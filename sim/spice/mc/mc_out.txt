@@ -1,0 +1,2247 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.64068e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.75199e-09
+m0_n2                                      1.8
+m0_n3                              2.62306e-09
+m0_n4                                      1.8
+m0_n5                              2.77308e-09
+m0_n6                                      1.8
+m0_n7                              2.78958e-09
+m0_n8                                      1.8
+m0_n9                              2.69839e-09
+m0_n10                                     1.8
+m0_n11                              2.9828e-09
+m0_n12                                     1.8
+m0_n13                             2.78934e-09
+m0_n14                                     1.8
+m0_n15                             2.54528e-09
+m0_n16                                     1.8
+m0_n17                             2.86213e-09
+m0_n18                                     1.8
+m0_n19                             2.79027e-09
+m0_n20                                     1.8
+m0_n21                             2.59702e-09
+m0_n22                                     1.8
+m0_n23                             2.66101e-09
+m0_n24                                     1.8
+m0_n25                              2.5874e-09
+m0_n26                                     1.8
+m0_n27                               3.042e-09
+m0_n28                                     1.8
+m0_n29                             2.69505e-09
+m0_net2                            2.64975e-09
+m0_out                             5.38918e-09
+ven#branch                                   0
+vdd#branch                        -9.18741e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.501698e-08 targ=  4.489200e-08 trig=  9.875019e-09
+f0 = 5.711515e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.94773e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.58749e-09
+m0_n2                                      1.8
+m0_n3                              2.64902e-09
+m0_n4                                      1.8
+m0_n5                               2.7098e-09
+m0_n6                                      1.8
+m0_n7                              2.75442e-09
+m0_n8                                      1.8
+m0_n9                              2.72069e-09
+m0_n10                                     1.8
+m0_n11                             2.56599e-09
+m0_n12                                     1.8
+m0_n13                             2.86275e-09
+m0_n14                                     1.8
+m0_n15                             3.00783e-09
+m0_n16                                     1.8
+m0_n17                             2.77387e-09
+m0_n18                                     1.8
+m0_n19                              2.7959e-09
+m0_n20                                     1.8
+m0_n21                             2.75769e-09
+m0_n22                                     1.8
+m0_n23                             2.65938e-09
+m0_n24                                     1.8
+m0_n25                             2.81428e-09
+m0_n26                                     1.8
+m0_n27                             2.61305e-09
+m0_n28                                     1.8
+m0_n29                              2.6212e-09
+m0_net2                            2.63056e-09
+m0_out                             4.78964e-09
+ven#branch                                   0
+vdd#branch                         -9.1136e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.507215e-08 targ=  4.495665e-08 trig=  9.884503e-09
+f0 = 5.702530e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.04714e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.85222e-09
+m0_n2                                      1.8
+m0_n3                               2.9761e-09
+m0_n4                                      1.8
+m0_n5                               2.6706e-09
+m0_n6                                      1.8
+m0_n7                              2.75997e-09
+m0_n8                                      1.8
+m0_n9                              2.76259e-09
+m0_n10                                     1.8
+m0_n11                             2.85611e-09
+m0_n12                                     1.8
+m0_n13                             2.55069e-09
+m0_n14                                     1.8
+m0_n15                              2.6994e-09
+m0_n16                                     1.8
+m0_n17                             2.95856e-09
+m0_n18                                     1.8
+m0_n19                             2.94489e-09
+m0_n20                                     1.8
+m0_n21                             2.70952e-09
+m0_n22                                     1.8
+m0_n23                             2.71362e-09
+m0_n24                                     1.8
+m0_n25                             2.70397e-09
+m0_n26                                     1.8
+m0_n27                             2.57576e-09
+m0_n28                                     1.8
+m0_n29                             2.67205e-09
+m0_net2                            2.56332e-09
+m0_out                             4.95331e-09
+ven#branch                                   0
+vdd#branch                        -9.16609e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.510442e-08 targ=  4.500202e-08 trig=  9.897600e-09
+f0 = 5.697288e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.21849e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                               2.7398e-09
+m0_n2                                      1.8
+m0_n3                              2.72534e-09
+m0_n4                                      1.8
+m0_n5                              2.51967e-09
+m0_n6                                      1.8
+m0_n7                               2.6819e-09
+m0_n8                                      1.8
+m0_n9                              2.72318e-09
+m0_n10                                     1.8
+m0_n11                             2.63403e-09
+m0_n12                                     1.8
+m0_n13                             2.94956e-09
+m0_n14                                     1.8
+m0_n15                             2.61587e-09
+m0_n16                                     1.8
+m0_n17                             2.74844e-09
+m0_n18                                     1.8
+m0_n19                              3.1014e-09
+m0_n20                                     1.8
+m0_n21                             2.90651e-09
+m0_n22                                     1.8
+m0_n23                             2.81757e-09
+m0_n24                                     1.8
+m0_n25                             2.83717e-09
+m0_n26                                     1.8
+m0_n27                             2.85408e-09
+m0_n28                                     1.8
+m0_n29                             2.69584e-09
+m0_net2                             2.5609e-09
+m0_out                             4.90558e-09
+ven#branch                                   0
+vdd#branch                        -9.21207e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.520555e-08 targ=  4.512116e-08 trig=  9.915605e-09
+f0 = 5.680922e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.66647e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.50128e-09
+m0_n2                                      1.8
+m0_n3                              2.72949e-09
+m0_n4                                      1.8
+m0_n5                              2.90966e-09
+m0_n6                                      1.8
+m0_n7                              2.56989e-09
+m0_n8                                      1.8
+m0_n9                              2.70806e-09
+m0_n10                                     1.8
+m0_n11                             2.58662e-09
+m0_n12                                     1.8
+m0_n13                             2.65224e-09
+m0_n14                                     1.8
+m0_n15                             2.58196e-09
+m0_n16                                     1.8
+m0_n17                             2.94156e-09
+m0_n18                                     1.8
+m0_n19                             2.71831e-09
+m0_n20                                     1.8
+m0_n21                             2.59006e-09
+m0_n22                                     1.8
+m0_n23                             2.68194e-09
+m0_n24                                     1.8
+m0_n25                             3.01421e-09
+m0_n26                                     1.8
+m0_n27                             2.77146e-09
+m0_n28                                     1.8
+m0_n29                             2.74665e-09
+m0_net2                            2.79465e-09
+m0_out                             5.08005e-09
+ven#branch                                   0
+vdd#branch                        -9.22177e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.519421e-08 targ=  4.510696e-08 trig=  9.912753e-09
+f0 = 5.682753e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                             4.8419e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.49735e-09
+m0_n2                                      1.8
+m0_n3                              2.80719e-09
+m0_n4                                      1.8
+m0_n5                              2.76784e-09
+m0_n6                                      1.8
+m0_n7                              2.75438e-09
+m0_n8                                      1.8
+m0_n9                              2.63834e-09
+m0_n10                                     1.8
+m0_n11                              2.8893e-09
+m0_n12                                     1.8
+m0_n13                             2.70932e-09
+m0_n14                                     1.8
+m0_n15                             2.52225e-09
+m0_n16                                     1.8
+m0_n17                             2.78893e-09
+m0_n18                                     1.8
+m0_n19                             2.78287e-09
+m0_n20                                     1.8
+m0_n21                             2.51436e-09
+m0_n22                                     1.8
+m0_n23                             2.66081e-09
+m0_n24                                     1.8
+m0_n25                             2.81316e-09
+m0_n26                                     1.8
+m0_n27                             2.80408e-09
+m0_n28                                     1.8
+m0_n29                             2.87036e-09
+m0_net2                            2.58731e-09
+m0_out                             4.89449e-09
+ven#branch                                   0
+vdd#branch                        -9.12048e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.512980e-08 targ=  4.502940e-08 trig=  9.899598e-09
+f0 = 5.693172e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.09933e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.86223e-09
+m0_n2                                      1.8
+m0_n3                              2.56945e-09
+m0_n4                                      1.8
+m0_n5                               2.6465e-09
+m0_n6                                      1.8
+m0_n7                              2.62178e-09
+m0_n8                                      1.8
+m0_n9                              2.74655e-09
+m0_n10                                     1.8
+m0_n11                             2.66551e-09
+m0_n12                                     1.8
+m0_n13                              2.7081e-09
+m0_n14                                     1.8
+m0_n15                              2.4876e-09
+m0_n16                                     1.8
+m0_n17                             2.72459e-09
+m0_n18                                     1.8
+m0_n19                             2.72414e-09
+m0_n20                                     1.8
+m0_n21                              2.8252e-09
+m0_n22                                     1.8
+m0_n23                             2.77429e-09
+m0_n24                                     1.8
+m0_n25                             2.60264e-09
+m0_n26                                     1.8
+m0_n27                             2.66056e-09
+m0_n28                                     1.8
+m0_n29                             2.80487e-09
+m0_net2                            2.51796e-09
+m0_out                             5.21931e-09
+ven#branch                                   0
+vdd#branch                        -9.10261e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.523999e-08 targ=  4.517423e-08 trig=  9.934243e-09
+f0 = 5.675371e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.97842e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.56714e-09
+m0_n2                                      1.8
+m0_n3                              2.80834e-09
+m0_n4                                      1.8
+m0_n5                              2.64524e-09
+m0_n6                                      1.8
+m0_n7                              2.58397e-09
+m0_n8                                      1.8
+m0_n9                              2.67567e-09
+m0_n10                                     1.8
+m0_n11                             2.76791e-09
+m0_n12                                     1.8
+m0_n13                             2.71861e-09
+m0_n14                                     1.8
+m0_n15                             2.64751e-09
+m0_n16                                     1.8
+m0_n17                             2.66792e-09
+m0_n18                                     1.8
+m0_n19                             2.84226e-09
+m0_n20                                     1.8
+m0_n21                             2.88012e-09
+m0_n22                                     1.8
+m0_n23                             2.74259e-09
+m0_n24                                     1.8
+m0_n25                              2.4366e-09
+m0_n26                                     1.8
+m0_n27                             2.58089e-09
+m0_n28                                     1.8
+m0_n29                             2.89113e-09
+m0_net2                            2.54385e-09
+m0_out                             5.07648e-09
+ven#branch                                   0
+vdd#branch                        -9.11224e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.515929e-08 targ=  4.506769e-08 trig=  9.908392e-09
+f0 = 5.688397e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                             5.2939e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.70963e-09
+m0_n2                                      1.8
+m0_n3                              2.60506e-09
+m0_n4                                      1.8
+m0_n5                              2.78554e-09
+m0_n6                                      1.8
+m0_n7                              2.60379e-09
+m0_n8                                      1.8
+m0_n9                              2.81722e-09
+m0_n10                                     1.8
+m0_n11                              2.7262e-09
+m0_n12                                     1.8
+m0_n13                             2.89879e-09
+m0_n14                                     1.8
+m0_n15                             2.71144e-09
+m0_n16                                     1.8
+m0_n17                             2.87644e-09
+m0_n18                                     1.8
+m0_n19                             2.62594e-09
+m0_n20                                     1.8
+m0_n21                             2.62407e-09
+m0_n22                                     1.8
+m0_n23                             2.88746e-09
+m0_n24                                     1.8
+m0_n25                             2.82139e-09
+m0_n26                                     1.8
+m0_n27                             2.70324e-09
+m0_n28                                     1.8
+m0_n29                             2.63036e-09
+m0_net2                            2.54628e-09
+m0_out                             4.97281e-09
+ven#branch                                   0
+vdd#branch                        -9.07025e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.515347e-08 targ=  4.505865e-08 trig=  9.905183e-09
+f0 = 5.689339e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.52521e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.62361e-09
+m0_n2                                      1.8
+m0_n3                              2.93058e-09
+m0_n4                                      1.8
+m0_n5                              2.54629e-09
+m0_n6                                      1.8
+m0_n7                               2.7255e-09
+m0_n8                                      1.8
+m0_n9                              2.73891e-09
+m0_n10                                     1.8
+m0_n11                             2.67937e-09
+m0_n12                                     1.8
+m0_n13                              2.7033e-09
+m0_n14                                     1.8
+m0_n15                             2.53461e-09
+m0_n16                                     1.8
+m0_n17                             2.70813e-09
+m0_n18                                     1.8
+m0_n19                             2.53437e-09
+m0_n20                                     1.8
+m0_n21                             2.42078e-09
+m0_n22                                     1.8
+m0_n23                             2.81117e-09
+m0_n24                                     1.8
+m0_n25                             2.63119e-09
+m0_n26                                     1.8
+m0_n27                             2.77931e-09
+m0_n28                                     1.8
+m0_n29                             2.80239e-09
+m0_net2                            2.50744e-09
+m0_out                             5.36641e-09
+ven#branch                                   0
+vdd#branch                        -9.07527e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.520096e-08 targ=  4.511836e-08 trig=  9.917403e-09
+f0 = 5.681663e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                             5.2117e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.86326e-09
+m0_n2                                      1.8
+m0_n3                              2.56334e-09
+m0_n4                                      1.8
+m0_n5                              2.61594e-09
+m0_n6                                      1.8
+m0_n7                              2.87716e-09
+m0_n8                                      1.8
+m0_n9                              2.95921e-09
+m0_n10                                     1.8
+m0_n11                             2.66493e-09
+m0_n12                                     1.8
+m0_n13                             2.62355e-09
+m0_n14                                     1.8
+m0_n15                             2.70602e-09
+m0_n16                                     1.8
+m0_n17                             2.84909e-09
+m0_n18                                     1.8
+m0_n19                             2.84776e-09
+m0_n20                                     1.8
+m0_n21                             2.97765e-09
+m0_n22                                     1.8
+m0_n23                             2.74414e-09
+m0_n24                                     1.8
+m0_n25                             2.69218e-09
+m0_n26                                     1.8
+m0_n27                             3.25695e-09
+m0_n28                                     1.8
+m0_n29                             2.60752e-09
+m0_net2                             2.4375e-09
+m0_out                             5.19694e-09
+ven#branch                                   0
+vdd#branch                        -9.25152e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.500411e-08 targ=  4.488764e-08 trig=  9.883529e-09
+f0 = 5.713615e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.38636e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.78808e-09
+m0_n2                                      1.8
+m0_n3                              2.66914e-09
+m0_n4                                      1.8
+m0_n5                              2.69081e-09
+m0_n6                                      1.8
+m0_n7                              2.85319e-09
+m0_n8                                      1.8
+m0_n9                              2.56092e-09
+m0_n10                                     1.8
+m0_n11                             2.92989e-09
+m0_n12                                     1.8
+m0_n13                             2.74414e-09
+m0_n14                                     1.8
+m0_n15                             2.64823e-09
+m0_n16                                     1.8
+m0_n17                             2.70687e-09
+m0_n18                                     1.8
+m0_n19                             2.71988e-09
+m0_n20                                     1.8
+m0_n21                             2.68973e-09
+m0_n22                                     1.8
+m0_n23                             2.65262e-09
+m0_n24                                     1.8
+m0_n25                             2.76688e-09
+m0_n26                                     1.8
+m0_n27                             2.66473e-09
+m0_n28                                     1.8
+m0_n29                             2.74948e-09
+m0_net2                            2.57061e-09
+m0_out                             5.13857e-09
+ven#branch                                   0
+vdd#branch                        -9.12693e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.514901e-08 targ=  4.505208e-08 trig=  9.903073e-09
+f0 = 5.690061e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.64325e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.69602e-09
+m0_n2                                      1.8
+m0_n3                              2.60634e-09
+m0_n4                                      1.8
+m0_n5                              2.81355e-09
+m0_n6                                      1.8
+m0_n7                              2.76536e-09
+m0_n8                                      1.8
+m0_n9                              2.81548e-09
+m0_n10                                     1.8
+m0_n11                             2.69015e-09
+m0_n12                                     1.8
+m0_n13                             2.52296e-09
+m0_n14                                     1.8
+m0_n15                             2.73928e-09
+m0_n16                                     1.8
+m0_n17                             2.80692e-09
+m0_n18                                     1.8
+m0_n19                             2.73043e-09
+m0_n20                                     1.8
+m0_n21                             2.69529e-09
+m0_n22                                     1.8
+m0_n23                             2.73387e-09
+m0_n24                                     1.8
+m0_n25                             2.73945e-09
+m0_n26                                     1.8
+m0_n27                             2.79363e-09
+m0_n28                                     1.8
+m0_n29                             2.83335e-09
+m0_net2                            3.02578e-09
+m0_out                             4.71799e-09
+ven#branch                                   0
+vdd#branch                        -9.14481e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.526311e-08 targ=  4.519655e-08 trig=  9.933445e-09
+f0 = 5.671649e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.19455e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              3.03963e-09
+m0_n2                                      1.8
+m0_n3                              2.52378e-09
+m0_n4                                      1.8
+m0_n5                              2.70036e-09
+m0_n6                                      1.8
+m0_n7                              2.60158e-09
+m0_n8                                      1.8
+m0_n9                               2.7399e-09
+m0_n10                                     1.8
+m0_n11                             2.68993e-09
+m0_n12                                     1.8
+m0_n13                              2.6247e-09
+m0_n14                                     1.8
+m0_n15                              2.6676e-09
+m0_n16                                     1.8
+m0_n17                             2.59845e-09
+m0_n18                                     1.8
+m0_n19                             2.75236e-09
+m0_n20                                     1.8
+m0_n21                             2.57965e-09
+m0_n22                                     1.8
+m0_n23                             2.95452e-09
+m0_n24                                     1.8
+m0_n25                             2.69373e-09
+m0_n26                                     1.8
+m0_n27                             2.86595e-09
+m0_n28                                     1.8
+m0_n29                             2.50142e-09
+m0_net2                            2.63692e-09
+m0_out                             5.14338e-09
+ven#branch                                   0
+vdd#branch                        -9.05106e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.529512e-08 targ=  4.523109e-08 trig=  9.935974e-09
+f0 = 5.666506e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.28756e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.47412e-09
+m0_n2                                      1.8
+m0_n3                              2.80325e-09
+m0_n4                                      1.8
+m0_n5                              2.54713e-09
+m0_n6                                      1.8
+m0_n7                              2.59511e-09
+m0_n8                                      1.8
+m0_n9                               2.7932e-09
+m0_n10                                     1.8
+m0_n11                             3.04024e-09
+m0_n12                                     1.8
+m0_n13                             2.48483e-09
+m0_n14                                     1.8
+m0_n15                             2.82736e-09
+m0_n16                                     1.8
+m0_n17                             2.68365e-09
+m0_n18                                     1.8
+m0_n19                             2.77174e-09
+m0_n20                                     1.8
+m0_n21                             2.86659e-09
+m0_n22                                     1.8
+m0_n23                             2.83109e-09
+m0_n24                                     1.8
+m0_n25                             2.50722e-09
+m0_n26                                     1.8
+m0_n27                             2.82655e-09
+m0_n28                                     1.8
+m0_n29                             2.75443e-09
+m0_net2                            2.56622e-09
+m0_out                             5.18709e-09
+ven#branch                                   0
+vdd#branch                        -9.05612e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.530691e-08 targ=  4.524221e-08 trig=  9.935302e-09
+f0 = 5.664614e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.22477e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.80342e-09
+m0_n2                                      1.8
+m0_n3                              2.60866e-09
+m0_n4                                      1.8
+m0_n5                              2.88401e-09
+m0_n6                                      1.8
+m0_n7                              2.78954e-09
+m0_n8                                      1.8
+m0_n9                              2.71821e-09
+m0_n10                                     1.8
+m0_n11                             3.00163e-09
+m0_n12                                     1.8
+m0_n13                             2.51358e-09
+m0_n14                                     1.8
+m0_n15                             2.66726e-09
+m0_n16                                     1.8
+m0_n17                             2.51059e-09
+m0_n18                                     1.8
+m0_n19                             2.49119e-09
+m0_n20                                     1.8
+m0_n21                             2.86491e-09
+m0_n22                                     1.8
+m0_n23                              2.8002e-09
+m0_n24                                     1.8
+m0_n25                             3.02085e-09
+m0_n26                                     1.8
+m0_n27                             2.67556e-09
+m0_n28                                     1.8
+m0_n29                              2.9154e-09
+m0_net2                            2.62156e-09
+m0_out                             5.52369e-09
+ven#branch                                   0
+vdd#branch                        -9.27534e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.535255e-08 targ=  4.528960e-08 trig=  9.937049e-09
+f0 = 5.657301e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.75402e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.61367e-09
+m0_n2                                      1.8
+m0_n3                              2.60765e-09
+m0_n4                                      1.8
+m0_n5                              2.73695e-09
+m0_n6                                      1.8
+m0_n7                              2.71639e-09
+m0_n8                                      1.8
+m0_n9                               2.9725e-09
+m0_n10                                     1.8
+m0_n11                             2.68404e-09
+m0_n12                                     1.8
+m0_n13                             2.49924e-09
+m0_n14                                     1.8
+m0_n15                               2.615e-09
+m0_n16                                     1.8
+m0_n17                             2.56123e-09
+m0_n18                                     1.8
+m0_n19                             2.74776e-09
+m0_n20                                     1.8
+m0_n21                             2.99792e-09
+m0_n22                                     1.8
+m0_n23                             2.75573e-09
+m0_n24                                     1.8
+m0_n25                             2.50741e-09
+m0_n26                                     1.8
+m0_n27                             2.61045e-09
+m0_n28                                     1.8
+m0_n29                             2.76334e-09
+m0_net2                            2.50665e-09
+m0_out                             5.23981e-09
+ven#branch                                   0
+vdd#branch                         -9.1717e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.498338e-08 targ=  4.484928e-08 trig=  9.865903e-09
+f0 = 5.717000e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.17179e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.95008e-09
+m0_n2                                      1.8
+m0_n3                              2.71038e-09
+m0_n4                                      1.8
+m0_n5                              2.88193e-09
+m0_n6                                      1.8
+m0_n7                              2.83491e-09
+m0_n8                                      1.8
+m0_n9                              2.79927e-09
+m0_n10                                     1.8
+m0_n11                             2.65996e-09
+m0_n12                                     1.8
+m0_n13                             2.80948e-09
+m0_n14                                     1.8
+m0_n15                             2.56996e-09
+m0_n16                                     1.8
+m0_n17                             2.60204e-09
+m0_n18                                     1.8
+m0_n19                             2.66518e-09
+m0_n20                                     1.8
+m0_n21                             3.06917e-09
+m0_n22                                     1.8
+m0_n23                             2.80306e-09
+m0_n24                                     1.8
+m0_n25                             3.05908e-09
+m0_n26                                     1.8
+m0_n27                             2.83868e-09
+m0_n28                                     1.8
+m0_n29                             2.93177e-09
+m0_net2                            2.57437e-09
+m0_out                             5.34777e-09
+ven#branch                                   0
+vdd#branch                        -9.25172e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.495843e-08 targ=  4.482202e-08 trig=  9.863589e-09
+f0 = 5.721081e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                             4.9116e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.68566e-09
+m0_n2                                      1.8
+m0_n3                              2.78698e-09
+m0_n4                                      1.8
+m0_n5                              2.74354e-09
+m0_n6                                      1.8
+m0_n7                              2.85881e-09
+m0_n8                                      1.8
+m0_n9                              2.77908e-09
+m0_n10                                     1.8
+m0_n11                             2.93907e-09
+m0_n12                                     1.8
+m0_n13                             2.74461e-09
+m0_n14                                     1.8
+m0_n15                             2.63188e-09
+m0_n16                                     1.8
+m0_n17                             2.71795e-09
+m0_n18                                     1.8
+m0_n19                             2.59966e-09
+m0_n20                                     1.8
+m0_n21                             2.71846e-09
+m0_n22                                     1.8
+m0_n23                             2.74188e-09
+m0_n24                                     1.8
+m0_n25                             2.59148e-09
+m0_n26                                     1.8
+m0_n27                             2.65242e-09
+m0_n28                                     1.8
+m0_n29                             2.69269e-09
+m0_net2                            2.61686e-09
+m0_out                             5.26476e-09
+ven#branch                                   0
+vdd#branch                        -9.13056e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.526227e-08 targ=  4.519397e-08 trig=  9.931706e-09
+f0 = 5.671785e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.49526e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.59878e-09
+m0_n2                                      1.8
+m0_n3                              2.61997e-09
+m0_n4                                      1.8
+m0_n5                              3.09404e-09
+m0_n6                                      1.8
+m0_n7                              2.90244e-09
+m0_n8                                      1.8
+m0_n9                              2.73537e-09
+m0_n10                                     1.8
+m0_n11                             2.75145e-09
+m0_n12                                     1.8
+m0_n13                             2.57096e-09
+m0_n14                                     1.8
+m0_n15                             2.51118e-09
+m0_n16                                     1.8
+m0_n17                             2.79622e-09
+m0_n18                                     1.8
+m0_n19                             2.79352e-09
+m0_n20                                     1.8
+m0_n21                             2.55669e-09
+m0_n22                                     1.8
+m0_n23                             2.58594e-09
+m0_n24                                     1.8
+m0_n25                             2.62019e-09
+m0_n26                                     1.8
+m0_n27                             2.68838e-09
+m0_n28                                     1.8
+m0_n29                              2.8767e-09
+m0_net2                            2.63213e-09
+m0_out                             5.42361e-09
+ven#branch                                   0
+vdd#branch                        -9.22103e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.499351e-08 targ=  4.485675e-08 trig=  9.863237e-09
+f0 = 5.715346e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.70656e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.85162e-09
+m0_n2                                      1.8
+m0_n3                              2.76506e-09
+m0_n4                                      1.8
+m0_n5                              2.62156e-09
+m0_n6                                      1.8
+m0_n7                               2.9674e-09
+m0_n8                                      1.8
+m0_n9                              3.04826e-09
+m0_n10                                     1.8
+m0_n11                              2.7024e-09
+m0_n12                                     1.8
+m0_n13                              2.7793e-09
+m0_n14                                     1.8
+m0_n15                             2.71404e-09
+m0_n16                                     1.8
+m0_n17                             2.74899e-09
+m0_n18                                     1.8
+m0_n19                             2.76036e-09
+m0_n20                                     1.8
+m0_n21                             2.63897e-09
+m0_n22                                     1.8
+m0_n23                             2.76989e-09
+m0_n24                                     1.8
+m0_n25                             3.04509e-09
+m0_n26                                     1.8
+m0_n27                             2.71969e-09
+m0_n28                                     1.8
+m0_n29                             2.71829e-09
+m0_net2                            2.67328e-09
+m0_out                             5.04876e-09
+ven#branch                                   0
+vdd#branch                        -9.15633e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.515941e-08 targ=  4.506312e-08 trig=  9.903711e-09
+f0 = 5.688378e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.85639e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.78613e-09
+m0_n2                                      1.8
+m0_n3                              2.48529e-09
+m0_n4                                      1.8
+m0_n5                              2.74669e-09
+m0_n6                                      1.8
+m0_n7                              2.70529e-09
+m0_n8                                      1.8
+m0_n9                              2.85694e-09
+m0_n10                                     1.8
+m0_n11                             2.64564e-09
+m0_n12                                     1.8
+m0_n13                             2.98124e-09
+m0_n14                                     1.8
+m0_n15                             2.92738e-09
+m0_n16                                     1.8
+m0_n17                             2.64717e-09
+m0_n18                                     1.8
+m0_n19                             2.78638e-09
+m0_n20                                     1.8
+m0_n21                             2.92203e-09
+m0_n22                                     1.8
+m0_n23                             2.78947e-09
+m0_n24                                     1.8
+m0_n25                             2.80353e-09
+m0_n26                                     1.8
+m0_n27                             2.87138e-09
+m0_n28                                     1.8
+m0_n29                             2.61129e-09
+m0_net2                            2.56283e-09
+m0_out                             4.90318e-09
+ven#branch                                   0
+vdd#branch                        -9.17341e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.516221e-08 targ=  4.507140e-08 trig=  9.909187e-09
+f0 = 5.687925e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.99565e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.78442e-09
+m0_n2                                      1.8
+m0_n3                              2.86528e-09
+m0_n4                                      1.8
+m0_n5                              2.83387e-09
+m0_n6                                      1.8
+m0_n7                              2.82437e-09
+m0_n8                                      1.8
+m0_n9                               2.8095e-09
+m0_n10                                     1.8
+m0_n11                             3.11544e-09
+m0_n12                                     1.8
+m0_n13                              2.5213e-09
+m0_n14                                     1.8
+m0_n15                             2.56116e-09
+m0_n16                                     1.8
+m0_n17                             2.61913e-09
+m0_n18                                     1.8
+m0_n19                             2.64897e-09
+m0_n20                                     1.8
+m0_n21                             2.62184e-09
+m0_n22                                     1.8
+m0_n23                             2.58531e-09
+m0_n24                                     1.8
+m0_n25                             2.60035e-09
+m0_n26                                     1.8
+m0_n27                             2.76955e-09
+m0_n28                                     1.8
+m0_n29                             2.66225e-09
+m0_net2                             2.7097e-09
+m0_out                             4.75539e-09
+ven#branch                                   0
+vdd#branch                        -9.12237e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.518385e-08 targ=  4.509194e-08 trig=  9.908087e-09
+f0 = 5.684426e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.19344e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.74331e-09
+m0_n2                                      1.8
+m0_n3                              2.82719e-09
+m0_n4                                      1.8
+m0_n5                              2.67028e-09
+m0_n6                                      1.8
+m0_n7                              2.90325e-09
+m0_n8                                      1.8
+m0_n9                              2.72849e-09
+m0_n10                                     1.8
+m0_n11                             2.82267e-09
+m0_n12                                     1.8
+m0_n13                             3.14351e-09
+m0_n14                                     1.8
+m0_n15                             2.65545e-09
+m0_n16                                     1.8
+m0_n17                             2.63179e-09
+m0_n18                                     1.8
+m0_n19                             2.95057e-09
+m0_n20                                     1.8
+m0_n21                             2.75664e-09
+m0_n22                                     1.8
+m0_n23                             2.72643e-09
+m0_n24                                     1.8
+m0_n25                             2.82727e-09
+m0_n26                                     1.8
+m0_n27                             2.72234e-09
+m0_n28                                     1.8
+m0_n29                             2.81686e-09
+m0_net2                            3.01746e-09
+m0_out                             5.00425e-09
+ven#branch                                   0
+vdd#branch                        -9.26405e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.506935e-08 targ=  4.494700e-08 trig=  9.877659e-09
+f0 = 5.702986e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.92131e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.81489e-09
+m0_n2                                      1.8
+m0_n3                               2.5409e-09
+m0_n4                                      1.8
+m0_n5                              2.73605e-09
+m0_n6                                      1.8
+m0_n7                              2.62905e-09
+m0_n8                                      1.8
+m0_n9                               2.6917e-09
+m0_n10                                     1.8
+m0_n11                             2.77309e-09
+m0_n12                                     1.8
+m0_n13                             2.82498e-09
+m0_n14                                     1.8
+m0_n15                             2.67649e-09
+m0_n16                                     1.8
+m0_n17                             2.63317e-09
+m0_n18                                     1.8
+m0_n19                             2.71855e-09
+m0_n20                                     1.8
+m0_n21                             2.74407e-09
+m0_n22                                     1.8
+m0_n23                              2.6053e-09
+m0_n24                                     1.8
+m0_n25                             2.84199e-09
+m0_n26                                     1.8
+m0_n27                             2.94638e-09
+m0_n28                                     1.8
+m0_n29                               2.773e-09
+m0_net2                            2.69575e-09
+m0_out                             4.93257e-09
+ven#branch                                   0
+vdd#branch                        -9.20101e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.510369e-08 targ=  4.499862e-08 trig=  9.894923e-09
+f0 = 5.697407e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                             4.8324e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.65829e-09
+m0_n2                                      1.8
+m0_n3                              2.54855e-09
+m0_n4                                      1.8
+m0_n5                              2.66039e-09
+m0_n6                                      1.8
+m0_n7                              2.63078e-09
+m0_n8                                      1.8
+m0_n9                              2.85198e-09
+m0_n10                                     1.8
+m0_n11                             2.59165e-09
+m0_n12                                     1.8
+m0_n13                             2.77171e-09
+m0_n14                                     1.8
+m0_n15                             2.64858e-09
+m0_n16                                     1.8
+m0_n17                             2.62403e-09
+m0_n18                                     1.8
+m0_n19                             2.77779e-09
+m0_n20                                     1.8
+m0_n21                             2.58472e-09
+m0_n22                                     1.8
+m0_n23                             2.69428e-09
+m0_n24                                     1.8
+m0_n25                             2.78416e-09
+m0_n26                                     1.8
+m0_n27                             2.80677e-09
+m0_n28                                     1.8
+m0_n29                              3.0087e-09
+m0_net2                            2.83838e-09
+m0_out                             5.14978e-09
+ven#branch                                   0
+vdd#branch                        -9.26988e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.513024e-08 targ=  4.503410e-08 trig=  9.903859e-09
+f0 = 5.693101e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.19019e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.70886e-09
+m0_n2                                      1.8
+m0_n3                               2.6731e-09
+m0_n4                                      1.8
+m0_n5                              2.84244e-09
+m0_n6                                      1.8
+m0_n7                              2.92856e-09
+m0_n8                                      1.8
+m0_n9                              2.72342e-09
+m0_n10                                     1.8
+m0_n11                             2.84951e-09
+m0_n12                                     1.8
+m0_n13                             2.91077e-09
+m0_n14                                     1.8
+m0_n15                             2.60734e-09
+m0_n16                                     1.8
+m0_n17                             2.72898e-09
+m0_n18                                     1.8
+m0_n19                             2.59272e-09
+m0_n20                                     1.8
+m0_n21                             2.78467e-09
+m0_n22                                     1.8
+m0_n23                             3.05243e-09
+m0_n24                                     1.8
+m0_n25                             2.85268e-09
+m0_n26                                     1.8
+m0_n27                             2.62824e-09
+m0_n28                                     1.8
+m0_n29                             2.48856e-09
+m0_net2                            2.62985e-09
+m0_out                             4.78517e-09
+ven#branch                                   0
+vdd#branch                        -9.20212e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.544798e-08 targ=  4.541273e-08 trig=  9.964746e-09
+f0 = 5.642070e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.70281e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.51374e-09
+m0_n2                                      1.8
+m0_n3                              2.65505e-09
+m0_n4                                      1.8
+m0_n5                              2.89136e-09
+m0_n6                                      1.8
+m0_n7                              2.71755e-09
+m0_n8                                      1.8
+m0_n9                              2.70829e-09
+m0_n10                                     1.8
+m0_n11                             2.71275e-09
+m0_n12                                     1.8
+m0_n13                             2.71462e-09
+m0_n14                                     1.8
+m0_n15                             2.79573e-09
+m0_n16                                     1.8
+m0_n17                             2.77609e-09
+m0_n18                                     1.8
+m0_n19                             2.61198e-09
+m0_n20                                     1.8
+m0_n21                             2.73516e-09
+m0_n22                                     1.8
+m0_n23                             2.57878e-09
+m0_n24                                     1.8
+m0_n25                             2.55846e-09
+m0_n26                                     1.8
+m0_n27                             2.75989e-09
+m0_n28                                     1.8
+m0_n29                             2.64978e-09
+m0_net2                            2.54781e-09
+m0_out                             5.32122e-09
+ven#branch                                   0
+vdd#branch                        -9.18964e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.503467e-08 targ=  4.491618e-08 trig=  9.881512e-09
+f0 = 5.708631e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.49202e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.55627e-09
+m0_n2                                      1.8
+m0_n3                              2.72418e-09
+m0_n4                                      1.8
+m0_n5                              2.66584e-09
+m0_n6                                      1.8
+m0_n7                              2.66679e-09
+m0_n8                                      1.8
+m0_n9                              2.59816e-09
+m0_n10                                     1.8
+m0_n11                             2.78932e-09
+m0_n12                                     1.8
+m0_n13                             2.74529e-09
+m0_n14                                     1.8
+m0_n15                             2.75638e-09
+m0_n16                                     1.8
+m0_n17                               2.898e-09
+m0_n18                                     1.8
+m0_n19                             2.59502e-09
+m0_n20                                     1.8
+m0_n21                             2.68801e-09
+m0_n22                                     1.8
+m0_n23                             2.63542e-09
+m0_n24                                     1.8
+m0_n25                             2.53038e-09
+m0_n26                                     1.8
+m0_n27                             2.78008e-09
+m0_n28                                     1.8
+m0_n29                             2.80078e-09
+m0_net2                            2.65566e-09
+m0_out                             4.68983e-09
+ven#branch                                   0
+vdd#branch                        -9.05001e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.521442e-08 targ=  4.512436e-08 trig=  9.909939e-09
+f0 = 5.679492e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.16514e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                                2.657e-09
+m0_n2                                      1.8
+m0_n3                              2.61409e-09
+m0_n4                                      1.8
+m0_n5                              2.67229e-09
+m0_n6                                      1.8
+m0_n7                               2.6326e-09
+m0_n8                                      1.8
+m0_n9                              2.86073e-09
+m0_n10                                     1.8
+m0_n11                             2.65911e-09
+m0_n12                                     1.8
+m0_n13                             2.60212e-09
+m0_n14                                     1.8
+m0_n15                             2.95042e-09
+m0_n16                                     1.8
+m0_n17                             2.59672e-09
+m0_n18                                     1.8
+m0_n19                             2.82942e-09
+m0_n20                                     1.8
+m0_n21                             2.70774e-09
+m0_n22                                     1.8
+m0_n23                              2.6876e-09
+m0_n24                                     1.8
+m0_n25                             2.68678e-09
+m0_n26                                     1.8
+m0_n27                             2.67572e-09
+m0_n28                                     1.8
+m0_n29                              2.6868e-09
+m0_net2                            2.46339e-09
+m0_out                              5.1396e-09
+ven#branch                                   0
+vdd#branch                        -9.20331e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.499889e-08 targ=  4.486610e-08 trig=  9.867211e-09
+f0 = 5.714467e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.10519e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.81499e-09
+m0_n2                                      1.8
+m0_n3                              2.64961e-09
+m0_n4                                      1.8
+m0_n5                              2.58337e-09
+m0_n6                                      1.8
+m0_n7                              2.70998e-09
+m0_n8                                      1.8
+m0_n9                               2.6906e-09
+m0_n10                                     1.8
+m0_n11                             2.68223e-09
+m0_n12                                     1.8
+m0_n13                             2.64025e-09
+m0_n14                                     1.8
+m0_n15                             2.79895e-09
+m0_n16                                     1.8
+m0_n17                             2.62223e-09
+m0_n18                                     1.8
+m0_n19                             2.51191e-09
+m0_n20                                     1.8
+m0_n21                             2.52312e-09
+m0_n22                                     1.8
+m0_n23                             2.76175e-09
+m0_n24                                     1.8
+m0_n25                             2.65225e-09
+m0_n26                                     1.8
+m0_n27                             2.73048e-09
+m0_n28                                     1.8
+m0_n29                             2.73444e-09
+m0_net2                              2.783e-09
+m0_out                             4.76985e-09
+ven#branch                                   0
+vdd#branch                        -9.08703e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.524896e-08 targ=  4.517162e-08 trig=  9.922661e-09
+f0 = 5.673926e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.27062e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                               2.8878e-09
+m0_n2                                      1.8
+m0_n3                              2.72232e-09
+m0_n4                                      1.8
+m0_n5                              2.83581e-09
+m0_n6                                      1.8
+m0_n7                              2.81688e-09
+m0_n8                                      1.8
+m0_n9                              2.62189e-09
+m0_n10                                     1.8
+m0_n11                             2.83131e-09
+m0_n12                                     1.8
+m0_n13                             2.70331e-09
+m0_n14                                     1.8
+m0_n15                             2.83222e-09
+m0_n16                                     1.8
+m0_n17                             2.67812e-09
+m0_n18                                     1.8
+m0_n19                             2.87164e-09
+m0_n20                                     1.8
+m0_n21                             2.81257e-09
+m0_n22                                     1.8
+m0_n23                             2.80087e-09
+m0_n24                                     1.8
+m0_n25                             2.83547e-09
+m0_n26                                     1.8
+m0_n27                             2.82337e-09
+m0_n28                                     1.8
+m0_n29                             2.65543e-09
+m0_net2                            3.25505e-09
+m0_out                             5.21144e-09
+ven#branch                                   0
+vdd#branch                        -9.27736e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.510899e-08 targ=  4.499731e-08 trig=  9.888313e-09
+f0 = 5.696547e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.87331e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.65998e-09
+m0_n2                                      1.8
+m0_n3                              2.87186e-09
+m0_n4                                      1.8
+m0_n5                              2.69598e-09
+m0_n6                                      1.8
+m0_n7                              2.74359e-09
+m0_n8                                      1.8
+m0_n9                               2.6694e-09
+m0_n10                                     1.8
+m0_n11                             2.88089e-09
+m0_n12                                     1.8
+m0_n13                              2.7514e-09
+m0_n14                                     1.8
+m0_n15                             2.68889e-09
+m0_n16                                     1.8
+m0_n17                              2.6292e-09
+m0_n18                                     1.8
+m0_n19                             2.85335e-09
+m0_n20                                     1.8
+m0_n21                             2.66721e-09
+m0_n22                                     1.8
+m0_n23                             2.63386e-09
+m0_n24                                     1.8
+m0_n25                             2.67947e-09
+m0_n26                                     1.8
+m0_n27                             2.54143e-09
+m0_n28                                     1.8
+m0_n29                              2.6755e-09
+m0_net2                            2.51598e-09
+m0_out                             5.13989e-09
+ven#branch                                   0
+vdd#branch                        -9.15146e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.510044e-08 targ=  4.499080e-08 trig=  9.890360e-09
+f0 = 5.697934e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                             4.8596e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.91782e-09
+m0_n2                                      1.8
+m0_n3                              2.79606e-09
+m0_n4                                      1.8
+m0_n5                              2.60503e-09
+m0_n6                                      1.8
+m0_n7                               2.7203e-09
+m0_n8                                      1.8
+m0_n9                              2.67725e-09
+m0_n10                                     1.8
+m0_n11                             2.65221e-09
+m0_n12                                     1.8
+m0_n13                             2.87604e-09
+m0_n14                                     1.8
+m0_n15                             2.85173e-09
+m0_n16                                     1.8
+m0_n17                             2.58632e-09
+m0_n18                                     1.8
+m0_n19                             2.47254e-09
+m0_n20                                     1.8
+m0_n21                              2.7228e-09
+m0_n22                                     1.8
+m0_n23                               2.804e-09
+m0_n24                                     1.8
+m0_n25                             2.62021e-09
+m0_n26                                     1.8
+m0_n27                             2.71571e-09
+m0_n28                                     1.8
+m0_n29                             2.66723e-09
+m0_net2                            2.79246e-09
+m0_out                             5.04174e-09
+ven#branch                                   0
+vdd#branch                        -9.12387e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.533694e-08 targ=  4.527598e-08 trig=  9.939041e-09
+f0 = 5.659800e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.77332e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.81703e-09
+m0_n2                                      1.8
+m0_n3                               2.7013e-09
+m0_n4                                      1.8
+m0_n5                              2.64398e-09
+m0_n6                                      1.8
+m0_n7                              2.78388e-09
+m0_n8                                      1.8
+m0_n9                              2.61722e-09
+m0_n10                                     1.8
+m0_n11                             2.64984e-09
+m0_n12                                     1.8
+m0_n13                             2.63997e-09
+m0_n14                                     1.8
+m0_n15                             2.80921e-09
+m0_n16                                     1.8
+m0_n17                             2.64524e-09
+m0_n18                                     1.8
+m0_n19                             2.69403e-09
+m0_n20                                     1.8
+m0_n21                             3.06172e-09
+m0_n22                                     1.8
+m0_n23                              2.4076e-09
+m0_n24                                     1.8
+m0_n25                              2.7192e-09
+m0_n26                                     1.8
+m0_n27                             2.62287e-09
+m0_n28                                     1.8
+m0_n29                              2.6454e-09
+m0_net2                            2.62644e-09
+m0_out                             4.92478e-09
+ven#branch                                   0
+vdd#branch                        -9.08988e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.505158e-08 targ=  4.494192e-08 trig=  9.890340e-09
+f0 = 5.705877e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            4.93764e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.67056e-09
+m0_n2                                      1.8
+m0_n3                              2.92781e-09
+m0_n4                                      1.8
+m0_n5                              2.54981e-09
+m0_n6                                      1.8
+m0_n7                              2.58228e-09
+m0_n8                                      1.8
+m0_n9                              2.79067e-09
+m0_n10                                     1.8
+m0_n11                             2.87402e-09
+m0_n12                                     1.8
+m0_n13                             2.52129e-09
+m0_n14                                     1.8
+m0_n15                              2.7461e-09
+m0_n16                                     1.8
+m0_n17                             2.69673e-09
+m0_n18                                     1.8
+m0_n19                             2.54881e-09
+m0_n20                                     1.8
+m0_n21                             2.90007e-09
+m0_n22                                     1.8
+m0_n23                             2.67132e-09
+m0_n24                                     1.8
+m0_n25                             2.65281e-09
+m0_n26                                     1.8
+m0_n27                             2.56254e-09
+m0_n28                                     1.8
+m0_n29                             2.74684e-09
+m0_net2                             2.6249e-09
+m0_out                             4.53732e-09
+ven#branch                                   0
+vdd#branch                        -9.06625e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.531470e-08 targ=  4.526171e-08 trig=  9.947005e-09
+f0 = 5.663364e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.09811e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.67407e-09
+m0_n2                                      1.8
+m0_n3                              2.77492e-09
+m0_n4                                      1.8
+m0_n5                              2.88023e-09
+m0_n6                                      1.8
+m0_n7                              2.99961e-09
+m0_n8                                      1.8
+m0_n9                              2.76632e-09
+m0_n10                                     1.8
+m0_n11                             2.68062e-09
+m0_n12                                     1.8
+m0_n13                             2.81772e-09
+m0_n14                                     1.8
+m0_n15                             2.63371e-09
+m0_n16                                     1.8
+m0_n17                             2.75369e-09
+m0_n18                                     1.8
+m0_n19                             2.71485e-09
+m0_n20                                     1.8
+m0_n21                             3.00963e-09
+m0_n22                                     1.8
+m0_n23                             2.52492e-09
+m0_n24                                     1.8
+m0_n25                              3.1386e-09
+m0_n26                                     1.8
+m0_n27                             2.73609e-09
+m0_n28                                     1.8
+m0_n29                             2.67235e-09
+m0_net2                            2.66381e-09
+m0_out                             4.95555e-09
+ven#branch                                   0
+vdd#branch                        -9.17693e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.530078e-08 targ=  4.523073e-08 trig=  9.929949e-09
+f0 = 5.665597e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.27559e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.87567e-09
+m0_n2                                      1.8
+m0_n3                              2.54948e-09
+m0_n4                                      1.8
+m0_n5                              2.70915e-09
+m0_n6                                      1.8
+m0_n7                              2.60795e-09
+m0_n8                                      1.8
+m0_n9                              2.66323e-09
+m0_n10                                     1.8
+m0_n11                             2.78514e-09
+m0_n12                                     1.8
+m0_n13                             2.63974e-09
+m0_n14                                     1.8
+m0_n15                             2.58791e-09
+m0_n16                                     1.8
+m0_n17                             2.62392e-09
+m0_n18                                     1.8
+m0_n19                             2.57033e-09
+m0_n20                                     1.8
+m0_n21                             2.68597e-09
+m0_n22                                     1.8
+m0_n23                             2.81406e-09
+m0_n24                                     1.8
+m0_n25                             2.62371e-09
+m0_n26                                     1.8
+m0_n27                             2.68979e-09
+m0_n28                                     1.8
+m0_n29                             2.72566e-09
+m0_net2                             2.6523e-09
+m0_out                             5.18019e-09
+ven#branch                                   0
+vdd#branch                         -9.1362e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.491592e-08 targ=  4.476942e-08 trig=  9.853496e-09
+f0 = 5.728046e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.01296e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                              2.64382e-09
+m0_n2                                      1.8
+m0_n3                              2.68436e-09
+m0_n4                                      1.8
+m0_n5                              2.62507e-09
+m0_n6                                      1.8
+m0_n7                               2.6601e-09
+m0_n8                                      1.8
+m0_n9                              2.66214e-09
+m0_n10                                     1.8
+m0_n11                             2.80786e-09
+m0_n12                                     1.8
+m0_n13                             2.44065e-09
+m0_n14                                     1.8
+m0_n15                             2.76362e-09
+m0_n16                                     1.8
+m0_n17                             2.75339e-09
+m0_n18                                     1.8
+m0_n19                             3.31063e-09
+m0_n20                                     1.8
+m0_n21                             3.47889e-09
+m0_n22                                     1.8
+m0_n23                             2.78148e-09
+m0_n24                                     1.8
+m0_n25                             2.86119e-09
+m0_n26                                     1.8
+m0_n27                             2.79629e-09
+m0_n28                                     1.8
+m0_n29                             2.71523e-09
+m0_net2                            2.90718e-09
+m0_out                             5.04716e-09
+ven#branch                                   0
+vdd#branch                        -9.20594e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.521567e-08 targ=  4.513697e-08 trig=  9.921299e-09
+f0 = 5.679290e+08
+Reset re-loads circuit * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Circuit: * silicon monte carlo v2: matched oscillator, mismatch-only common draws
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+m0_net1                            5.17509e-09
+m0_n0                                      1.8
+m0_n30                                     1.8
+m0_n1                               3.0015e-09
+m0_n2                                      1.8
+m0_n3                               2.6454e-09
+m0_n4                                      1.8
+m0_n5                              2.60715e-09
+m0_n6                                      1.8
+m0_n7                              2.64274e-09
+m0_n8                                      1.8
+m0_n9                              2.71962e-09
+m0_n10                                     1.8
+m0_n11                             2.64725e-09
+m0_n12                                     1.8
+m0_n13                             2.57327e-09
+m0_n14                                     1.8
+m0_n15                             2.77558e-09
+m0_n16                                     1.8
+m0_n17                             2.87291e-09
+m0_n18                                     1.8
+m0_n19                             2.83472e-09
+m0_n20                                     1.8
+m0_n21                             2.78968e-09
+m0_n22                                     1.8
+m0_n23                             2.64099e-09
+m0_n24                                     1.8
+m0_n25                             2.75744e-09
+m0_n26                                     1.8
+m0_n27                              2.6181e-09
+m0_n28                                     1.8
+m0_n29                             2.68351e-09
+m0_net2                            2.61424e-09
+m0_out                              5.5611e-09
+ven#branch                                   0
+vdd#branch                        -9.21358e-11
+
+
+No. of Data Rows : 16014
+tp0                 =  3.508280e-08 targ=  4.496914e-08 trig=  9.886332e-09
+f0 = 5.700799e+08
+Note: Simulation executed from .control section 

@@ -1,0 +1,16 @@
+{
+  "DESIGN_NAME": "ro_macro_hard",
+  "VERILOG_FILES": ["dir::ro_macro_hard.v", "dir::ro_macro.v"],
+  "DESIGN_IS_CORE": false,
+  "CLOCK_PORT": "",
+  "CLOCK_PERIOD": 20,
+  "RUN_CTS": false,
+  "RUN_LINTER": false,
+  "FP_SIZING": "absolute",
+  "DIE_AREA": [0, 0, 60, 40],
+  "PL_TARGET_DENSITY_PCT": 45,
+  "FP_PDN_MULTILAYER": true,
+  "MAGIC_WRITE_LEF_PINONLY": true,
+  "MAGIC_DEF_LABELS": false,
+  "GRT_ALLOW_CONGESTION": true
+}

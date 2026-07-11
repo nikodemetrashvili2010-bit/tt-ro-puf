@@ -1,0 +1,95 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * silicon arm b matched frequency : hardened ro_macro_hard, nom spef
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+en                                           0
+a_net1                              4.9501e-09
+a_n0                                       1.8
+a_n30                                      1.8
+a_n1                               2.70603e-09
+a_n2                                       1.8
+a_n3                               2.70603e-09
+a_n4                                       1.8
+a_n5                               2.70603e-09
+a_n6                                       1.8
+a_n7                               2.70603e-09
+a_n8                                       1.8
+a_n9                               2.70603e-09
+a_n10                                      1.8
+a_n11                              2.70603e-09
+a_n12                                      1.8
+a_n13                              2.70603e-09
+a_n14                                      1.8
+a_n15                              2.70603e-09
+a_n16                                      1.8
+a_n17                              2.70603e-09
+a_n18                                      1.8
+a_n19                              2.70603e-09
+a_n20                                      1.8
+a_n21                              2.70603e-09
+a_n22                                      1.8
+a_n23                              2.70603e-09
+a_n24                                      1.8
+a_n25                              2.70603e-09
+a_n26                                      1.8
+a_n27                              2.70603e-09
+a_n28                                      1.8
+a_n29                              2.70603e-09
+a_net2                             2.60627e-09
+a_out                               4.9501e-09
+b_net1                              4.9501e-09
+b_n0                                       1.8
+b_n30                                      1.8
+b_n1                               2.70603e-09
+b_n2                                       1.8
+b_n3                               2.70603e-09
+b_n4                                       1.8
+b_n5                               2.70603e-09
+b_n6                                       1.8
+b_n7                               2.70603e-09
+b_n8                                       1.8
+b_n9                               2.70603e-09
+b_n10                                      1.8
+b_n11                              2.70603e-09
+b_n12                                      1.8
+b_n13                              2.70603e-09
+b_n14                                      1.8
+b_n15                              2.70603e-09
+b_n16                                      1.8
+b_n17                              2.70603e-09
+b_n18                                      1.8
+b_n19                              2.70603e-09
+b_n20                                      1.8
+b_n21                              2.70603e-09
+b_n22                                      1.8
+b_n23                              2.70603e-09
+b_n24                                      1.8
+b_n25                              2.70603e-09
+b_n26                                      1.8
+b_n27                              2.70603e-09
+b_n28                                      1.8
+b_n29                              2.70604e-09
+b_net2                             2.60627e-09
+b_out                               4.9501e-09
+ven#branch                                   0
+vdd#branch                        -1.81169e-10
+
+
+No. of Data Rows : 80014
+tp_a                =  3.151113e-08 targ=  4.061328e-08 trig=  9.102154e-09
+tp_b                =  3.504962e-08 targ=  4.493123e-08 trig=  9.881609e-09
+f_a = 6.346964e+08
+f_b = 5.706196e+08
+Note: Simulation executed from .control section 

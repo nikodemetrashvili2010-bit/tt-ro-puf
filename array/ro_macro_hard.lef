@@ -1,0 +1,62 @@
+VERSION 5.7 ;
+  NOWIREEXTENSIONATPIN ON ;
+  DIVIDERCHAR "/" ;
+  BUSBITCHARS "[]" ;
+MACRO ro_macro_hard
+  CLASS BLOCK ;
+  FOREIGN ro_macro_hard ;
+  ORIGIN 0.000 0.000 ;
+  SIZE 60.000 BY 40.000 ;
+  PIN VGND
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met4 ;
+        RECT 24.340 10.640 25.940 27.440 ;
+    END
+  END VGND
+  PIN VPWR
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met4 ;
+        RECT 21.040 10.640 22.640 27.440 ;
+    END
+  END VPWR
+  PIN en
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNAGATEAREA 0.213000 ;
+    PORT
+      LAYER met2 ;
+        RECT 34.130 0.000 34.410 0.280 ;
+    END
+  END en
+  PIN out
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.702900 ;
+    PORT
+      LAYER met2 ;
+        RECT 30.450 39.720 30.730 40.000 ;
+    END
+  END out
+  OBS
+      LAYER nwell ;
+        RECT 5.330 10.795 54.470 27.285 ;
+      LAYER li1 ;
+        RECT 5.520 10.795 54.280 27.285 ;
+      LAYER met1 ;
+        RECT 5.520 10.640 54.280 27.840 ;
+      LAYER met2 ;
+        RECT 21.070 39.440 30.170 39.720 ;
+        RECT 31.010 39.440 39.000 39.720 ;
+        RECT 21.070 0.560 39.000 39.440 ;
+        RECT 21.070 0.280 33.850 0.560 ;
+        RECT 34.690 0.280 39.000 0.560 ;
+      LAYER met3 ;
+        RECT 21.050 10.715 25.930 27.365 ;
+  END
+END ro_macro_hard
+END LIBRARY
+

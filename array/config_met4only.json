@@ -1,0 +1,178 @@
+{
+  "DESIGN_NAME": "ro_array",
+  "VERILOG_FILES": [
+    "dir::ro_array.v"
+  ],
+  "VERILOG_FILES_BLACKBOX": [
+    "dir::ro_macro_hard_bb.v"
+  ],
+  "DESIGN_IS_CORE": true,
+  "CLOCK_PORT": "",
+  "CLOCK_PERIOD": 20,
+  "RUN_CTS": false,
+  "RUN_LINTER": false,
+  "FP_SIZING": "absolute",
+  "DIE_AREA": [
+    0,
+    0,
+    276.0,
+    240
+  ],
+  "PL_TARGET_DENSITY_PCT": 35,
+  "MACROS": {
+    "ro_macro_hard": {
+      "gds": [
+        "dir::ro_macro_hard.gds"
+      ],
+      "lef": [
+        "dir::ro_macro_hard.lef"
+      ],
+      "nl": [
+        "dir::ro_macro_hard.nl.v"
+      ],
+      "instances": {
+        "u_rob0": {
+          "location": [
+            5.98,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob1": {
+          "location": [
+            65.98,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob2": {
+          "location": [
+            125.98,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob3": {
+          "location": [
+            185.98,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob4": {
+          "location": [
+            5.98,
+            70
+          ],
+          "orientation": "N"
+        },
+        "u_rob5": {
+          "location": [
+            65.98,
+            70
+          ],
+          "orientation": "N"
+        },
+        "u_rob6": {
+          "location": [
+            125.98,
+            70
+          ],
+          "orientation": "N"
+        },
+        "u_rob7": {
+          "location": [
+            185.98,
+            70
+          ],
+          "orientation": "N"
+        },
+        "u_rob8": {
+          "location": [
+            5.98,
+            120
+          ],
+          "orientation": "N"
+        },
+        "u_rob9": {
+          "location": [
+            65.98,
+            120
+          ],
+          "orientation": "N"
+        },
+        "u_rob10": {
+          "location": [
+            125.98,
+            120
+          ],
+          "orientation": "N"
+        },
+        "u_rob11": {
+          "location": [
+            185.98,
+            120
+          ],
+          "orientation": "N"
+        },
+        "u_rob12": {
+          "location": [
+            5.98,
+            170
+          ],
+          "orientation": "N"
+        },
+        "u_rob13": {
+          "location": [
+            65.98,
+            170
+          ],
+          "orientation": "N"
+        },
+        "u_rob14": {
+          "location": [
+            125.98,
+            170
+          ],
+          "orientation": "N"
+        },
+        "u_rob15": {
+          "location": [
+            185.98,
+            170
+          ],
+          "orientation": "N"
+        }
+      }
+    }
+  },
+  "PDN_MACRO_CONNECTIONS": [
+    "u_rob0 VPWR VGND VPWR VGND",
+    "u_rob1 VPWR VGND VPWR VGND",
+    "u_rob2 VPWR VGND VPWR VGND",
+    "u_rob3 VPWR VGND VPWR VGND",
+    "u_rob4 VPWR VGND VPWR VGND",
+    "u_rob5 VPWR VGND VPWR VGND",
+    "u_rob6 VPWR VGND VPWR VGND",
+    "u_rob7 VPWR VGND VPWR VGND",
+    "u_rob8 VPWR VGND VPWR VGND",
+    "u_rob9 VPWR VGND VPWR VGND",
+    "u_rob10 VPWR VGND VPWR VGND",
+    "u_rob11 VPWR VGND VPWR VGND",
+    "u_rob12 VPWR VGND VPWR VGND",
+    "u_rob13 VPWR VGND VPWR VGND",
+    "u_rob14 VPWR VGND VPWR VGND",
+    "u_rob15 VPWR VGND VPWR VGND"
+  ],
+  "FP_PDN_MULTILAYER": false,
+  "FP_PDN_VPITCH": 60,
+  "FP_PDN_VOFFSET": 22.3,
+  "FP_MACRO_HORIZONTAL_HALO": 2,
+  "FP_MACRO_VERTICAL_HALO": 2,
+  "MAGIC_WRITE_LEF_PINONLY": true,
+  "MAGIC_DEF_LABELS": false,
+  "GRT_ALLOW_CONGESTION": true,
+  "PDN_CFG": "dir::pdn_cfg.tcl",
+  "FP_PDN_VWIDTH": 2.4,
+  "FP_PDN_VSPACING": 0.9
+}

@@ -1,0 +1,694 @@
+{
+  "creator": "Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)",
+  "modules": {
+    "ro_macro_hard": {
+      "attributes": {
+        "hdlname": "ro_macro_hard",
+        "top": "00000000000000000000000000000001",
+        "src": "/home/pc/romacro/ro_macro_hard.v:22.1-33.10"
+      },
+      "parameter_default_values": {
+        "IDX": "00000000000000000000000000000000",
+        "N_INV": "00000000000000000000000000011110"
+      },
+      "ports": {
+        "en": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "out": {
+          "direction": "output",
+          "bits": [ 3 ]
+        }
+      },
+      "cells": {
+        "u_ro.g_inv[10].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[10].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 4 ],
+            "Y": [ 5 ]
+          }
+        },
+        "u_ro.g_inv[11].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[11].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 5 ],
+            "Y": [ 6 ]
+          }
+        },
+        "u_ro.g_inv[12].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[12].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 6 ],
+            "Y": [ 7 ]
+          }
+        },
+        "u_ro.g_inv[13].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[13].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 7 ],
+            "Y": [ 8 ]
+          }
+        },
+        "u_ro.g_inv[14].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[14].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 8 ],
+            "Y": [ 9 ]
+          }
+        },
+        "u_ro.g_inv[15].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[15].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 9 ],
+            "Y": [ 10 ]
+          }
+        },
+        "u_ro.g_inv[16].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[16].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 10 ],
+            "Y": [ 11 ]
+          }
+        },
+        "u_ro.g_inv[17].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[17].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 11 ],
+            "Y": [ 12 ]
+          }
+        },
+        "u_ro.g_inv[18].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[18].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 12 ],
+            "Y": [ 13 ]
+          }
+        },
+        "u_ro.g_inv[19].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[19].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 13 ],
+            "Y": [ 14 ]
+          }
+        },
+        "u_ro.g_inv[1].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[1].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 15 ],
+            "Y": [ 16 ]
+          }
+        },
+        "u_ro.g_inv[20].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[20].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 14 ],
+            "Y": [ 17 ]
+          }
+        },
+        "u_ro.g_inv[21].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[21].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 17 ],
+            "Y": [ 18 ]
+          }
+        },
+        "u_ro.g_inv[22].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[22].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 18 ],
+            "Y": [ 19 ]
+          }
+        },
+        "u_ro.g_inv[23].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[23].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 19 ],
+            "Y": [ 20 ]
+          }
+        },
+        "u_ro.g_inv[24].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[24].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 20 ],
+            "Y": [ 21 ]
+          }
+        },
+        "u_ro.g_inv[25].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[25].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 21 ],
+            "Y": [ 22 ]
+          }
+        },
+        "u_ro.g_inv[26].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[26].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 22 ],
+            "Y": [ 23 ]
+          }
+        },
+        "u_ro.g_inv[27].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[27].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 23 ],
+            "Y": [ 24 ]
+          }
+        },
+        "u_ro.g_inv[28].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[28].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 24 ],
+            "Y": [ 25 ]
+          }
+        },
+        "u_ro.g_inv[29].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[29].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 25 ],
+            "Y": [ 26 ]
+          }
+        },
+        "u_ro.g_inv[2].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[2].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 16 ],
+            "Y": [ 27 ]
+          }
+        },
+        "u_ro.g_inv[30].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[30].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 26 ],
+            "Y": [ 28 ]
+          }
+        },
+        "u_ro.g_inv[3].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[3].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 27 ],
+            "Y": [ 29 ]
+          }
+        },
+        "u_ro.g_inv[4].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[4].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 29 ],
+            "Y": [ 30 ]
+          }
+        },
+        "u_ro.g_inv[5].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[5].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 30 ],
+            "Y": [ 31 ]
+          }
+        },
+        "u_ro.g_inv[6].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[6].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 31 ],
+            "Y": [ 32 ]
+          }
+        },
+        "u_ro.g_inv[7].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[7].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 32 ],
+            "Y": [ 33 ]
+          }
+        },
+        "u_ro.g_inv[8].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[8].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 33 ],
+            "Y": [ 34 ]
+          }
+        },
+        "u_ro.g_inv[9].u_inv": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__inv_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro g_inv[9].u_inv",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:48.47-48.75"
+          },
+          "port_directions": {
+            "A": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 34 ],
+            "Y": [ 4 ]
+          }
+        },
+        "u_ro.u_buf": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__buf_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro u_buf",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:53.39-53.70"
+          },
+          "port_directions": {
+            "A": "input",
+            "X": "output"
+          },
+          "connections": {
+            "A": [ 10 ],
+            "X": [ 3 ]
+          }
+        },
+        "u_ro.u_nand": {
+          "hide_name": 0,
+          "type": "sky130_fd_sc_hd__nand2_1",
+          "parameters": {
+          },
+          "attributes": {
+            "hdlname": "u_ro u_nand",
+            "keep": "00000000000000000000000000000001",
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/romacro/ro_macro.v:42.41-42.80"
+          },
+          "port_directions": {
+            "A": "input",
+            "B": "input",
+            "Y": "output"
+          },
+          "connections": {
+            "A": [ 2 ],
+            "B": [ 28 ],
+            "Y": [ 15 ]
+          }
+        }
+      },
+      "netnames": {
+        "en": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/pc/romacro/ro_macro_hard.v:26.17-26.19"
+          }
+        },
+        "out": {
+          "hide_name": 0,
+          "bits": [ 3 ],
+          "attributes": {
+            "src": "/home/pc/romacro/ro_macro_hard.v:27.17-27.20"
+          }
+        },
+        "u_ro.n": {
+          "hide_name": 0,
+          "bits": [ 15, 16, 27, 29, 30, 31, 32, 33, 34, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 28 ],
+          "attributes": {
+            "hdlname": "u_ro n",
+            "src": "/home/pc/romacro/ro_macro.v:39.20-39.21"
+          }
+        }
+      }
+    }
+  }
+}

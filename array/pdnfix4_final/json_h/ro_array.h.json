@@ -1,0 +1,328 @@
+{
+  "creator": "Yosys 0.62 (git sha1 7326bb7d6641500ecb285c291a54a662cb1e76cf, clang++ 21.1.2 -fPIC -O3)",
+  "modules": {
+    "ro_array": {
+      "attributes": {
+        "hdlname": "ro_array",
+        "top": "00000000000000000000000000000001",
+        "src": "/home/pc/roarray/ro_array.v:3.1-23.10"
+      },
+      "ports": {
+        "en": {
+          "direction": "input",
+          "bits": [ 2 ]
+        },
+        "out": {
+          "direction": "output",
+          "bits": [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ]
+        }
+      },
+      "cells": {
+        "u_rob0": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:7.17-7.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 3 ]
+          }
+        },
+        "u_rob1": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:8.17-8.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 4 ]
+          }
+        },
+        "u_rob10": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:17.17-17.49"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 13 ]
+          }
+        },
+        "u_rob11": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:18.17-18.49"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 14 ]
+          }
+        },
+        "u_rob12": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:19.17-19.49"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 15 ]
+          }
+        },
+        "u_rob13": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:20.17-20.49"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 16 ]
+          }
+        },
+        "u_rob14": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:21.17-21.49"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 17 ]
+          }
+        },
+        "u_rob15": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:22.17-22.49"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 18 ]
+          }
+        },
+        "u_rob2": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:9.17-9.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 5 ]
+          }
+        },
+        "u_rob3": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:10.17-10.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 6 ]
+          }
+        },
+        "u_rob4": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:11.17-11.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 7 ]
+          }
+        },
+        "u_rob5": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:12.17-12.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 8 ]
+          }
+        },
+        "u_rob6": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:13.17-13.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 9 ]
+          }
+        },
+        "u_rob7": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:14.17-14.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 10 ]
+          }
+        },
+        "u_rob8": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:15.17-15.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 11 ]
+          }
+        },
+        "u_rob9": {
+          "hide_name": 0,
+          "type": "ro_macro_hard",
+          "parameters": {
+          },
+          "attributes": {
+            "module_not_derived": "00000000000000000000000000000001",
+            "src": "/home/pc/roarray/ro_array.v:16.17-16.47"
+          },
+          "port_directions": {
+            "en": "input",
+            "out": "output"
+          },
+          "connections": {
+            "en": [ 2 ],
+            "out": [ 12 ]
+          }
+        }
+      },
+      "netnames": {
+        "en": {
+          "hide_name": 0,
+          "bits": [ 2 ],
+          "attributes": {
+            "src": "/home/pc/roarray/ro_array.v:4.24-4.26"
+          }
+        },
+        "out": {
+          "hide_name": 0,
+          "bits": [ 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ],
+          "attributes": {
+            "src": "/home/pc/roarray/ro_array.v:5.24-5.27"
+          }
+        }
+      }
+    }
+  }
+}

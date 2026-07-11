@@ -1,0 +1,65 @@
+* Ring-oscillator pre-layout SPICE test (sky130_fd_sc_hd)
+* 31 inverting stages: enable NAND + 30 inverters, plus an isolating buffer.
+* Confirms the oscillator runs and measures its frequency before any layout.
+* sky130 cell pin order is alphabetical: inputs, VGND, VNB, VPB, VPWR, output.
+
+.lib /home/pc/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice tt
+.include /home/pc/pdks/sky130A/libs.ref/sky130_fd_sc_hd/spice/sky130_fd_sc_hd.spice
+
+.param SUPPLY=1.8
+Vdd VPWR 0 {SUPPLY}
+Ven EN   0 {SUPPLY}
+
+* stage 0: enable NAND, NAND(EN, n30) -> n0
+Xnand EN n30 0 0 VPWR VPWR n0 sky130_fd_sc_hd__nand2_1
+
+* stages 1..30: inverter chain n0 -> n1 -> ... -> n30
+Xi1  n0  0 0 VPWR VPWR n1  sky130_fd_sc_hd__inv_1
+Xi2  n1  0 0 VPWR VPWR n2  sky130_fd_sc_hd__inv_1
+Xi3  n2  0 0 VPWR VPWR n3  sky130_fd_sc_hd__inv_1
+Xi4  n3  0 0 VPWR VPWR n4  sky130_fd_sc_hd__inv_1
+Xi5  n4  0 0 VPWR VPWR n5  sky130_fd_sc_hd__inv_1
+Xi6  n5  0 0 VPWR VPWR n6  sky130_fd_sc_hd__inv_1
+Xi7  n6  0 0 VPWR VPWR n7  sky130_fd_sc_hd__inv_1
+Xi8  n7  0 0 VPWR VPWR n8  sky130_fd_sc_hd__inv_1
+Xi9  n8  0 0 VPWR VPWR n9  sky130_fd_sc_hd__inv_1
+Xi10 n9  0 0 VPWR VPWR n10 sky130_fd_sc_hd__inv_1
+Xi11 n10 0 0 VPWR VPWR n11 sky130_fd_sc_hd__inv_1
+Xi12 n11 0 0 VPWR VPWR n12 sky130_fd_sc_hd__inv_1
+Xi13 n12 0 0 VPWR VPWR n13 sky130_fd_sc_hd__inv_1
+Xi14 n13 0 0 VPWR VPWR n14 sky130_fd_sc_hd__inv_1
+Xi15 n14 0 0 VPWR VPWR n15 sky130_fd_sc_hd__inv_1
+Xi16 n15 0 0 VPWR VPWR n16 sky130_fd_sc_hd__inv_1
+Xi17 n16 0 0 VPWR VPWR n17 sky130_fd_sc_hd__inv_1
+Xi18 n17 0 0 VPWR VPWR n18 sky130_fd_sc_hd__inv_1
+Xi19 n18 0 0 VPWR VPWR n19 sky130_fd_sc_hd__inv_1
+Xi20 n19 0 0 VPWR VPWR n20 sky130_fd_sc_hd__inv_1
+Xi21 n20 0 0 VPWR VPWR n21 sky130_fd_sc_hd__inv_1
+Xi22 n21 0 0 VPWR VPWR n22 sky130_fd_sc_hd__inv_1
+Xi23 n22 0 0 VPWR VPWR n23 sky130_fd_sc_hd__inv_1
+Xi24 n23 0 0 VPWR VPWR n24 sky130_fd_sc_hd__inv_1
+Xi25 n24 0 0 VPWR VPWR n25 sky130_fd_sc_hd__inv_1
+Xi26 n25 0 0 VPWR VPWR n26 sky130_fd_sc_hd__inv_1
+Xi27 n26 0 0 VPWR VPWR n27 sky130_fd_sc_hd__inv_1
+Xi28 n27 0 0 VPWR VPWR n28 sky130_fd_sc_hd__inv_1
+Xi29 n28 0 0 VPWR VPWR n29 sky130_fd_sc_hd__inv_1
+Xi30 n29 0 0 VPWR VPWR n30 sky130_fd_sc_hd__inv_1
+
+* loop closes: n30 feeds back into the NAND above
+
+* isolating output buffer, tapped mid-chain
+Xbuf n15 0 0 VPWR VPWR osc sky130_fd_sc_hd__buf_1
+
+* nudge the loop off its DC balance point so it starts
+.ic v(n0)=0
+
+.tran 5p 200n uic
+
+.control
+run
+meas tran tperiods TRIG v(osc) VAL=0.9 RISE=10 TARG v(osc) VAL=0.9 RISE=30
+let freq_hz = 20 / tperiods
+print freq_hz
+.endc
+
+.end
