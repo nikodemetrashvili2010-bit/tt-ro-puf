@@ -11,3 +11,6 @@ test/sim_build
 test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
+
+# keep the master plan local, never in the public repo
+Project_SILICON_Master_Plan.md
