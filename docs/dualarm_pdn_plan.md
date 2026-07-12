@@ -86,6 +86,12 @@ signal shapes (verified in its DEF). The only met4 in the macro is the two
 power straps themselves, and the aligned stripe pair lands on them same-net.
 Nothing to short.
 
+That is a real precondition, not a detail. The recipe only works for macros
+that keep met4 clear of signal routing. If your macro routes signals on met4,
+the uncut stripes cannot pass over it, and you need a different scheme, for
+example power pins brought out to the macro edge so cut stripes can abut
+them. Check your macro's DEF before copying these numbers.
+
 ## Build checklist (next session)
 
 1. Verify the LibreLane 3 variable name for a custom PDN script (expected
