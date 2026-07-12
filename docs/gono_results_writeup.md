@@ -66,15 +66,12 @@ one distinct value to 7 significant figures, matching the standalone
 single-oscillator SPICE baseline (633.6 MHz). So the 32 instances are truly
 identical, and any spread in the parasitic deck comes from parasitics alone.
 
-**With extracted parasitics.**
-
-| quantity | value |
-|---|---|
-| mean frequency | 567.6 MHz (10.4% below control, from loading) |
-| std deviation | 10.9 MHz (1.93% of mean) |
-| min / max | 539.1 MHz (RO10) / 589.2 MHz (RO4) |
-| peak-to-peak spread | 50.2 MHz = **8.8% of mean** |
-| ring capacitance range | 7.4 - 17.8 fF (mean 11.6) |
+**With extracted parasitics.** The mean frequency is 567.6 MHz (10.4%
+below the control, from the loading), with a standard deviation of 10.9 MHz
+(1.93% of the mean). The slowest oscillator is RO10 at 539.1 MHz, the
+fastest is RO4 at 589.2 MHz, so the peak-to-peak spread is 50.2 MHz, which
+is **8.8% of the mean**. The extracted ring capacitances go from 7.4 to
+17.8 fF with a mean of 11.6.
 
 **Mechanism.** Frequency tracks extracted ring capacitance at r = -0.997,
 slope -4.93 MHz/fF. The highest-capacitance oscillator is the slowest, the
@@ -131,15 +128,13 @@ The hardened macro's own routed build supplies its extracted parasitics
 that macro is every Arm B oscillator. `gen_macro_deck.py` builds the deck with
 the same methodology as the Arm A go/no-go (same models and corner,
 enable-pulse startup, lumped SPEF caps, 20-period measurement) and puts a
-no-parasitic control instance in the same run:
-
-| Quantity | Value |
-|---|---|
-| Control (no parasitics) | 633.15 MHz, reproduces the Arm A control (633.640) within 0.08% |
-| **Matched Arm B frequency** | **569.5 MHz** (10.1% below control) |
-| Macro ring capacitance | 11.01 fF (Arm A range 7.4-17.8 fF) |
-| Arm A cap-regression prediction | 570.2 MHz, measured within 0.12% of it |
-| Numerical (timestep) uncertainty | about 0.2% (5 ps vs 1 ps `.tran`) |
+no-parasitic control instance in the same run. The control instance reads
+633.15 MHz, which agrees with the Arm A control (633.640) within 0.08%. The
+matched Arm B frequency is **569.5 MHz**, 10.1% below the control. The
+macro's ring capacitance is 11.01 fF, inside the Arm A range of 7.4 to
+17.8 fF, and Arm A's own capacitance regression predicts 570.2 MHz for that
+load, only 0.12% away from the simulated value. The numerical (timestep)
+uncertainty is about 0.2% (5 ps against 1 ps `.tran`).
 
 The matched frequency lands within 0.35% of the Arm A mean (567.6 MHz). In
 other words the macro behaves like a typical Arm A routing, except all sixteen

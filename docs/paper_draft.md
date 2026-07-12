@@ -139,15 +139,12 @@ One value, zero spread, matching the standalone single-oscillator baseline. So
 the instances really are identical, and whatever spread shows up in the
 parasitic deck comes from parasitics alone.
 
-**With extracted parasitics.** The 32 identical oscillators fan out:
-
-| Quantity | Value |
-|---|---|
-| Mean frequency | 567.6 MHz (10.4% below control, from loading) |
-| Std. deviation | 10.9 MHz (1.9% of mean) |
-| Min / max | 539.1 MHz (RO10) / 589.2 MHz (RO4) |
-| Peak-to-peak spread | 50.2 MHz = **8.8% of mean** |
-| Extracted ring capacitance | 7.4 – 17.8 fF (mean 11.6) |
+**With extracted parasitics.** The 32 identical oscillators fan out. The
+mean is 567.6 MHz, which is 10.4% below the control because of the loading.
+The standard deviation is 10.9 MHz (1.9% of the mean). The slowest
+oscillator (RO10) runs at 539.1 MHz and the fastest (RO4) at 589.2 MHz, so
+the peak-to-peak spread is 50.2 MHz, which is **8.8% of the mean**. The
+extracted ring capacitances go from 7.4 to 17.8 fF with a mean of 11.6.
 
 This spread is not noise. Frequency tracks extracted ring capacitance with
 *r* = −0.997 at −4.93 MHz/fF (Figure 2a). The oscillator the router loaded
@@ -188,8 +185,9 @@ is supposed to run on.
 parasitics (nom-corner SPEF), and since every copy is the same GDS, simulating
 the macro once is simulating every Arm B oscillator. I used the same deck flow
 as Section 4. Same models, same startup, same 20-period measurement. The
-matched oscillator runs at **569.5 MHz**, 10.1% below its no-parasitic control
-of 633.15 MHz, and that control reproduces the Section 5 control within 0.08%.
+matched oscillator runs at **569.5 MHz**. That is 10.1% below its
+no-parasitic control of 633.15 MHz, and that control agrees with the
+Section 5 control within 0.08%.
 Two more checks say the number is solid. The macro's 11.0 fF of ring
 capacitance lands mid-range of Arm A's 7.4 to 17.8 fF, and Arm A's own
 capacitance fit predicts 570.2 MHz for that load; the simulation came in 0.12%
