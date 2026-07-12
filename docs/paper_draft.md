@@ -19,8 +19,8 @@ the layout. That alone spread the 32 supposedly identical oscillators over an
 explains the spread almost completely (Pearson *r* = −0.997). The pattern is
 printed by the mask. Every chip gets the same one. An attacker who
 characterizes a single device can predict the bits on all the others, which
-makes this fake entropy, not real entropy. The fix is old but nobody had
-carried it to this flow: harden one oscillator into a fixed macro and step out
+makes this fake entropy, not real entropy. The fix is known from FPGA work, but nobody had
+brought it to this flow: harden one oscillator into a fixed macro and step out
 bit-identical copies. Layout spread goes to zero by construction and the
 operating point survives; the matched oscillator simulates at 569.5 MHz,
 within 0.4% of the auto-placed arm's mean. In the submitted two-arm chip the effect and
@@ -49,7 +49,7 @@ implementation tool from giving the oscillators different physical
 surroundings. But that literature lives on FPGAs, where the bias comes from
 LUTs and switch-box routing on a fixed fabric, and it mostly stops there.
 
-Meanwhile the hardware changed under it. Open PDKs and automated RTL-to-GDSII
+But the hardware world changed. Open PDKs and automated RTL-to-GDSII
 flows [9, 10] now let individuals tape out real silicon through shuttles like
 TinyTapeout and Efabless ChipIgnite. The bias source on these flows is
 different: it is the metal that automated place-and-route wraps around each
@@ -98,8 +98,8 @@ output buffer tapped at the middle of the chain, all sky130 standard cells
 (`nand2_1`, `inv_1`, `buf_1`). A pre-layout SPICE check puts the ring at
 633 MHz. A sky130 flip-flop counts that comfortably.
 
-In the build studied here both arms are auto-placed by the flow, so the array
-shows the automated-layout behaviour. I call that Arm A. Arm B, the matched
+Figure 1 shows the plan of the chip. In the first build both arms are
+auto-placed by the flow, so the array shows the automated-layout behaviour. I call that Arm A. Arm B, the matched
 version, is built in Section 6.
 
 ## 4. Method
@@ -127,7 +127,7 @@ study (Section 7).
 
 **Startup.** Each oscillator is enable-started. The enable sits low, then
 releases, which injects one edge and guarantees the fundamental mode, the same
-way the chip does it. I learned this the hard way: a naive tie-high-and-kick
+way the chip does it. I learned this from a mistake: a naive tie-high-and-kick
 start excited higher-order ring modes that read as impossibly high
 frequencies. Frequency is measured in ngspice over twenty periods after
 enable.
@@ -150,14 +150,14 @@ parasitic deck comes from parasitics alone.
 | Extracted ring capacitance | 7.4 – 17.8 fF (mean 11.6) |
 
 This spread is not noise. Frequency tracks extracted ring capacitance with
-*r* = −0.997 at −4.93 MHz/fF (Figure 1a). The oscillator the router loaded
+*r* = −0.997 at −4.93 MHz/fF (Figure 2a). The oscillator the router loaded
 heaviest (RO10, 17.8 fF) is the slowest one. The oscillator it loaded lightest
 (RO4, 7.4 fF) is the fastest. Everything in between lines up monotonically.
 There is no mystery about the cause. The router wired each supposedly
 identical oscillator with different metal.
 
 Frequency barely correlates with where the oscillators sit (|*r*| < 0.27
-against *x*, *y*, and distance from center; Figure 1b). So the bias is a
+against *x*, *y*, and distance from center; Figure 2b). So the bias is a
 per-instance routing fingerprint rather than a smooth gradient across the die,
 which is what you would expect from a global placer scattering each
 oscillator's cells. That does not make it less dangerous. It is fixed by the
@@ -177,7 +177,7 @@ passes the same checks.
 
 Every copy is the same GDS. The internal ring nets therefore carry identical
 parasitics, and the oscillator-to-oscillator layout spread is zero by
-construction, against 8.8% on the auto-placed arm (Figure 2). The only wiring
+construction, against 8.8% on the auto-placed arm (Figure 3). The only wiring
 that differs per copy is enable and output. Those sit outside the oscillation
 loop and do not set the frequency. The control result in Section 5 already
 proved the logic: identical parasitics gave identical frequency. What is left
@@ -196,7 +196,7 @@ capacitance fit predicts 570.2 MHz for that load; the simulation came in 0.12%
 under it. Two different builds, one model, same answer. In short, the matched
 design behaves like a typical Arm A routing (within 0.35% of the Arm A mean),
 except all sixteen copies share it. The operating point stays. The 8.8% spread
-goes to zero (Figure 2). Absolute numbers carry about 0.2% numerical timestep
+goes to zero (Figure 3). Absolute numbers carry about 0.2% numerical timestep
 uncertainty, forty times smaller than the effect being measured.
 
 **Both arms in one chip.** The submitted two-arm build lets me run the whole
@@ -205,14 +205,14 @@ itself: the top-level SPEF contains all 496 ring nets of the auto-placed arm,
 and not one net from inside the sixteen macro copies, because they are one
 sealed block. The auto-placed arm's sixteen oscillators spread 29.7 MHz, 5.4%
 peak-to-peak, with frequency tracking ring capacitance at r = -0.999 inside
-this build alone (Figure 3). The matched arm sits at 569.5 MHz, sixteen
+this build alone (Figure 4). The matched arm sits at 569.5 MHz, sixteen
 copies, one value. Two details are worth stopping on. First, the original
 build's capacitance regression predicts this build's mean within 0.10%, so
 the model now holds across three separate builds. Second, this build's Arm A
 pattern differs from the first build's (5.4% versus 8.8%, mean 551.7 versus
-567.6). The bias is not a property of the circuit. Every run of the tool
-mints a new fingerprint, and each fingerprint is then frozen into every chip
-made from that mask.
+567.6). The bias is not a property of the circuit. Every run of the tool creates
+a new pattern, and that pattern is then frozen into every chip made from
+that mask.
 
 ## 7. What this means for PUF entropy
 
@@ -241,8 +241,8 @@ for 31 near-identical stages. That gives a per-ring mismatch sigma of
 0.062%. Virtual chips built from it reach 50.7% key uniqueness, right at the
 ideal. Held against it, the auto-placed arm's measured layout spread is 21.6
 times larger by standard deviation and 87 times by peak-to-peak. That is the
-problem in two numbers. The fake entropy is more than twenty times the size
-of the real entropy it buries, and only the fake part repeats across
+problem in two numbers. The fake entropy is more than twenty times bigger
+than the real entropy under it, and only the fake part repeats across
 chips.
 
 ## 8. Limitations
@@ -260,7 +260,7 @@ checked on real TinyTapeout chips.
 
 ## 9. Conclusion and future work
 
-On the open-source sky130 flow, automated place-and-route stamps a large,
+On the open-source sky130 flow, automated place-and-route puts a large,
 deterministic frequency bias onto identical ring oscillators. It is the same
 on every die. Per-oscillator routing capacitance explains almost all of it. A
 naive RO-PUF would ship that pattern as its "entropy" on every chip it ever
@@ -269,22 +269,25 @@ construction, and the test that catches it needs only open tools and the
 design's own extracted parasitics, so any shuttle user can run it before a
 one-shot fabrication.
 
-Next steps, in order: SPICE-level Monte Carlo with sky130 mismatch models to
-get the real-entropy uniqueness distribution; then, once the dual-arm chip
-comes back from fab, measuring both arms across dies, voltage and temperature.
-The prediction to falsify is specific. The auto-placed arm's pattern should
-repeat across chips. The matched arm's should not.
+The next step is silicon. Once the dual-arm chip comes back from
+fabrication, I will measure both arms across dies, voltage and temperature.
+The prediction to test is specific. The auto-placed arm's pattern should
+repeat across chips, with the strength of the extracted 5.4% spread, and the
+matched arm's pattern should not repeat at all.
 
 ## Figures
 
-- **Figure 1** (`sim/spice/gono/ro_gono.png`): (a) oscillation frequency
+- **Figure 1** (`docs/figures/chip_block.png`): block diagram of the
+  two-arm chip. Both arms hold the same circuit; only the layout method
+  differs.
+- **Figure 2** (`sim/spice/gono/ro_gono.png`): (a) oscillation frequency
   against extracted ring capacitance, with the linear fit (−4.93 MHz/fF,
   *r* = −0.997) and the no-parasitic control line; (b) spatial map of
   oscillator frequency.
-- **Figure 2** (`sim/spice/gono/armB_prediction.png`): per-oscillator
+- **Figure 3** (`sim/spice/gono/armB_prediction.png`): per-oscillator
   frequency and layout-induced spread, auto-placed arm (8.8%) against matched
   macro (0%, at its measured 569.5 MHz).
-- **Figure 3** (`sim/spice/gono/dualarm_gono.png`): both arms measured from
+- **Figure 4** (`sim/spice/gono/dualarm_gono.png`): both arms measured from
   the one submitted two-arm build. Auto-placed arm 5.4% spread, matched arm
   one frequency.
 

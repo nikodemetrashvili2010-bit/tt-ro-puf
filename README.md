@@ -1,58 +1,107 @@
 # SILICON: an open ring-oscillator PUF on sky130
 
-A ring-oscillator Physically Unclonable Function (RO-PUF) for the open-source
-SkyWater 130 nm process. The project asks one question: does a fully automated
-open-source ASIC layout flow inject systematic bias that destroys the
-inter-chip uniqueness an RO-PUF depends on? The answer so far is yes, by a
-lot, and the repo also contains the fix.
+This is my chip project. It is a ring-oscillator Physically Unclonable
+Function (RO-PUF) for the open-source SkyWater 130 nm process. The project
+asks one question: when a fully automated open-source ASIC flow builds an
+RO-PUF, does the layout tool itself add a hidden bias that breaks the
+security? My answer, from simulation of the real routed chip, is yes, and
+the bias is large. The repo also contains the fix.
+
+I am a self-taught student and I built everything here with open tools on a
+home PC. Every number below can be re-checked from the raw files with the
+scripts in `sim/spice/gono/` and `sim/spice/mc/`.
+
+## The idea in one picture
+
+A PUF makes a secret key from random manufacturing differences between
+identical circuits. That only works if the differences are really random.
+My chip has two "arms" with the exact same circuit, built in two different
+ways:
+
+![chip block diagram](docs/figures/chip_block.png)
+
+If the frequencies in Arm A follow a pattern that is the same on every
+chip, that pattern is not entropy. It only looks like entropy. An attacker
+can learn it from one chip and predict the keys of all other chips.
+
+## What I found
+
+```mermaid
+flowchart LR
+    A["routed chip from the\nautomated flow"] --> B["take the flow's own\nextracted parasitics (SPEF)"]
+    B --> C["simulate every oscillator\nin ngspice, transistors\nheld at nominal"]
+    C --> D["Arm A: 5.4% frequency\nspread, fixed by the mask,\nsame on every die"]
+    C --> E["Arm B: one frequency,\nall 16 copies identical"]
+```
+
+The main numbers, all from simulation of the routed layout:
+
+- The automated flow spreads identical oscillators by 8.8% peak-to-peak in
+  the first build and 5.4% in the final two-arm chip. Routing capacitance
+  explains the spread almost completely (r = -0.997 and -0.999). The
+  pattern comes from the mask, so every fabricated die would carry the same
+  one. This is fake entropy.
+- The fix is one hardened oscillator macro, repeated 16 times as exact
+  copies. Identical layout means identical parasitics, so the layout spread
+  is zero by construction. The matched oscillator runs at 569.5 MHz, within
+  0.4% of the auto-placed arm's mean, so the design keeps its operating
+  point.
+- The real entropy under the bias is small: a Monte Carlo run over the
+  PDK's mismatch models gives a per-oscillator sigma of 0.062%. The layout
+  bias is about 20 times bigger than that. A naive RO-PUF on this flow
+  ships a key that is mostly layout, not silicon.
+
+Both arms measured from the one submitted chip:
+
+![both arms from one chip](sim/spice/gono/dualarm_gono.png)
+
+And this is the chip itself. Arm B is the neat 4x4 grid of identical blocks
+on the left. Arm A is inside the sea of standard cells on the right:
+
+![chip render](dualarm/build_debug/gds_render.png)
 
 ## Status
 
-Pre-silicon work is done. The main results:
+The two-arm chip is built and checked: DRC, LVS, antenna and power-grid
+connectivity all clean, TinyTapeout precheck passed, and the same checks are
+green on TinyTapeout's own CI. Target shuttle: TTSKY26c. Real-silicon
+measurements come after fabrication; the measurement firmware is already
+written and tested in `firmware/`.
 
-- Extracted-parasitic SPICE on the routed design shows the automated flow
-  spreads 32 identical oscillators by 8.8% peak-to-peak, and per-oscillator
-  routing capacitance explains it at r = -0.997. The pattern is mask-fixed, so
-  every die would carry the same one. Fake entropy.
-- The fix is a hardened oscillator macro, step-and-repeated 16 times.
-  Bit-identical copies mean identical parasitics, so the layout spread is zero
-  by construction. The matched oscillator simulates at 569.5 MHz, within 0.4%
-  of the auto-placed arm's mean.
-- The full two-arm chip (auto-placed arm, matched arm, shared serial
-  measurement core) builds green through LibreLane on a TinyTapeout 2x2 tile:
-  DRC, LVS, antenna and power-grid connectivity all clean.
-
-Target shuttle: TTSKY26c. Real-silicon measurements come after fabrication.
-
-The paper draft with all numbers lives in `docs/paper_draft.md`. The results
-writeup is `docs/gono_results_writeup.md`. Every number can be re-derived from
-raw files with `sim/spice/gono/verify.py` and `verify_macro.py`.
+The paper draft with all numbers is `docs/paper_draft.md` (PDF in
+`docs/paper/`). The full results writeup is `docs/gono_results_writeup.md`.
 
 ## Repository layout
 
-    rtl/      synthesisable RTL and the simulation-only oscillator model
+    src/      the TinyTapeout project sources (RTL, macro, config)
+    test/     the TinyTapeout RTL test (cocotb)
+    rtl/      original RTL and the simulation-only oscillator model
     tb/       self-checking testbenches
-    sim/      reference models, SPICE decks, analysis (sim/spice/gono/)
-    macro/    the hardened oscillator macro (GDS/LEF + final views)
-    array/    16-copy matched array builds and PDN debug artifacts
-    dualarm/  the dual-arm TinyTapeout integration kit
-    docs/     paper draft, results writeup, related work, build plans
+    sim/      SPICE decks and analysis (gono = the main experiment,
+              mc = the mismatch Monte Carlo)
+    macro/    the hardened oscillator macro (GDS/LEF and final views)
+    array/    16-copy matched array builds and power-grid debug files
+    dualarm/  the dual-arm integration kit and build artifacts
+    firmware/ measurement scripts for the demo board (silicon day)
+    docs/     paper, writeup, related work, build plans, figures
 
-## Simulation
+## Reproducing the simulations
 
-Requires Icarus Verilog (and GTKWave to view waveforms).
+Requires Icarus Verilog for the RTL test and ngspice plus the sky130 PDK
+for the SPICE work. The short version:
 
-    make          # compile and run the testbench
-    make waves    # run, then open the waveform
-    make clean    # remove build artifacts
+    # RTL testbench
+    make
 
-Without `make`:
+    # the main experiment (needs the routed build's netlist + SPEF)
+    cd sim/spice/gono
+    python3 gen_decks.py
+    ngspice -b ro_all_ctrl.spice -o ctrl_out.txt
+    ngspice -b ro_all_par.spice -o par_out.txt
+    python3 verify.py
 
-    iverilog -g2012 -o sim_out rtl/ro_behavioural.v rtl/ro_puf_core.v tb/tb_ro_puf_core.v
-    vvp sim_out
-
-Expected output: one count per oscillator, decreasing with index, ending in
-`RESULT: PASS`.
+Every result file in the repo has a matching verify script that re-derives
+the numbers from raw logs with independent code.
 
 ## License
 

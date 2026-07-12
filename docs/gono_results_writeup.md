@@ -89,8 +89,9 @@ each oscillator's cells. It stays just as deterministic and just as shared. In
 the planned `frequency ~ C(chip_id)*C(ro_position)` ANOVA it will show up as a
 large per-position term that repeats across chips.
 
-(Figures: `sim/spice/gono/ro_gono.png` for the mechanism and spatial map,
-`armB_prediction.png` for Arm A against matched Arm B.)
+![mechanism and spatial map](../sim/spice/gono/ro_gono.png)
+
+![Arm A against matched Arm B](../sim/spice/gono/armB_prediction.png)
 
 ## Interpretation
 
@@ -163,9 +164,10 @@ tell the sixteen rings apart, which is the matching argument stated by the
 tool itself. Cross-build check: the ORIGINAL build's cap regression predicts
 this build's mean within 0.10%, and the cap spread predicts the p-p within
 3%. Note the fingerprint changed between builds (5.4% here vs 8.8% before):
-each flow run mints a new pattern, then freezes it into every die.
-`verify_dualarm.py` re-derives all of it from raw files, 9/9 checks. Figure:
-`dualarm_gono.png`.
+each run of the flow creates a new pattern and then freezes it into every
+die. `verify_dualarm.py` re-derives all of it from raw files, 9/9 checks.
+
+![both arms from the one submitted chip](../sim/spice/gono/dualarm_gono.png)
 
 ### Mismatch Monte Carlo (the real entropy, 2026-07-11)
 

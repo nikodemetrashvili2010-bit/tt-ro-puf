@@ -13,6 +13,24 @@ day the chips arrive. Protocol checked against `dualarm/src/tt_um_ro_puf.v`.
   each arm's frequency pattern correlates ACROSS chips. Prediction: Arm A
   near +1 (shared fake entropy), Arm B near 0 (real entropy).
 
+## How one measurement works
+
+```mermaid
+sequenceDiagram
+    participant PC
+    participant Board as demo board (RP2)
+    participant Chip
+    PC->>Board: mpremote run measure_puf.py
+    loop 32 oscillators x 5 samples
+        Board->>Chip: set arm + index on ui_in, pulse start
+        Note over Chip: selected oscillator runs,<br/>edges counted for 1000 clk cycles
+        Chip-->>Board: done = 1 on uio[0]
+        Board->>Chip: byte select low, then high
+        Chip-->>Board: two count bytes on uo_out
+    end
+    Board-->>PC: CSV over USB
+```
+
 ## One-time PC setup
 
     pip install mpremote
