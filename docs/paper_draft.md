@@ -14,7 +14,7 @@ difference is not random at all. I took a 32-oscillator RO-PUF through the
 OpenLANE/OpenROAD flow on the SkyWater sky130 PDK, extracted the parasitics of
 the routed layout, and simulated every oscillator in SPICE. The transistors
 were held at nominal, so the only thing that differed between oscillators was
-the layout. That alone spread the 32 supposedly identical oscillators over an
+the layout. In a first build with both arms auto-placed, that alone spread the 32 supposedly identical oscillators over an
 **8.8% peak-to-peak frequency range**, and extracted routing capacitance
 explains the spread almost completely (Pearson *r* = −0.997). The pattern is
 printed by the mask. Every chip gets the same one. An attacker who
@@ -23,7 +23,7 @@ makes this fake entropy, not real entropy. The fix is known from FPGA work, but 
 brought it to this flow: harden one oscillator into a fixed macro and step out
 bit-identical copies. Layout spread goes to zero by construction and the
 operating point survives; the matched oscillator simulates at 569.5 MHz,
-within 0.4% of the auto-placed arm's mean. In the submitted two-arm chip the effect and
+within 0.35% of the auto-placed arm's mean. In the submitted two-arm chip the effect and
 the fix sit side by side: the auto-placed arm spreads 5.4% while the matched
 arm holds one frequency. The whole check runs on open tools, OpenROAD
 extraction plus ngspice, so anyone can run it before paying for a one-shot
@@ -142,7 +142,7 @@ parasitic deck comes from parasitics alone.
 **With extracted parasitics.** The 32 identical oscillators fan out. The
 mean is 567.6 MHz, which is 10.4% below the control because of the loading.
 The standard deviation is 10.9 MHz (1.9% of the mean). The slowest
-oscillator (RO10) runs at 539.1 MHz and the fastest (RO4) at 589.2 MHz, so
+oscillator (RO10) runs near 539 MHz and the fastest (RO4) near 589 MHz, so
 the peak-to-peak spread is 50.2 MHz, which is **8.8% of the mean**. The
 extracted ring capacitances go from 7.4 to 17.8 fF with a mean of 11.6.
 
@@ -234,10 +234,10 @@ leaks most of its key to anyone who characterizes a single chip.
 mismatch models puts a number on it. sky130's mismatch parameters draw once
 per ngspice run and shift every device of a class together, so I measured
 the matched oscillator's common-draw sigma over 40 runs (0.345%) and scaled
-it by sqrt(31) for independent per-device draws, which is first-order exact
+it by sqrt(31) for independent per-device draws, which is a first-order estimate
 for 31 near-identical stages. That gives a per-ring mismatch sigma of
 0.062%. Virtual chips built from it reach 50.7% key uniqueness, right at the
-ideal. Held against it, the auto-placed arm's measured layout spread is 21.6
+ideal. Held against it, the submitted chip's auto-placed arm carries a layout spread 21.6
 times larger by standard deviation and 87 times by peak-to-peak. That is the
 problem in two numbers. The fake entropy is more than twenty times bigger
 than the real entropy under it, and only the fake part repeats across

@@ -1,9 +1,6 @@
 # Related work and where this project fits
 
-Working bibliography and positioning for the SILICON project. Entries come
-from a literature search. Titles, venues and years are as found, and author
-names appear only where the source confirmed them. Confirm full author lists,
-pages and DOIs against the linked sources before submitting anything.
+Bibliography and positioning for the SILICON project.
 
 ## 1. Where RO-PUFs come from
 
@@ -88,7 +85,7 @@ contribution is demonstrating it on the open ASIC flow, tying the bias
 causally to extracted parasitics, and packaging the whole thing as a test you
 run before paying for silicon.
 
-## References (author lists confirmed by search, 2026-07-11; check DOIs/pages once more at submission)
+## References
 
 [1] G. E. Suh and S. Devadas, "Physical Unclonable Functions for Device
 Authentication and Secret Key Generation," Proc. 44th Design Automation Conf.
@@ -103,8 +100,8 @@ Characterization of RO-PUF," IEEE Int. Symp. Hardware-Oriented Security and
 Trust (HOST), 2010.
 
 [4] F. Wilde, M. Hiller, and M. Pehl, "Statistic-Based Security Analysis of
-Ring Oscillator PUFs," IEEE conference publication, 2014 (IEEE Xplore
-7029528); preprint arXiv:1910.07068. https://arxiv.org/abs/1910.07068
+Ring Oscillator PUFs," Int. Symp. on Integrated Circuits (ISIC), 2014,
+doi:10.1109/ISICIR.2014.7029528; also arXiv:1910.07068 (2019 re-posting). https://arxiv.org/abs/1910.07068
 
 [5] A. S. Chauhan, V. Sahula, and A. S. Mandal, "Novel Randomized Placement
 for FPGA Based Robust ROPUF with Improved Uniqueness," Journal of Electronic

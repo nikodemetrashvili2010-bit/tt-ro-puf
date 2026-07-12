@@ -1,7 +1,7 @@
 # Fake entropy from automated layout in an RO-PUF (pre-silicon evidence)
 
-Results notes, SILICON project. First written 2026-06-20 from the routed
-TinyTapeout/sky130 build, updated 2026-07-09. Everything is reproducible from
+Results notes for the SILICON project, from the routed TinyTapeout/sky130
+build. Everything is reproducible from
 `sim/spice/gono/`.
 
 ## Summary
@@ -15,9 +15,9 @@ so every fabricated die carries the same pattern. That is deterministic,
 shared, fake entropy. An attacker characterizes it once and predicts it
 everywhere. A matched hardened-macro layout (Arm B) removes it: 16
 bit-identical copies of one hardened oscillator share identical internal
-parasitics, so the spread is zero by construction. As of 2026-07-09 the Arm B
+parasitics, so the spread is zero by construction. The Arm B
 macro is built, its 16-copy array is fully signed off (DRC, LVS, antenna,
-power connectivity), the matched frequency is measured at 569.5 MHz (within
+power connectivity), the matched frequency is 569.5 MHz (within
 0.35% of the Arm A mean), and the complete two-arm chip builds green on a
 TinyTapeout 2x2 tile.
 
@@ -61,15 +61,14 @@ I found out it matters.
 
 ## Results
 
-**Control (no parasitics).** All 32 oscillators read an identical 633.64 MHz,
-one distinct value to 7 significant figures, matching the standalone
+**Control (no parasitics).** All 32 oscillators read an identical 633.64 MHz, matching the standalone
 single-oscillator SPICE baseline (633.6 MHz). So the 32 instances are truly
 identical, and any spread in the parasitic deck comes from parasitics alone.
 
 **With extracted parasitics.** The mean frequency is 567.6 MHz (10.4%
 below the control, from the loading), with a standard deviation of 10.9 MHz
-(1.93% of the mean). The slowest oscillator is RO10 at 539.1 MHz, the
-fastest is RO4 at 589.2 MHz, so the peak-to-peak spread is 50.2 MHz, which
+(1.93% of the mean). The slowest oscillator is RO10 (near 539 MHz), the
+fastest is RO4 (near 589 MHz), so the peak-to-peak spread is 50.2 MHz, which
 is **8.8% of the mean**. The extracted ring capacitances go from 7.4 to
 17.8 fF with a mean of 11.6.
 
@@ -104,10 +103,10 @@ committing to a one-shot fabrication.
 ## Arm B, the matched macro
 
 Arm B is built. One oscillator was hardened into a fixed 60x40 um macro
-(`ro_macro_hard`) with LibreLane locally on 2026-06-22: DRC, LVS ("circuits
+(`ro_macro_hard`) with LibreLane locally: DRC, LVS ("circuits
 match uniquely") and antenna all clean, ring intact (30 inverters, the NAND,
 the output buffer). Sixteen bit-identical copies place on a uniform 4x4 grid
-(`ro_array`), and the full array run is signed off as of 2026-07-09: Magic and
+(`ro_array`), and the full array run is signed off: Magic and
 KLayout DRC, LVS, antenna, and power-grid connectivity (PSM) all clean
 (`array/pdnfix4_final/`, met4-only variant in `array/met4only_debug/`). The
 complete two-arm chip, both arms plus the measurement core on a TinyTapeout
@@ -121,7 +120,7 @@ oscillation loop and do not set the frequency. The control experiment
 confirmed this identity argument empirically. Whatever spread remains on Arm B
 in silicon is transistor mismatch, the real per-chip entropy.
 
-### Matched frequency (measured 2026-07-09)
+### Matched frequency
 
 The hardened macro's own routed build supplies its extracted parasitics
 (nom-corner SPEF). All 16 Arm B copies are the same GDS, so one simulation of
@@ -145,7 +144,7 @@ an independent check that the extraction-to-frequency model holds across two
 different builds. Every number above is re-derived from the raw files by
 `verify_macro.py`, 15 checks out of 15.
 
-### Both arms from the one submitted chip (measured 2026-07-11)
+### Both arms from the one submitted chip
 
 The two-arm TinyTapeout build (2x2 tile, precheck-passed) gives the whole
 experiment in one layout. `gen_dualarm_decks.py` rebuilds the Arm A decks
@@ -164,7 +163,7 @@ die. `verify_dualarm.py` re-derives all of it from raw files, 9/9 checks.
 
 ![both arms from the one submitted chip](../sim/spice/gono/dualarm_gono.png)
 
-### Mismatch Monte Carlo (the real entropy, 2026-07-11)
+### Mismatch Monte Carlo (the real entropy)
 
 `sim/spice/mc/` measures what remains on the matched arm. sky130 mismatch
 parameters are global per run (confirmed in the PDK source; a 16-oscillator
