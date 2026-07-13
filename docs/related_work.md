@@ -54,13 +54,14 @@ ask whether the automated flow itself compromises the entropy.
 
 ## 5. The gap
 
-Two things are missing from the picture above. First, the matched-layout fix
-is established for FPGAs but nobody has demonstrated it, with numbers, on the
-open-source ASIC place-and-route flow, where the bias mechanism is routing
-parasitics on a standard-cell fabric rather than LUTs and switch boxes.
-Second, there is no cheap pre-fabrication test that tells a shuttle user,
-before they spend a fabrication slot they only get once, whether their
-automatically laid-out PUF will ship shared fake entropy.
+Two things look underexplored here. First, the matched-layout fix is
+established for FPGAs, but I have not found it demonstrated, with numbers,
+on the automated open-source ASIC place-and-route flow, where the bias
+mechanism is routing parasitics on a standard-cell fabric rather than LUTs
+and switch boxes. Second, I am not aware of a lightweight pre-fabrication
+test that tells a shuttle user, before they spend a fabrication slot they
+only get once, whether their automatically laid-out PUF will ship a shared,
+deterministic layout bias.
 
 This project covers both, with open tools only:
 

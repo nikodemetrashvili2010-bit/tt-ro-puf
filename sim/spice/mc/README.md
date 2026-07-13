@@ -1,6 +1,6 @@
 # Monte Carlo mismatch study (the real entropy, H2)
 
-v2, 2026-07-11. The v1 run taught us something worth keeping: sky130's
+v2, 2026-07-11. The v1 run taught me something worth keeping: sky130's
 mismatch parameters are global .param statements, so ngspice draws ONE value
 per run shared by every transistor of a model. v1's 16-oscillator deck gave
 16 identical frequencies per virtual chip (within-chip sigma exactly 0.000),
@@ -27,7 +27,7 @@ against Arm A's measured layout spread.
 ## Assumptions to state in the paper
 
 - Equal per-stage sensitivities (the ring is 31 near-identical stages), so
-  the sqrt(31) scaling is first-order exact for the in-loop devices.
+  the sqrt(31) scaling is a first-order estimate for the in-loop devices.
 - The nand gate counts as one stage of each class; its internal series and
   parallel pairs bend this slightly. Second-order, and stated as such.
 - MC_PR_SWITCH stays 0: global process shifts move a whole chip's

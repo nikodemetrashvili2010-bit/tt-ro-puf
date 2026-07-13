@@ -19,9 +19,9 @@ the layout. In a first build with both arms auto-placed, that alone spread the 3
 explains the spread almost completely (Pearson *r* = −0.997). The pattern is
 printed by the mask. Every chip gets the same one. An attacker who
 characterizes a single device can predict the bits on all the others, which
-makes this fake entropy, not real entropy. The fix is known from FPGA work, but nobody had
-brought it to this flow: harden one oscillator into a fixed macro and step out
-bit-identical copies. Layout spread goes to zero by construction and the
+makes this fake entropy, not real entropy. The fix is known from FPGA work, and here I bring it to this open ASIC
+flow: harden one oscillator into a fixed macro and step out bit-identical
+copies. Layout spread goes to zero by construction and the
 operating point survives; the matched oscillator simulates at 569.5 MHz,
 within 0.35% of the auto-placed arm's mean. In the submitted two-arm chip the effect and
 the fix sit side by side: the auto-placed arm spreads 5.4% while the matched
@@ -46,8 +46,8 @@ community built a whole toolbox against it: hard macros, controlled placement,
 randomized placement, configurable oscillators, statistical bias removal
 [2, 5, 6, 7]. Every one of those tricks is a way of stopping the
 implementation tool from giving the oscillators different physical
-surroundings. But that literature lives on FPGAs, where the bias comes from
-LUTs and switch-box routing on a fixed fabric, and it mostly stops there.
+surroundings. But most of that literature is on FPGAs, where the bias comes from LUTs
+and switch-box routing on a fixed fabric.
 
 But the hardware world changed. Open PDKs and automated RTL-to-GDSII
 flows [9, 10] now let individuals tape out real silicon through shuttles like
@@ -82,9 +82,10 @@ constructions that tolerate bias [7]. Someone has already built an RO-PUF on
 sky130 through TinyTapeout [11], but as a working implementation. It did not
 ask where its entropy came from.
 
-So the matched-layout fix is established on FPGAs. What was missing: anyone
-showing the bias on the open ASIC flow, putting a number on it, and giving
-people a test to run before fab. The full bibliography is in
+So the matched-layout fix is established on FPGAs, and placement-dependent
+bias has been studied there in depth. What I did not find is the same
+effect shown and quantified on the automated open-source ASIC flow,
+together with a test people can run before fab. The full bibliography is in
 `related_work.md`.
 
 ## 3. Design under test

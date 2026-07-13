@@ -44,7 +44,7 @@ The main numbers, all from simulation of the routed layout:
 - The fix is one hardened oscillator macro, repeated 16 times as exact
   copies. Identical layout means identical parasitics, so the layout spread
   is zero by construction. The matched oscillator runs at 569.5 MHz, within
-  0.4% of the auto-placed arm's mean, so the design keeps its operating
+  0.35% of the auto-placed arm's mean, so the design keeps its operating
   point.
 - The real entropy under the bias is small: a Monte Carlo run over the
   PDK's mismatch models gives a per-oscillator sigma of 0.062%. The layout
