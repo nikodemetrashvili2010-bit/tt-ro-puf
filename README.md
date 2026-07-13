@@ -96,8 +96,8 @@ for the SPICE work. The short version:
     # the main experiment (needs the routed build's netlist + SPEF)
     cd sim/spice/gono
     python3 gen_decks.py
-    ngspice -b ro_all_ctrl.spice -o ctrl_out.txt
-    ngspice -b ro_all_par.spice -o par_out.txt
+    ngspice -b ro_all_ctrl.spice -o ctrl2.txt
+    ngspice -b ro_all_par.spice  -o par2.txt
     python3 verify.py
 
 Every result file in the repo has a matching verify script that re-derives
