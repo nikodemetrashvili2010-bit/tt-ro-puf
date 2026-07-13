@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 import os
 
-ORANGE, GREEN, BLUE, GREY = "#d95f02", "#1b9e77", "#4472a8", "#666666"
+ORANGE, GREEN, BLUE, GREY = "#c0504d", "#3a8a5f", "#35618f", "#666666"
 fig, ax = plt.subplots(figsize=(11, 5.6))
 ax.set_xlim(0, 110); ax.set_ylim(0, 62); ax.axis("off")
 
