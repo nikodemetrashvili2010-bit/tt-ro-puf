@@ -68,7 +68,7 @@ axL.plot(xf, [a + b*v for v in xf], "--", color=RED, lw=2.0, zorder=2,
 axL.scatter(cap, f, s=60, c=BLUE, edgecolor="white", linewidth=0.7, zorder=3)
 axL.set_xlabel("Extracted ring capacitance per oscillator  (fF)")
 axL.set_ylabel("Oscillation frequency  (MHz)")
-axL.set_title("(a)  Mechanism: routing capacitance sets frequency",
+axL.set_title("(a)  Frequency versus extracted ring capacitance",
               loc="left", fontweight="bold")
 axL.legend(loc="upper right", fontsize=9)
 axL.margins(x=0.05)
@@ -83,13 +83,12 @@ axR.set_title("(b)  Spatial map of oscillator frequency",
 cb = fig.colorbar(sc, ax=axR, pad=0.02); cb.set_label("Frequency  (MHz)")
 axR.margins(0.08)
 
-fig.suptitle("Automated layout (Arm A) injects a deterministic, layout-locked "
-             "frequency spread across 32 identical oscillators",
-             fontsize=12.5, fontweight="bold", y=0.99)
+fig.suptitle("Arm A: the routing sets each oscillator's frequency",
+             fontsize=13, fontweight="bold", y=0.99)
 fig.text(0.5, 0.005,
-         f"sky130 / TinyTapeout · OpenROAD-extracted parasitics (nom corner) · "
-         f"spread {ptp:.0f} MHz peak-to-peak ({100*ptp/mean:.1f}% of mean), "
-         f"std {100*std/mean:.1f}%  ·  identical logic, different routing",
+         f"sky130 TinyTapeout, OpenROAD-extracted parasitics at the nominal corner. "
+         f"Spread {ptp:.0f} MHz peak-to-peak ({100*ptp/mean:.1f}% of mean), "
+         f"std {100*std/mean:.1f}%. Same logic, different routing.",
          ha="center", fontsize=8.5, color="#555555", style="italic")
 fig.tight_layout(rect=[0, 0.03, 1, 0.96])
 fig.savefig(os.path.join(HERE, "ro_gono.png"))
@@ -129,14 +128,14 @@ for rect, v in zip(bars, [100*ptp/mean, 0.0]):
              ha="center", va="bottom", fontsize=11, fontweight="bold")
 axR.grid(axis="x", alpha=0)
 
-fig.suptitle("Matched hardened-macro layout (Arm B) removes the auto-layout "
-             '"fake entropy"', fontsize=12.5, fontweight="bold", y=0.99)
+fig.suptitle("Matched macro removes the Arm A spread",
+             fontsize=13, fontweight="bold", y=0.99)
 fig.text(0.5, 0.01,
-         "Arm A: measured (extracted parasitics).  Arm B: 16 bit-identical "
-         "hardened-macro copies → identical internal parasitics → zero layout "
-         "spread by construction\n(array DRC/LVS/antenna/power clean). Arm B "
-         "level measured: 569.5 MHz from the macro's own routed nom-SPEF deck, "
-         "0.3% from the Arm A mean; only mismatch remains.",
+         "Arm A is measured from the extracted parasitics. Arm B is 16 bit-identical "
+         "hardened-macro copies, so their internal parasitics are identical and the "
+         "layout spread is zero by construction\n(array DRC, LVS, antenna and power all clean). "
+         "The Arm B level is the macro's own routed nom-SPEF frequency, 569.5 MHz, "
+         "0.3% from the Arm A mean. Only mismatch remains.",
          ha="center", fontsize=8.0, color="#555555", style="italic")
 fig.tight_layout(rect=[0, 0.06, 1, 0.96])
 fig.savefig(os.path.join(HERE, "armB_prediction.png"))

@@ -43,13 +43,13 @@ for rect, v in zip(bars, [100*ptp/mean, 0.0]):
     axR.text(rect.get_x()+rect.get_width()/2, v+0.12, f"{v:.1f}%",
              ha="center", va="bottom", fontsize=11, fontweight="bold")
 
-fig.suptitle("The submitted two-arm chip: auto-placed arm spreads, matched arm does not",
+fig.suptitle("The submitted chip: Arm A spreads, Arm B does not",
              fontsize=12.5, fontweight="bold", y=0.99)
 fig.text(0.5, 0.01,
          "Both arms from ONE routed 2x2-tile build. Arm A: 16 auto-placed oscillators, extracted parasitics, "
          "r = -0.999 against ring capacitance.\nArm B: 16 bit-identical hardened-macro copies at 569.5 MHz "
-         "(macro nom-SPEF). Note Arm A's pattern differs from the single-arm build (5.4% vs 8.8%): "
-         "each flow run mints a new fingerprint.",
+         "(macro nom-SPEF). Arm A's pattern differs from the single-arm build (5.4% vs 8.8%): "
+         "each flow run creates a new pattern.",
          ha="center", fontsize=8.0, color="#555555", style="italic")
 fig.tight_layout(rect=[0, 0.06, 1, 0.96])
 fig.savefig(os.path.join(HERE, "dualarm_gono.png"))
