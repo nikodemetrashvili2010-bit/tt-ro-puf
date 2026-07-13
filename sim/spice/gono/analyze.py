@@ -87,27 +87,6 @@ with open(os.path.join(HERE, "gono_results.csv"), "w", newline="") as f:
     for i in ros:
         w.writerow([i, pos[i][0], pos[i][1], pos[i][2], round(par[i]/1e6,3), round(ctrl[i]/1e6,3)])
 
-# ---- figure ----
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 5))
-    axL.scatter(caps, fMHz, c="#2b6cb0", s=45, zorder=3)
-    xfit = [min(caps), max(caps)]; axL.plot(xfit, [a+b*xx for xx in xfit], "r--", lw=1.5,
-            label=f"fit: {b:+.2f} MHz/fF\nr={pearson(fMHz,caps):+.3f}")
-    axL.axhline(f_ctrl, color="gray", ls=":", label=f"control {f_ctrl:.0f} MHz")
-    axL.set_xlabel("extracted ring capacitance (fF)"); axL.set_ylabel("oscillation frequency (MHz)")
-    axL.set_title("Mechanism: parasitic loading -> frequency"); axL.legend(fontsize=8); axL.grid(alpha=.3)
-    sc = axR.scatter(xs, ys, c=fMHz, cmap="viridis", s=120, edgecolor="k", linewidth=.4)
-    for i in ros: axR.annotate(str(i), (xs[ros.index(i)], ys[ros.index(i)]), fontsize=6,
-                               ha="center", va="center", color="white")
-    axR.set_xlabel("x (um)"); axR.set_ylabel("y (um)")
-    axR.set_title("Spatial map of RO frequency (auto-placed Arm A)")
-    fig.colorbar(sc, ax=axR, label="freq (MHz)")
-    fig.suptitle("SILICON go/no-go: auto-layout injects a deterministic RO frequency spread (nom SPEF)", fontsize=11)
-    fig.tight_layout()
-    fig.savefig(os.path.join(HERE, "ro_gono.png"), dpi=130)
-    print("\nfigure written: ro_gono.png")
-except Exception as e:
-    print(f"\n(figure skipped: {e})")
+# Figures come from make_figures.py (publication style), which reads the
+# gono_results.csv written above. Keeping figure generation in one place
+# stops an old-style plot from overwriting the clean one.
