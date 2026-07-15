@@ -6,13 +6,13 @@ Derived mechanically from gen_decks.py (32-RO version); only NRO, the input
 paths, and the output names differ. Arm B is not in these decks: its 16 copies
 are one sealed macro, measured once in ro_macro_matched.spice (569.5 MHz).
 
-Two combined decks, each with all 32 ring oscillators wired exactly as on
-silicon (enable NAND -> 30 inverters -> feedback, output buffer tapping n[15]):
+Two combined decks, each with the dual-arm build's 16 Arm A oscillators wired
+exactly as on silicon (enable NAND -> 30 inverters -> feedback, buffer on n[15]):
 
-  ro_all_ctrl.spice : NO parasitics.  All 32 ROs are topologically identical, so
-                      they MUST read the same frequency -> control / self-test.
-  ro_all_par.spice  : real OpenROAD-extracted capacitance on every ring node
-                      (nom corner). Spread across ROs = layout-induced bias.
+  dualarm_ctrl.spice : NO parasitics.  All 16 ROs are topologically identical,
+                       so they MUST read the same frequency -> control.
+  dualarm_par.spice  : real OpenROAD-extracted capacitance on every ring node
+                       (nom corner). Spread across ROs = layout-induced bias.
 
 Startup: each RO is started the way the chip does it -- the shared enable EN is
 held low (ring forced to a defined rest state), then pulsed high at t=2 ns. This
@@ -27,8 +27,8 @@ that total as a lumped cap to ground (farads, plain sci notation). Series wire R
 (~30 ohm) shifts stage delay <0.1% and is omitted. Transistors are nominal, so
 the ONLY RO-to-RO difference is layout parasitics.
 
-Outputs (next to this script): ro_all_ctrl.spice, ro_all_par.spice,
-ro_positions.csv
+Outputs (next to this script): dualarm_ctrl.spice, dualarm_par.spice,
+dualarm_positions.csv
 """
 import re, os, csv
 
