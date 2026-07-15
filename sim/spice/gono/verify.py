@@ -5,8 +5,7 @@
 import re, os, csv, math
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PROJ = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-SPEF = os.path.join(PROJ, "gds_build", "runs", "wokwi", "final", "spef", "nom",
+SPEF = os.path.join(HERE, "first_build",
                     "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
 
 def read_fN(path):

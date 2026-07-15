@@ -36,11 +36,12 @@ flowchart LR
 
 The main numbers, all from simulation of the routed layout:
 
-- The automated flow spreads identical oscillators by 8.8% peak-to-peak in
-  the first build and 5.4% in the final two-arm chip. Routing capacitance
-  explains the spread almost completely (r = -0.997 and -0.999). The
-  pattern comes from the mask, so every fabricated die would carry the same
-  one. This is fake entropy.
+- In the submitted two-arm chip the automated flow spreads the auto-placed
+  arm's identical oscillators by 5.4% peak-to-peak. An earlier build with
+  all 32 oscillators auto-placed showed 8.8%, so the effect repeats across
+  builds. Routing capacitance explains the spread almost completely
+  (r = -0.999 and -0.997). The pattern comes from the mask, so every
+  fabricated die would carry the same one. This is fake entropy.
 - The fix is one hardened oscillator macro, repeated 16 times as exact
   copies. Identical layout means identical parasitics, so the layout spread
   is zero by construction. The matched oscillator runs at 569.5 MHz, within
@@ -64,9 +65,12 @@ on the left. Arm A is inside the sea of standard cells on the right:
 
 The two-arm chip is built and checked: DRC, LVS, antenna and power-grid
 connectivity all clean, TinyTapeout precheck passed, and the same checks are
-green on TinyTapeout's own CI. Target shuttle: TTSKY26c. Real-silicon
-measurements come after fabrication; the measurement firmware is already
-written and tested in `firmware/`.
+green on TinyTapeout's own CI. It goes to fabrication on the TTSKY26c
+shuttle. When the chips come back I will measure both arms across dies,
+voltage and temperature, and the results will be added here. The prediction
+is written down before the silicon exists: the auto-placed arm's pattern
+should repeat across chips and the matched arm's should not. The measurement
+firmware is already written and tested in `firmware/`.
 
 The paper draft with all numbers is `docs/paper_draft.md` (PDF in
 `docs/paper/`). The full results writeup is `docs/gono_results_writeup.md`.
@@ -93,7 +97,7 @@ for the SPICE work. The short version:
     # RTL testbench
     make
 
-    # the main experiment (needs the routed build's netlist + SPEF)
+    # the main experiment (its inputs ship in sim/spice/gono/first_build/)
     cd sim/spice/gono
     python3 gen_decks.py
     ngspice -b ro_all_ctrl.spice -o ctrl2.txt

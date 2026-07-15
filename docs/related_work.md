@@ -27,6 +27,13 @@ is exactly the failure mode this project targets. The difference is the
 source: here the shared component is injected by the layout tool, not the
 wafer.
 
+RO-PUFs have been measured on ASICs before. Katzenbeisser et al.
+characterized five PUF types, ring oscillators included, across 96 ASICs in
+a commercial 65 nm process [12]. That work measures finished silicon from a
+closed commercial flow and asks how good the PUFs are. It does not ask what
+the layout tool contributed to the answer, and on a closed flow there is no
+way to look.
+
 ## 3. How FPGAs fixed it
 
 On FPGAs the big avoidable bias source is asymmetric routing and non-identical
@@ -58,7 +65,9 @@ Two things look underexplored here. First, the matched-layout fix is
 established for FPGAs, but I have not found it demonstrated, with numbers,
 on the automated open-source ASIC place-and-route flow, where the bias
 mechanism is routing parasitics on a standard-cell fabric rather than LUTs
-and switch boxes. Second, I am not aware of a lightweight pre-fabrication
+and switch boxes. ASIC RO-PUF measurements exist [12], but they treat the
+finished chip as a given. The open flow lets me open the layout step itself
+and put a number on its contribution before fabrication. Second, I am not aware of a lightweight pre-fabrication
 test that tells a shuttle user, before they spend a fabrication slot they
 only get once, whether their automatically laid-out PUF will ship a shared,
 deterministic layout bias.
@@ -133,3 +142,9 @@ https://github.com/google/skywater-pdk
 
 [11] litneet64, "RO-based Physically Unclonable Function in sky130 (TinyTapeout
 tt07)." https://github.com/litneet64/tt07-RO-based-PUF
+
+[12] S. Katzenbeisser, U. Kocabas, V. Rozic, A.-R. Sadeghi, I. Verbauwhede,
+and C. Wachsmann, "PUFs: Myth, Fact or Busted? A Security Evaluation of
+Physically Unclonable Functions (PUFs) Cast in Silicon," Cryptographic
+Hardware and Embedded Systems (CHES), LNCS 7428, 2012, pp. 283-301.
+https://www.iacr.org/archive/ches2012/74280281/74280281.pdf

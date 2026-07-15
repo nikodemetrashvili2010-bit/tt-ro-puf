@@ -18,7 +18,8 @@ capacitance, and the spread across its 32 oscillators is the layout bias.
 
 ## The files
 
-`gen_decks.py` writes the two decks from the routed netlist and the SPEF.
+`gen_decks.py` writes the two decks from the routed build's SPEF and DEF,
+which ship in `first_build/` so everything runs from a bare clone.
 `ctrl2.txt` and `par2.txt` are the raw ngspice frequency logs. `ro_positions.csv`
 gives each oscillator its placement centroid and extracted ring capacitance.
 `analyze.py` joins these and prints the verdict, and `gono_results.csv` is the

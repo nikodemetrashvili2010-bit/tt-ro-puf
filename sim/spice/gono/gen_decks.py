@@ -30,10 +30,9 @@ ro_positions.csv
 import re, os, csv
 
 HERE  = os.path.dirname(os.path.abspath(__file__))
-PROJ  = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-FINAL = os.path.join(PROJ, "gds_build", "runs", "wokwi", "final")
-SPEF  = os.path.join(FINAL, "spef", "nom", "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
-DEFF  = os.path.join(FINAL, "def", "tt_um_nikodemetrashvili20_ro_puf.def")
+FIRST = os.path.join(HERE, "first_build")
+SPEF  = os.path.join(FIRST, "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
+DEFF  = os.path.join(FIRST, "tt_um_nikodemetrashvili20_ro_puf.def")
 
 NRO, NINV, TAP = 32, 30, 15
 

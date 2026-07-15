@@ -1,7 +1,8 @@
 # Automated Layout Manufactures Fake Entropy in Ring-Oscillator PUFs: A Pre-Silicon Study on the Open-Source sky130 Flow
 
 **Nikoloz Demetrashvili** · Independent researcher · Georgia
-Draft, 2026-07-09
+
+Draft, 2026-07-15
 
 ---
 
@@ -14,18 +15,21 @@ difference is not random at all. I took a 32-oscillator RO-PUF through the
 OpenLANE/OpenROAD flow on the SkyWater sky130 PDK, extracted the parasitics of
 the routed layout, and simulated every oscillator in SPICE. The transistors
 were held at nominal, so the only thing that differed between oscillators was
-the layout. In a first build with both arms auto-placed, that alone spread the 32 supposedly identical oscillators over an
-**8.8% peak-to-peak frequency range**, and extracted routing capacitance
-explains the spread almost completely (Pearson *r* = −0.997). The pattern is
+the layout. In the chip I am submitting for fabrication, that alone spreads
+the auto-placed arm's sixteen identical oscillators over a **5.4%
+peak-to-peak frequency range**, with extracted routing capacitance explaining
+the spread almost completely (Pearson *r* = −0.999). An earlier build with
+all 32 oscillators auto-placed showed the same effect at 8.8% and *r* =
+−0.997, so the finding repeats across builds. The pattern is
 printed by the mask. Every chip gets the same one. An attacker who
 characterizes a single device can predict the bits on all the others, which
 makes this fake entropy, not real entropy. The fix is known from FPGA work, and here I bring it to this open ASIC
 flow: harden one oscillator into a fixed macro and step out bit-identical
 copies. Layout spread goes to zero by construction and the
 operating point survives; the matched oscillator simulates at 569.5 MHz,
-within 0.35% of the auto-placed arm's mean. In the submitted two-arm chip the effect and
-the fix sit side by side: the auto-placed arm spreads 5.4% while the matched
-arm holds one frequency. The whole check runs on open tools, OpenROAD
+within 0.35% of the auto-placed arm's mean. In the submitted two-arm chip the
+effect and the fix sit side by side: the auto-placed arm spreads while the
+matched arm holds one frequency. The whole check runs on open tools, OpenROAD
 extraction plus ngspice, so anyone can run it before paying for a one-shot
 fabrication slot. Everything here is pre-silicon. Validation on real
 chips waits for a TinyTapeout run.
@@ -60,9 +64,10 @@ OpenLANE/sky130 flow.
 
 Three things come out of it:
 
-- a causal measurement: the automated flow spreads identical oscillators by
-  8.8% peak-to-peak, deterministically, the same on every die, with the spread
-  tracking extracted routing capacitance at *r* = −0.997;
+- a causal measurement: in the submitted chip the automated flow spreads
+  identical oscillators by 5.4% peak-to-peak (8.8% in an earlier build),
+  deterministically, the same on every die, with the spread tracking
+  extracted routing capacitance at *r* = −0.999;
 - a fix that works inside the same open flow: a hardened, step-and-repeated
   macro, which removes the spread by construction and lands at 569.5 MHz,
   right at the auto-placed arm's operating point;
@@ -80,12 +85,18 @@ randomized placement raise uniqueness, and uncontrolled placement does worst
 [2, 5]. Other papers remove the systematic part statistically [6] or design
 constructions that tolerate bias [7]. Someone has already built an RO-PUF on
 sky130 through TinyTapeout [11], but as a working implementation. It did not
-ask where its entropy came from.
+ask where its entropy came from. RO-PUFs have also been measured on ASICs at
+scale: Katzenbeisser et al. characterized five PUF types, ring oscillators
+included, across 96 ASICs in a commercial 65 nm process [12]. That work
+treats the finished chip as a given and asks how good the PUFs are. On a
+closed commercial flow that is the only question you can ask, because the
+layout step is not yours to open.
 
-So the matched-layout fix is established on FPGAs, and placement-dependent
-bias has been studied there in depth. What I did not find is the same
-effect shown and quantified on the automated open-source ASIC flow,
-together with a test people can run before fab. The full bibliography is in
+So the matched-layout fix is established on FPGAs, placement-dependent
+bias has been studied there in depth, and ASIC RO-PUFs have been measured
+after fabrication. What I did not find is the layout tool's own contribution
+shown and quantified on the automated open-source ASIC flow, together with a
+test people can run before fab. The full bibliography is in
 `related_work.md`.
 
 ## 3. Design under test
@@ -134,6 +145,10 @@ frequencies. Frequency is measured in ngspice over twenty periods after
 enable.
 
 ## 5. Results
+
+This section measures the first build, the one with all 32 oscillators
+auto-placed. It is where I found the effect. The submitted chip gets the same
+treatment in Section 6, and its numbers are the ones on the cover.
 
 **Control.** With no parasitics, all 32 oscillators read exactly 633.640 MHz.
 One value, zero spread, matching the standalone single-oscillator baseline. So
@@ -242,7 +257,8 @@ ideal. Held against it, the submitted chip's auto-placed arm carries a layout sp
 times larger by standard deviation and 87 times by peak-to-peak. That is the
 problem in two numbers. The fake entropy is more than twenty times bigger
 than the real entropy under it, and only the fake part repeats across
-chips.
+chips. The twenty comes from an estimated denominator, so treat it as a
+scale, not a precision figure. Silicon will measure it directly.
 
 ## 8. Limitations
 
@@ -295,4 +311,4 @@ matched arm's pattern should not repeat at all.
 See `related_work.md` for the annotated bibliography. Key references: Suh &
 Devadas, DAC 2007 [1]; Maiti & Schaumont, J. Cryptology 2011 [2]; Maiti et
 al., HOST 2010 [3]; OpenLANE, 2020 [9]; SkyWater sky130 PDK [10]; TinyTapeout
-sky130 RO-PUF [11].
+sky130 RO-PUF [11]; Katzenbeisser et al., CHES 2012 [12].

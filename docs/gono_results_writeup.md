@@ -10,7 +10,8 @@ I ran extracted-parasitic SPICE on the auto-placed ring-oscillator array. The
 open-source layout flow gives 32 logically identical oscillators a
 deterministic frequency spread of **8.8% peak-to-peak** (about 1.9% std), and
 per-oscillator routing capacitance explains the spread almost completely
-(r = -0.997). The effect is fixed by the mask and the transistors are nominal,
+(r = -0.997). The submitted two-arm chip repeats the effect on its own
+layout at 5.4% (r = -0.999), measured further down. The effect is fixed by the mask and the transistors are nominal,
 so every fabricated die carries the same pattern. That is deterministic,
 shared, fake entropy. An attacker characterizes it once and predicts it
 everywhere. A matched hardened-macro layout (Arm B) removes it: 16
@@ -192,6 +193,6 @@ Details, assumptions and the v1 postmortem are in `sim/spice/mc/README.md`.
 SPEF), the decks themselves, `analyze.py` (stats, correlations),
 `make_figures.py`, `verify.py` and `verify_macro.py` (independent
 re-derivation of every number from the raw ngspice logs and the SPEF; all
-checks pass), `predict_armB.py`, `ro_positions.csv`, `gono_results.csv`, and
-the figures. Frequencies were measured in ngspice (`-b`, KLU solver) over 20
+checks pass), `ro_positions.csv`, `gono_results.csv`, and
+the figures. The routed build's SPEF, DEF and netlist ship in `first_build/`. Frequencies were measured in ngspice (`-b`, KLU solver) over 20
 oscillation periods after enable.
