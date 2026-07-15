@@ -1,14 +1,14 @@
-# Monte Carlo mismatch study (the real entropy, H2)
+# Monte Carlo mismatch study (the real entropy)
 
-v2, 2026-07-11. The v1 run taught me something worth keeping: sky130's
+The first version of this run taught me something worth keeping: sky130's
 mismatch parameters are global .param statements, so ngspice draws ONE value
-per run shared by every transistor of a model. v1's 16-oscillator deck gave
+per run shared by every transistor of a model. My first 16-oscillator deck gave
 16 identical frequencies per virtual chip (within-chip sigma exactly 0.000),
 and an extreme process draw crashed the loop at run 17 of 30. Both symptoms
-are explained and fixed in v2, and the global-draw fact is confirmed against
+are explained and fixed in the current version, and the global-draw fact is confirmed against
 the PDK source (the __mismatch.corner.spice files).
 
-## How v2 works
+## How it works
 
 One matched oscillator (the macro's own layout parasitics), mismatch switch
 on, process switch off. Each of the 40 runs shifts all 31 in-loop nfets
@@ -18,9 +18,9 @@ by sqrt(31). The analyzer applies that, then builds 1000 virtual chips from
 the derived sigma and reports key uniqueness and the fake-to-real ratio
 against Arm A's measured layout spread.
 
-## Run it (WSL, 2-4 minutes)
+## Run it (2-4 minutes)
 
-    cd "/mnt/d/silicon/silicon chip/sim/spice/mc"
+    cd sim/spice/mc
     ngspice -b mc_matched.spice -o mc_out.txt
     python3 analyze_mc.py mc_out.txt
 

@@ -1,7 +1,7 @@
 # Silicon-day measurement kit
 
-Written 2026-07-11, before silicon exists, so it can be tested and ready the
-day the chips arrive. Protocol checked against `dualarm/src/tt_um_ro_puf.v`.
+Written before the silicon exists, so it can be tested and ready the day
+the chips arrive. Protocol checked against `dualarm/src/tt_um_ro_puf.v`.
 
 ## What is here
 
@@ -44,8 +44,8 @@ sequenceDiagram
 
        mpremote run measure_puf.py > chip03_room_1v8.csv
 
-4. Repeat per chip and per condition (room, freeze spray, hairdryer, and the
-   voltage points from the master plan).
+4. Repeat per chip and per condition: room temperature, freeze spray,
+   hairdryer, and a couple of supply points around 1.8 V.
 5. Analyze any set of files together:
 
        python3 analyze_counts.py chip01_room_1v8.csv chip02_room_1v8.csv

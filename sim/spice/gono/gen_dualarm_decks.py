@@ -141,8 +141,8 @@ def main():
     with open(os.path.join(HERE, "dualarm_par.spice"), "w") as f:
         f.write(build_deck("PARASITIC (nom SPEF)", caps))
 
-    with open(os.path.join(HERE, "dualarm_positions.csv"), "w", newline="") as f:
-        w = csv.writer(f); w.writerow(["ro", "x_um", "y_um", "ncells", "ring_cap_fF"])
+    with open(os.path.join(HERE, "dualarm_positions.csv"), "w", newline="\n") as f:
+        w = csv.writer(f, lineterminator="\n"); w.writerow(["ro", "x_um", "y_um", "ncells", "ring_cap_fF"])
         for i in range(NRO):
             ring = sum(caps.get(net(i, k), 0.0) for k in range(NINV + 1)) * 1000.0
             x, y, n = cent.get(i, (float("nan"), float("nan"), 0))
