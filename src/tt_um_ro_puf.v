@@ -13,7 +13,7 @@
 // Pin map (unchanged from v1):
 //   clk           measurement reference clock
 //   rst_n         active-low reset
-//   ui_in[0]      start, a rising edge begins one measurement
+//   ui_in[0]      start, hold high for at least three clk cycles
 //   ui_in[1]      arm select (0 = Arm A auto-placed, 1 = Arm B hardened)
 //   ui_in[5:2]    ro_idx, oscillator within the arm (0..15)
 //   ui_in[6]      byte select for readout (0 = low byte, 1 = high byte)
@@ -35,16 +35,47 @@ module tt_um_nikodemetrashvili20_ro_puf (
 );
     localparam [15:0] WINDOW = 16'd1000;
 
-    wire       arm      = ui_in[1];
-    wire [3:0] ro_idx   = ui_in[5:2];
-    wire       byte_sel = ui_in[6];
+    // Project reset asserts immediately so deselection always shuts down an
+    // active oscillator, even if clk has stopped. Release passes through two
+    // clk stages so the rest of the design never sees an asynchronous reset
+    // deassertion near a clock edge.
+    wire async_project_rst_n = rst_n & ena;
+    (* async_reg = "true" *) reg [1:0] reset_sync;
+    always @(posedge clk or negedge async_project_rst_n) begin
+        if (!async_project_rst_n)
+            reset_sync <= 2'b00;
+        else
+            reset_sync <= {reset_sync[0], 1'b1};
+    end
+    wire project_rst_n = reset_sync[1];
 
-    // One-cycle start pulse from the rising edge of ui_in[0].
-    reg start_d;
-    always @(posedge clk or negedge rst_n)
-        if (!rst_n) start_d <= 1'b0;
-        else        start_d <= ui_in[0];
-    wire start_pulse = ui_in[0] & ~start_d;
+    // The board GPIOs are asynchronous to clk. Synchronize the complete
+    // control bundle, then edge-detect start in the synchronized domain. The
+    // host protocol keeps arm/index stable for three clocks before asserting
+    // start, holds start for at least three clocks, and leaves the selection
+    // unchanged until done. The core latches the synchronized selection before
+    // enabling an oscillator. A shorter asynchronous pulse is not guaranteed
+    // to be sampled.
+    (* async_reg = "true" *) reg [6:0] ui_meta;
+    (* async_reg = "true" *) reg [6:0] ui_sync;
+    reg start_sync_d;
+
+    always @(posedge clk or negedge project_rst_n) begin
+        if (!project_rst_n) begin
+            ui_meta      <= 7'b0;
+            ui_sync      <= 7'b0;
+            start_sync_d <= 1'b0;
+        end else begin
+            ui_meta      <= ui_in[6:0];
+            ui_sync      <= ui_meta;
+            start_sync_d <= ui_sync[0];
+        end
+    end
+
+    wire       start_pulse = ui_sync[0] & ~start_sync_d;
+    wire       arm         = ui_sync[1];
+    wire [3:0] ro_idx      = ui_sync[5:2];
+    wire       byte_sel    = ui_sync[6];
 
     wire        done;
     wire [15:0] count;
@@ -72,7 +103,7 @@ module tt_um_nikodemetrashvili20_ro_puf (
 
     ro_puf #(.N_PER_ARM(16), .CNT_W(16)) u_puf (
         .xclk     (clk),
-        .rst_n    (rst_n),
+        .rst_n    (project_rst_n),
         .start    (start_pulse),
         .arm      (arm),
         .ro_idx   (ro_idx),
@@ -87,8 +118,10 @@ module tt_um_nikodemetrashvili20_ro_puf (
     assign uio_out = {7'b0, done};
     assign uio_oe  = 8'b0000_0001;        // only uio[0] is an output
 
-    // Tie off unused inputs to keep the linter quiet.
-    wire _unused = &{ena, uio_in, ui_in[7], 1'b0};
+    // Tie off unused inputs to keep the linter quiet. Pulling ena low is an
+    // asynchronous project reset, so it also shuts down an active oscillator
+    // even if the reference clock has stopped.
+    wire _unused = &{uio_in, ui_in[7], 1'b0};
 
 endmodule
 

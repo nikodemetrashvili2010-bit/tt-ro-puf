@@ -1,198 +1,200 @@
-# Fake entropy from automated layout in an RO-PUF (pre-silicon evidence)
+# Deterministic layout contribution in an RO-PUF: pre-silicon results
 
-Results notes for the SILICON project, from the routed TinyTapeout/sky130
-build. Everything is reproducible from
-`sim/spice/gono/`.
+This note records the nominal post-layout simulations used by the SILICON
+project. Inputs, generated decks, raw ngspice logs, and analysis scripts are
+under `sim/spice/gono/`.
 
 ## Summary
 
-I ran extracted-parasitic SPICE on the auto-placed ring-oscillator array. The
-open-source layout flow gives 32 logically identical oscillators a
-deterministic frequency spread of **8.8% peak-to-peak** (about 1.9% std), and
-per-oscillator routing capacitance explains the spread almost completely
-(r = -0.997). The submitted two-arm chip repeats the effect on its own
-layout at 5.4% (r = -0.999), measured further down. The effect is fixed by the mask and the transistors are nominal,
-so every fabricated die carries the same pattern. That is deterministic,
-shared, fake entropy. An attacker characterizes it once and predicts it
-everywhere. A matched hardened-macro layout (Arm B) removes it: 16
-bit-identical copies of one hardened oscillator share identical internal
-parasitics, so the spread is zero by construction. The Arm B
-macro is built, its 16-copy array is fully signed off (DRC, LVS, antenna,
-power connectivity), the matched frequency is 569.5 MHz (within
-0.35% of the Arm A mean), and the complete two-arm chip builds green on a
-TinyTapeout 2x2 tile.
+An earlier build routed 32 logically identical ring oscillators separately.
+With transistors held at the nominal corner, a lumped-capacitance model derived
+from the routed SPEF produced an 8.8% peak-to-peak frequency spread. Frequency
+was strongly associated with extracted ring capacitance (Pearson *r* =
+-0.997). Arm A of an archived dual-arm layout showed the same mechanism at
+5.4% peak-to-peak and *r* = -0.999.
+
+These simulations isolate a deterministic layout contribution in two routed
+designs. They do not show that complete frequency patterns or response bits
+will repeat across fabricated chips. Device mismatch, voltage, temperature,
+stress, and measurement noise have not yet been observed. Cross-die
+repeatability is the hypothesis the fabricated experiment is meant to test.
+
+Arm B uses sixteen instances of one hardened oscillator macro. Its comparison
+point is one nominal simulation of that macro's extracted internal parasitics,
+569.5 MHz, shown sixteen times because every instance uses the same internal
+GDS. This is a structural prediction about internal layout matching, not
+sixteen independent simulations or measurements.
 
 ## Design under test
 
-Top module `tt_um_nikodemetrashvili20_ro_puf`: 32 ring oscillators in two
-16-oscillator arms, read by one shared serial counter. Each oscillator is an
-enable NAND plus 30 inverters in a loop, with an output buffer tapped at the
-mid-chain node, all sky130 standard cells (`sky130_fd_sc_hd__nand2_1`,
-`__inv_1`, `__buf_1`). In the baseline build studied here, all 32 oscillators
-are auto-placed by the flow, so the array measures the automated-layout
-behaviour. I call that Arm A.
+The current top module, `tt_um_nikodemetrashvili20_ro_puf`, contains two
+16-oscillator arms and one shared counter. Each oscillator has an enable NAND,
+30 inverters, and a buffered tap at the middle of the ring. Arm A is built from
+standard cells placed and routed with the surrounding logic. Arm B instantiates
+the hardened `ro_macro_hard` block sixteen times.
+
+The earlier baseline build placed all 32 oscillators as standard cells. It is
+retained because it provides a second routed layout on which to check whether
+the capacitance association was peculiar to one flow run.
 
 ## Method
 
-**Parasitics from the real layout.** I used the OpenLane build's routed
-gate-level netlist (`final/nl/...nl.v`) and OpenROAD RC extraction
-(`final/spef/nom/...spef`) directly. This is the same data the flow uses for
-timing sign-off; nothing is re-extracted. The netlist keeps all 32 oscillators
-with their internal ring nodes (`...g_ro_bank[i].u_ro.n[0..30]`) and the SPEF
-has a capacitance for every net.
+### Routed inputs
 
-**Per-oscillator SPICE decks.** A generator (`gen_decks.py`) emits each
-oscillator exactly as routed and hangs each ring net's total SPEF capacitance
-(ground plus coupling, pre-summed on the `*D_NET` line) as a lumped capacitor
-to ground. Two decks come out: a control with no parasitics and a parasitic
-deck with the extracted capacitance.
+The generator reads the nominal-corner routed netlist, SPEF, and DEF emitted by
+the flow. The netlist identifies every Arm A ring node, the SPEF gives each
+net's total capacitance, and the DEF supplies placement centroids. No new RC
+extraction is performed by the analysis scripts.
 
-**Modelling choices, and why.** (i) Only one oscillator runs at a time on the
-chip, so a measured oscillator's neighbours are static and their coupling
-capacitance behaves as a fixed grounded load. The lumped total models exactly
-that. (ii) Series wire resistance (~30 ohm) changes a stage delay by under
-0.1%, so I dropped it. (iii) Transistors sit at the nominal corner on purpose.
-That leaves layout parasitics as the only difference between oscillators,
-which is the isolation the experiment needs; random device mismatch is the
-separate Monte Carlo study. (iv) Each oscillator is enable-started (enable
-held low, then released) to guarantee the fundamental mode. This mirrors how
-the chip enables an oscillator. A tie-high-and-kick start had excited
-higher-order ring modes that read as impossibly high frequencies, which is how
-I found out it matters.
+### SPICE model
 
-## Results
+For each Arm A oscillator, the generator reproduces the ring topology and
+places the SPEF `*D_NET` total capacitance on each ring node as a grounded
+lumped load. Two combined decks are generated:
 
-**Control (no parasitics).** All 32 oscillators read an identical 633.64 MHz, matching the standalone
-single-oscillator SPICE baseline (633.6 MHz). So the 32 instances are truly
-identical, and any spread in the parasitic deck comes from parasitics alone.
+- a control deck with no extracted capacitance; and
+- a nominal post-layout deck with the extracted capacitance.
 
-**With extracted parasitics.** The mean frequency is 567.6 MHz (10.4%
-below the control, from the loading), with a standard deviation of 10.9 MHz
-(1.93% of the mean). The slowest oscillator is RO10 (near 539 MHz), the
-fastest is RO4 (near 589 MHz), so the peak-to-peak spread is 50.2 MHz, which
-is **8.8% of the mean**. The extracted ring capacitances go from 7.4 to
-17.8 fF with a mean of 11.6.
+Only one oscillator is enabled during a chip measurement. The model therefore
+treats coupling to inactive neighboring logic as a fixed grounded load. Series
+wire resistance is omitted; a separate estimate put its stage-delay effect
+below 0.1% for these nets. This is an approximation and is one reason the work
+should be described as a nominal post-layout model rather than a sign-off or
+silicon model.
 
-**Mechanism.** Frequency tracks extracted ring capacitance at r = -0.997,
-slope -4.93 MHz/fF. The highest-capacitance oscillator is the slowest, the
-lowest-capacitance one is the fastest, and everything between lines up
-monotonically. The router simply wired each nominally identical oscillator
-with different metal.
+Transistors are held at nominal values to isolate implementation differences.
+Each oscillator starts with enable low and is released with an enable pulse.
+Frequency is measured over twenty periods after startup.
 
-**Spatial structure.** Frequency barely correlates with placement centroid
-(|r| < 0.27 for x, y, and radius). The bias is a per-instance routing
-fingerprint, not a smooth die gradient, which fits a global placer scattering
-each oscillator's cells. It stays just as deterministic and just as shared. In
-the planned `frequency ~ C(chip_id)*C(ro_position)` ANOVA it will show up as a
-large per-position term that repeats across chips.
+## Earlier 32-oscillator build
 
-![mechanism and spatial map](../sim/spice/gono/ro_gono.png)
+### Control
 
-![Arm A against matched Arm B](../sim/spice/gono/armB_prediction.png)
+All 32 no-parasitic instances read 633.640 MHz in the generated control deck.
+This checks that the generator gave them the same topology and stimulus.
 
-## Interpretation
+### Nominal extracted-capacitance result
 
-The automated flow injects a large, deterministic, position-locked frequency
-pattern into identical oscillators. It is set by the mask with nominal
-devices, so every fabricated chip carries the same pattern. A PUF built on it
-exposes fake entropy: its inter-oscillator responses are shared across chips
-and predictable from a single characterized device instead of being unique per
-chip. This is the failure mode the project predicted for naive automated PUF
-layout, and it is now confirmed in silicon-accurate simulation before
-committing to a one-shot fabrication.
+The mean frequency is 567.6 MHz. The population standard deviation across the
+32 routed instances is 10.9 MHz, or 1.93% of the mean. Frequencies range from
+about 539.1 MHz for RO10 to 589.2 MHz for RO4, a 50.2 MHz or 8.8%
+peak-to-peak spread. Extracted ring capacitance ranges from 7.4 to 17.8 fF.
 
-## Arm B, the matched macro
+Across these 32 routed instances, frequency and ring capacitance have Pearson
+*r* = -0.997 with a fitted slope of -4.93 MHz/fF. Correlation with placement
+centroid is weak (absolute *r* below 0.27 for the tested coordinates). These
+are descriptive statistics for one routed layout, not a random sample of
+layouts or chips, so no population confidence interval is claimed.
 
-Arm B is built. One oscillator was hardened into a fixed 60x40 um macro
-(`ro_macro_hard`) with LibreLane locally: DRC, LVS ("circuits
-match uniquely") and antenna all clean, ring intact (30 inverters, the NAND,
-the output buffer). Sixteen bit-identical copies place on a uniform 4x4 grid
-(`ro_array`), and the full array run is signed off: Magic and
-KLayout DRC, LVS, antenna, and power-grid connectivity (PSM) all clean
-(`array/pdnfix4_final/`, met4-only variant in `array/met4only_debug/`). The
-complete two-arm chip, both arms plus the measurement core on a TinyTapeout
-2x2 tile, also builds green through the same flow (branch `armb-dualarm`).
+![frequency association and spatial map](../sim/spice/gono/ro_gono.png)
 
-Every copy is the same GDS, so the internal ring nets carry identical
-parasitics and the layout-induced spread is zero by construction, against Arm
-A's 8.8%. The only per-copy wiring is `en` and `out`, which sit outside the
-oscillation loop and do not set the frequency. The control experiment
-(identical parasitics gave all 32 oscillators the same frequency) already
-confirmed this identity argument empirically. Whatever spread remains on Arm B
-in silicon is transistor mismatch, the real per-chip entropy.
+## Hardened Arm B macro
 
-### Matched frequency
+The `ro_macro_hard` layout passes the checked-in DRC, LVS, and antenna checks.
+Its standalone 16-copy array also has clean checked-in DRC, LVS, antenna, and
+power-connectivity results. Reusing the macro means that each instance has the
+same internal ring geometry. It does not guarantee identical frequencies in
+fabricated silicon or remove top-level environmental effects.
 
-The hardened macro's own routed build supplies its extracted parasitics
-(nom-corner SPEF). All 16 Arm B copies are the same GDS, so one simulation of
-that macro is every Arm B oscillator. `gen_macro_deck.py` builds the deck with
-the same methodology as the Arm A go/no-go (same models and corner,
-enable-pulse startup, lumped SPEF caps, 20-period measurement) and puts a
-no-parasitic control instance in the same run. The control instance reads
-633.15 MHz, which agrees with the Arm A control (633.640) within 0.08%. The
-matched Arm B frequency is **569.5 MHz**, 10.1% below the control. The
-macro's ring capacitance is 11.01 fF, inside the Arm A range of 7.4 to
-17.8 fF, and Arm A's own capacitance regression predicts 570.2 MHz for that
-load, only 0.12% away from the simulated value. The numerical (timestep)
-uncertainty is about 0.2% (5 ps against 1 ps `.tran`).
+### Macro frequency reference
 
-The matched frequency lands within 0.35% of the Arm A mean (567.6 MHz). In
-other words the macro behaves like a typical Arm A routing, except all sixteen
-copies share it, so the 8.8% inter-oscillator spread collapses to zero and the
-operating point (counter design, measurement window) stays put. The agreement
-with Arm A's own capacitance regression (predicted 570.2, simulated 569.5) is
-an independent check that the extraction-to-frequency model holds across two
-different builds. Every number above is re-derived from the raw files by
-`verify_macro.py`, 15 checks out of 15.
+The macro's own nominal SPEF is simulated with the same startup and
+lumped-capacitance method. The no-parasitic control reads 633.15 MHz, within
+0.08% of the earlier Arm A control. The extracted macro result is 569.5 MHz,
+10.1% below its control. Its extracted ring capacitance is 11.01 fF. Applying
+the earlier Arm A capacitance fit to that load predicts 570.2 MHz, 0.12% above
+the macro simulation.
 
-### Both arms from the one submitted chip
+The 569.5 MHz point is within 0.35% of the earlier Arm A mean. A 5 ps versus
+1 ps timestep comparison changes it by about 0.2%. Those checks support the
+numerical consistency of the macro-level model; they do not quantify model
+error against silicon.
 
-The two-arm TinyTapeout build (2x2 tile, precheck-passed) gives the whole
-experiment in one layout. `gen_dualarm_decks.py` rebuilds the Arm A decks
-from that build's own netlist and SPEF, same method as everything above.
-Results: control puts all 16 at exactly 633.64 MHz again; with extracted
-parasitics the auto-placed arm spreads 534.8 to 564.5 MHz (29.7 MHz = 5.4%
-p-p, std 1.34%, mean 551.7), tracking ring capacitance at r = -0.999 within
-this build. The matched arm is 569.5 MHz sixteen times over. The top-level
-SPEF contains zero nets from inside the macro copies; the extractor cannot
-tell the sixteen rings apart, which is the matching argument stated by the
-tool itself. Cross-build check: the ORIGINAL build's cap regression predicts
-this build's mean within 0.10%, and the cap spread predicts the p-p within
-3%. Note the fingerprint changed between builds (5.4% here vs 8.8% before):
-each run of the flow creates a new pattern and then freezes it into every
-die. `verify_dualarm.py` re-derives all of it from raw files, 9/9 checks.
+![earlier Arm A distribution and one Arm B macro reference](../sim/spice/gono/armB_prediction.png)
 
-![both arms from the one submitted chip](../sim/spice/gono/dualarm_gono.png)
+## Archived dual-arm layout
 
-### Mismatch Monte Carlo (the real entropy)
+The archived design occupies a TinyTapeout 2x2 block. `gen_dualarm_decks.py`
+was used to build the Arm A decks from that run's nominal SPEF and DEF. Its
+no-parasitic control gives all 16 generated Arm A instances 633.64 MHz. With
+extracted capacitance, Arm A ranges from 534.8 to 564.5 MHz: 29.7 MHz or 5.4%
+peak-to-peak, with a mean of 551.7 MHz and a population standard deviation of
+1.34%. Frequency and ring capacitance have *r* = -0.999 across the 16
+instances.
 
-`sim/spice/mc/` measures what remains on the matched arm. sky130 mismatch
-parameters are global per run (confirmed in the PDK source; a 16-oscillator
-deck gave 16 identical frequencies, which is itself the proof), so the v2
-method measures the common-draw sigma of one matched oscillator over 40 runs
-(0.345%, mean 568.9 MHz, within 0.11% of nominal) and divides by sqrt(31)
-for independent devices: per-ring mismatch sigma 0.062%. Virtual chips from
-that sigma give 50.7% key uniqueness (ideal 50). Fake-to-real ratio: Arm A's
-layout spread is 21.6x the mismatch sigma by std, 87x by peak-to-peak.
-Details, assumptions and the v1 postmortem are in `sim/spice/mc/README.md`.
+The current RTL is newer than this physical snapshot: it adds synchronized
+controls, selector latching, and a stopped-counter stability handshake. The
+archived DEF is also a mixed-stage checkpoint and is now rejected by the deck
+generator instead of producing missing coordinates. A coherent fresh final
+DEF/SPEF is required before regenerating or applying these values to the
+current candidate.
 
-## Limitations
+The top-level SPEF does not expand the sealed macro internals. Arm B is
+therefore represented by the one 569.5 MHz macro result repeated for its
+sixteen common internal layouts. The green points in the figure are not
+sixteen extracted top-level frequencies.
 
-- Lumped-capacitance model (argued above). Absolute MHz are good to a few
-  percent; the relative spread and the r = -0.997 mechanism are the solid part.
-- Nominal transistors, nominal corner only, on purpose. Mismatch and corners
-  are separate studies, and min/max SPEF corners exist to bracket things later.
-- The per-oscillator centroid is a coarse "position" when the placer scatters
-  cells.
-- Pre-silicon. This is silicon-accurate simulation, to be checked on the real
-  chips once they exist.
+The earlier build's fitted capacitance relation predicts the archived Arm A
+mean within 0.10%, and its fitted slope predicts the peak-to-peak span within
+about 3%. The two layouts have different Arm A patterns and spreads. This is
+consistent with each place-and-route result fixing its own deterministic
+component, but cross-die persistence cannot be inferred from two layout runs.
 
-## Reproducibility
+![archived dual-arm Arm A result and repeated Arm B macro reference](../sim/spice/gono/dualarm_gono.png)
 
-`sim/spice/gono/` has it all: `gen_decks.py` (builds decks from netlist plus
-SPEF), the decks themselves, `analyze.py` (stats, correlations),
-`make_figures.py`, `verify.py` and `verify_macro.py` (independent
-re-derivation of every number from the raw ngspice logs and the SPEF; all
-checks pass), `ro_positions.csv`, `gono_results.csv`, and
-the figures. The routed build's SPEF, DEF and netlist ship in `first_build/`. Frequencies were measured in ngspice (`-b`, KLU solver) over 20
-oscillation periods after enable.
+## Preliminary mismatch scale
+
+The separate study under `sim/spice/mc/` runs the matched macro with the PDK's
+mismatch switch enabled and process variation disabled. The PDK parameters
+used by ngspice are global draws for a device class, so 40 runs measure a
+common-draw frequency standard deviation of 0.345%, not independent mismatch
+among devices in one ring.
+
+The analysis divides that value by `sqrt(31)` to obtain a first-order 0.062%
+per-ring estimate under equal, independent stage sensitivities. The NAND's
+series/parallel structure and unequal device sensitivities make the scaling
+approximate. Forty draws also leave substantial sampling uncertainty. The
+analyzer reports a sampling-only interval of 0.051% to 0.080% for the scaled
+value at roughly 95% coverage, while leaving model-form uncertainty
+unquantified. The resulting layout-to-mismatch ratios
+(about 21.6 by standard deviation and 87 by peak-to-peak) are scale estimates,
+not measured entropy or security metrics.
+
+## Limitations and registered silicon test
+
+- The electrical model uses total capacitance as grounded lumped loads and
+  omits distributed resistance and active coupling.
+- Only nominal device and extraction corners are used for the main comparison.
+- The correlation coefficients describe routed instances in one layout each;
+  they are not estimates over a population of chips.
+- Arm B contributes one internal-macro simulation, repeated in figures to show
+  common geometry. Top-level supply, thermal, stress, and fabrication effects
+  remain unmodelled.
+- The mismatch scale uses a first-order transformation of 40 global PDK draws,
+  not direct independent-device Monte Carlo.
+- The architectural uniqueness and attack examples in the paper are
+  parametric illustrations, not measurements.
+
+The registered hardware prediction is that, under matched measurement
+conditions, Arm A will have greater centred-pattern correlation across chips
+than Arm B. Multiple chips and repeated voltage/temperature measurements are
+needed to test that prediction. A negative or weak result would be informative
+and would require revising the interpretation above.
+
+## Reproducibility map
+
+- `gen_decks.py`, `ro_all_*.spice`, `ctrl2.txt`, `par2.txt`, and `verify.py`:
+  earlier 32-oscillator build.
+- `gen_dualarm_decks.py`, `dualarm_*.spice`, `dualarm_*_out.txt`, and
+  `verify_dualarm.py`: Arm A in the archived dual-arm layout.
+- `gen_macro_deck.py`, `ro_macro_matched*.spice`, `macro*_out.txt`, and
+  `verify_macro.py`: one hardened-macro reference.
+- `analyze.py` and the figure scripts: descriptive tables and plots.
+- `first_build/` and `dualarm/build_debug/`: routed inputs retained for the
+  two Arm A analyses.
+
+The verify scripts recompute selected headline quantities from the archived
+logs. They are useful consistency checks, not independent experimental
+replications. The portable runner resolves local PDK paths in a temporary deck
+without editing the checked-in file. The original tool/PDK revision is still
+unknown and should not be invented when reporting a reproduction.

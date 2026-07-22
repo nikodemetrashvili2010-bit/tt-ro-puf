@@ -28,10 +28,10 @@ def arrow(x1, y1, x2, y2, label="", color=GREY, off=1.8):
 
 # Arm A
 box(3, 32, 30, 17, ORANGE, "Arm A: 16 oscillators",
-    "auto-placed by the flow\nevery copy gets different\nrouting (different metal)")
+    "auto-placed by the flow\ninstance routing can add\ndifferent parasitic loads")
 # Arm B
 box(3, 8, 30, 17, GREEN, "Arm B: 16 oscillators",
-    "16 copies of ONE hardened\nmacro, identical layout\nby construction")
+    "16 copies of ONE hardened\nmacro with common internal\nlayout geometry")
 # mux + core
 box(44, 20, 28, 17, BLUE, "measurement core",
     "select 1 of 32 oscillators,\ncount its edges in a fixed\nwindow of 1000 clk cycles")
@@ -43,8 +43,8 @@ arrow(33.6, 40, 44, 32, "16x en / out", ORANGE, off=2.4)
 arrow(33.6, 16, 44, 24, "16x en / out", GREEN, off=-3.0)
 arrow(72.6, 28.5, 82.4, 28.5, "16-bit count", BLUE, off=2.2)
 
-ax.text(55, 57.5, "One chip, both layouts. Same circuit in both arms, so any "
-        "frequency difference between the arms comes from layout.",
+ax.text(55, 57.5, "One design, two layout methods. Nominal post-layout simulation "
+        "isolates the implementation contribution; silicon adds variation.",
         ha="center", fontsize=10.5, style="italic", color="#333333")
 fig.tight_layout()
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chip_block.png")

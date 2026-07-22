@@ -1,314 +1,393 @@
-# Automated Layout Manufactures Fake Entropy in Ring-Oscillator PUFs: A Pre-Silicon Study on the Open-Source sky130 Flow
+# Deterministic Layout Bias in a Ring-Oscillator PUF: A Pre-Silicon Study on the Open SKY130 Flow
 
 **Nikoloz Demetrashvili** · Independent researcher · Georgia
 
-Draft, 2026-07-15
+Draft, 2026-07-22
 
 ---
 
 ## Abstract
 
-A ring-oscillator PUF is only secure if the frequency differences between its
-identical oscillators come from random manufacturing variation. I show that on
-the open-source ASIC flow used by low-cost shuttles, a big part of the
-difference is not random at all. I took a 32-oscillator RO-PUF through the
-OpenLANE/OpenROAD flow on the SkyWater sky130 PDK, extracted the parasitics of
-the routed layout, and simulated every oscillator in SPICE. The transistors
-were held at nominal, so the only thing that differed between oscillators was
-the layout. In the chip I am submitting for fabrication, that alone spreads
-the auto-placed arm's sixteen identical oscillators over a **5.4%
-peak-to-peak frequency range**, with extracted routing capacitance explaining
-the spread almost completely (Pearson *r* = −0.999). An earlier build with
-all 32 oscillators auto-placed showed the same effect at 8.8% and *r* =
-−0.997, so the finding repeats across builds. The pattern is
-printed by the mask. Every chip gets the same one. An attacker who
-characterizes a single device can predict the bits on all the others, which
-makes this fake entropy, not real entropy. The fix is known from FPGA work, and here I bring it to this open ASIC
-flow: harden one oscillator into a fixed macro and step out bit-identical
-copies. Layout spread goes to zero by construction and the
-operating point survives; the matched oscillator simulates at 569.5 MHz,
-within 0.35% of the auto-placed arm's mean. In the submitted two-arm chip the
-effect and the fix sit side by side: the auto-placed arm spreads while the
-matched arm holds one frequency. The whole check runs on open tools, OpenROAD
-extraction plus ngspice, so anyone can run it before paying for a one-shot
-fabrication slot. Everything here is pre-silicon. Validation on real
-chips waits for a TinyTapeout run.
+Ring-oscillator physical unclonable functions (RO-PUFs) rely on manufacturing
+variation to distinguish nominally identical oscillators. Their physical
+implementation can also introduce a deterministic frequency pattern. This
+work isolates that implementation contribution in layouts produced by the
+OpenLane/OpenROAD flow with the open SKY130 process design kit. Routed
+netlists and extracted capacitances are simulated at the nominal device
+corner; no fabricated devices have been measured.
+
+In an archived dual-arm physical snapshot, the 16 automatically placed
+oscillators have a 5.4% peak-to-peak nominal post-layout frequency spread.
+Frequency and total
+extracted ring capacitance are strongly anticorrelated (Pearson
+*r* = -0.999). An earlier automatically placed 32-oscillator layout showed an
+8.8% spread and *r* = -0.997. These results show a sizeable deterministic
+layout component in these particular routed designs. They do not establish
+how that component compares with device mismatch across fabricated dies.
+
+The comparison arm uses 16 instances of one hardened oscillator macro with a
+common internal layout. One extraction and one nominal post-layout simulation
+of that macro produce a 569.5 MHz reference result. Repeating that value for
+the 16 instances in a plot represents their common internal geometry; it is
+not 16 independent simulations or measurements. The matched construction is
+intended to suppress internal-layout differences, while top-level routing,
+process variation, voltage, temperature, ageing, and measurement noise remain
+to be evaluated.
+
+The immediate contribution is a repository-traceable pre-fabrication
+diagnostic for
+separating nominal layout bias from the intended source of RO-PUF variation.
+Whether the observed layout pattern repeats across dies, affects uniqueness,
+or creates a practical prediction attack remains a registered hypothesis for
+silicon testing.
 
 ## 1. Introduction
 
-An RO-PUF compares the frequencies of identical ring oscillators and turns
-each comparison into one response bit [1]. The appeal is that the secret is
-never stored anywhere. It is read out of manufacturing randomness, and that
-only works if the randomness is actually random. If part of the frequency
-difference is shared across dies, those response bits come out the same on
-every chip, and an attacker with one characterized device can predict them on
-the rest.
+An RO-PUF compares the frequencies of nominally identical ring oscillators
+and converts one or more comparisons into response bits [1]. Ideally, the
+useful chip-to-chip differences arise from manufacturing variation. In
+practice, placement and routing can give instances different parasitic loads,
+adding a deterministic component to the response.
 
-None of this is a new worry. Systematic and spatially correlated process
-variation has been on the RO-PUF threat list for years [2, 3, 4], and the FPGA
-community built a whole toolbox against it: hard macros, controlled placement,
-randomized placement, configurable oscillators, statistical bias removal
-[2, 5, 6, 7]. Every one of those tricks is a way of stopping the
-implementation tool from giving the oscillators different physical
-surroundings. But most of that literature is on FPGAs, where the bias comes from LUTs
-and switch-box routing on a fixed fabric.
+That distinction matters. A fixed layout pattern is not, by itself, evidence
+of a security failure: random mismatch may be larger, comparisons may cancel
+common structure, and response processing may reduce bias. But a
+layout component that is stable across chips could reduce uniqueness or make
+some comparisons easier to predict. Establishing either outcome requires
+measurements from multiple fabricated devices under controlled conditions.
 
-But the hardware world changed. Open PDKs and automated RTL-to-GDSII
-flows [9, 10] now let individuals tape out real silicon through shuttles like
-TinyTapeout and Efabless ChipIgnite. The bias source on these flows is
-different: it is the metal that automated place-and-route wraps around each
-standard-cell oscillator. I could not find anyone who had measured whether
-that bias is big enough to break a PUF, or shown how to catch it before paying
-for a fabrication slot you only get once. This paper does both for the
-OpenLANE/sky130 flow.
+This paper reports the pre-silicon part of that investigation. It asks a
+narrow question: how much nominal frequency variation is introduced by the
+physical implementation of one open-source RO-PUF design, with transistor
+parameters held fixed? The study contributes:
 
-Three things come out of it:
+- nominal post-layout results for an automatically placed oscillator array,
+  including an earlier 32-oscillator layout and the 16-oscillator Arm A in an
+  archived dual-arm build;
+- a capacitance-based explanation for the observed spread in those layouts;
+- a matched-macro Arm B that gives every instance the same internal geometry;
+- scripts and checks that allow the same diagnostic to be run before
+  fabrication; and
+- explicit hypotheses and measurement requirements for the later silicon
+  study.
 
-- a causal measurement: in the submitted chip the automated flow spreads
-  identical oscillators by 5.4% peak-to-peak (8.8% in an earlier build),
-  deterministically, the same on every die, with the spread tracking
-  extracted routing capacitance at *r* = −0.999;
-- a fix that works inside the same open flow: a hardened, step-and-repeated
-  macro, which removes the spread by construction and lands at 569.5 MHz,
-  right at the auto-placed arm's operating point;
-- a go/no-go test any shuttle user can run before tapeout, built from nothing
-  but OpenROAD extraction and ngspice.
+The findings are deliberately limited to the routed layouts and simulation
+model described here. They are predictions about nominal implementation
+effects, not measurements of fabricated PUF entropy, reliability, uniqueness,
+or attack success.
 
 ## 2. Background and related work
 
-Suh and Devadas introduced the RO-PUF [1]. Maiti and Schaumont showed that
-systematic variation hurts uniqueness and proposed configurable-RO
-compensation [2]; later they measured the spatial structure of the variation
-at scale [3]. Newer work treats strong spatial correlation as an outright
-security threat [4]. On FPGAs, matched hard macros and controlled or
-randomized placement raise uniqueness, and uncontrolled placement does worst
-[2, 5]. Other papers remove the systematic part statistically [6] or design
-constructions that tolerate bias [7]. Someone has already built an RO-PUF on
-sky130 through TinyTapeout [11], but as a working implementation. It did not
-ask where its entropy came from. RO-PUFs have also been measured on ASICs at
-scale: Katzenbeisser et al. characterized five PUF types, ring oscillators
-included, across 96 ASICs in a commercial 65 nm process [12]. That work
-treats the finished chip as a given and asks how good the PUFs are. On a
-closed commercial flow that is the only question you can ask, because the
-layout step is not yours to open.
+Suh and Devadas introduced the widely used RO-PUF construction [1]. Maiti and
+Schaumont examined improved ring-oscillator PUF designs and compensation for
+systematic effects [2], while later FPGA studies mapped spatial variation and
+studied placement-dependent behaviour [3, 5]. Other work has proposed
+statistical bias reduction, configurable structures, and placement-aware
+designs [5-8]. Katzenbeisser et al. evaluated several PUF constructions,
+including ring oscillators, across 96 ASICs [12].
 
-So the matched-layout fix is established on FPGAs, placement-dependent
-bias has been studied there in depth, and ASIC RO-PUFs have been measured
-after fabrication. What I did not find is the layout tool's own contribution
-shown and quantified on the automated open-source ASIC flow, together with a
-test people can run before fab. The full bibliography is in
-`related_work.md`.
+Prior literature does not support the simple rule that any spatial or
+systematic structure makes an RO-PUF predictable. In particular, Wilde,
+Hiller, and Pehl found that adjacent-oscillator comparisons reduced exploitable
+spatial structure in their data and that estimated covariance was too small
+for their proposed predictor to outperform the relevant baseline [4]. That is
+important counterevidence: layout bias must be evaluated together with the
+comparison scheme, mismatch distribution, sampling plan, and attacker model.
+
+Open-source ASIC flows make a useful additional experiment possible. The
+designer can inspect the routed netlist and parasitic extraction before
+fabrication, rather than treating the physical implementation as opaque.
+OpenLane/OpenROAD [9] and the open SKY130 PDK [10] provide that setting, and a
+separate TinyTapeout RO-PUF project demonstrates the general feasibility of
+the circuit family in the same ecosystem [11]. The present work focuses on a
+specific missing measurement: the nominal frequency component associated with
+instance-dependent routing in one automated layout.
 
 ## 3. Design under test
 
-The design is a two-arm RO-PUF, `tt_um_nikodemetrashvili20_ro_puf`, sized for
-one TinyTapeout tile on sky130. Each arm has sixteen oscillators. A shared
-serial core enables one oscillator at a time and counts its edges over a fixed
-window, so every oscillator gets measured the exact same way. The oscillator
-itself is a 31-stage ring: an enable NAND, thirty inverters, and an isolating
-output buffer tapped at the middle of the chain, all sky130 standard cells
-(`nand2_1`, `inv_1`, `buf_1`). A pre-layout SPICE check puts the ring at
-633 MHz. A sky130 flip-flop counts that comfortably.
+The current candidate, `tt_um_nikodemetrashvili20_ro_puf`, occupies a
+TinyTapeout 2x2 tile. It contains two 16-oscillator arms and a shared serial
+measurement core. The core enables one oscillator at a time and counts its
+edges over a fixed window.
 
-Figure 1 shows the plan of the chip. In the first build both arms are
-auto-placed by the flow, so the array shows the automated-layout behaviour. I call that Arm A. Arm B, the matched
-version, is built in Section 6.
+The nominal dual-arm physical results below come from an archived build of an
+earlier RTL revision. The current RTL adds synchronized controls, selector
+latching, and a stopped-counter stability handshake. Because those changes can
+alter placement and routing, the archived render, SPEF, metrics, and 5.4%
+result must not be treated as the current candidate's physical signoff.
+
+Each oscillator is a 31-stage ring built from SKY130 standard cells: an enable
+NAND, 30 inverters, and an isolating output buffer tapped near the middle of
+the chain. A nominal pre-layout SPICE control is approximately 633 MHz. Arm A
+allows the normal flow to place and route each oscillator. Arm B instantiates
+16 copies of one hardened oscillator macro on a regular grid. The logical
+oscillator is the same in both arms; the physical implementation method is the
+experimental variable.
+
+Figure 1 summarizes the design. The comparison is not a claim that the two
+arms are otherwise perfect experimental twins. Arm B has a macro boundary and
+different top-level connectivity, and those differences must be considered
+when interpreting both simulation and future measurements.
+
+![Figure 1. Block diagram of the two-arm design. Arm A lets the flow place and route each oscillator separately; Arm B repeats one hardened macro with common internal geometry.](figures/chip_block.png)
 
 ## 4. Method
 
-**Parasitics from the real layout.** Nothing is re-extracted or approximated.
-The OpenLANE build outputs a routed gate-level netlist and OpenROAD RC
-extraction (SPEF) at the nominal corner, the same parasitics the flow itself
-uses for timing signoff. The netlist keeps all 32 oscillators with their
-internal ring nodes, and the SPEF has a capacitance for every net.
+### 4.1 Extraction and deck generation
 
-**Per-oscillator SPICE.** A small generator reads the netlist and the SPEF and
-writes out each oscillator exactly as routed. Each ring net's total extracted
-capacitance (ground plus coupling, already summed on the SPEF `*D_NET` record)
-hangs on the node as one lumped capacitor. Two decks come out: a control deck
-with no parasitics and a parasitic deck with the extracted capacitance.
+The flow starts from the routed gate-level netlist and the OpenROAD SPEF at the
+nominal corner. A generator identifies each oscillator and adds the total
+extracted capacitance from each ring net's SPEF `*D_NET` record as a lumped
+load. It produces two ngspice decks per automatically placed oscillator:
 
-**Why lumped caps are enough here.** Only one oscillator runs at a time in
-this design. While one is measured its neighbours sit still, so their coupling
-capacitance acts as a fixed load to ground, which is exactly what the lumped
-total models. Series wire resistance on these short nets shifts a stage delay
-by under 0.1%, so I dropped it. Holding the transistors at nominal is the
-point of the experiment, not a shortcut: it leaves layout parasitics as the
-only difference between oscillators. Random device mismatch is a separate
-study (Section 7).
+1. a control deck without extracted parasitic capacitance; and
+2. a post-layout deck with the extracted ring-net capacitances.
 
-**Startup.** Each oscillator is enable-started. The enable sits low, then
-releases, which injects one edge and guarantees the fundamental mode, the same
-way the chip does it. I learned this from a mistake: a naive tie-high-and-kick
-start excited higher-order ring modes that read as impossibly high
-frequencies. Frequency is measured in ngspice over twenty periods after
-enable.
+The device models remain nominal. This isolates the modelled layout
+contribution rather than attempting to simulate the population distribution
+of fabricated parts.
 
-## 5. Results
+For the matched arm, the hardened oscillator macro is extracted and simulated
+once. Because the 16 macro instances use the same internal GDS geometry, that
+single result is a useful internal-layout reference. It does not include 16
+independent mismatch draws, instance-specific top-level parasitics, or 16
+separate observations.
 
-This section measures the first build, the one with all 32 oscillators
-auto-placed. It is where I found the effect. The submitted chip gets the same
-treatment in Section 6, and its numbers are the ones on the cover.
+### 4.2 Approximation and startup
 
-**Control.** With no parasitics, all 32 oscillators read exactly 633.640 MHz.
-One value, zero spread, matching the standalone single-oscillator baseline. So
-the instances really are identical, and whatever spread shows up in the
-parasitic deck comes from parasitics alone.
+Only one oscillator is intended to run at a time. The present decks therefore
+use total capacitance as a lumped load and omit distributed wire resistance.
+This is a modelling choice, not a sign-off guarantee. Coupling activity,
+distributed RC, supply-network interaction, package effects, and substrate
+effects are not represented in full. The relative nominal results are more
+informative than the absolute frequency prediction.
 
-**With extracted parasitics.** The 32 identical oscillators fan out. The
-mean is 567.6 MHz, which is 10.4% below the control because of the loading.
-The standard deviation is 10.9 MHz (1.9% of the mean). The slowest
-oscillator (RO10) runs near 539 MHz and the fastest (RO4) near 589 MHz, so
-the peak-to-peak spread is 50.2 MHz, which is **8.8% of the mean**. The
-extracted ring capacitances go from 7.4 to 17.8 fF with a mean of 11.6.
+Each oscillator starts disabled and is then enabled, which injects the
+transition needed for startup. Frequency is measured over 20 periods after
+enable. This procedure avoids a previously observed simulation artefact in
+which an artificial initial condition excited an unintended ring mode.
 
-This spread is not noise. Frequency tracks extracted ring capacitance with
-*r* = −0.997 at −4.93 MHz/fF (Figure 2a). The oscillator the router loaded
-heaviest (RO10, 17.8 fF) is the slowest one. The oscillator it loaded lightest
-(RO4, 7.4 fF) is the fastest. Everything in between lines up monotonically.
-There is no mystery about the cause. The router wired each supposedly
-identical oscillator with different metal.
+### 4.3 Reported statistics
 
-Frequency barely correlates with where the oscillators sit (|*r*| < 0.27
-against *x*, *y*, and distance from center; Figure 2b). So the bias is a
-per-instance routing fingerprint rather than a smooth gradient across the die,
-which is what you would expect from a global placer scattering each
-oscillator's cells. That does not make it less dangerous. It is fixed by the
-mask and it repeats on every fabricated die.
+For each automatically placed array, the analysis reports mean, sample
+standard deviation, range, peak-to-peak range divided by the mean, and Pearson
+correlation between frequency and extracted ring capacitance. The oscillator
+instances within one routed design are not independent samples from a chip
+population. Consequently, the reported correlations are descriptive for that
+layout; no population confidence interval or across-die inference is claimed.
 
-## 6. The fix
+## 5. Automatically placed arrays
 
-If the problem is that identical oscillators got different layouts, the cure
-is to give them the same layout. I hardened one oscillator into a fixed
-60 × 40 µm macro with LibreLane on sky130. The macro passes DRC, LVS
-("circuits match uniquely") and antenna checks with the ring intact: thirty
-inverters, the enable NAND, the buffer. Sixteen bit-identical copies then go
-down on a uniform grid, and the full array passes DRC, LVS, antenna and
-power-grid connectivity. The complete two-arm chip, both arms plus the
-measurement core on a TinyTapeout 2×2 tile, builds through the same flow and
-passes the same checks.
+### 5.1 Earlier 32-oscillator layout
 
-Every copy is the same GDS. The internal ring nets therefore carry identical
-parasitics, and the oscillator-to-oscillator layout spread is zero by
-construction, against 8.8% on the auto-placed arm (Figure 3). The only wiring
-that differs per copy is enable and output. Those sit outside the oscillation
-loop and do not set the frequency. The control result in Section 5 already
-proved the logic: identical parasitics gave identical frequency. What is left
-on a matched array is transistor mismatch, the real per-chip randomness a PUF
-is supposed to run on.
+The earlier build automatically placed all 32 oscillators. In the no-parasitic
+control, the decks produced the same nominal frequency, approximately
+633.640 MHz. With extracted capacitance, the mean was 567.6 MHz and the sample
+standard deviation was 10.9 MHz. Frequencies ranged from approximately 539 to
+589 MHz, a 50.2 MHz or 8.8% peak-to-peak spread relative to the mean.
 
-**The matched frequency.** The macro's own routed build has its own extracted
-parasitics (nom-corner SPEF), and since every copy is the same GDS, simulating
-the macro once is simulating every Arm B oscillator. I used the same deck flow
-as Section 4. Same models, same startup, same 20-period measurement. The
-matched oscillator runs at **569.5 MHz**. That is 10.1% below its
-no-parasitic control of 633.15 MHz, and that control agrees with the
-Section 5 control within 0.08%.
-Two more checks say the number is solid. The macro's 11.0 fF of ring
-capacitance lands mid-range of Arm A's 7.4 to 17.8 fF, and Arm A's own
-capacitance fit predicts 570.2 MHz for that load; the simulation came in 0.12%
-under it. Two different builds, one model, same answer. In short, the matched
-design behaves like a typical Arm A routing (within 0.35% of the Arm A mean),
-except all sixteen copies share it. The operating point stays. The 8.8% spread
-goes to zero (Figure 3). Absolute numbers carry about 0.2% numerical timestep
-uncertainty, forty times smaller than the effect being measured.
+Extracted ring capacitance ranged from 7.4 to 17.8 fF. Frequency and
+capacitance had Pearson *r* = -0.997, with a fitted slope of approximately
+-4.93 MHz/fF (Figure 2a). Correlations with simple placement coordinates were
+smaller in magnitude (|*r*| < 0.27; Figure 2b). For this layout and model, the
+result is consistent with instance-specific routing load rather than a simple
+die-wide spatial gradient.
 
-**Both arms in one chip.** The submitted two-arm build lets me run the whole
-experiment on a single layout. Its extraction makes the matching argument by
-itself: the top-level SPEF contains all 496 ring nets of the auto-placed arm,
-and not one net from inside the sixteen macro copies, because they are one
-sealed block. The auto-placed arm's sixteen oscillators spread 29.7 MHz, 5.4%
-peak-to-peak, with frequency tracking ring capacitance at r = -0.999 inside
-this build alone (Figure 4). The matched arm sits at 569.5 MHz, sixteen
-copies, one value. Two details are worth stopping on. First, the original
-build's capacitance regression predicts this build's mean within 0.10%, so
-the model now holds across three separate builds. Second, this build's Arm A
-pattern differs from the first build's (5.4% versus 8.8%, mean 551.7 versus
-567.6). The bias is not a property of the circuit. Every run of the tool creates
-a new pattern, and that pattern is then frozen into every chip made from
-that mask.
+![Figure 2. Nominal post-layout results for the earlier 32-oscillator automatically placed layout: frequency versus extracted ring capacitance, with the no-parasitic control, and a spatial frequency map.](../sim/spice/gono/ro_gono.png)
 
-## 7. What this means for PUF entropy
+### 5.2 Archived dual-arm Arm A
 
-To connect frequency spread to PUF metrics I model a population of chips. An
-oscillator's frequency is a shared layout bias plus independent per-chip
-mismatch, and each chip's key is a set of pairwise comparisons. With the
-auto-placed arm carrying the shared bias and the matched arm carrying none,
-the model (200 chips, eight comparison bits) gives inter-chip uniqueness of
-13.2% for the auto-placed arm against 49.9% for the matched arm. Ideal is 50%.
-An attacker who predicts a new chip's key from oscillator position alone
-succeeds 91.2% of the time on the auto-placed arm. On the matched arm he does
-no better than a coin flip (49.2%).
+The archived dual-arm layout contains 16 automatically placed oscillators in
+Arm A. Its nominal post-layout frequencies have a mean of 551.7 MHz and a
+29.7 MHz peak-to-peak range, or 5.4% of the mean. Frequency and extracted
+ring capacitance have Pearson *r* = -0.999 (Figure 4).
 
-I want to be careful about what these numbers are. They use assumed bias and
-mismatch magnitudes, so they illustrate the mechanism; they are not silicon
-measurements. The silicon-accurate result is the extracted-parasitic spread in
-Section 5. But they make the stakes plain. A PUF on the auto-placed array
-leaks most of its key to anyone who characterizes a single chip.
+The earlier and archived dual-arm layouts do not have the same frequency pattern or
+spread. That difference supports the narrower conclusion that routing choices
+can materially affect the nominal pattern. It does not show what proportion
+of the response will be common across fabricated dies from either mask.
 
-**How big is the real entropy?** A Monte Carlo pass over the PDK's own
-mismatch models puts a number on it. sky130's mismatch parameters draw once
-per ngspice run and shift every device of a class together, so I measured
-the matched oscillator's common-draw sigma over 40 runs (0.345%) and scaled
-it by sqrt(31) for independent per-device draws, which is a first-order estimate
-for 31 near-identical stages. That gives a per-ring mismatch sigma of
-0.062%. Virtual chips built from it reach 50.7% key uniqueness, right at the
-ideal. Held against it, the submitted chip's auto-placed arm carries a layout spread 21.6
-times larger by standard deviation and 87 times by peak-to-peak. That is the
-problem in two numbers. The fake entropy is more than twenty times bigger
-than the real entropy under it, and only the fake part repeats across
-chips. The twenty comes from an estimated denominator, so treat it as a
-scale, not a precision figure. Silicon will measure it directly.
+## 6. Matched-macro arm
+
+The matched construction hardens one oscillator as a 60 x 40 micrometre
+macro. The macro-level layout passes the available DRC, LVS, antenna, and
+connectivity checks, and the 16 instances are placed on a regular grid in Arm
+B. These checks establish consistency with the implemented design rules and
+netlist; they do not validate PUF quality or silicon behaviour.
+
+The extracted macro has approximately 11.0 fF of total ring capacitance. One
+nominal post-layout simulation gives 569.5 MHz, compared with a no-parasitic
+control of approximately 633.15 MHz. The earlier Arm A capacitance fit predicts
+about 570.2 MHz at that load. This agreement is a useful cross-check on the
+nominal model, but it is not an independent silicon validation.
+
+![Figure 3. The earlier automatically placed array beside the 569.5 MHz nominal macro reference repeated at 16 Arm B positions. The repeated green points represent common internal geometry and are not independent observations.](../sim/spice/gono/armB_prediction.png)
+
+Figures 3 and 4 repeat the 569.5 MHz macro result across 16 Arm B positions to
+show that the internal macro geometry is common. The repeated points must not
+be read as 16 simulations, 16 measurements, or evidence of no Arm B spread in
+fabricated devices. The construction removes intended differences in the
+internal routed ring. Device mismatch, local process gradients, top-level
+enable and output routing, supply variation, temperature, ageing, and
+measurement noise can still separate the instances.
+
+![Figure 4. Archived dual-arm Arm A nominal post-layout frequencies beside the same single 569.5 MHz macro result repeated at 16 Arm B positions; the Arm B points are not 16 simulations or measurements.](../sim/spice/gono/dualarm_gono.png)
+
+## 7. Security interpretation and planned silicon test
+
+### 7.1 Parametric examples
+
+The analysis repository includes a simple virtual-population model in which
+each oscillator frequency is the sum of a shared layout term and an
+independent mismatch term. Under one chosen set of assumptions, 200 virtual
+chips and eight adjacent comparison bits produced 13.2% inter-chip Hamming
+distance for the automatically placed pattern and 49.9% for the matched
+pattern; a position-based predictor scored 91.2% and 49.2%, respectively.
+
+Those values are illustrative outputs of the assumed model. They are not
+measurements, calibrated forecasts, confidence bounds, or evidence of a
+practical attack. Changing the mismatch scale, covariance, comparison pairs,
+noise, or attacker information can change the result substantially. The
+repository should therefore use these numbers only to explain the proposed
+mechanism and motivate the silicon experiment.
+
+### 7.2 Mismatch estimate
+
+A separate 40-run ngspice Monte Carlo exercise used the PDK models' available
+global draw and observed a frequency standard deviation of 0.345%. Dividing
+by `sqrt(31)` gives 0.062% as a first-order scale estimate for independent
+contributions from 31 similar stages. This transformation assumes independence
+and equal contribution, neither of which is established by those 40 global
+draws. A sampling-only approximation puts the common-draw sigma at 0.283% to
+0.443% and the scaled value at 0.051% to 0.080% with about 95% coverage. That
+interval does not include uncertainty from the `sqrt(31)` model itself. The
+result is not a measured mismatch distribution or an entropy estimate.
+
+Comparisons such as 21.6x by standard deviation or 87x by peak-to-peak depend
+on that approximate denominator and mix statistics with different sampling
+properties. They may be useful as sensitivity examples, but they should not
+be presented as measured ratios between layout variation and manufacturing
+variation.
+
+### 7.3 Registered hypotheses and metrics
+
+The central silicon hypothesis is that Arm A will retain more of the nominal
+layout pattern across dies than Arm B. A proper test requires multiple chip
+IDs, repeated measurements, matched voltage and temperature settings, and a
+fixed comparison rule. The firmware records chip and condition labels so the
+analysis can keep those groups separate.
+
+The planned descriptive metrics are:
+
+- repeatability within each chip and condition, including timeout and missing
+  oscillator rates;
+- centered pattern correlation across distinct chips measured under the same
+  known condition;
+- inter-chip Hamming distance for a predeclared set of adjacent comparison
+  pairs; and
+- within-chip response changes across voltage and temperature conditions.
+
+Results will be reported only when the grouping and completeness requirements
+are met. A single chip, one condition, incomplete oscillator vectors, or
+unknown clock/window settings are insufficient for the corresponding
+population or reliability claim. Sample size and uncertainty intervals should
+be specified before interpreting the security significance of the data.
 
 ## 8. Limitations
 
-The frequency results use a lumped-capacitance model (argued in Section 4).
-Absolute frequencies are good to a few percent; the relative spread and the
-*r* = −0.997 mechanism are the solid part. Transistors are nominal at the
-nominal corner on purpose, to isolate the layout effect. Min/max corners exist
-and can bracket things later. The per-oscillator centroid is a rough stand-in
-for "position" when the placer scatters cells. The uniqueness and
-predictability numbers in Section 7 are a parametric projection, not a
-measurement. And everything here is pre-silicon. It is exactly the kind of
-simulation you run before fabrication, which is the point, and it will be
-checked on real TinyTapeout chips.
+This study is pre-silicon. It measures neither a fabricated oscillator nor a
+PUF response population. Its main limitations are:
 
-## 9. Conclusion and future work
+- nominal transistor models do not capture random local mismatch;
+- lumped capacitance omits parts of distributed RC and dynamic coupling;
+- one earlier layout and one archived dual-arm layout do not define a distribution
+  over place-and-route seeds, floorplans, flows, or technologies;
+- oscillator instances within a layout are related observations, so ordinary
+  instance-level confidence intervals would overstate the evidence;
+- Pearson correlation establishes association in the modelled layout but does
+  not by itself prove a complete causal or security model;
+- the Arm B plot repeats one macro result and cannot quantify fabricated Arm B
+  variation;
+- the 40-run global Monte Carlo exercise does not reproduce independent local
+  device mismatch and is too small for a precise tail estimate;
+- voltage, temperature, supply noise, ageing, package, and measurement-system
+  effects remain uncharacterized; and
+- uniqueness, reliability, min-entropy, and attack success require a
+  multi-chip data set and a stated threat model.
 
-On the open-source sky130 flow, automated place-and-route puts a large,
-deterministic frequency bias onto identical ring oscillators. It is the same
-on every die. Per-oscillator routing capacitance explains almost all of it. A
-naive RO-PUF would ship that pattern as its "entropy" on every chip it ever
-manufactured. A hardened, step-and-repeated macro removes the bias by
-construction, and the test that catches it needs only open tools and the
-design's own extracted parasitics, so any shuttle user can run it before a
-one-shot fabrication.
+These limitations do not erase the observed nominal layout component. They
+set the boundary on what can be concluded from it.
 
-The next step is silicon. Once the dual-arm chip comes back from
-fabrication, I will measure both arms across dies, voltage and temperature.
-The prediction to test is specific. The auto-placed arm's pattern should
-repeat across chips, with the strength of the extracted 5.4% spread, and the
-matched arm's pattern should not repeat at all.
+## 9. Conclusion
 
-## Figures
+Two automatically placed SKY130 RO arrays show a nominal post-layout
+frequency pattern that tracks extracted ring capacitance closely. The
+archived dual-arm Arm A has a 5.4% peak-to-peak spread and *r* = -0.999; an earlier
+32-oscillator layout has an 8.8% spread and *r* = -0.997. A hardened macro
+provides a 569.5 MHz common-internal-layout reference for Arm B.
 
-- **Figure 1** (`docs/figures/chip_block.png`): block diagram of the
-  two-arm chip. Both arms hold the same circuit; only the layout method
-  differs.
-- **Figure 2** (`sim/spice/gono/ro_gono.png`): (a) oscillation frequency
-  against extracted ring capacitance, with the linear fit (−4.93 MHz/fF,
-  *r* = −0.997) and the no-parasitic control line; (b) spatial map of
-  oscillator frequency.
-- **Figure 3** (`sim/spice/gono/armB_prediction.png`): per-oscillator
-  frequency and layout-induced spread, auto-placed arm (8.8%) against matched
-  macro (0%, at its measured 569.5 MHz).
-- **Figure 4** (`sim/spice/gono/dualarm_gono.png`): both arms measured from
-  the one submitted two-arm build. Auto-placed arm 5.4% spread, matched arm
-  one frequency.
+The supported conclusion is that automated physical implementation introduced
+a sizeable deterministic component in these routed designs. The stronger
+claims remain open: whether the pattern is stable across fabricated dies,
+whether it dominates mismatch and environmental noise, whether it reduces
+useful PUF uniqueness, and whether an attacker can exploit it. The current
+dual-arm candidate and grouped firmware protocol are intended to answer those
+questions with silicon data, after a fresh physical flow replaces the stale
+dual-arm snapshot.
 
 ## References
 
-See `related_work.md` for the annotated bibliography. Key references: Suh &
-Devadas, DAC 2007 [1]; Maiti & Schaumont, J. Cryptology 2011 [2]; Maiti et
-al., HOST 2010 [3]; OpenLANE, 2020 [9]; SkyWater sky130 PDK [10]; TinyTapeout
-sky130 RO-PUF [11]; Katzenbeisser et al., CHES 2012 [12].
+[1] G. E. Suh and S. Devadas, "Physical Unclonable Functions for Device
+Authentication and Secret Key Generation," *Proceedings of the 44th ACM/IEEE
+Design Automation Conference (DAC)*, pp. 9-14, 2007.
+https://doi.org/10.1145/1278480.1278484
+
+[2] A. Maiti and P. Schaumont, "Improved Ring Oscillator PUF: An FPGA-Friendly
+Secure Primitive," *Journal of Cryptology*, vol. 24, pp. 375-397, 2011.
+https://doi.org/10.1007/s00145-010-9088-4
+
+[3] A. Maiti, J. Casarona, L. McHale, and P. Schaumont, "A Large Scale
+Characterization of RO-PUF," *IEEE International Symposium on
+Hardware-Oriented Security and Trust (HOST)*, pp. 66-71, 2010.
+https://schaumont.dyn.wpi.edu/schaum/pdf/papers/2010hostm.pdf
+
+[4] F. Wilde, M. Hiller, and M. Pehl, "Statistic-Based Security Analysis of
+Ring Oscillator PUFs," *2014 International Symposium on Integrated Circuits
+(ISIC)*, pp. 148-151, 2014.
+https://doi.org/10.1109/ISICIR.2014.7029528
+
+[5] A. S. Chauhan, V. Sahula, and A. S. Mandal, "Novel Randomized Placement
+for FPGA Based Robust ROPUF with Improved Uniqueness," *Journal of Electronic
+Testing*, vol. 35, no. 5, pp. 581-601, 2019.
+https://doi.org/10.1007/s10836-019-05829-5
+
+[6] K. A. Asha, L. E. Hsu, A. Patyal, and H.-M. Chen, "Improving the Quality
+of FPGA RO-PUF by Principal Component Analysis (PCA)," *ACM Journal on
+Emerging Technologies in Computing Systems*, vol. 17, no. 3, article 34,
+2021. https://doi.org/10.1145/3442444
+
+[7] W.-C. Wang, Z. Li, J. Skudlarek, M. Larouche, M. Chen, and P. Gupta,
+"UNBIAS PUF: A Physical Implementation Bias Agnostic Strong PUF,"
+arXiv:1703.10725, 2017. https://arxiv.org/abs/1703.10725
+
+[8] J. Miskelly, C. Gu, Q. Ma, Y. Cui, W. Liu, and M. O'Neill, "Modelling
+Attack Analysis of Configurable Ring Oscillator (CRO) PUF Designs," *2018
+IEEE 23rd International Conference on Digital Signal Processing (DSP)*,
+pp. 1-5, 2018. https://doi.org/10.1109/ICDSP.2018.8631638
+
+[9] M. Shalan and T. Edwards, "Building OpenLANE: A 130nm OpenROAD-based
+Tapeout-Proven Flow," *2020 IEEE/ACM International Conference on Computer
+Aided Design (ICCAD)*, article 110, pp. 1-6, 2020.
+https://doi.org/10.1145/3400302.3415735
+
+[10] SkyWater Technology and Google, "SkyWater Open Source PDK (SKY130)."
+https://github.com/google/skywater-pdk
+
+[11] litneet64, "RO-based Physically Unclonable Function in sky130
+(TinyTapeout tt07)." https://github.com/litneet64/tt07-RO-based-PUF
+
+[12] S. Katzenbeisser, U. Kocabas, V. Rozic, A.-R. Sadeghi, I. Verbauwhede,
+and C. Wachsmann, "PUFs: Myth, Fact or Busted? A Security Evaluation of
+Physically Unclonable Functions (PUFs) Cast in Silicon," *Cryptographic
+Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283-301, 2012.
+https://doi.org/10.1007/978-3-642-33027-8_17

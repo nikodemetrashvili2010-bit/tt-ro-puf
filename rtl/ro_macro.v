@@ -3,7 +3,7 @@
 //
 // Hardened ring-oscillator cell, built from sky130 standard cells. This is the
 // real oscillator that goes on silicon, the synthesis and layout version of
-// ro_behavioural.v.
+// ro_macro_sim.v.
 //
 // Structure: N_INV+1 inverting stages in a loop. Stage 0 is an enable NAND,
 // which behaves as an inverter when en=1 and forces a fixed level when en=0 so
@@ -22,10 +22,11 @@
 //   - Not event-simulable: a zero-delay logic loop cannot run in Icarus. The
 //     frequency is checked in SPICE (sim/spice/ro_osc_tb.spice) and, after
 //     layout, with extracted parasitics. Functional simulation of the wider
-//     design uses ro_behavioural.v.
+//     design uses ro_macro_sim.v.
 //   - On the chip this cell is hardened into a fixed macro and black-boxed.
 //   - Power pins (VPWR, VGND, VPB, VNB) are connected by the hardening flow.
 
+`timescale 1ps/1ps
 `default_nettype none
 
 module ro_macro #(

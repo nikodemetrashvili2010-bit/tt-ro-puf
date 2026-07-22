@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 """
-Figures for the SILICON go/no-go, regenerated from the raw data
+Figures for the nominal lumped-C go/no-go, regenerated from the raw data
 (par2.txt frequencies + gono_results.csv). Overwrites:
   ro_gono.png         - (a) frequency vs extracted ring capacitance, (b) spatial map
   armB_prediction.png - (a) per-oscillator frequency, (b) spread magnitude
@@ -33,6 +33,14 @@ def read_fN(path):
         m = re.match(r'^f(\d+)\s*=\s*([0-9.eE+\-]+)', line)
         if m: d[int(m.group(1))] = float(m.group(2))
     return d
+
+def read_named(path, name):
+    pattern = re.compile(rf'^{re.escape(name)}\s*=\s*([0-9.eE+\-]+)')
+    for line in open(path):
+        match = pattern.match(line)
+        if match:
+            return float(match.group(1))
+    raise ValueError(f"{name} not found in {path}")
 
 par  = read_fN(os.path.join(HERE, "par2.txt"))
 ctrl = read_fN(os.path.join(HERE, "ctrl2.txt"))
@@ -79,11 +87,12 @@ axR.set_title("(b)  spatial map of frequency", loc="left", fontsize=11.5, color=
 axR.grid(False)
 cb = fig.colorbar(sc, ax=axR, pad=0.02); cb.set_label("frequency  (MHz)")
 axR.margins(0.08)
-fig_title(fig, "Arm A: the routing sets each oscillator's frequency")
+fig_title(fig, "Arm A: nominal lumped-C model predicts layout-dependent spread")
 fig.savefig(os.path.join(HERE, "ro_gono.png")); plt.close(fig)
 
 # ---- armB_prediction.png : (a) frequencies, (b) spread magnitude ----
-random.seed(1); matched = 569.51
+random.seed(1)
+matched = read_named(os.path.join(HERE, "macro_out.txt"), "f_b") / 1e6
 fig, (axL, axR) = plt.subplots(1, 2, figsize=(11.5, 5.0), gridspec_kw={"width_ratios": [1.5, 1]})
 fig.subplots_adjust(top=0.85, bottom=0.14, left=0.08, right=0.97, wspace=0.32)
 xa = [1 + (random.random()-0.5)*0.30 for _ in f]; xb = [2 + (random.random()-0.5)*0.30 for _ in f]
@@ -93,18 +102,21 @@ axL.hlines(mean, 0.74, 1.26, color=A_RED, lw=2.4, zorder=4)
 axL.hlines(matched, 1.74, 2.26, color=B_GREEN, lw=2.4, zorder=4)
 axL.set_ylim(min(f)-15, max(f)+16); axL.set_xlim(0.55, 2.5)
 axL.text(1.0, max(f)+4, f"{ptp:.0f} MHz peak-to-peak", va="bottom", ha="center", fontsize=10.5, color=A_RED, fontweight="bold")
-axL.text(2.0, matched-6, "16 identical copies", va="top", ha="center", fontsize=10.5, color=B_GREEN, fontweight="bold")
+axL.text(2.0, matched-6, "one shared scalar repeated", va="top", ha="center", fontsize=10.5, color=B_GREEN, fontweight="bold")
 axL.set_xticks([1, 2]); axL.set_xticklabels(["Arm A\nauto-placed", "Arm B\nmatched macro"], fontsize=11)
 axL.set_ylabel("oscillation frequency  (MHz)")
 axL.set_title("(a)  per-oscillator frequency", loc="left", fontsize=11.5, color="#444444", pad=8)
 axL.grid(axis="x", visible=False)
-bars = axR.bar(["Arm A", "Arm B"], [pct, 0.0], color=[A_RED, B_GREEN], edgecolor="white", linewidth=0.8, width=0.62)
+bars = axR.bar([0], [pct], color=[A_RED], edgecolor="white", linewidth=0.8, width=0.62)
 axR.set_ylim(0, pct*1.28)
-for rect, v, c in zip(bars, [pct, 0.0], [A_RED, B_GREEN]):
+for rect, v, c in zip(bars, [pct], [A_RED]):
     axR.text(rect.get_x()+rect.get_width()/2, v+pct*0.02, f"{v:.1f}%", ha="center", va="bottom", fontsize=12, fontweight="bold", color=c)
-axR.set_ylabel("layout-induced spread  (%, peak-to-peak)")
-axR.set_title("(b)  spread magnitude", loc="left", fontsize=11.5, color="#444444", pad=8)
+axR.set_xlim(-0.6, 1.6)
+axR.set_xticks([0, 1]); axR.set_xticklabels(["Arm A", "Arm B"])
+axR.text(1, pct*0.24, "not estimated\n(one shared scalar)", ha="center", va="center", fontsize=10.5, color=B_GREEN, fontweight="bold")
+axR.set_ylabel("modeled internal-layout spread  (%, peak-to-peak)")
+axR.set_title("(b)  spread supported by the runs", loc="left", fontsize=11.5, color="#444444", pad=8)
 axR.grid(axis="x", visible=False)
-fig_title(fig, "Matched macro removes the Arm A spread")
+fig_title(fig, "Arm B is a shared nominal reference, not a spread estimate")
 fig.savefig(os.path.join(HERE, "armB_prediction.png")); plt.close(fig)
 print(f"ro_gono + armB | mean={mean:.2f} ptp={ptp:.2f} ({pct:.2f}%) std={100*std/mean:.2f}% r={r_cap:.4f}")

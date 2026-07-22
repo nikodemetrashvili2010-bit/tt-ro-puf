@@ -14,9 +14,10 @@ inter-chip fractional Hamming distance, the fraction of key bits that differ
 between two different chips, averaged over all chip pairs. The ideal for a PUF
 is 0.5.
 
-Expected: Arm A sits far below 0.5 because the shared bias makes every chip
-produce nearly the same key (fake entropy). Arm B sits near 0.5 because only
-the independent random mismatch decides each bit (real entropy).
+With these assumed distributions, Arm A sits far below 0.5 because the shared
+bias makes virtual chips produce nearly the same key. Arm B sits near 0.5 by
+construction because its comparisons use symmetric IID random draws. This is
+an architectural toy model, not entropy, uniqueness, or reliability evidence.
 
 Pure standard library, no external packages.
 """
@@ -67,8 +68,9 @@ def main():
     print(f"chips = {N_CHIPS}, bits per chip = {N_BITS}")
     print(f"sigma_spatial = {SIGMA_SPATIAL}, sigma_mismatch = {SIGMA_MISMATCH}")
     print()
-    print(f"Arm A inter-chip uniqueness: {mean_uniqueness(keys_A) * 100:5.1f} %   (ideal 50; low means fake entropy)")
-    print(f"Arm B inter-chip uniqueness: {mean_uniqueness(keys_B) * 100:5.1f} %   (ideal 50; this is real entropy)")
+    print("MODEL ONLY: assumed Gaussian terms; not silicon validation")
+    print(f"Arm A virtual inter-chip Hamming distance: {mean_uniqueness(keys_A) * 100:5.1f} %")
+    print(f"Arm B virtual inter-chip Hamming distance: {mean_uniqueness(keys_B) * 100:5.1f} %   (50% follows from symmetric IID draws)")
     print()
     print(f"Arm A uniformity: {uniformity(keys_A) * 100:5.1f} %")
     print(f"Arm B uniformity: {uniformity(keys_B) * 100:5.1f} %")

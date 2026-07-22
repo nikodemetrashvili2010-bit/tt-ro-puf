@@ -1,150 +1,135 @@
 # Related work and where this project fits
 
-Bibliography and positioning for the SILICON project.
+This note gives the bibliography and the narrower research claim behind the
+SILICON project.
 
-## 1. Where RO-PUFs come from
+## 1. Ring-oscillator PUFs
 
-Suh and Devadas introduced the ring-oscillator PUF. It compares the
-frequencies of nominally identical ring oscillators and turns each pairwise
-comparison into a response bit [1]. The security rests on one assumption: the
-frequency differences between identical ROs come from random process
-variation, so one chip's responses tell an attacker nothing about another's.
-Everything in this project turns on whether that assumption survives an
-automated layout flow.
+Suh and Devadas introduced the ring-oscillator PUF as a circuit that compares
+the frequencies of nominally identical ring oscillators [1]. A response is
+useful only if it is sufficiently device-specific and stable. For this
+project, the relevant question is how much of the frequency ordering is due to
+random manufacturing variation and how much is a deterministic consequence of
+physical implementation.
 
-## 2. The known weakness
+## 2. Systematic variation and placement bias
 
-People have known for over a decade that process variation is not purely
-random. Maiti and Schaumont showed that systematic variation degrades RO-PUF
-uniqueness, because a deterministic component shared across a die acts like a
-fixed bias added to every comparison. Their configurable-RO compensation
-recovers up to about 18% of uniqueness [2]. Their large-scale RO-PUF
-characterization measured inter- and intra-die Hamming distance across many
-devices and made the spatial structure of the variation visible [3]. Later
-work treats strong spatial correlation as an outright security threat, since
-an adversary who learns the shared pattern can predict across chips [4]. That
-is exactly the failure mode this project targets. The difference is the
-source: here the shared component is injected by the layout tool, not the
-wafer.
+Systematic variation in RO-PUFs is well established. Maiti and Schaumont
+showed that it can reduce uniqueness and reported that configurable-RO
+compensation improved uniqueness by as much as about 18% in their experiments
+[2]. Their larger characterization study measured reliability and uniqueness
+over 125 FPGAs and examined spatial structure in oscillator frequency [3].
 
-RO-PUFs have been measured on ASICs before. Katzenbeisser et al.
-characterized five PUF types, ring oscillators included, across 96 ASICs in
-a commercial 65 nm process [12]. That work measures finished silicon from a
-closed commercial flow and asks how good the PUFs are. It does not ask what
-the layout tool contributed to the answer, and on a closed flow there is no
-way to look.
+The security consequences require care. Wilde, Hiller, and Pehl studied
+spatial frequency patterns as a possible source of prediction [4]. They also
+reported important counterevidence: for adjacent-oscillator comparisons, the
+measured covariance was too small for their statistical estimator to recover
+the response bits. Their result does not say that spatial bias is harmless or
+that it is always exploitable. It shows that the pairing rule, the strength of
+the shared component, and device-specific variation all matter.
 
-## 3. How FPGAs fixed it
+RO-PUFs have also been evaluated in fabricated ASICs. Katzenbeisser et al.
+characterized five PUF types, including ring oscillators, across 96 ASICs in a
+commercial 65 nm process [12]. That work evaluates finished devices rather
+than isolating the contribution of an open place-and-route flow.
 
-On FPGAs the big avoidable bias source is asymmetric routing and non-identical
-logic resources, and the community's answer was to take placement and routing
-out of the tool's hands. Hard macros that replicate one matched RO layout,
-controlled placement, and randomized-but-fixed placement all raise uniqueness
-substantially. Uncontrolled placement does worst; matched or controlled
-placement does best [2, 5]. Other papers attack the same bias statistically
-instead of physically: principal-component removal of the systematic part [6],
-bias-agnostic strong PUF constructions [7], and configurable ROs whose
-modeling resistance has been studied directly [8]. The recurring lesson is
-that making the instances physically identical is the clean structural fix.
-The recurring limitation is that nearly all of this lives on FPGAs, where
-"matched layout" means a hard macro over a fixed fabric.
+## 3. Mitigation work on FPGAs
 
-## 4. Open ASIC flows change the picture
+FPGA implementations have used matched hard macros, controlled placement,
+placement selection, configurable oscillators, and statistical correction to
+reduce implementation bias [2, 5, 6]. Other work proposes constructions that
+are less sensitive to physical implementation bias [7] or studies modelling
+attacks on configurable RO designs [8].
 
-Open PDKs and automated RTL-to-GDSII flows made custom silicon accessible. The
-SkyWater sky130 open PDK [10] and the OpenLANE/OpenROAD flow [9] underpin
-low-cost multi-project shuttles like TinyTapeout and Efabless ChipIgnite,
-which is how a solo or student designer can tape out a chip at all. Someone
-has already implemented an RO-PUF on sky130 through TinyTapeout [11], but as a
-working CRP implementation offered for community characterization. It did not
-ask whether the automated flow itself compromises the entropy.
+These results motivate a matched-layout arm, but they do not justify a claim
+that matching removes all frequency variation. Reusing one macro makes its
+internal geometry and extracted internal parasitics common to every instance.
+Fabrication mismatch, supply distribution, temperature, stress, and other
+top-level effects remain and must be measured.
 
-## 5. The gap
+## 4. Open ASIC flows
 
-Two things look underexplored here. First, the matched-layout fix is
-established for FPGAs, but I have not found it demonstrated, with numbers,
-on the automated open-source ASIC place-and-route flow, where the bias
-mechanism is routing parasitics on a standard-cell fabric rather than LUTs
-and switch boxes. ASIC RO-PUF measurements exist [12], but they treat the
-finished chip as a given. The open flow lets me open the layout step itself
-and put a number on its contribution before fabrication. Second, I am not aware of a lightweight pre-fabrication
-test that tells a shuttle user, before they spend a fabrication slot they
-only get once, whether their automatically laid-out PUF will ship a shared,
-deterministic layout bias.
+The OpenLANE/OpenROAD flow [9] and the open SkyWater SKY130 PDK [10] make it
+possible to inspect placement, routing, and extracted parasitics before a
+low-cost shuttle run. A previous TinyTapeout project implemented an RO-PUF in
+SKY130 for community characterization [11]. The present project asks a
+different, narrower question: what deterministic frequency component appears
+in nominal post-layout simulation, and does a repeated hard macro reduce it?
 
-This project covers both, with open tools only:
+## 5. Scope of this project
 
-1. The injected bias, quantified. From the routed array I take OpenROAD's own
-   extracted parasitics (SPEF) and show in SPICE that the automated flow gives
-   32 logically identical oscillators an 8.8% peak-to-peak frequency spread,
-   almost entirely explained by per-oscillator routing capacitance (Pearson
-   r = -0.997). Transistors are held nominal, so this isolates the layout
-   contribution cleanly, and the spread is fixed by the mask, so every die
-   gets the same one.
+The current evidence supports three limited claims:
 
-2. A structural fix inside the same flow. I harden one oscillator into a fixed
-   macro and step-and-repeat bit-identical copies. Inter-oscillator parasitic
-   spread goes to zero by construction. This carries the FPGA matched-layout
-   idea onto the open ASIC flow.
+1. In nominal post-layout simulation, separately routed standard-cell
+   oscillators show a frequency spread associated closely with their extracted
+   ring capacitance: 8.8% peak-to-peak in an earlier 32-oscillator build and
+   5.4% in Arm A of the archived dual-arm layout.
+2. Arm B reuses one hardened oscillator GDS sixteen times. One simulation of
+   that macro's extracted internal parasitics gives 569.5 MHz and is repeated
+   in the comparison figure to represent the common internal layout. It is not
+   sixteen independent simulated or physical measurements.
+3. Extraction followed by nominal SPICE is a practical pre-fabrication check
+   for deterministic layout sensitivity.
 
-3. A pre-silicon go/no-go: the extraction-plus-SPICE procedure is a
-   reproducible test any shuttle user can run before committing to fab.
-
-The matched-layout principle is not new and I do not claim it is. The
-contribution is demonstrating it on the open ASIC flow, tying the bias
-causally to extracted parasitics, and packaging the whole thing as a test you
-run before paying for silicon.
+The data do not yet establish cross-die repeatability, response uniqueness,
+attack success, or entropy. Those are registered predictions for measurement
+on multiple fabricated chips. The matched-layout principle is not new; the
+project's intended contribution is an open ASIC case study and a reproducible
+pre-silicon diagnostic.
 
 ## References
 
-[1] G. E. Suh and S. Devadas, "Physical Unclonable Functions for Device
-Authentication and Secret Key Generation," Proc. 44th Design Automation Conf.
-(DAC), 2007, pp. 9-14. https://people.csail.mit.edu/devadas/pubs/puf-dac07.pdf
+[1] G. E. Suh and S. Devadas, “Physical Unclonable Functions for Device
+Authentication and Secret Key Generation,” *Proceedings of the 44th Design
+Automation Conference (DAC)*, pp. 9–14, 2007.
+https://doi.org/10.1145/1278480.1278484
 
-[2] A. Maiti and P. Schaumont, "Improved Ring Oscillator PUF: An FPGA-friendly
-Secure Primitive," Journal of Cryptology, vol. 24, pp. 375-397, 2011.
-https://link.springer.com/article/10.1007/s00145-010-9088-4
+[2] A. Maiti and P. Schaumont, “Improved Ring Oscillator PUF: An FPGA-friendly
+Secure Primitive,” *Journal of Cryptology*, vol. 24, no. 2, pp. 375–397,
+2011. https://doi.org/10.1007/s00145-010-9088-4
 
-[3] A. Maiti, J. Casarona, L. McHale, and P. Schaumont, "A Large Scale
-Characterization of RO-PUF," IEEE Int. Symp. Hardware-Oriented Security and
-Trust (HOST), 2010.
+[3] A. Maiti, J. Casarona, L. McHale, and P. Schaumont, “A Large Scale
+Characterization of RO-PUF,” *IEEE International Symposium on
+Hardware-Oriented Security and Trust (HOST)*, pp. 66–71, 2010.
+https://schaumont.dyn.wpi.edu/schaum/pdf/papers/2010hostm.pdf
 
-[4] F. Wilde, M. Hiller, and M. Pehl, "Statistic-Based Security Analysis of
-Ring Oscillator PUFs," Int. Symp. on Integrated Circuits (ISIC), 2014,
-doi:10.1109/ISICIR.2014.7029528; also arXiv:1910.07068 (2019 re-posting). https://arxiv.org/abs/1910.07068
+[4] F. Wilde, M. Hiller, and M. Pehl, “Statistic-Based Security Analysis of
+Ring Oscillator PUFs,” *2014 International Symposium on Integrated Circuits
+(ISIC)*, pp. 148–151, 2014.
+https://doi.org/10.1109/ISICIR.2014.7029528
 
-[5] A. S. Chauhan, V. Sahula, and A. S. Mandal, "Novel Randomized Placement
-for FPGA Based Robust ROPUF with Improved Uniqueness," Journal of Electronic
-Testing, vol. 35, pp. 581-601, 2019; arXiv:2006.09290.
-https://link.springer.com/article/10.1007/s10836-019-05829-5
+[5] A. S. Chauhan, V. Sahula, and A. S. Mandal, “Novel Randomized Placement
+for FPGA Based Robust ROPUF with Improved Uniqueness,” *Journal of Electronic
+Testing*, vol. 35, no. 5, pp. 581–601, 2019.
+https://doi.org/10.1007/s10836-019-05829-5
 
-[6] K. A. Asha, L. E. Hsu, A. Patyal, and H.-M. Chen, "Improving the Quality
-of FPGA RO-PUF by Principal Component Analysis (PCA)," ACM Journal on
-Emerging Technologies in Computing Systems, 2021. doi:10.1145/3442444
+[6] K. A. Asha, L. E. Hsu, A. Patyal, and H.-M. Chen, “Improving the Quality
+of FPGA RO-PUF by Principal Component Analysis (PCA),” *ACM Journal on
+Emerging Technologies in Computing Systems*, vol. 17, no. 3, article 34,
+2021. https://doi.org/10.1145/3442444
 
 [7] W.-C. Wang, Z. Li, J. Skudlarek, M. Larouche, M. Chen, and P. Gupta,
-"UNBIAS PUF: A Physical Implementation Bias Agnostic Strong PUF,"
-arXiv:1703.10725, 2017.
+“UNBIAS PUF: A Physical Implementation Bias Agnostic Strong PUF,”
+arXiv:1703.10725, 2017. https://arxiv.org/abs/1703.10725
 
-[8] J. Miskelly, C. Gu, Q. Ma, Y. Cui, W. Liu, and M. O'Neill, "Modelling
-Attack Analysis of Configurable Ring Oscillator (CRO) PUF Designs," IEEE
-Int. Conf. on Digital Signal Processing (DSP), 2018.
-https://ieeexplore.ieee.org/document/8631638
+[8] J. Miskelly, C. Gu, Q. Ma, Y. Cui, W. Liu, and M. O’Neill, “Modelling
+Attack Analysis of Configurable Ring Oscillator (CRO) PUF Designs,” *2018
+IEEE 23rd International Conference on Digital Signal Processing (DSP)*,
+pp. 1–5, 2018. https://doi.org/10.1109/ICDSP.2018.8631638
 
-[9] M. Shalan and T. Edwards, "Building OpenLANE: A 130nm OpenROAD-based
-Tapeout-Proven Flow," IEEE/ACM Int. Conf. on Computer Aided Design (ICCAD),
-2020. doi:10.1145/3400302.3415735 (note: the related WOSET 2020 paper
-"OpenLANE: The Open-Source Digital ASIC Implementation Flow" is by A. Ghazy
-and M. Shalan)
+[9] M. Shalan and T. Edwards, “Building OpenLANE: A 130nm OpenROAD-based
+Tapeout-Proven Flow,” *2020 IEEE/ACM International Conference on Computer
+Aided Design (ICCAD)*, article 110, pp. 1–6, 2020.
+https://doi.org/10.1145/3400302.3415735
 
-[10] SkyWater Technology and Google, "SkyWater Open Source PDK (sky130)."
+[10] SkyWater Technology and Google, “SkyWater Open Source PDK (SKY130).”
 https://github.com/google/skywater-pdk
 
-[11] litneet64, "RO-based Physically Unclonable Function in sky130 (TinyTapeout
-tt07)." https://github.com/litneet64/tt07-RO-based-PUF
+[11] litneet64, “RO-based Physically Unclonable Function in sky130
+(TinyTapeout tt07).” https://github.com/litneet64/tt07-RO-based-PUF
 
-[12] S. Katzenbeisser, U. Kocabas, V. Rozic, A.-R. Sadeghi, I. Verbauwhede,
-and C. Wachsmann, "PUFs: Myth, Fact or Busted? A Security Evaluation of
-Physically Unclonable Functions (PUFs) Cast in Silicon," Cryptographic
-Hardware and Embedded Systems (CHES), LNCS 7428, 2012, pp. 283-301.
-https://www.iacr.org/archive/ches2012/74280281/74280281.pdf
+[12] S. Katzenbeisser, U. Kocabas, V. Rožić, A.-R. Sadeghi, I. Verbauwhede,
+and C. Wachsmann, “PUFs: Myth, Fact or Busted? A Security Evaluation of
+Physically Unclonable Functions (PUFs) Cast in Silicon,” *Cryptographic
+Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283–301, 2012.
+https://doi.org/10.1007/978-3-642-33027-8_17

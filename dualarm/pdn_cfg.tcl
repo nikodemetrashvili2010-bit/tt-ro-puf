@@ -15,7 +15,7 @@
 # PDN_VPITCH equal to the macro column pitch and PDN_VOFFSET aligned so a
 # VPWR/VGND stripe pair lands exactly on each macro's internal met4 power
 # straps (VPWR centerline x=21.84, VGND x=25.14 inside ro_macro_hard; pair
-# spacing 3.3 um = default VWIDTH 1.6 + VSPACING 1.7 -- never change these),
+# pitch 3.3 um = VWIDTH 2.4 + VSPACING 0.9 in the current config),
 # the stripe and the pin overlap on the same layer and are connected.
 # ro_macro_hard has NO other met4 shapes (verified in its DEF), so a stripe
 # crossing the macro cannot short anything.

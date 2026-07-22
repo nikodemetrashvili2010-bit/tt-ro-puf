@@ -4,7 +4,7 @@
 #
 # GEOMETRY (v3, 2026-07-09, after run pdnfix2):
 # Columns ABUT (pitch 60 = macro width) and the grid starts one site from the
-# core edge. Why: pdnfix2 reached full signoff and Magic flagged 4124 well-tap
+# core edge. Why: pdnfix2 completed, but Magic flagged 4124 well-tap
 # violations (nwell.4 / LU.2 / LU.3) - the 10um column gaps and 14um edge
 # strips fragmented the rows into slivers the tap placer left untapped (58
 # taps total). Abutting the columns deletes those slivers entirely; the only

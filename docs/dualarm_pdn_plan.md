@@ -57,7 +57,7 @@ pins, and the 0.9 um gap is DRC-legal.
 
 ## Alignment math
 
-The macros sit on a 4x4 grid at x = X0 + 64k, all in orientation N and never
+The macros sit on a 4x4 grid at x = X0 + 60k, all in orientation N and never
 flipped. A mirrored macro would swap VPWR and VGND. Inside the macro the VPWR
 strap centerline is at x = 21.84 and VGND at 25.14 (from the LEF), a pitch of
 3.3 um.
@@ -65,7 +65,7 @@ strap centerline is at x = 21.84 and VGND at 25.14 (from the LEF), a pitch of
 pdngen puts its first VPWR stripe centerline at core_x0 plus the vertical
 offset, which I confirmed from the macro's own DEF. So the offset is
 `PDN_VOFFSET = macro_X0 + 21.84 - core_x0` and the vertical pitch
-`PDN_VPITCH = 64`, the macro column pitch. Read core_x0 from ROW_0 in the
+`PDN_VPITCH = 60`, the macro column pitch. Read core_x0 from ROW_0 in the
 floorplan DEF of the actual run rather than assuming it. `dualarm/gen_dualarm.py`
 computes VOFFSET 22.3 for X0 3.22 with the TinyTapeout 2x2 core_x0 of 2.76, but
 check it against the real DEF.
@@ -74,9 +74,10 @@ check it against the real DEF.
 (`PDN_*` in place of the older `FP_PDN_*`): standard-cell met4 stripes with
 `-pins met4`, met1 rails, and deliberately no macro grid. Keep
 `PDN_MACRO_CONNECTIONS` in the config. It drives the logical net tie for the
-macro power pins (`add_global_connection`), not the macro grid. The macro GDS is
-never touched, no pin stretching and no re-harden, so the matched frequency of
-569.5 MHz stays exactly valid.
+macro power pins (`add_global_connection`), not the macro grid. This recipe
+does not alter the hardened macro GDS, so the 569.5 MHz macro-level nominal
+simulation remains the relevant pre-silicon reference. Top-level supply and
+fabrication effects are not included in that number.
 
 ## The precondition that makes it safe
 

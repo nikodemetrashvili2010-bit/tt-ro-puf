@@ -1,0 +1,15 @@
+* text=auto
+
+*.md text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.v text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+Makefile text eol=lf
+
+*.docx binary
+*.gds binary
+*.pdf binary
+*.png binary

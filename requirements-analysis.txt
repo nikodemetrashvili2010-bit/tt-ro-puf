@@ -1,0 +1,7 @@
+# Dependencies used to regenerate the checked-in figures and paper artifacts.
+# Kept separate from the cocotb/test environment.
+matplotlib==3.10.8
+Pillow==12.3.0
+python-docx==1.2.0
+reportlab==4.4.9
+pypdf==6.10.0

@@ -1,52 +1,64 @@
 <!---
-This file is used to generate your project datasheet. Please fill in the
-information below and delete any unused sections.
+This file is used to generate the TinyTapeout project datasheet.
 -->
 
 ## How it works
 
-This is a ring-oscillator Physically Unclonable Function (PUF). A PUF turns the
-tiny, uncontrollable differences between manufactured chips into a value that is
-unique to each physical chip.
+This project is a ring-oscillator Physically Unclonable Function (RO-PUF)
+experiment. An RO-PUF compares nominally identical oscillators and uses their
+frequency ordering to form response bits. Useful device-specific behavior must
+come from manufacturing variation rather than a deterministic implementation
+bias shared by the design.
 
-The design holds 32 ring oscillators, split into two arms of 16. Arm A is placed
-by the automated flow; Arm B is built from hardened, matched oscillator macros.
-Both arms are the same circuit, so any difference between them comes from layout.
-Each oscillator is a 31-stage ring (one enable NAND plus 30 inverters), and its
-frequency depends on manufacturing variation.
+The design has 32 ring oscillators split into two arms of 16. Arm A is placed
+and routed as standard cells by the automated flow. Arm B uses sixteen
+instances of one hardened oscillator macro. Both arms use the same oscillator
+circuit, but their physical implementation is different. Each oscillator is a
+31-stage ring: one enable NAND and 30 inverters, with a buffered tap for the
+measurement core.
 
-Oscillators are measured one at a time through a shared counter, which keeps the
-measurement identical for every oscillator. A start pulse clears the counter and
-opens a fixed window of `window` reference-clock cycles. During the window the
-selected oscillator's edges are accumulated in an asynchronous ripple counter.
-When the window closes the count freezes and `done` is asserted. The count is
-proportional to the oscillator's frequency. Comparing counts between oscillators,
-and between chips, is what reveals the layout-induced bias this project studies.
+Oscillators are measured one at a time through a shared counter. A synchronized
+start request clears the counter and opens a fixed window of `window`
+reference-clock cycles. The selected oscillator's edges are accumulated in an
+asynchronous ripple counter. When the window closes, the oscillator stops; the
+counter crosses a two-flop sampler and must produce three consecutive equal
+samples before the frozen count and `done` are published.
 
-The chip is an experiment with a specific prediction. Simulation with the
-flow's own extracted parasitics says the auto-placed arm's sixteen oscillators
-spread about 5% peak-to-peak from routing capacitance alone, in a pattern
-fixed by the mask and therefore identical on every die, while the matched
-arm's sixteen copies sit at one frequency. If real chips reproduce this, the
-auto-placed arm is shipping fake entropy and the matched macro is the right
-way to build an RO-PUF on this flow.
+An archived nominal post-layout simulation predicts a 5.4% peak-to-peak spread
+in an earlier dual-arm Arm A layout, associated closely with extracted routing
+capacitance. The current RTL is newer than that physical snapshot and requires
+a fresh green build before submission.
+Arm B's sixteen instances reuse the same internal macro layout; its plotted
+pre-silicon value is one extracted-macro result repeated sixteen times, not
+sixteen separate measurements. The experiment will test whether Arm A's
+centred frequency pattern repeats more strongly across fabricated chips than
+Arm B's pattern. Cross-die repeatability, uniqueness, and security impact are
+unknown until those measurements are made.
 
 ## How to test
 
 Drive `clk` with a clean reference clock and release `rst_n`.
 
-1. Select an oscillator: set the arm with `ui[1]` (0 = Arm A, 1 = Arm B) and the
-   oscillator index with `ui[2]` to `ui[5]`.
-2. Pulse `ui[0]` (start) high, then low.
-3. Wait for `done` on `uio[0]` to go high.
-4. Read the 16-bit count as two bytes on `uo[7:0]`: set `ui[6]` low for the low
-   byte, then high for the high byte.
+Keep `clk` running until `done`. If a measurement must be aborted, assert
+`rst_n` or deselect the project (`ena=0`) before stopping the clock; either path
+asynchronously shuts down the selected oscillator.
 
-Repeat for every oscillator in each arm and compare the counts. A faster
-oscillator gives a higher count.
+1. Select an oscillator: set the arm with `ui[1]` (0 = Arm A, 1 = Arm B) and
+   the oscillator index with `ui[2]` through `ui[5]`.
+2. Keep arm and index stable for at least three `clk` cycles, hold `ui[0]`
+   (`start`) high for at least three more cycles, then drive it low. Leave arm
+   and index unchanged until `done`.
+3. Wait for `done` on `uio[0]`.
+4. Read the 16-bit count as two bytes on `uo[7:0]`: set `ui[6]` low for the
+   low byte, then high for the high byte.
+
+Repeat for each oscillator in both arms and collect repeated samples. Testing
+the research hypothesis requires multiple physical chips measured under the
+same controlled conditions, followed by repeated voltage and temperature
+runs. The scripts and data-label convention are documented in `firmware/`.
 
 ## External hardware
 
-A microcontroller (for example the RP2040 on the Tiny Tapeout demo board) to set
-the select and start lines and read back the two counter bytes, plus a clean
-clock source on `clk`. No other external hardware is required.
+A microcontroller such as the RP2040 on the TinyTapeout demo board can set the
+control inputs and read the counter bytes. A stable reference clock and a way
+to record supply voltage and temperature are needed for controlled comparison.

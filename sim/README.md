@@ -14,5 +14,7 @@ The two Python chip models are parametric. They show the mechanism with assumed
 spread and mismatch numbers, not silicon measurements, and the paper presents
 them that way.
 
-`spice/gono/` is the main experiment on the routed layout. `spice/mc/` is the
-mismatch Monte Carlo that estimates the real entropy under the bias.
+`spice/gono/` is a nominal lumped-capacitance experiment on routed-layout
+artifacts. `spice/mc/` is a first-order mismatch-sensitivity study. Neither is
+a silicon measurement or an entropy/reliability validation; the exact modeled
+scope and omitted effects are stated in each subdirectory README.

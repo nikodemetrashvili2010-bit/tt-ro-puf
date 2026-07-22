@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 """
-SILICON go/no-go analysis.
+Nominal lumped-C go/no-go analysis.
 
 Joins the extracted-parasitic ngspice frequencies (par2.txt) with each RO's
 placement centroid and ring capacitance (ro_positions.csv) and the no-parasitic
@@ -12,7 +12,8 @@ Verdict logic:
   GO  if the parasitic frequency spread across nominally-identical ROs is large
       (>>0) and tracks the extracted capacitance (mechanism confirmed). Because
       it is a layout effect with nominal transistors, this bias is deterministic
-      and identical on every fabricated chip -> shared "fake entropy".
+      in the checked-in nominal model. Fabricated-die repeatability is not
+      established by this experiment.
 """
 import re, os, csv, math
 
@@ -59,13 +60,15 @@ rad = [math.hypot(x-cx, y-cy) for x, y in zip(xs, ys)]
 
 m, s = mean(fMHz), std(fMHz)
 print("="*64)
-print("SILICON go/no-go : Arm A (auto-placed) extracted-parasitic result")
+print("MODEL go/no-go: Arm A nominal lumped-C extracted-parasitic prediction")
 print("="*64)
 print(f"control (no parasitics) : {f_ctrl:.2f} MHz  (all 32 identical)")
 print(f"parasitic mean          : {m:.2f} MHz   ({100*(f_ctrl-m)/f_ctrl:.1f}% slower than control)")
 print(f"parasitic std-dev       : {s:.2f} MHz   ({100*s/m:.2f}% of mean)")
 print(f"parasitic min / max     : {min(fMHz):.2f} / {max(fMHz):.2f} MHz")
 print(f"peak-to-peak spread     : {max(fMHz)-min(fMHz):.2f} MHz   ({100*(max(fMHz)-min(fMHz))/m:.1f}% of mean)")
+print("scope                   : TT/1.8 V nominal devices; total C only (no distributed R/coupling)")
+print("                          pre-silicon prediction, not fabricated-die validation")
 print()
 print("MECHANISM  (does parasitic loading explain the spread?)")
 print(f"  corr(freq, ring_cap)  : r = {pearson(fMHz, caps):+.3f}   (expect strongly negative)")

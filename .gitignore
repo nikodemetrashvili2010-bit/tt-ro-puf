@@ -8,9 +8,10 @@ tt_submission
 src/user_config.json
 src/config_merged.json
 test/sim_build
-test/__pycache__/
+**/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
+/tt
 
 # keep the master plan local, never in the public repo
 Project_SILICON_Master_Plan.md

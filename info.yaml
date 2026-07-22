@@ -1,10 +1,10 @@
-# Tiny Tapeout project information — DUAL-ARM (v2, Arm B hardened macros).
+# Tiny Tapeout project information - DUAL-ARM (v2, Arm B hardened macros).
 # Schema matches the ttsky-verilog-template (SKY shuttle), yaml_version 6.
 project:
   title:        "Two-arm ring-oscillator PUF"
   author:       "Nikoloz Demetrashvili"
   discord:      ""
-  description:  "Ring-oscillator PUF with an automated-layout arm and a matched hardened-macro arm, to measure layout-induced bias in hardware-security entropy."
+  description:  "Ring-oscillator PUF with automated-layout and matched-macro arms, testing deterministic layout-related frequency bias."
   language:     "Verilog"
   clock_hz:     50000000        # measurement reference clock; tunable
 
@@ -27,7 +27,7 @@ project:
 # Pinout. Descriptive names only; do not add or remove pins.
 pinout:
   # Inputs
-  ui[0]: "start (rising edge runs one measurement)"
+  ui[0]: "start (hold high for at least 3 clock cycles)"
   ui[1]: "arm select (0=A automated, 1=B hardened)"
   ui[2]: "ro_idx[0]"
   ui[3]: "ro_idx[1]"

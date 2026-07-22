@@ -1,67 +1,90 @@
-# Silicon-day measurement kit
+# Fabricated-device measurement kit
 
-Written before the silicon exists, so it can be tested and ready the day
-the chips arrive. Protocol checked against `dualarm/src/tt_um_ro_puf.v`.
+These scripts were written before silicon was available. They implement the
+planned measurement protocol and the analysis needed to test the pre-silicon
+prediction. The pin protocol was checked against
+`dualarm/src/tt_um_ro_puf.v`; board and SDK behavior still needs to be checked
+with the returned hardware.
 
-## What is here
+## Files
 
-- `measure_puf.py` runs ON the TinyTapeout demo board (MicroPython, TT SDK
-  v3). It selects the project, clocks it at 25 MHz, measures all 32
-  oscillators (both arms, 5 samples each) and prints CSV.
-- `analyze_counts.py` runs on the PC. Give it one CSV per chip. With several
-  chips it computes the number the whole project exists for: how strongly
-  each arm's frequency pattern correlates ACROSS chips. Prediction: Arm A
-  near +1 (shared fake entropy), Arm B near 0 (real entropy).
+- `measure_puf.py` runs on a TinyTapeout demo board using MicroPython and the
+  TT SDK v3 interface. It measures all 32 oscillators, five samples each, and
+  prints CSV.
+- `analyze_counts.py` runs on a PC using only the Python standard library. It
+  keeps chip identity and measurement condition separate, reports descriptive
+  per-arm statistics, and computes comparison metrics only when the input set
+  supports them.
 
-## How one measurement works
+The pre-silicon hypothesis is that the centred Arm A frequency pattern will be
+more correlated across chips than the Arm B pattern. That is a prediction, not
+an assumption built into the analyzer.
 
-```mermaid
-sequenceDiagram
-    participant PC
-    participant Board as demo board (RP2)
-    participant Chip
-    PC->>Board: mpremote run measure_puf.py
-    loop 32 oscillators x 5 samples
-        Board->>Chip: set arm + index on ui_in, pulse start
-        Note over Chip: selected oscillator runs,<br/>edges counted for 1000 clk cycles
-        Chip-->>Board: done = 1 on uio[0]
-        Board->>Chip: byte select low, then high
-        Chip-->>Board: two count bytes on uo_out
-    end
-    Board-->>PC: CSV over USB
-```
+## Label convention
 
-## One-time PC setup
+Set `LABEL` in `measure_puf.py` to `chip_id_condition`. The first underscore
+separates the stable chip identifier from the condition. The rest of the label
+may contain underscores:
 
-    pip install mpremote
+    chip03_room_1v8
+    chip03_freeze_1v8
+    chip04_room_1v8
+
+The first two files are two conditions for one chip. The first and third are
+two chips at the same condition. Do not change the chip identifier between
+runs on the same physical device.
 
 ## Taking a measurement
 
-1. Plug the demo board in over USB.
-2. Edit LABEL at the top of `measure_puf.py`: chip id and condition, for
-   example `chip03_room_1v8` or `chip03_freeze_1v8`.
-3. Run and capture:
+1. Install `mpremote` on the PC:
+
+       pip install mpremote
+
+2. Connect the demo board and edit `LABEL` in `measure_puf.py`.
+3. Run the script and capture its output:
 
        mpremote run measure_puf.py > chip03_room_1v8.csv
 
-4. Repeat per chip and per condition: room temperature, freeze spray,
-   hairdryer, and a couple of supply points around 1.8 V.
-5. Analyze any set of files together:
+4. Repeat the run for each chip and condition. Record actual temperature and
+   supply voltage separately in the experiment log; labels such as `freeze`
+   and `hairdryer` are only shorthand.
+5. Analyze the files together:
 
        python3 analyze_counts.py chip01_room_1v8.csv chip02_room_1v8.csv
 
-## Notes and gotchas
+## What the analyzer will and will not report
 
-- The counter is 16 bit and the window is fixed at 1000 clock cycles, so the
-  clock choice sets the overflow ceiling: count = f_osc x 1000 / f_clk. At
-  25 MHz the ceiling is 1.6 GHz, safe at every corner. Do not go below about
-  12 MHz.
-- A count of -1 in the CSV means a done-timeout; the analyzer skips them. A
-  few could appear if the project mux glitches; many means something is
-  wrong (check the project is enabled and clocked).
-- The exact SDK calls (`DemoBoard.get()`, `tt.shuttle...enable()`,
-  `tt.clock_project_PWM`, `tt.ui_in.value`, `tt.uio_out[0]`) match TT SDK v3
-  as of 2026-07. If the SDK moved by silicon day, these are the only lines
-  that might need a touch.
-- The shuttle index name will be `tt_um_nikodemetrashvili20_ro_puf`; the
-  script also falls back to `tt.shuttle.find("ro_puf")`.
+- Per-chip summaries can use partial data, but the output states how many of
+  the 16 oscillators were present.
+- Cross-chip pattern correlation requires complete measurements from at least
+  two distinct chips at the same condition and matching clock/window metadata.
+- Inter-chip uniqueness uses eight fixed adjacent oscillator pairs and is
+  reported only when at least two complete chip responses exist and no pair is
+  tied at the available count resolution.
+- Cross-condition response comparison requires one chip measured completely
+  under at least two conditions. It compares responses formed from the mean
+  count at each condition; it is not a repeat-level bit-error estimate.
+- If those requirements are not met, the analyzer prints `insufficient data`
+  instead of interpreting files from different chips or conditions as a PUF
+  population.
+
+These descriptive metrics do not establish entropy or security by themselves.
+A credible result also needs enough chips, repeat runs, uncertainty estimates,
+and a measurement protocol fixed before looking at the outcome. Pairwise
+comparisons share chips and therefore are not independent observations; the
+analyzer does not calculate confidence intervals.
+
+## Protocol notes
+
+- The counter is 16 bit and the window is fixed at 1000 reference-clock
+  cycles. At a 25 MHz reference clock the nominal overflow ceiling is about
+  1.6 GHz. Do not use a substantially lower reference clock without checking
+  the fastest expected corner.
+- A count of `-1` is a timeout marker. The analyzer skips it and reports the
+  number of skipped samples.
+- The SDK calls match the TT SDK v3 interface available when this script was
+  written in July 2026. Check the SDK release notes before the first hardware
+  run.
+- The expected shuttle project name is
+  `tt_um_nikodemetrashvili20_ro_puf`; the script also searches for `ro_puf` as
+  a fallback.

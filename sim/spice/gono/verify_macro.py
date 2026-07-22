@@ -6,7 +6,7 @@ Re-derives every number from raw files with fresh code (no imports from
 gen_macro_deck.py): macro SPEF, the generated deck itself, both ngspice logs,
 and the Arm A results csv. Prints PASS/FAIL per check.
 """
-import re, os, csv, math
+import argparse, re, os, csv, math
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJ = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -15,6 +15,14 @@ DECK = os.path.join(HERE, "ro_macro_matched.spice")
 LOG5 = os.path.join(HERE, "macro_out.txt")
 LOG1 = os.path.join(HERE, "macro_fine_out.txt")
 CSV  = os.path.join(HERE, "gono_results.csv")
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--spef", default=SPEF)
+parser.add_argument("--deck", default=DECK)
+parser.add_argument("--log-5p", default=LOG5)
+parser.add_argument("--log-1p", default=LOG1)
+parser.add_argument("--csv", default=CSV)
+args = parser.parse_args()
 
 ok = fail = 0
 def check(name, cond, detail=""):
@@ -25,7 +33,7 @@ def check(name, cond, detail=""):
     print(f"[{tag}] {name}" + (f"  ({detail})" if detail else ""))
 
 # --- 1. SPEF: fresh parse (D_NET blocks by name map) ---
-txt = open(SPEF).read()
+txt = open(args.spef).read()
 nmap = dict(re.findall(r'^\*(\d+)\s+(\S+)\s*$', txt, re.M))
 dnets = re.findall(r'^\*D_NET \*(\d+)\s+([0-9.eE+-]+)', txt, re.M)
 caps = {nmap[i].replace("\\", ""): float(c) for i, c in dnets}
@@ -35,7 +43,7 @@ check("SPEF has 35 nets, all 31 ring nets", len(caps) == 35 and len(ring) == 31,
       f"{len(caps)} nets, {len(ring)} ring, ring cap {ring_fF:.2f} fF")
 
 # --- 2. Deck: caps faithfully transferred, topology correct ---
-deck = open(DECK).read()
+deck = open(args.deck).read()
 dcaps = dict(re.findall(r'^C(b_\S+)\s+\S+\s+0\s+([0-9.e+-]+)', deck, re.M))
 exact = all(math.isclose(float(dcaps.get(f"b_n{k}", -1)), ring[k]*1e-12, rel_tol=1e-5)
             for k in range(31))
@@ -64,7 +72,7 @@ def readlog(path):
         tp, targ, trig = map(float, m.groups())
         out[inst] = (tp, targ, trig, float(f.group(1)))
     return out
-L5, L1 = readlog(LOG5), readlog(LOG1)
+L5, L1 = readlog(args.log_5p), readlog(args.log_1p)
 for name, L in (("5p", L5), ("1p", L1)):
     for inst in ("a", "b"):
         tp, targ, trig, fprint = L[inst]
@@ -74,7 +82,7 @@ for name, L in (("5p", L5), ("1p", L1)):
               f"{f_re/1e6:.3f} MHz")
 
 # --- 4. Physics/consistency checks vs Arm A ---
-rows = list(csv.DictReader(open(CSV)))
+rows = list(csv.DictReader(open(args.csv)))
 fA   = [float(r["freq_MHz"]) for r in rows]
 cA   = [float(r["ring_cap_fF"]) for r in rows]
 ctrlA = float(rows[0]["freq_ctrl_MHz"])
@@ -108,5 +116,9 @@ print(f"== SUMMARY ==  {ok} passed, {fail} failed")
 print(f"Arm B matched frequency (5p, Arm A settings): {f_b5:.2f} MHz "
       f"({100*(1-f_b5/f_a5):.1f}% below its own control {f_a5:.2f})")
 print(f"Absolute numerical uncertainty (5p vs 1p): ~{100*(f_b1-f_b5)/f_b5:.2f}%")
-print(f"Arm A for comparison: {mnA:.1f}..{mxA:.1f} MHz, mean {meanA:.2f}, spread 8.8%")
-print(f"Arm B spread across 16 copies: 0 (single shared layout, one simulation)")
+print(f"Arm A for comparison: {mnA:.1f}..{mxA:.1f} MHz, mean {meanA:.2f}, "
+      f"spread {100*(mxA-mnA)/meanA:.2f}%")
+print("Arm B modeled internal-layout spread: 0 by construction; "
+      "fabricated instances and top-level variation were not simulated")
+
+raise SystemExit(1 if fail else 0)

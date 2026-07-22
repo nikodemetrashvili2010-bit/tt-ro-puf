@@ -2,11 +2,11 @@
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
 """
-Reference model for ro_puf_core, used to check the architecture when no Verilog
-simulator is available. It reproduces the testbench: 8 oscillators with
+Legacy arithmetic sanity check for an earlier 8-oscillator testbench. It does
+not reproduce the current 16+16 dual-arm top-level RTL. It models oscillators with
 half-period (1500 + 40*i) ps, a 100 MHz reference clock, and a 200-cycle window.
-It counts the rising edges that fall inside the window and checks they are
-non-zero, distinct, and falling with index.
+It checks only the edge-count arithmetic for those constants; use the cocotb
+tests and an HDL simulator for the current design.
 """
 
 N_RO           = 8

@@ -2,10 +2,32 @@ name: gds
 
 on:
   push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
+  archived-evidence:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check Python and archived numerical evidence
+        run: |
+          python3 -m compileall -q sim
+          python3 sim/ref_model.py
+          python3 sim/montecarlo.py
+          python3 sim/h3_audit.py
+          python3 sim/spice/gono/verify.py
+          python3 sim/spice/gono/verify_macro.py
+          python3 sim/spice/gono/verify_dualarm.py
+          python3 sim/spice/gono/verify_provenance.py
+          python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
+
   gds:
+    needs: archived-evidence
     runs-on: ubuntu-24.04
     steps:
       - name: checkout repo
@@ -38,6 +60,7 @@ jobs:
         uses: TinyTapeout/tt-gds-action/gl_test@ttsky26c
 
   viewer:
+    if: github.event_name != 'pull_request'
     needs: gds
     runs-on: ubuntu-24.04
     permissions:

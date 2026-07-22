@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite the repository using this metadata."
+title: "SILICON: Deterministic Layout Bias in a Ring-Oscillator PUF"
+type: software
+license: Apache-2.0
+authors:
+  - family-names: Demetrashvili
+    given-names: Nikoloz
+repository-code: "https://github.com/nikodemetrashvili2010-bit/tt-ro-puf"
+url: "https://github.com/nikodemetrashvili2010-bit/tt-ro-puf"
+abstract: >-
+  Open SKY130 pre-silicon study of deterministic physical-implementation bias
+  in automatically placed ring oscillators, with a matched-macro comparison
+  arm and a planned multi-chip validation protocol.
+keywords:
+  - ring oscillator
+  - physical unclonable function
+  - SKY130
+  - OpenLane
+  - OpenROAD
+  - post-layout simulation

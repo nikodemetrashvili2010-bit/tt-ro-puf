@@ -8,13 +8,15 @@ An attacker who knows only oscillator position (not the chip) tries to predict
 a chip's key. We train a position-based predictor on a subset of chips and test
 it on held-out chips:
 
-  Arm A  shared layout bias -> position predicts the key -> high accuracy
-  Arm B  random mismatch only -> position carries no secret -> chance (50%)
+  Arm A  assumed shared layout term -> position can predict -> high accuracy
+  Arm B  assumed IID mismatch only -> position-only model -> chance (50%)
 
 The predictor is the optimal position-only model: for each bit position, learn
 the majority value across the training chips and predict it for every test
 chip. A logistic-regression or SVM model reaches the same conclusion; this
-version needs no external packages.
+version needs no external packages. The distributions and magnitudes below
+are assumptions, so this is a toy threat-model demonstration rather than a
+security evaluation of silicon or measured responses.
 """
 
 import random
@@ -63,10 +65,11 @@ def main():
     keys_B = make_keys(spatial_B)
 
     train_pct = int(TRAIN_FRAC * 100)
+    print("MODEL ONLY: assumed Gaussian terms; not an empirical attack result")
     print(f"chips = {N_CHIPS}, train/test = {train_pct}/{100 - train_pct}, bits per chip = {N_BITS}")
     print()
-    print(f"Arm A prediction accuracy on unseen chips: {audit(keys_A) * 100:5.1f} %   (chance 50; high means the layout leaks the key)")
-    print(f"Arm B prediction accuracy on unseen chips: {audit(keys_B) * 100:5.1f} %   (chance 50; position carries no secret)")
+    print(f"Arm A prediction accuracy on unseen virtual chips: {audit(keys_A) * 100:5.1f} %   (chance 50; reflects the assumed shared term)")
+    print(f"Arm B prediction accuracy on unseen virtual chips: {audit(keys_B) * 100:5.1f} %   (chance 50; follows the assumed IID model)")
     return 0
 
 

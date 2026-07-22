@@ -2,11 +2,18 @@
 # Independent re-verification of the go/no-go result. Recomputes everything from
 # the raw ngspice logs + SPEF with fresh code (does NOT import analyze.py), and
 # cross-checks against gono_results.csv. Prints PASS/FAIL on each check.
-import re, os, csv, math
+import argparse, re, os, csv, math
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEF = os.path.join(HERE, "first_build",
                     "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--par", default=os.path.join(HERE, "par2.txt"))
+parser.add_argument("--ctrl", default=os.path.join(HERE, "ctrl2.txt"))
+parser.add_argument("--csv", default=os.path.join(HERE, "gono_results.csv"))
+parser.add_argument("--spef", default=SPEF)
+args = parser.parse_args()
 
 def read_fN(path):
     d = {}
@@ -31,8 +38,8 @@ PASS = []; FAIL = []
 def chk(name, cond, detail=""):
     (PASS if cond else FAIL).append(name + ("" if not detail else f"  [{detail}]"))
 
-par  = read_fN(os.path.join(HERE, "par2.txt"))
-ctrl = read_fN(os.path.join(HERE, "ctrl2.txt"))
+par  = read_fN(args.par)
+ctrl = read_fN(args.ctrl)
 chk("par2.txt has 32 freqs", len(par) == 32, f"got {len(par)}")
 chk("ctrl2.txt has 32 freqs", len(ctrl) == 32, f"got {len(ctrl)}")
 
@@ -48,7 +55,7 @@ chk("every parasitic freq <= control", all(v <= fctrl+1e3 for v in par.values())
 
 # load csv
 rows = {}
-with open(os.path.join(HERE, "gono_results.csv")) as f:
+with open(args.csv) as f:
     for r in csv.DictReader(f):
         rows[int(r["ro"])] = (float(r["x_um"]), float(r["y_um"]),
                               float(r["ring_cap_fF"]), float(r["freq_MHz"]))
@@ -59,7 +66,7 @@ chk("csv freq_MHz matches par2.txt", md < 0.01, f"max diff {md:.4g} MHz")
 
 # independent SPEF re-parse -> per-RO ring cap (fF), compare to csv
 num2name, name2cap = {}, {}
-for line in open(SPEF):
+for line in open(args.spef):
     m = re.match(r'^\*(\d+)\s+(\S+)\s*$', line)
     if m:
         num2name[m.group(1)] = m.group(2).replace("\\", ""); continue
@@ -116,3 +123,5 @@ if FAIL:
     for s in FAIL: print("  [!!]", s)
 else:
     print("\nALL CHECKS PASSED.")
+
+raise SystemExit(1 if FAIL else 0)

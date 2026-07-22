@@ -5,20 +5,20 @@
 # GEOMETRY (2x2 tile, die 334.88 x 225.76, template tt_block_2x2_pg.def):
 #   TT margins (from the green config): LEFT/RIGHT_MARGIN_MULT 6, TOP/BOTTOM 1
 #   -> core origin x = 6 sites * 0.46 = 2.76, y = 1 row * 2.72 = 2.72.
-#   Macro grid: 4x4, columns x = 20/84/148/212 (pitch 64), rows y =
-#   20/68/116/164 (pitch 48). Right strip (x 272..332) and bottom strip hold
-#   Arm A + the measurement core.
+#   Macro grid: 4x4, columns x = 3.22/63.22/123.22/183.22 (pitch 60), rows y =
+#   20/68/116/164 (pitch 48). The macro block ends at x=243.22; the remaining
+#   core area to x=332.12 holds Arm A and integration standard cells.
 #
 # POWER (the PSM-0069 lesson from the standalone array):
 #   The macro's power pins are two vertical met4 straps: VPWR centerline at
 #   x = 21.84 inside the macro, VGND at 25.14 (ro_macro_hard.lef). Parallel
 #   met4 can only connect by DIRECT OVERLAP, so the block's met4 stripes must
 #   land exactly on the macro pins of every column:
-#     FP_PDN_VPITCH  = 64  (the macro column pitch)
-#     FP_PDN_VOFFSET = X0 + 21.84 - core_x0 = 20 + 21.84 - 2.76 = 39.08
+#     FP_PDN_VPITCH  = 60  (the macro column pitch)
+#     FP_PDN_VOFFSET = X0 + 21.84 - core_x0 = 3.22 + 21.84 - 2.76 = 22.30
 #   (pdngen convention, verified from the macro's own DEF: first VPWR stripe
 #   centerline = core_x0 + FP_PDN_VOFFSET; VGND follows at +3.3 with the
-#   default VWIDTH/VSPACING of 1.6/1.7, matching the macro's pin spacing.)
+#   VWIDTH/VSPACING of 2.4/0.9, matching the macro's 3.3 um pin pitch.)
 #   After floorplan, verify core_x0: grep "ROW ROW_0" in the DEF -> x=2760.
 import json, os
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -47,8 +47,8 @@ config = {
     "RUN_LINTER": 1,
     "LINTER_INCLUDE_PDK_MODELS": 1,
     "CLOCK_PORT": "clk",
-    "RUN_KLAYOUT_XOR": 0,
-    "RUN_KLAYOUT_DRC": 0,
+    "RUN_KLAYOUT_XOR": 1,
+    "RUN_KLAYOUT_DRC": 1,
     "DESIGN_REPAIR_BUFFER_OUTPUT_PORTS": 0,
     "TOP_MARGIN_MULT": 1,
     "BOTTOM_MARGIN_MULT": 1,

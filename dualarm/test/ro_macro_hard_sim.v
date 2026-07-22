@@ -4,13 +4,18 @@
 // Simulation-only behavioural model of the hardened Arm B oscillator macro.
 // Parameterless on purpose, exactly like the synthesis blackbox
 // (src/ro_macro_hard_bb.v). All 16 copies toggle at the same nominal rate,
-// which is precisely the point of the matched arm. Used only by the cocotb
-// RTL testbench; never synthesized.
+// which is precisely the point of the matched arm. Used by the cocotb
+// testbench in both RTL and gate-level runs; never synthesized. The power
+// pins exist only so a powered gate-level netlist can connect them.
 
 `timescale 1ps/1ps
 `default_nettype none
 
 module ro_macro_hard (
+`ifdef USE_POWER_PINS
+    inout wire VPWR,
+    inout wire VGND,
+`endif
     input  wire en,
     output reg  out
 );

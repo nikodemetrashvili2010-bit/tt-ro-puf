@@ -1,0 +1,35 @@
+{
+  "description": "Git blob identities for the archived July dual-arm analysis bundle and the source snapshot stored with it. These hashes bind files inside repository history; they do not prove tool or PDK provenance.",
+  "source_files": {
+    ".github/workflows/gds.yaml": "d2933aeecfb816f6034e3c57244e3665b405b239",
+    "info.yaml": "33e0ce061403b6b39cc9b3aaf1bc61ba8dc8178c",
+    "src/ro_macro.v": "46fd155d2a577a1c42202b0cc718f039dee71b15",
+    "src/ro_macro_hard_bb.v": "6abc8819a72c2025796d25d838c2a1b22f8fc02c",
+    "src/ro_puf_core.v": "e15a7eaff9067b7b6366196b100d6caa7e258b42",
+    "src/ro_puf.v": "53dd1f763a663587fbcac694b25359da86c69746",
+    "src/tt_um_ro_puf.v": "f6924f481a841dfe42d852822b1c7c04d1498ebf",
+    "src/config.json": "13ecd6a49e8d6f8d5c61aa47f8a71d08bd84d18e",
+    "src/pdn_cfg.tcl": "51ff7a58a879c6a916694e6b52e4b6818a07e874"
+  },
+  "evidence_files": {
+    "src/ro_macro_hard.gds": "c95e67dbd9912f1fb2165c684b9a60fc5fb98303",
+    "src/ro_macro_hard.lef": "2e9e6a43d812e08b1d211bd89da4c59a001e6619",
+    "src/ro_macro_hard.nl.v": "6fd5e9de59413e67d4c1dc0ffb86dc1f58bfca0e",
+    "dualarm/build_debug/tt_um_nikodemetrashvili20_ro_puf.nl.v": "eccfcad05a55029a431556cd99916050edf843eb",
+    "dualarm/build_debug/tt_um_nikodemetrashvili20_ro_puf.nom.spef": "029d16ee5ba4bf897979034d63a395ca6492a8dd",
+    "dualarm/build_debug/tt_um_nikodemetrashvili20_ro_puf.def": "3d28814ee8d65148656f90891f214ae9b768aa50",
+    "dualarm/build_debug/metrics.json": "4d14d7ed307c37fb5f879c5c4129a651ddcbe2b9",
+    "sim/spice/gono/dualarm_ctrl_out.txt": "39c2007533c8a850a30cb7eb267bc09cd9f496f3",
+    "sim/spice/gono/dualarm_par_out.txt": "fcd69d26f747dd2e923d4855e25a00c434456cd9",
+    "sim/spice/gono/macro_out.txt": "75dcea61ecb99f24a1312d70792010153366ac29",
+    "sim/spice/gono/macro_fine_out.txt": "f0fe8643d70c4eaa5f168c0eddf90d13b6b40938",
+    "sim/spice/gono/ro_macro_matched.spice": "1b88368f55edb717a79b694dbf4b0bbffa9b1a5f",
+    "sim/spice/gono/ctrl2.txt": "93f396143f318f800447a6d971e9af39b5963abe",
+    "sim/spice/gono/par2.txt": "61e3fd06c193ab71b1424556b9a2cad766f31378",
+    "sim/spice/gono/gono_results.csv": "a7d2c11abe9d5b90ab0a3c42489acdc616dc3699",
+    "sim/spice/gono/first_build/tt_um_nikodemetrashvili20_ro_puf.nom.spef": "ddb23cd88614582681eb67dbd4c6e7d6576a06bc",
+    "macro/romacro_final/spef/nom/ro_macro_hard.nom.spef": "e596e2451568fa1b673b16cf5a205a37bb407a44",
+    "sim/spice/mc/mc_matched.spice": "17a2a34b5eeaefd8979e950032ffbd24a333d0da",
+    "sim/spice/mc/mc_out.txt": "5f2b01c5f3b69cb2df4c80f885b40d5b24398c78"
+  }
+}

@@ -8,16 +8,17 @@
 #   mpremote run measure_puf.py > chip01_room_1v8.csv
 #
 # Chip protocol (from tt_um_ro_puf.v):
-#   ui[0] start (rising edge), ui[1] arm (0=A auto, 1=B matched),
+#   ui[0] start (hold high for at least 3 clk cycles),
+#   ui[1] arm (0=A auto, 1=B matched),
 #   ui[5:2] oscillator index, ui[6] byte select (0 low, 1 high),
 #   uo[7:0] selected count byte, uio[0] done (high = count valid).
-#   WINDOW is fixed in silicon at 1000 clk cycles.
+#   The current RTL fixes WINDOW at 1000 reference-clock cycles.
 #
 # Clock choice: count = f_osc * WINDOW / f_clk. The counter is 16 bit
 # (ceiling 65535). At CLK_HZ = 25 MHz the window is 40 us, a 570 MHz
-# oscillator reads about 22800, and the ceiling sits at 1.6 GHz, safely above
-# any corner. Do not drop CLK_HZ below ~12 MHz or a fast corner could
-# overflow the counter.
+# nominal post-layout oscillator would read about 22800, and the 16-bit ceiling
+# corresponds to about 1.6 GHz. Check the observed counts for saturation; a
+# lower reference clock reduces this headroom.
 
 import time
 from ttboard.demoboard import DemoBoard
@@ -26,7 +27,9 @@ PROJECT  = "tt_um_nikodemetrashvili20_ro_puf"
 CLK_HZ   = 25_000_000
 WINDOW   = 1000
 REPEATS  = 5          # samples per oscillator; raise for noise studies
-LABEL    = "chip01_room_1v8"   # edit per chip / voltage / temperature run
+# The first underscore separates chip id from condition for analyze_counts.py.
+# Keep the chip id unchanged when measuring that device under another condition.
+LABEL    = "chip01_room_1v8"
 TIMEOUT_MS = 200
 
 tt = DemoBoard.get()
@@ -41,7 +44,8 @@ def measure_one(arm, idx):
     base = _ui(0, arm, idx, 0)
     tt.ui_in.value = base
     time.sleep_ms(1)
-    # rising edge on start
+    # One millisecond is far longer than the three-clock minimum at 25 MHz.
+    # Keep arm/index unchanged through the transaction.
     tt.ui_in.value = base | 1
     time.sleep_ms(1)
     tt.ui_in.value = base

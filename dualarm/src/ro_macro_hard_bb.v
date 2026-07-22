@@ -3,6 +3,7 @@
 // uniquified by yosys and break the MACROS instance-name matching). The real
 // physical/gate views come from the GDS/LEF/nl supplied via MACROS in
 // config.json.
+`timescale 1ps/1ps
 `default_nettype none
 (* blackbox *)
 module ro_macro_hard (
