@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 """
-Independent verification of the Stage 3 dual-arm result. Fresh code, raw
+Independent consistency check of the dual-arm result (re-derives it from raw logs). Fresh code, raw
 inputs only: the dual-arm SPEF, the two ngspice logs, and the ORIGINAL
 build's gono_results.csv (for the cross-build regression check).
 """

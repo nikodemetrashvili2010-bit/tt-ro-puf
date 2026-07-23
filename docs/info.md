@@ -18,16 +18,18 @@ circuit, but their physical implementation is different. Each oscillator is a
 measurement core.
 
 Oscillators are measured one at a time through a shared counter. A synchronized
-start request clears the counter and opens a fixed window of `window`
-reference-clock cycles. The selected oscillator's edges are accumulated in an
+start request clears the counter and opens a fixed 1000-cycle measurement
+window (the hardware constant WINDOW; it is not externally selectable). The selected oscillator's edges are accumulated in an
 asynchronous ripple counter. When the window closes, the oscillator stops; the
 counter crosses a two-flop sampler and must produce three consecutive equal
 samples before the frozen count and `done` are published.
 
 A coherent nominal post-layout simulation of the current build predicts a
 10.5% peak-to-peak spread in Arm A, associated closely with extracted routing
-capacitance. That build passes all sign-off checks with zero violations, so
-the prediction and the manufacturable GDS come from the same run.
+capacitance. That build passes Magic and KLayout DRC, XOR, LVS, antenna, detailed
+routing, and power-grid connectivity with zero violations, so the prediction
+and the manufacturable GDS come from the same run; the ring-oscillator STA
+warnings are listed separately in SIGNOFF.
 Arm B's sixteen instances reuse the same internal macro layout; its plotted
 pre-silicon value is one extracted-macro result repeated sixteen times, not
 sixteen separate measurements. The experiment will test whether Arm A's

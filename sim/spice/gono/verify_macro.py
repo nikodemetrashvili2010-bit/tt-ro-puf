@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 """
-Independent verification of the Arm B matched-frequency result.
+Independent consistency check of the Arm B matched-frequency result (re-derives it from raw logs).
 Re-derives every number from raw files with fresh code (no imports from
 gen_macro_deck.py): macro SPEF, the generated deck itself, both ngspice logs,
 and the Arm A results csv. Prints PASS/FAIL per check.

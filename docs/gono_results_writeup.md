@@ -60,7 +60,7 @@ deck, which checks that the generator gave them the same topology and
 stimulus.
 
 With extracted capacitance the mean is 567.6 MHz. The population standard
-deviation across the 32 routed instances is 10.9 MHz, 1.93% of the mean.
+deviation across the 32 routed instances is 10.8 MHz, 1.90% of the mean.
 Frequencies run from about 539.1 MHz (RO10) to 589.2 MHz (RO4), a 50.2 MHz
 or 8.8% peak-to-peak spread. Extracted ring capacitance runs from 7.4 to
 17.8 fF. Frequency and capacitance have Pearson *r* = -0.997 with a fitted

@@ -20,10 +20,16 @@ one flow run on the current hardened RTL with KLayout DRC and XOR enabled,
 and every sign-off check is clean: Magic DRC 0, KLayout DRC 0, KLayout XOR 0,
 LVS 0, antenna 0, power grid 0 on both rails. The GDS, final DEF, nominal
 SPEF, and metrics all come from that one run, and the go/no-go analysis in
-`sim/spice/gono/` reads its parasitics. The only warnings are max-slew and
-max-cap at some corners, which a free-running ring oscillator always trips
-under STA; they are not layout violations. I did not pin every transitive
-tool version, but the build environment is recorded in REPRODUCIBILITY.
+`sim/spice/gono/` reads its parasitics. The build also carries the warning
+classes a free-running ring oscillator and a black-boxed macro always raise
+under conventional STA: 461 lint warnings, up to 171 max-slew and 3 max-cap
+violations across corners, one max-fanout violation, two floating timing nets,
+nine disconnected pins (none critical), and 25 unannotated timing nets per
+corner. These are expected for asynchronous ring structures and unused
+outputs, not detailed-route or connectivity failures, but each class still
+needs per-net triage from the timing reports before final tapeout. I did not
+pin every transitive tool version; the build environment is recorded in
+REPRODUCIBILITY.
 
 **macro/romacro_final/** is the hardened oscillator macro bundle: GDS, LEF,
 DEF, both netlists, SPEF, Liberty, SDF, extracted SPICE, tool views, a
@@ -45,12 +51,12 @@ derived from it is now a prior data point, not the headline.
 
 ## What is left
 
-The coherent flow this project needed has now run: one build from the current
-source, KLayout DRC and XOR passing alongside Magic, LVS, antenna, and power
-grid, with the extracted go/no-go regenerated from that same build. What is
-still open is the oscillator-to-counter interface, where the ripple counter
-is clocked by the ring itself and its fast-corner timing is checked only in
-behavioural simulation so far, and then silicon: the PUF claims about
-uniqueness, reliability, and any attack can only be settled by measuring
-multiple dies at several voltage and temperature points. Until those exist,
-this is a pre-silicon prototype with a clean coherent build behind it.
+The coherent flow this project needed has run. One build from the current
+source, with KLayout DRC and XOR passing next to Magic, LVS, antenna, and power
+grid, and the go/no-go regenerated from that same build. Two things are still
+open. The oscillator-to-counter interface, where the ripple counter is clocked
+by the ring itself, is checked only in behavioural simulation, so its fast-corner
+timing is not yet proven. And the PUF claims come last: uniqueness, reliability,
+and any attack need measured dies at several voltage and temperature points, not
+a simulation. Until then this is a pre-silicon prototype with a clean coherent
+build behind it.

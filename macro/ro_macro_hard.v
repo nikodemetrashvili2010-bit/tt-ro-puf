@@ -9,13 +9,15 @@
 //   * place bit-identical copies of its hardened GDS/LEF at fixed locations
 //     (MACROS.ro_macro_hard.instances.<inst>.location).
 //
-// Because every Arm B instance is the SAME hardened GDS, their internal ring
-// parasitics are identical -> no per-oscillator layout bias (see the go/no-go:
-// the auto-placed Arm A spread 8.8% peak-to-peak; matched Arm B -> ~0).
+// Every Arm B instance is the SAME hardened GDS, so their internal ring
+// parasitics are identical: no per-oscillator internal-layout bias. Hardening
+// also inserts input and output clkdlybuf boundary buffers around the ring
+// (visible in the extracted netlist; see macro/README.md), so the Arm A and
+// Arm B external interfaces are not identical. The go/no-go compares the
+// internal-layout term, not a perfectly matched boundary.
 //
-// NOT yet wired into the build: this file is intentionally absent from
-// info.yaml source_files, so the current (green) design is unaffected. It is
-// added to the build only when the Arm B integration step begins, on a branch.
+// This module is part of the integrated dual-arm design: src/tt_um_ro_puf.v
+// instantiates 16 copies as u_rob0..u_rob15.
 
 `default_nettype none
 

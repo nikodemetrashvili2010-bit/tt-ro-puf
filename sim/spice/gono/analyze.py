@@ -29,7 +29,9 @@ def read_freqs(path):
 
 def mean(v): return sum(v) / len(v)
 def std(v):
-    m = mean(v); return math.sqrt(sum((x-m)**2 for x in v) / (len(v)-1))
+    # Population SD: the oscillators of one routed layout are the complete
+    # set for that layout, described descriptively, so divide by n.
+    m = mean(v); return math.sqrt(sum((x-m)**2 for x in v) / len(v))
 def pearson(a, b):
     ma, mb = mean(a), mean(b)
     num = sum((x-ma)*(y-mb) for x, y in zip(a, b))

@@ -1,346 +1,402 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
-"""Summarize RO-PUF measurements without mixing chips or conditions.
+"""Summarize RO-PUF measurements without mixing chips, conditions, or runs.
 
-Labels must have the form ``chip_id_condition``.  The first underscore
-separates the chip identifier from the condition, so ``chip03_room_1v8`` and
-``chip03_freeze_1v8`` are two conditions measured on the same chip.
+Input CSVs come from measure_puf.py: a ``# META {json}`` header line plus rows
+``run_id,chip_id,condition,round,order,arm,idx,count,t_ms``. The physical die is
+the experimental unit, so across-chip statistics are bootstrapped over chips
+rather than over the dependent set of chip pairs. Response bits use pairings
+that are fixed before the data is seen. All outputs are descriptive; they do
+not by themselves establish entropy, reliability, or a security claim.
 """
 
 import argparse
 import csv
+import hashlib
+import json
 import math
-import re
+import random
 import sys
 from itertools import combinations
 
-
 NRO = 16
-BIT_PAIRS = tuple((i, i + 1) for i in range(0, NRO, 2))
-META_RE = re.compile(r"\b(clk|window|repeats)=([^\s]+)")
+# Predeclared logical adjacent pairs. Same index mapping in both arms, so this
+# is a clean architectural comparison. A geometry-based pairing can be supplied
+# with --positions (also fixed before seeing frequencies).
+LOGICAL_PAIRS = tuple((i, i + 1) for i in range(0, NRO, 2))
+BOOTSTRAP = 2000
+NEAR_TIE_MARGIN = 1.0  # counts of separation below which a bit is called fragile
 
 
-def split_label(label):
-    """Return ``(chip_id, condition)`` from the measurement label."""
-    label = label.strip()
-    if "_" not in label:
-        raise ValueError(
-            f"label {label!r} has no condition; use chip_id_condition"
-        )
-    chip_id, condition = label.split("_", 1)
-    if not chip_id or not condition:
-        raise ValueError(
-            f"label {label!r} must contain both a chip id and a condition"
-        )
-    return chip_id, condition
+def mean(xs):
+    return sum(xs) / len(xs)
 
 
-def parse_metadata(lines):
-    """Read the clock/window tuple emitted by ``measure_puf.py``."""
+def median(xs):
+    s = sorted(xs)
+    n = len(s)
+    return s[n // 2] if n % 2 else 0.5 * (s[n // 2 - 1] + s[n // 2])
+
+
+def population_sd(xs):
+    c = mean(xs)
+    return math.sqrt(mean([(x - c) ** 2 for x in xs]))
+
+
+def mad(xs):
+    m = median(xs)
+    return median([abs(x - m) for x in xs])
+
+
+def parse_meta(lines):
     for line in lines:
-        if line.startswith("# tt_ro_puf measurement"):
-            fields = dict(META_RE.findall(line))
+        if line.startswith("# META "):
             try:
-                return int(fields["clk"]), int(fields["window"])
-            except (KeyError, ValueError):
+                return json.loads(line[len("# META "):])
+            except ValueError:
                 return None
     return None
 
 
 def load_files(paths):
     groups = {}
+    seen_runs = {}
+    seen_digests = {}
     for path in paths:
-        with open(path, encoding="utf-8", newline="") as handle:
-            lines = handle.readlines()
-        setting = parse_metadata(lines)
-        rows = csv.DictReader(line for line in lines if not line.startswith("#"))
-        required = {"label", "arm", "idx", "count"}
+        with open(path, encoding="utf-8", newline="") as fh:
+            raw_bytes = fh.read()
+        digest = hashlib.sha256(raw_bytes.encode("utf-8")).hexdigest()[:12]
+        if digest in seen_digests:
+            raise ValueError(
+                "identical file passed more than once: %s and %s"
+                % (seen_digests[digest], path))
+        seen_digests[digest] = path
+        lines = raw_bytes.splitlines(keepends=True)
+        meta = parse_meta(lines)
+        setting = None
+        if meta:
+            setting = (meta.get("clk_hz_requested"), meta.get("window"))
+        rows = csv.DictReader(l for l in lines if not l.startswith("#"))
+        required = {"run_id", "chip_id", "condition", "round", "arm", "idx", "count"}
         if not rows.fieldnames or not required.issubset(rows.fieldnames):
             missing = sorted(required.difference(rows.fieldnames or ()))
-            raise ValueError(f"{path}: missing CSV column(s): {', '.join(missing)}")
-
-        for line_number, row in enumerate(rows, 2):
+            raise ValueError("%s: missing CSV column(s): %s" % (path, ", ".join(missing)))
+        for n, row in enumerate(rows, 2):
             try:
-                label = row["label"].strip()
-                chip_id, condition = split_label(label)
+                run_id = row["run_id"].strip()
+                chip_id = row["chip_id"].strip()
+                condition = row["condition"].strip()
+                rnd = int(row["round"])
                 arm = int(row["arm"])
                 idx = int(row["idx"])
                 count = int(row["count"])
             except (KeyError, TypeError, ValueError) as exc:
-                raise ValueError(f"{path}:{line_number}: {exc}") from exc
+                raise ValueError("%s:%d: %s" % (path, n, exc)) from exc
             if arm not in (0, 1) or not 0 <= idx < NRO:
+                raise ValueError("%s:%d: arm/idx out of range" % (path, n))
+            # Reject a run_id seen in a different file: re-submitting the same
+            # run would inflate the sample with duplicate observations.
+            if run_id in seen_runs and seen_runs[run_id] != (path, digest):
                 raise ValueError(
-                    f"{path}:{line_number}: arm/index out of range ({arm}, {idx})"
-                )
-
-            key = (chip_id, condition)
-            group = groups.setdefault(
-                key,
-                {"raw": {}, "sources": set(), "settings": set(), "timeouts": 0},
-            )
-            group["sources"].add(path)
-            # Keep a missing header visible.  Silently borrowing metadata from
-            # another file in the same group could make incomparable captures
-            # look compatible.
-            group["settings"].add(setting)
+                    "duplicate run_id %s in %s and %s" % (run_id, seen_runs[run_id][0], path))
+            seen_runs[run_id] = (path, digest)
+            g = groups.setdefault(
+                (chip_id, condition),
+                {"raw": {}, "by_round": {}, "runs": set(), "sources": set(),
+                 "settings": set(), "timeouts": 0, "saturated": 0})
+            g["sources"].add(path)
+            g["runs"].add(run_id)
+            g["settings"].add(setting)
             if count < 0:
-                group["timeouts"] += 1
+                g["timeouts"] += 1
                 continue
-            group["raw"].setdefault((arm, idx), []).append(count)
+            if count >= 65000:
+                g["saturated"] += 1
+            g["raw"].setdefault((arm, idx), []).append(count)
+            g["by_round"].setdefault((run_id, rnd), {})[(arm, idx)] = count
     return groups
 
 
-def mean(values):
-    return sum(values) / len(values)
+def osc_means(g, arm):
+    return {idx: mean(s) for (a, idx), s in g["raw"].items() if a == arm and s}
 
 
-def population_sd(values):
-    centre = mean(values)
-    return math.sqrt(mean([(value - centre) ** 2 for value in values]))
-
-
-def oscillator_means(group, arm):
-    return {
-        idx: mean(samples)
-        for (sample_arm, idx), samples in group["raw"].items()
-        if sample_arm == arm and samples
-    }
-
-
-def complete_vector(group, arm):
-    values = oscillator_means(group, arm)
-    if set(values) != set(range(NRO)):
+def complete_vector(g, arm):
+    v = osc_means(g, arm)
+    if set(v) != set(range(NRO)):
         return None
-    return [values[idx] for idx in range(NRO)]
+    return [v[i] for i in range(NRO)]
 
 
-def response_bits(vector):
-    """Eight fixed adjacent-pair bits, or ``None`` if a pair is tied."""
+def correlation(a, b):
+    ma, mb = mean(a), mean(b)
+    da = [x - ma for x in a]
+    db = [x - mb for x in b]
+    s = math.sqrt(sum(x * x for x in da)) * math.sqrt(sum(x * x for x in db))
+    return None if s == 0 else sum(x * y for x, y in zip(da, db)) / s
+
+
+def response_bits(vector, pairs):
     bits = []
-    for left, right in BIT_PAIRS:
-        if vector[left] == vector[right]:
+    for l, r in pairs:
+        if vector[l] == vector[r]:
             return None
-        bits.append(int(vector[left] > vector[right]))
+        bits.append(int(vector[l] > vector[r]))
     return bits
 
 
-def correlation(first, second):
-    first_mean = mean(first)
-    second_mean = mean(second)
-    a = [value - first_mean for value in first]
-    b = [value - second_mean for value in second]
-    scale = math.sqrt(sum(value * value for value in a)) * math.sqrt(
-        sum(value * value for value in b)
-    )
-    if scale == 0:
-        return None
-    return sum(x * y for x, y in zip(a, b)) / scale
+def hamming_pct(a, b):
+    return 100.0 * sum(x != y for x, y in zip(a, b)) / len(a)
 
 
-def hamming_percent(first, second):
-    return 100.0 * sum(a != b for a, b in zip(first, second)) / len(first)
-
-
-def compatible_settings(entries):
-    settings = []
-    for _, group, _ in entries:
-        if len(group["settings"]) != 1 or None in group["settings"]:
+def settings_ok(entries):
+    ss = []
+    for e in entries:
+        s = e[1]["settings"]
+        if len(s) != 1 or None in s:
             return False
-        settings.append(next(iter(group["settings"])))
-    return len(set(settings)) == 1
+        ss.append(next(iter(s)))
+    return len(set(ss)) == 1
 
 
-def print_group_summaries(groups):
-    for (chip_id, condition), group in sorted(groups.items()):
-        sources = ", ".join(sorted(group["sources"]))
-        print(f"\n== {chip_id} / {condition}  [{sources}]")
-        if group["timeouts"]:
-            print(f"  skipped timeout samples: {group['timeouts']}")
-        if len(group["settings"]) == 1 and None not in group["settings"]:
-            clk, window = next(iter(group["settings"]))
-            print(f"  acquisition: clk={clk} Hz, window={window} cycles")
-        elif group["settings"] == {None}:
-            print("  acquisition metadata: missing")
+def bit_reliability(g, arm, pairs):
+    """Per-pair bit-error rate across rounds, and a fragile-bit count.
+
+    A bit whose two oscillators sit within NEAR_TIE_MARGIN counts on average, or
+    that flips across repeats, is unreliable even if the pooled means order it.
+    """
+    per_round = [rc for (rid, rnd), rc in g["by_round"].items()]
+    fragile = 0
+    bers = []
+    for l, r in pairs:
+        votes = []
+        for rc in per_round:
+            if (arm, l) in rc and (arm, r) in rc and rc[(arm, l)] != rc[(arm, r)]:
+                votes.append(int(rc[(arm, l)] > rc[(arm, r)]))
+        if not votes:
+            continue
+        ref = 1 if sum(votes) * 2 >= len(votes) else 0
+        ber = mean([int(v != ref) for v in votes])
+        bers.append(ber)
+        ml = g["raw"].get((arm, l))
+        mr = g["raw"].get((arm, r))
+        if ml and mr and abs(mean(ml) - mean(mr)) < NEAR_TIE_MARGIN:
+            fragile += 1
+        elif ber > 0.02:
+            fragile += 1
+    return (mean(bers) if bers else None), fragile, len(bers)
+
+
+def shared_position_ratio(vectors):
+    """Descriptive variance split: how much of the total across-chip variance is
+    the shared per-position pattern versus chip-by-position residual. A larger
+    ratio means a more repeatable layout pattern. Not a formal mixed model."""
+    if len(vectors) < 2:
+        return None
+    n = len(vectors[0])
+    col_means = [mean([v[i] for v in vectors]) for i in range(n)]
+    grand = mean(col_means)
+    shared = mean([(c - grand) ** 2 for c in col_means])
+    resid = mean([mean([(v[i] - col_means[i]) ** 2 for i in range(n)]) for v in vectors])
+    total = shared + resid
+    return None if total == 0 else shared / total
+
+
+def boot_ci(values, chips, stat, reps=BOOTSTRAP):
+    """Bootstrap a statistic by resampling whole chips (the experimental unit),
+    not chip pairs. values maps a chip to its vector."""
+    rng = random.Random(20260723)
+    keys = list(chips)
+    if len(keys) < 2:
+        return None
+    samples = []
+    for _ in range(reps):
+        pick = [rng.choice(keys) for _ in keys]
+        vecs = [values[k] for k in pick]
+        s = stat(vecs)
+        if s is not None:
+            samples.append(s)
+    if not samples:
+        return None
+    samples.sort()
+    lo = samples[int(0.025 * len(samples))]
+    hi = samples[min(len(samples) - 1, int(0.975 * len(samples)))]
+    return mean(samples), lo, hi
+
+
+def mean_pairwise_corr(vectors):
+    cs = [c for a, b in combinations(vectors, 2) for c in [correlation(a, b)] if c is not None]
+    return mean(cs) if cs else None
+
+
+def load_positions(path):
+    """Geometry-based pairing fixed before frequencies are seen: greedily pair
+    each oscillator with its nearest unused neighbour by (x, y)."""
+    pos = {}
+    with open(path, encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            try:
+                pos[int(row["ro"])] = (float(row["x_um"]), float(row["y_um"]))
+            except (KeyError, ValueError):
+                return None
+    if set(pos) != set(range(NRO)) or any(math.isnan(x) or math.isnan(y) for x, y in pos.values()):
+        return None
+    remaining = set(range(NRO))
+    pairs = []
+    while len(remaining) >= 2:
+        i = min(remaining)
+        remaining.discard(i)
+        j = min(remaining, key=lambda k: (pos[i][0] - pos[k][0]) ** 2 + (pos[i][1] - pos[k][1]) ** 2)
+        remaining.discard(j)
+        pairs.append((i, j))
+    return tuple(pairs)
+
+
+def print_summaries(groups):
+    for (chip, cond), g in sorted(groups.items()):
+        print("\n== %s / %s  [%d run(s), %d file(s)]"
+              % (chip, cond, len(g["runs"]), len(g["sources"])))
+        if g["timeouts"]:
+            print("  timeout samples skipped: %d" % g["timeouts"])
+        if g["saturated"]:
+            print("  WARNING: %d samples near the 16-bit ceiling" % g["saturated"])
+        if len(g["settings"]) == 1 and None not in g["settings"]:
+            clk, win = next(iter(g["settings"]))
+            print("  acquisition: clk=%s Hz window=%s" % (clk, win))
         else:
             print("  acquisition metadata: missing or inconsistent across files")
-
         for arm, name in ((0, "Arm A (auto)"), (1, "Arm B (matched)")):
-            means = oscillator_means(group, arm)
-            if not means:
-                print(f"  {name}: no valid data")
+            v = osc_means(g, arm)
+            if not v:
+                print("  %s: no valid data" % name)
                 continue
-            values = list(means.values())
-            centre = mean(values)
-            spread = max(values) - min(values)
-            sd = population_sd(values)
-            repeat_sds = [
-                population_sd(samples)
-                for (sample_arm, _), samples in group["raw"].items()
-                if sample_arm == arm and len(samples) > 1
-            ]
-            noise_text = (
-                f"mean within-oscillator repeat SD {mean(repeat_sds):.2f} counts"
-                if repeat_sds
-                else "repeat noise unavailable (need at least two valid samples)"
-            )
-            relative_text = (
-                f"{100 * spread / centre:.2f}% p-p, "
-                f"SD {sd:.1f} ({100 * sd / centre:.2f}%)"
-                if centre != 0
-                else f"relative spread unavailable (mean is zero), SD {sd:.1f}"
-            )
-            print(
-                f"  {name}: {len(values)}/{NRO} oscillators, mean {centre:.1f}, "
-                f"spread {spread:.1f} ({relative_text}); {noise_text}"
-            )
+            vals = list(v.values())
+            c = mean(vals)
+            pp = max(vals) - min(vals)
+            sd = population_sd(vals)
+            rep = [population_sd(s) for (a, _), s in g["raw"].items() if a == arm and len(s) > 1]
+            noise = "repeat SD %.2f counts" % mean(rep) if rep else "repeat noise n/a"
+            if c:
+                print("  %s: %d/%d osc, mean %.1f | p-p %.2f%% | SD %.2f%% | "
+                      "median %.1f MAD %.2f | %s"
+                      % (name, len(vals), NRO, c, 100 * pp / c, 100 * sd / c,
+                         median(vals), mad(vals), noise))
+            else:
+                print("  %s: mean is zero" % name)
 
 
-def print_across_chip_metrics(groups):
-    print("\n== Across chips at the same condition")
-    conditions = sorted({condition for _, condition in groups})
-    for condition in conditions:
-        print(f"  Condition: {condition}")
+def print_across_chips(groups, pairings):
+    print("\n== Across chips at the same condition (chip is the unit)")
+    for cond in sorted({c for _, c in groups}):
+        print("  Condition: %s" % cond)
         for arm, name in ((0, "Arm A (auto)"), (1, "Arm B (matched)")):
             entries = []
-            for (chip_id, group_condition), group in sorted(groups.items()):
-                if group_condition != condition:
+            for (chip, gc), g in sorted(groups.items()):
+                if gc != cond:
                     continue
-                vector = complete_vector(group, arm)
-                if vector is not None:
-                    entries.append((chip_id, group, vector))
+                vec = complete_vector(g, arm)
+                if vec is not None:
+                    entries.append((chip, g, vec))
             if len(entries) < 2:
-                print(
-                    f"    {name}: insufficient data (need complete measurements "
-                    "from at least two distinct chips)"
-                )
+                print("    %s: need complete data from >=2 chips" % name)
                 continue
-            if not compatible_settings(entries):
-                print(
-                    f"    {name}: insufficient comparable data "
-                    "(clock/window metadata missing or inconsistent)"
-                )
+            if not settings_ok(entries):
+                print("    %s: incompatible acquisition settings across chips" % name)
                 continue
-
-            correlations = []
-            distances = []
-            tied = False
-            for first, second in combinations(entries, 2):
-                corr = correlation(first[2], second[2])
-                if corr is not None:
-                    correlations.append(corr)
-                first_bits = response_bits(first[2])
-                second_bits = response_bits(second[2])
-                if first_bits is None or second_bits is None:
-                    tied = True
-                else:
-                    distances.append(hamming_percent(first_bits, second_bits))
-
-            if correlations:
-                print(
-                    f"    {name}: centred frequency-pattern correlation "
-                    f"mean r={mean(correlations):+.3f} over "
-                    f"{len(correlations)} chip pair(s)"
-                )
-            else:
-                print(
-                    f"    {name}: pattern correlation unavailable "
-                    "(one or more patterns have no variation)"
-                )
-            if distances and not tied:
-                print(
-                    f"    {name}: 8-bit adjacent-pair uniqueness "
-                    f"mean Hamming distance={mean(distances):.1f}% over "
-                    f"{len(distances)} chip pair(s)"
-                )
-            else:
-                print(
-                    f"    {name}: response uniqueness unavailable "
-                    "(a fixed pair tied or a complete response is missing)"
-                )
+            vectors = {chip: vec for chip, _, vec in entries}
+            point = mean_pairwise_corr(list(vectors.values()))
+            ci = boot_ci(vectors, list(vectors), mean_pairwise_corr)
+            ratio = shared_position_ratio(list(vectors.values()))
+            npairs = len(list(combinations(entries, 2)))
+            if point is not None and ci:
+                _, lo, hi = ci
+                print("    %s: pattern correlation mean r=%+.3f "
+                      "[bootstrap 95%% by chip: %+.3f, %+.3f], n_chips=%d "
+                      "(%d dependent pairs)" % (name, point, lo, hi, len(vectors), npairs))
+            if ratio is not None:
+                print("      shared-position variance fraction %.2f "
+                      "(higher = more repeatable layout pattern)" % ratio)
+            for label, pairs in pairings:
+                bits = {chip: response_bits(vec, pairs) for chip, _, vec in entries}
+                good = {c: b for c, b in bits.items() if b is not None}
+                if len(good) < 2:
+                    print("      %s bits: a fixed pair tied on >=1 chip" % label)
+                    continue
+                hd = [hamming_pct(good[a], good[b]) for a, b in combinations(good, 2)]
+                print("      %s uniqueness: mean HD=%.1f%% over %d chips "
+                      "(%d dependent pairs, %d bits/chip)"
+                      % (label, mean(hd), len(good), len(hd), len(pairs)))
 
 
-def print_across_condition_metrics(groups):
+def print_reliability(groups, pairings):
+    print("\n== Bit reliability within chip/condition (needs repeated rounds)")
+    for (chip, cond), g in sorted(groups.items()):
+        for arm, name in ((0, "Arm A"), (1, "Arm B")):
+            for label, pairs in pairings:
+                ber, fragile, nb = bit_reliability(g, arm, pairs)
+                if ber is None:
+                    continue
+                print("  %s/%s %s %s: mean BER %.3f, %d/%d fragile bits"
+                      % (chip, cond, name, label, ber, fragile, nb))
+
+
+def print_across_conditions(groups, pairings):
     print("\n== Same chip across conditions")
-    chip_ids = sorted({chip_id for chip_id, _ in groups})
-    for chip_id in chip_ids:
-        print(f"  Chip: {chip_id}")
-        for arm, name in ((0, "Arm A (auto)"), (1, "Arm B (matched)")):
+    for chip in sorted({c for c, _ in groups}):
+        for arm, name in ((0, "Arm A"), (1, "Arm B")):
             entries = []
-            for (group_chip, condition), group in sorted(groups.items()):
-                if group_chip != chip_id:
+            for (gc, cond), g in sorted(groups.items()):
+                if gc != chip:
                     continue
-                vector = complete_vector(group, arm)
-                if vector is not None:
-                    entries.append((condition, group, vector))
+                vec = complete_vector(g, arm)
+                if vec is not None:
+                    entries.append((cond, g, vec))
             if len(entries) < 2:
-                print(
-                    f"    {name}: insufficient data (need two complete "
-                    "conditions for this chip)"
-                )
                 continue
-
-            correlations = []
-            distances = []
-            tied = False
-            for first, second in combinations(entries, 2):
-                corr = correlation(first[2], second[2])
-                if corr is not None:
-                    correlations.append(corr)
-                first_bits = response_bits(first[2])
-                second_bits = response_bits(second[2])
-                if first_bits is None or second_bits is None:
-                    tied = True
-                else:
-                    distances.append(hamming_percent(first_bits, second_bits))
-
-            if correlations:
-                print(
-                    f"    {name}: cross-condition pattern correlation "
-                    f"mean r={mean(correlations):+.3f} over "
-                    f"{len(correlations)} condition pair(s)"
-                )
-            else:
-                print(
-                    f"    {name}: pattern stability unavailable "
-                    "(one or more patterns have no variation)"
-                )
-            if distances and not tied:
-                error = mean(distances)
-                print(
-                    f"    {name}: 8-bit cross-condition response change "
-                    f"mean Hamming distance={error:.1f}% "
-                    f"(agreement={100 - error:.1f}%)"
-                )
-            else:
-                print(
-                    f"    {name}: cross-condition response comparison unavailable "
-                    "(a fixed pair tied or a complete response is missing)"
-                )
+            # Same compatibility gate as the across-chip path: comparing count
+            # magnitude across incompatible acquisition settings is meaningless.
+            if not settings_ok(entries):
+                print("  %s %s: incompatible acquisition settings across conditions"
+                      % (chip, name))
+                continue
+            cs = [c for a, b in combinations(entries, 2)
+                  for c in [correlation(a[2], b[2])] if c is not None]
+            if cs:
+                print("  %s %s: cross-condition pattern r=%+.3f over %d condition pair(s)"
+                      % (chip, name, mean(cs), len(cs)))
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(
-        description="Summarize grouped RO-PUF count CSV files without mixing chips or conditions."
-    )
-    parser.add_argument("csv_files", metavar="CSV", nargs="+")
-    paths = parser.parse_args(argv).csv_files
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("csv_files", metavar="CSV", nargs="+")
+    ap.add_argument("--positions", help="ro/x_um/y_um CSV for a geometry-based pairing")
+    args = ap.parse_args(argv)
     try:
-        groups = load_files(paths)
+        groups = load_files(args.csv_files)
     except (OSError, ValueError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print("error: %s" % exc, file=sys.stderr)
         return 2
     if not groups:
         print("error: no measurement rows found", file=sys.stderr)
         return 2
 
-    print_group_summaries(groups)
-    print_across_chip_metrics(groups)
-    print_across_condition_metrics(groups)
-    print(
-        "\nThese are descriptive metrics for the supplied files. "
-        "They do not establish cross-die repeatability or entropy on their own."
-    )
+    pairings = [("logical-pair", LOGICAL_PAIRS)]
+    if args.positions:
+        geo = load_positions(args.positions)
+        if geo:
+            pairings.append(("geometric-pair", geo))
+        else:
+            print("note: --positions ignored (incomplete or nan coordinates)", file=sys.stderr)
+
+    print_summaries(groups)
+    print_across_chips(groups, pairings)
+    print_reliability(groups, pairings)
+    print_across_conditions(groups, pairings)
+    print("\nDescriptive metrics only. The physical die is the unit; pairwise "
+          "chip/condition counts are dependent, so read the bootstrap-by-chip "
+          "interval, not the pair count, as the sample size. Hamming distance and "
+          "correlation are not entropy.")
     return 0
 
 

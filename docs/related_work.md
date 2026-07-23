@@ -67,10 +67,17 @@ simulation, 569.5 MHz, appears in the comparison figures as a reference line
 for that shared internal layout. And extraction followed by nominal SPICE is
 a practical pre-fabrication check for deterministic layout sensitivity.
 
-Cross-die repeatability, uniqueness, attack success, and entropy are
-predictions I will test on the fabricated chips. The matched-layout principle
-itself is not new; the intended contribution is an open ASIC case study and a
-pre-silicon diagnostic that others can rerun.
+Uniqueness, reliability, and entropy have standard definitions in the PUF
+literature [13], and cross-die repeatability, uniqueness, and any attack are
+predictions I will test on the fabricated chips rather than claims here. What I
+did not find is the exact combination this project targets. Prior mitigation
+work matches layout on FPGAs [2, 5, 6], large ASIC studies characterize RO-PUFs
+across many dies [3, 12], and temperature-aware designs tackle RO reliability
+[14], but I have not seen a controlled open-source RTL-to-GDS array compared
+against a matched hardened macro, quantified from the flow's own extraction
+before fabrication and then checked on the same dies. That gap, together with a
+diagnostic anyone can rerun, is the contribution. The matched-layout principle
+itself is old.
 
 ## References
 
@@ -128,3 +135,11 @@ and C. Wachsmann, “PUFs: Myth, Fact or Busted? A Security Evaluation of
 Physically Unclonable Functions (PUFs) Cast in Silicon,” *Cryptographic
 Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283–301, 2012.
 https://doi.org/10.1007/978-3-642-33027-8_17
+
+[13] C. Herder, M.-D. Yu, F. Koushanfar, and S. Devadas, “Physical Unclonable
+Functions and Applications: A Tutorial,” *Proceedings of the IEEE*, vol. 102,
+no. 8, pp. 1126–1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516
+
+[14] C.-E. Yin and G. Qu, “Temperature-aware cooperative ring oscillator PUF,”
+*2009 IEEE International Workshop on Hardware-Oriented Security and Trust
+(HOST)*, pp. 36–42, 2009. https://doi.org/10.1109/HST.2009.5225055

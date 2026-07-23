@@ -115,6 +115,35 @@ The post-start helper links `./tt` to the exact image checkout. It never
 performs an implicit `git pull` and leaves an existing non-symlink `tt`
 directory unchanged.
 
+## Which file is which
+
+The repository keeps failed and superseded builds on purpose, so here is the
+short answer to "which one is current":
+
+- Tapeout candidate GDS and its checks: `dualarm/build_current/` (the coherent
+  build from the current RTL). This is what the headline 10.5% comes from, via
+  its `.nom.spef` and the go/no-go logs in `sim/spice/gono/`.
+- Figures 2 and 3 come from the earlier 32-oscillator build under
+  `sim/spice/gono/first_build/`; Figure 4 comes from `dualarm/build_current/`.
+- Everything under `dualarm/build_debug/`, `array/`, and
+  `macro/romacro_final/` is historical or component evidence, not the tapeout
+  chip. `build_debug` in particular is an older, incomplete snapshot kept only
+  for contrast.
+
+## Freezing the final release
+
+Provenance today binds the archived analysis bundle, not a locked tapeout
+release. See the note in `sim/spice/gono/verify_provenance.py` for what that
+check does and does not cover. Before I order silicon I will cut one tagged
+release where everything lines up: source commit, TinyTapeout config, the macro
+and top GDS, the DEF and SPEF, the metrics, the DRC/LVS/XOR reports, the deck
+generators, the raw logs, and the paper numbers. The same tag records the parts
+that can still move today. That means the resolved SHAs behind
+`actions/checkout` and `TinyTapeout/tt-gds-action`, the SKY130 PDK commit, the
+LibreLane and OpenROAD revisions, the container image digest, `pip freeze`, and
+the tool versions listed above. After that the tag is the artifact, not a
+branch that keeps moving.
+
 ## Physical evidence
 
 See [SIGNOFF.md](SIGNOFF.md) for the per-artifact status.

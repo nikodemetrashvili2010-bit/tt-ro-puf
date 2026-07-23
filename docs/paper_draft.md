@@ -104,10 +104,17 @@ method is the experimental variable. Figure 1 summarizes the design.
 
 ![Figure 1. Block diagram of the two-arm design. Arm A lets the flow place and route each oscillator separately; Arm B repeats one hardened macro with a common internal layout.](figures/chip_block.png)
 
-Two caveats on the comparison itself. Arm B has a macro boundary and
-different top-level connectivity, so the arms are not perfect experimental
-twins. The main results below come from a coherent build of the current RTL
-that passes every sign-off check with zero violations; two earlier builds, an
+One caveat matters for interpretation: the two arms are not identical apart
+from internal-layout matching. Hardening inserts input and output delay
+buffers at the Arm B macro boundary that Arm A does not have, the sixteen
+Arm B macros occupy a regular block on one side of the tile while Arm A fills
+the rest, and the two arms differ in local decap and power-delivery geometry.
+The honest description is therefore a matched hardened-macro implementation
+against a conventional automated standard-cell implementation, not two circuits
+that differ only in internal routing; the ring loops themselves stay logically
+equivalent. The main results below come from a coherent build of the current
+RTL that passes the physical checks (Magic and KLayout DRC, XOR, LVS, antenna,
+detailed route, power grid) with zero violations; two earlier builds, an
 archived dual-arm snapshot and a 32-oscillator layout, are reported for
 contrast (see SIGNOFF.md in the repository).
 
@@ -138,7 +145,9 @@ For each automatically placed array I report mean, standard deviation,
 range, peak-to-peak spread relative to the mean, and the Pearson correlation
 between frequency and extracted ring capacitance. Instances inside one
 routed design are not independent samples from a chip population, so these
-are descriptive statistics for that layout. The extracted capacitance is also
+are descriptive statistics for that layout. Standard deviations are
+population values across those instances, which are the complete set for a
+layout, not a sample from a wider population. The extracted capacitance is also
 the only spread-producing input to the model, so a strong frequency-capacitance correlation is expected almost by construction. The coefficient
 confirms the model behaves; the spread it produces, and the slope, are the
 physically interesting parts.
@@ -150,7 +159,8 @@ physically interesting parts.
 The earlier build placed all 32 oscillators automatically. In the
 no-parasitic control every deck produced the same nominal frequency,
 approximately 633.640 MHz, which checks the generator itself. With extracted
-capacitance the mean was 567.6 MHz with a standard deviation of 10.9 MHz.
+capacitance the mean was 567.6 MHz with a population standard deviation of
+10.8 MHz (1.90%).
 Frequencies ranged from about 539 to 589 MHz, a 50.2 MHz or 8.8%
 peak-to-peak spread.
 
@@ -167,9 +177,14 @@ instance-specific routing load, not a smooth die-wide gradient.
 Arm A of the coherent dual-arm build contains 16 automatically placed
 oscillators. Their nominal post-layout frequencies have a mean of 551.7 MHz
 and a 58.0 MHz peak-to-peak range, 10.5% of the mean, with *r* = -0.999
-against extracted ring capacitance (Figure 4). This build passes Magic DRC,
-KLayout DRC, XOR, LVS, antenna, and power grid with zero violations, so the
-spread and the manufacturable GDS come from the same run.
+against extracted ring capacitance (Figure 4). One oscillator picked up an
+unusually heavy routing load and sits well below the rest, so the peak-to-peak
+figure is outlier-sensitive; the standard deviation is 2.36% and the median
+absolute deviation is smaller still. That outlier is itself an automated-layout
+artifact, not a measurement error, but the distribution matters more than the
+single peak-to-peak number. This build passes Magic DRC, KLayout DRC, XOR, LVS,
+antenna, and power grid with zero violations, so the spread and the
+manufacturable GDS come from the same run.
 
 The three builds do not share a frequency pattern or a spread: 10.5% here,
 5.4% in an earlier archived dual-arm snapshot, and 8.8% in the 32-oscillator
@@ -211,13 +226,13 @@ measurement the chip exists to make, not something these simulations show.
 
 The repository includes a simple virtual-population model in which each
 oscillator frequency is a shared layout term plus an independent mismatch
-term. Under one set of assumptions, 200 virtual chips and eight adjacent
-comparison bits gave 13.2% inter-chip Hamming distance for the automatically
-placed pattern and 49.9% for the matched pattern; a position-based predictor
-scored 91.2% and 49.2%. These numbers illustrate the proposed mechanism.
-They move substantially when the assumed mismatch scale, comparison pairs,
-or attacker information change, so I use them to motivate the silicon
-experiment rather than to quantify a real attack.
+term. Its behaviour is governed mainly by one dimensionless quantity, the
+ratio of the shared layout amplitude to the mismatch amplitude: as that ratio
+grows, the modelled inter-chip Hamming distance falls below the ideal and a
+position-based predictor beats its per-bit baseline. I use the model only to
+show that dependence. The specific percentages it produces are outputs of the
+assumed amplitudes, not measurements, so I keep them out of the results and
+leave the real ratio to silicon.
 
 ### 7.2 Mismatch scale estimate
 
@@ -230,12 +245,19 @@ stage in particular violates, and 40 global draws are not independent local
 mismatch. On this estimate the archived Arm A layout spread is roughly
 twenty times the mismatch scale by standard deviation. I treat that ratio as
 an argument that the layout term is large enough to be worth measuring, not
-as a measured entropy figure; silicon will measure the denominator directly.
+as a measured entropy figure. Because the sqrt(31) step rests on assumptions
+the PDK draw does not support, this estimate belongs in supplementary material,
+not the headline; silicon will measure the denominator directly.
 
 ### 7.3 What silicon has to show
 
 The main question for silicon is whether Arm A retains more of its nominal
-layout pattern across dies than Arm B. Testing it needs multiple chip IDs, repeated
+layout pattern across dies than Arm B. The threat model I have in mind is
+concrete: an attacker knows the public design and mask and holds measurements
+from other dies of the same design, but none from the target die, and asks
+whether the shared deterministic layout component lets them predict the target
+die's pair ordering above the relevant per-bit baseline. Predictor accuracy is
+then judged against that baseline with whole chips held out, not against 50%. Testing it needs multiple chip IDs, repeated
 measurements, matched voltage and temperature settings, and a fixed
 comparison rule; the firmware records chip and condition labels so groups
 stay separate. The planned metrics are repeatability within chip and
@@ -252,10 +274,13 @@ This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. Lumped capacitance omits
 distributed RC and dynamic coupling; a distributed-RC extraction would test
 whether the frequency ordering and the spread survive a fuller electrical
-model, and running it on the fresh build is the obvious next check. Two
-layouts do not define a
-distribution over place-and-route seeds, floorplans, flows, or technologies,
-and instances within a layout are related observations, so instance-level
+model, and running it on the fresh build is the obvious next check. The three
+builds reported here are not a controlled replicate set; they differ in source
+revision and tool settings as well as seed, so I do not aggregate their spreads
+into one distribution. A planned multi-seed study that varies only the
+place-and-route seed from one frozen source, config, and toolchain will give a
+proper spread distribution at essentially no cost next to fabrication. Instances
+within a single layout are also related observations, so instance-level
 confidence intervals would overstate the evidence. The Arm B reference is
 one simulation of one macro and cannot quantify fabricated Arm B variation.
 The 40-run global Monte Carlo cannot reproduce independent local device

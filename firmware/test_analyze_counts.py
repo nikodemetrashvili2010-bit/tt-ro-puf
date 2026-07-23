@@ -1,4 +1,4 @@
-"""Focused regression tests for the measurement CSV analyzer."""
+"""Regression tests for the measurement CSV analyzer (new run-based format)."""
 
 import contextlib
 import io
@@ -9,180 +9,106 @@ from pathlib import Path
 import analyze_counts as analyzer
 
 
+def make_csv(path, run_id, chip, cond, vectors, rounds=4, clk=25_000_000, window=1000):
+    """vectors: {arm: [16 counts]}. Emits `rounds` identical rounds plus header."""
+    meta = ('# META {"run_id": "%s", "chip_id": "%s", "condition": "%s", '
+            '"clk_hz_requested": %d, "window": %d}' % (run_id, chip, cond, clk, window))
+    lines = [meta, "run_id,chip_id,condition,round,order,arm,idx,count,t_ms"]
+    t = 0
+    for r in range(rounds):
+        order = 0
+        for arm, vals in vectors.items():
+            for idx, c in enumerate(vals):
+                lines.append("%s,%s,%s,%d,%d,%d,%d,%d,%d"
+                             % (run_id, chip, cond, r, order, arm, idx, c, t))
+                order += 1
+                t += 1
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return str(path)
+
+
 class AnalyzeCountsTests(unittest.TestCase):
     def setUp(self):
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name)
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
 
-    def write_csv(self, name, rows, metadata=(25_000_000, 1000)):
-        path = self.root / name
-        lines = []
-        if metadata is not None:
-            clk, window = metadata
-            lines.append(
-                "# tt_ro_puf measurement, label=fixture "
-                f"clk={clk} window={window} repeats=1"
-            )
-        lines.append("label,arm,idx,sample,count")
-        lines.extend(
-            f"{label},{arm},{idx},{sample},{count}"
-            for sample, (label, arm, idx, count) in enumerate(rows)
-        )
-        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        return str(path)
+    def test_missing_columns_rejected(self):
+        p = self.root / "bad.csv"
+        p.write_text("arm,idx,count\n0,0,100\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "missing CSV column"):
+            analyzer.load_files([str(p)])
 
-    @staticmethod
-    def vector_rows(label, arm, values):
-        return [(label, arm, idx, count) for idx, count in enumerate(values)]
+    def test_arm_idx_range_rejected(self):
+        p = make_csv(self.root / "r.csv", "r1", "c1", "room", {2: [100] * 16})
+        with self.assertRaisesRegex(ValueError, "arm/idx out of range"):
+            analyzer.load_files([p])
 
-    def test_split_label_and_reject_malformed_labels(self):
-        self.assertEqual(
-            analyzer.split_label(" chip03_room_1v8 "),
-            ("chip03", "room_1v8"),
-        )
-        for label in ("chip03", "_room", "chip03_"):
-            with self.subTest(label=label), self.assertRaises(ValueError):
-                analyzer.split_label(label)
+    def test_grouping_and_timeouts(self):
+        vals = list(range(1000, 1016))
+        p = make_csv(self.root / "g.csv", "r1", "c1", "room", {0: vals, 1: vals}, rounds=2)
+        # inject one timeout row
+        text = Path(p).read_text().rstrip().split("\n")
+        text.append("r1,c1,room,9,0,0,0,-1,999")
+        Path(p).write_text("\n".join(text) + "\n")
+        groups = analyzer.load_files([p])
+        g = groups[("c1", "room")]
+        self.assertEqual(g["timeouts"], 1)
+        self.assertEqual(analyzer.osc_means(g, 0)[0], 1000.0)
+        self.assertEqual(len(analyzer.complete_vector(g, 0)), 16)
 
-    def test_load_files_reports_schema_and_range_errors(self):
-        bad_schema = self.root / "bad_schema.csv"
-        bad_schema.write_text("label,arm,idx\nchip01_room,0,0\n", encoding="utf-8")
-        with self.assertRaisesRegex(ValueError, "missing CSV column.*count"):
-            analyzer.load_files([str(bad_schema)])
+    def test_duplicate_file_rejected(self):
+        p = make_csv(self.root / "d.csv", "r1", "c1", "room", {0: [1] * 16, 1: [1] * 16})
+        with self.assertRaisesRegex(ValueError, "identical file passed more than once"):
+            analyzer.load_files([p, p])
 
-        bad_range = self.write_csv(
-            "bad_range.csv", [("chip01_room", 2, 0, 100)]
-        )
-        with self.assertRaisesRegex(ValueError, "arm/index out of range"):
-            analyzer.load_files([bad_range])
+    def test_duplicate_run_id_rejected(self):
+        a = make_csv(self.root / "a.csv", "same", "c1", "room", {0: [1] * 16, 1: [1] * 16})
+        b = make_csv(self.root / "b.csv", "same", "c2", "room", {0: [2] * 16, 1: [2] * 16})
+        with self.assertRaisesRegex(ValueError, "duplicate run_id"):
+            analyzer.load_files([a, b])
 
-    def test_load_files_groups_samples_and_skips_timeouts(self):
-        first = self.write_csv(
-            "first.csv",
-            [
-                ("chip01_room_1v8", 0, 0, 100),
-                ("chip01_room_1v8", 0, 0, -1),
-            ],
-        )
-        second = self.write_csv(
-            "second.csv",
-            [
-                ("chip01_room_1v8", 0, 0, 120),
-                ("chip01_room_1v8", 1, 1, 200),
-                ("chip01_hot_1v8", 0, 0, 90),
-            ],
-        )
+    def test_across_chips_correlation_and_bootstrap(self):
+        asc = list(range(1000, 1016))
+        b = [v + 100 for v in asc]
+        groups = analyzer.load_files([
+            make_csv(self.root / "c1.csv", "r1", "c1", "room", {0: asc, 1: b}),
+            make_csv(self.root / "c2.csv", "r2", "c2", "room", {0: list(reversed(asc)), 1: b}),
+        ])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            analyzer.print_across_chips(groups, [("logical-pair", analyzer.LOGICAL_PAIRS)])
+        text = out.getvalue()
+        self.assertIn("Condition: room", text)
+        self.assertIn("bootstrap 95% by chip", text)
+        # Opposite Arm A patterns -> strongly negative correlation.
+        self.assertIn("r=-1.000", text)
 
-        groups = analyzer.load_files([first, second])
-        self.assertEqual(set(groups), {("chip01", "room_1v8"), ("chip01", "hot_1v8")})
-        room = groups[("chip01", "room_1v8")]
-        self.assertEqual(room["timeouts"], 1)
-        self.assertEqual(room["raw"][(0, 0)], [100, 120])
-        self.assertEqual(room["raw"][(1, 1)], [200])
-        self.assertEqual(room["sources"], {first, second})
-        self.assertEqual(room["settings"], {(25_000_000, 1000)})
-        self.assertEqual(analyzer.oscillator_means(room, 0), {0: 110.0})
+    def test_incompatible_settings_block_comparison(self):
+        asc = list(range(1000, 1016))
+        groups = analyzer.load_files([
+            make_csv(self.root / "w1.csv", "r1", "c1", "room", {0: asc}, window=1000),
+            make_csv(self.root / "w2.csv", "r2", "c2", "room", {0: asc}, window=500),
+        ])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            analyzer.print_across_chips(groups, [("logical-pair", analyzer.LOGICAL_PAIRS)])
+        self.assertIn("incompatible acquisition settings", out.getvalue())
 
-    def test_complete_same_condition_chips_emit_metrics(self):
-        ascending = [1000 + idx for idx in range(analyzer.NRO)]
-        descending = list(reversed(ascending))
-        first_rows = self.vector_rows("chip01_room_1v8", 0, ascending)
-        first_rows += self.vector_rows("chip01_room_1v8", 1, [v + 100 for v in ascending])
-        second_rows = self.vector_rows("chip02_room_1v8", 0, descending)
-        second_rows += self.vector_rows("chip02_room_1v8", 1, [v + 100 for v in descending])
-        groups = analyzer.load_files(
-            [
-                self.write_csv("chip01.csv", first_rows),
-                self.write_csv("chip02.csv", second_rows),
-            ]
-        )
-
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            analyzer.print_across_chip_metrics(groups)
-        text = output.getvalue()
-        self.assertIn("Condition: room_1v8", text)
-        self.assertEqual(text.count("mean r=-1.000"), 2)
-        self.assertEqual(text.count("mean Hamming distance=100.0%"), 2)
-
-    def test_incomplete_vectors_do_not_produce_cross_chip_metrics(self):
-        complete = [1000 + idx for idx in range(analyzer.NRO)]
-        groups = analyzer.load_files(
-            [
-                self.write_csv(
-                    "complete.csv",
-                    self.vector_rows("chip01_room", 0, complete),
-                ),
-                self.write_csv(
-                    "incomplete.csv",
-                    self.vector_rows("chip02_room", 0, complete[:-1]),
-                ),
-            ]
-        )
-
-        output = io.StringIO()
-        with contextlib.redirect_stdout(output):
-            analyzer.print_across_chip_metrics(groups)
-        text = output.getvalue()
-        self.assertIn("need complete measurements from at least two distinct chips", text)
-        self.assertNotIn("centred frequency-pattern correlation", text)
-
-    def test_missing_or_mismatched_metadata_blocks_comparison(self):
-        vector = [1000 + idx for idx in range(analyzer.NRO)]
-        cases = (
-            ("missing", None, (25_000_000, 1000)),
-            ("mismatched", (25_000_000, 1000), (50_000_000, 1000)),
-        )
-        for case, first_metadata, second_metadata in cases:
-            with self.subTest(case=case):
-                groups = analyzer.load_files(
-                    [
-                        self.write_csv(
-                            f"{case}_first.csv",
-                            self.vector_rows("chip01_room", 0, vector),
-                            first_metadata,
-                        ),
-                        self.write_csv(
-                            f"{case}_second.csv",
-                            self.vector_rows("chip02_room", 0, list(reversed(vector))),
-                            second_metadata,
-                        ),
-                    ]
-                )
-                output = io.StringIO()
-                with contextlib.redirect_stdout(output):
-                    analyzer.print_across_chip_metrics(groups)
-                self.assertIn(
-                    "clock/window metadata missing or inconsistent",
-                    output.getvalue(),
-                )
-
-    def test_main_returns_status_and_routes_output(self):
-        valid = self.write_csv(
-            "valid.csv",
-            [
-                ("chip07_room_1v8", 0, 0, 1234),
-                ("chip07_room_1v8", 0, 0, -1),
-            ],
-        )
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-            status = analyzer.main([valid])
+    def test_main_status_codes(self):
+        good = make_csv(self.root / "ok.csv", "r1", "c7", "room", {0: [5] * 16, 1: [5] * 16})
+        so, se = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(so), contextlib.redirect_stderr(se):
+            status = analyzer.main([good])
         self.assertEqual(status, 0)
-        self.assertEqual(stderr.getvalue(), "")
-        self.assertIn("== chip07 / room_1v8", stdout.getvalue())
-        self.assertIn("skipped timeout samples: 1", stdout.getvalue())
-        self.assertIn("descriptive metrics", stdout.getvalue())
+        self.assertIn("== c7 / room", so.getvalue())
+        self.assertIn("Descriptive metrics only", so.getvalue())
 
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+        so, se = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(so), contextlib.redirect_stderr(se):
             status = analyzer.main([str(self.root / "missing.csv")])
         self.assertEqual(status, 2)
-        self.assertEqual(stdout.getvalue(), "")
-        self.assertIn("error:", stderr.getvalue())
+        self.assertIn("error:", se.getvalue())
 
 
 if __name__ == "__main__":
