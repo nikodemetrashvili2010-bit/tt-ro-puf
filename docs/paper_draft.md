@@ -17,19 +17,23 @@ design kit, by simulating routed netlists and extracted capacitances at the
 nominal device corner. No fabricated devices have been measured yet.
 
 In an archived dual-arm build, the 16 automatically placed oscillators of
-Arm A spread 5.4% peak to peak in nominal post-layout simulation, and
-frequency tracks total extracted ring capacitance with Pearson *r* = -0.999.
-An earlier automatically placed 32-oscillator layout spread 8.8% with
-*r* = -0.997 and a different pattern, so each flow run fixes its own bias.
-The comparison arm, Arm B, instantiates one hardened oscillator macro sixteen
-times; a single extraction and simulation of that macro gives a 569.5 MHz
-reference for the shared internal layout.
+Arm A spread 5.4% peak to peak in nominal post-layout simulation; an earlier
+automatically placed 32-oscillator layout spread 8.8%. The two layouts
+produced different frequency patterns, which fits placement and routing
+setting the bias run by run. Within this lumped-capacitance model the spread
+is almost entirely explained by the extracted ring capacitance the model puts
+back in as a load (Pearson *r* = -0.999 and -0.997), so the result worth
+keeping is the size of the spread and its physical cause, not the coefficient.
+The comparison arm, Arm B, uses one hardened oscillator macro sixteen times.
+A single extraction of that macro gives a 569.5 MHz reference for the shared
+internal layout, which removes internal-layout variation by construction but
+does not on its own prove a smaller total spread once the chips are made.
 
 The contribution is a pre-fabrication diagnostic, traceable in the
 repository, that separates nominal layout bias from the variation a PUF is
 supposed to use. Whether the layout pattern repeats across dies, reduces
-uniqueness, or enables a practical prediction attack is registered as a
-hypothesis for the silicon phase, not claimed here.
+uniqueness, or enables a practical prediction attack is left for the silicon
+phase, not claimed here.
 
 ## 1. Introduction
 
@@ -52,7 +56,7 @@ introduce? I contribute nominal post-layout results for two automatically
 placed oscillator arrays, a capacitance-based explanation for the observed
 spread, a matched-macro arm that gives every instance the same internal
 geometry, the scripts to run the same diagnostic before any fabrication, and
-registered hypotheses for the silicon study.
+the specific predictions I plan to test once chips come back.
 
 ## 2. Background and related work
 
@@ -133,7 +137,10 @@ For each automatically placed array I report mean, standard deviation,
 range, peak-to-peak spread relative to the mean, and the Pearson correlation
 between frequency and extracted ring capacitance. Instances inside one
 routed design are not independent samples from a chip population, so these
-are descriptive statistics for that layout.
+are descriptive statistics for that layout. The extracted capacitance is also
+the only spread-producing input to the model, so a strong frequency-capacitance correlation is expected almost by construction. The coefficient
+confirms the model behaves; the spread it produces, and the slope, are the
+physically interesting parts.
 
 ## 5. Automatically placed arrays
 
@@ -161,10 +168,10 @@ oscillators. Their nominal post-layout frequencies have a mean of 551.7 MHz
 and a 29.7 MHz peak-to-peak range, 5.4% of the mean, with *r* = -0.999
 against extracted ring capacitance (Figure 4).
 
-The two builds do not share a frequency pattern or a spread. Each flow run
-froze a different bias into its mask. That supports the narrow conclusion
-that routing choices set the nominal pattern, and it also means a single
-layout cannot say what fraction of the response will be common across dies.
+The two builds do not share a frequency pattern or a spread. Two layouts are
+not a distribution, but a difference this large fits placement and routing
+setting the bias for each run. It also means a single layout cannot say what
+fraction of the response will be common across dies.
 Usefully, the earlier build's capacitance fit predicts the archived Arm A
 mean within 0.10%, so the mechanism transfers between builds even though the
 pattern does not.
@@ -186,8 +193,9 @@ Figures 3 and 4 draw Arm B as a single horizontal reference line at
 569.5 MHz, because the sixteen instances share one internal layout and there
 is only one extracted simulation behind it. By construction the internal
 layout contributes zero spread; fabricated Arm B instances will still differ
-through device mismatch, top-level routing, supply, and temperature, and
-measuring that residual spread is part of the silicon plan.
+through device mismatch, top-level routing, supply, and temperature. So the
+honest pre-silicon claim is narrow. The matched arm removes the internal-layout term, and whether that gives a smaller total spread than Arm A is the
+measurement the chip exists to make, not something these simulations show.
 
 ![Figure 3. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
 
@@ -220,10 +228,10 @@ twenty times the mismatch scale by standard deviation. I treat that ratio as
 an argument that the layout term is large enough to be worth measuring, not
 as a measured entropy figure; silicon will measure the denominator directly.
 
-### 7.3 Registered hypotheses and metrics
+### 7.3 What silicon has to show
 
-The central silicon hypothesis: Arm A retains more of its nominal layout
-pattern across dies than Arm B. Testing it needs multiple chip IDs, repeated
+The main question for silicon is whether Arm A retains more of its nominal
+layout pattern across dies than Arm B. Testing it needs multiple chip IDs, repeated
 measurements, matched voltage and temperature settings, and a fixed
 comparison rule; the firmware records chip and condition labels so groups
 stay separate. The planned metrics are repeatability within chip and
@@ -238,7 +246,10 @@ not support a population claim.
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. Lumped capacitance omits
-distributed RC and dynamic coupling. Two layouts do not define a
+distributed RC and dynamic coupling; a distributed-RC extraction would test
+whether the frequency ordering and the spread survive a fuller electrical
+model, and running it on the fresh build is the obvious next check. Two
+layouts do not define a
 distribution over place-and-route seeds, floorplans, flows, or technologies,
 and instances within a layout are related observations, so instance-level
 confidence intervals would overstate the evidence. The Arm B reference is
@@ -247,8 +258,11 @@ The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
 measurement-system effects are uncharacterized until chips exist, and
 uniqueness, reliability, min-entropy, and attack success all need a
-multi-chip data set with a stated threat model. None of this erases the
-observed nominal layout component; it bounds what can be concluded from it.
+multi-chip data set with a stated threat model. The ripple counter is clocked by the oscillator itself, and its behaviour at
+the fastest corner is checked only in behavioural simulation; the standard-cell flop at the oscillator-to-counter boundary still needs extracted,
+across-corner timing before I trust the fast end of the range. None of this
+erases the observed nominal layout component; it bounds what can be concluded
+from it.
 
 ## 9. Conclusion
 
@@ -265,7 +279,8 @@ pattern itself does not.
 The stronger claims stay open on purpose. Whether the pattern survives
 fabrication, dominates mismatch, reduces uniqueness, or supports a real
 attack will be settled by measuring both arms of the fabricated chip under
-the registered protocol, after a fresh physical flow replaces the archived
+the measurement protocol in the firmware, after a fresh physical flow replaces
+the archived
 snapshot.
 
 ## References

@@ -68,7 +68,7 @@ for that shared internal layout. And extraction followed by nominal SPICE is
 a practical pre-fabrication check for deterministic layout sensitivity.
 
 Cross-die repeatability, uniqueness, attack success, and entropy are
-registered predictions for the fabricated chips. The matched-layout principle
+predictions I will test on the fabricated chips. The matched-layout principle
 itself is not new; the intended contribution is an open ASIC case study and a
 pre-silicon diagnostic that others can rerun.
 

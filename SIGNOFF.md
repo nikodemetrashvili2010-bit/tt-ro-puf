@@ -44,6 +44,9 @@ support-tools, and PDK versions, exporting a coherent final bundle (GDS, LEF,
 final DEF, both netlists, SPEF, full metrics) with KLayout DRC and XOR
 passing alongside Magic, LVS, antenna, and power grid. Every lint, slew,
 fanout, and pin item fixed or waived by name; a bare count is not a waiver.
-Extracted simulation then repeats from that exact build. The PUF claims
+Extracted simulation then repeats from that exact build, including the
+oscillator-to-counter interface: the ripple counter is clocked by the ring
+itself, and its timing at the fast corner needs extracted, across-corner
+checks rather than the behavioural simulation it has now. The PUF claims
 themselves wait for measured dies. Until that run lands, this project is a
 pre-silicon prototype with strong macro and array evidence.

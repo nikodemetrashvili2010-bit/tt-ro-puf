@@ -8,8 +8,8 @@ everything here is pre-silicon: routed layouts, extracted parasitics, and
 nominal SPICE.
 
 I am a self-taught student and built the project with open tools on a home
-PC. The raw logs, analysis code, and a verification script for every headline
-number are checked in.
+PC. The raw logs, the analysis code, and scripts that recompute every headline
+number from those logs are all in the repo.
 
 ## The experiment
 
@@ -25,13 +25,23 @@ a circuit whose whole job is to be unpredictable.
 ## What the post-layout model predicts
 
 In the archived dual-arm build, Arm A's oscillators spread 5.4% peak to peak
-in nominal post-layout simulation, and frequency follows extracted ring
-capacitance with Pearson r = -0.999. An earlier 32-oscillator build spread
-8.8% with r = -0.997 and a different pattern, so each flow run freezes its
-own pattern into the mask. The hardened macro simulates at 569.5 MHz with its
-extracted internal parasitics. Its 16 Arm B copies share one internal layout,
-which is why the figure draws Arm B as a single reference line rather than
-sixteen separate points:
+in nominal post-layout simulation. An earlier 32-oscillator build spread 8.8%.
+The two builds produced different frequency patterns, which fits the idea that
+placement and routing set the bias run by run rather than the circuit carrying
+one fixed signature.
+
+The model takes each ring net's extracted capacitance from the SPEF and puts
+it back into the SPICE deck as a load, so the tight frequency-versus-capacitance fit (r near -0.999) is mostly the model doing what a
+capacitance-loaded oscillator has to do. The point is not the coefficient. It
+is that the spread is large and is driven by routing capacitance that the mask
+freezes in place.
+
+The hardened macro simulates at 569.5 MHz. Its 16 Arm B copies are the same
+GDS, so the matched arm removes internal-layout variation by construction.
+That is why the figure draws Arm B as one reference line, not sixteen points.
+It does not yet show that Arm B's total spread on real chips is lower than
+Arm A's: top-level routing, supply, temperature, and device mismatch still act
+on each copy, and only silicon can settle that:
 
 ![post-layout prediction for both arms](sim/spice/gono/dualarm_gono.png)
 
@@ -52,8 +62,8 @@ The measurement core was improved after the archived build, so the current
 source needs one fresh flow run, with KLayout DRC and XOR enabled, before the
 shuttle order. Target: TTSKY26c. After fabrication the plan is to measure
 both arms across chips, voltage, and temperature with the scripts in
-`firmware/`. The registered prediction: Arm A shows cross-chip pattern
-correlation, Arm B much less. The data can also prove me wrong.
+`firmware/`. What I expect on silicon: Arm A shows more cross-chip pattern
+correlation than Arm B. The data can also prove me wrong.
 
 Operating notes for the chip itself are in [docs/info.md](docs/info.md). The
 paper source is [docs/paper_draft.md](docs/paper_draft.md); build it with

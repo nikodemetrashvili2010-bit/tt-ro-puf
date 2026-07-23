@@ -64,9 +64,12 @@ deviation across the 32 routed instances is 10.9 MHz, 1.93% of the mean.
 Frequencies run from about 539.1 MHz (RO10) to 589.2 MHz (RO4), a 50.2 MHz
 or 8.8% peak-to-peak spread. Extracted ring capacitance runs from 7.4 to
 17.8 fF. Frequency and capacitance have Pearson *r* = -0.997 with a fitted
-slope of -4.93 MHz/fF. Correlation with placement centroid is weak
-(absolute *r* below 0.27 for the tested coordinates), so the spread behaves
-like a per-instance routing fingerprint rather than a die-wide gradient.
+slope of -4.93 MHz/fF. That extracted capacitance is the only thing the model
+varies, so a correlation this strong is expected; the slope and the 8.8%
+spread are the parts that carry physical meaning. Correlation with placement
+centroid is weak (absolute *r* below 0.27 for the tested coordinates), so the
+spread behaves like a per-instance routing fingerprint rather than a die-wide
+gradient.
 
 ![frequency association and spatial map](../sim/spice/gono/ro_gono.png)
 
@@ -84,7 +87,10 @@ its control, with 11.01 fF of extracted ring capacitance. Applying the
 earlier Arm A capacitance fit to that load predicts 570.2 MHz, 0.12% above
 the macro simulation, and the macro lands within 0.35% of the earlier Arm A
 mean. A 5 ps versus 1 ps timestep comparison moves the result by about 0.2%,
-which bounds the numerical error well below the layout effect.
+which bounds the numerical error well below the layout effect. The matched arm
+removes the internal-layout term by construction. It does not show that Arm B
+has a smaller total spread than Arm A; that comparison needs fabricated
+chips.
 
 ![earlier Arm A distribution and the matched-macro reference line](../sim/spice/gono/armB_prediction.png)
 
@@ -105,8 +111,9 @@ Two cross-build checks are worth recording. The earlier build's fitted
 capacitance relation predicts the archived Arm A mean within 0.10%, and its
 fitted slope predicts the peak-to-peak span within about 3%. At the same
 time the two layouts have clearly different patterns and spreads (8.8%
-versus 5.4%, different orderings), so each place-and-route run fixes its own
-deterministic component while the mechanism stays the same.
+versus 5.4%, different orderings). Two builds are not a distribution, but a
+difference this clear points to a run-specific deterministic component while
+the underlying mechanism stays the same.
 
 The current RTL is newer than this snapshot, and the archived DEF is a
 mixed-stage checkpoint that the deck generator now rejects. A coherent fresh
@@ -133,10 +140,10 @@ archived Arm A build) are scale estimates that inherit these assumptions,
 which is why the paper quotes them only as motivation for the silicon
 measurement.
 
-## Registered silicon test
+## The silicon test
 
-The registered prediction: under matched measurement conditions, Arm A will
-show greater centred-pattern correlation across chips than Arm B. Multiple
+The prediction: under matched measurement conditions, Arm A will show greater
+centred-pattern correlation across chips than Arm B. Multiple
 chips and repeated voltage and temperature measurements are needed to test
 it, and a weak or negative result would force a revision of the
 interpretation above. The model limitations behind all of these numbers are
