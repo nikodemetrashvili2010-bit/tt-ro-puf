@@ -1,14 +1,14 @@
 # Reproducibility
 
-The repository contains raw logs and physical artifacts, but the historical
-environment that created every artifact was not fully recorded. This guide
-separates checks that are reproducible from a clone from runs that require an
-external PDK/toolchain. It does not assign a made-up revision to old evidence.
+Raw logs and physical artifacts are checked in, but the historical tool
+environment that made some of them was not fully recorded. This file
+separates what reproduces from a bare clone from what needs an external PDK
+and toolchain.
 
 ## From a clean clone
 
-The numerical verifiers and architectural demonstrations use only the Python
-standard library:
+The verifiers and architectural models need only the Python standard
+library:
 
 ```sh
 python3 sim/ref_model.py                 # legacy 8-RO arithmetic sanity check
@@ -21,12 +21,13 @@ python3 sim/spice/gono/verify_provenance.py
 python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
 ```
 
-Each verifier exits nonzero on failure. A PASS proves consistency with the
-checked-in raw text/CSV files; it does not validate fabricated silicon or
-extend the modeled physical scope. The provenance check binds the archived
-source and evidence blobs to a reachable historical commit but cannot recover
-the unrecorded flow/PDK environment. Figure and paper regeneration install the
-pinned dependencies in `requirements-analysis.txt`:
+Each verifier exits nonzero on failure. A pass means the headline numbers
+match the checked-in raw logs and CSV files; independent replication still
+needs a fresh SPICE run against your own PDK install. The provenance check
+binds the archived source and evidence blobs to a reachable historical
+commit.
+
+Figures regenerate with the pinned packages in `requirements-analysis.txt`:
 
 ```sh
 python3 -m venv .venv
@@ -36,20 +37,18 @@ python3 sim/spice/gono/analyze.py
 python3 docs/figures/make_block_diagram.py
 python3 sim/spice/gono/make_figures.py
 python3 sim/spice/gono/make_dualarm_figure.py
-python3 docs/build_paper.py
-python3 docs/verify_paper.py
 ```
 
-The analysis scripts are deterministic for their checked-in seeds. PNG bytes
-can still differ across operating systems because fonts and renderer libraries
-are not fully locked; compare the derived numbers as well as the images.
+The paper builds with pandoc and LibreOffice: `sh docs/build_paper.sh`. PNG
+bytes can still differ across operating systems because fonts and renderer
+libraries are not locked, so compare the derived numbers rather than the
+image bytes.
 
 ## SPICE deck generation and execution
 
-Set `PDK_ROOT` to the directory containing the PDK and `PDK` to its directory
-name (default `sky130A`). The repository does **not** record the historical
-SKY130 PDK commit, so record `git rev-parse HEAD` (or the package identifier) of
-your installed PDK with any reproduced result.
+Set `PDK_ROOT` to the directory containing the PDK and `PDK` to its
+directory name (default `sky130A`). The historical SKY130 PDK commit was not
+recorded, so note your installed PDK revision next to any reproduced result.
 
 ```sh
 export PDK_ROOT=/absolute/path/to/pdks
@@ -76,50 +75,46 @@ python3 sim/spice/run_ngspice.py \
 ```
 
 `run_ngspice.py` replaces only the SKY130 model-library and standard-cell
-include paths in a temporary deck. It does not mutate the tracked deck. The
-deck generators use the same environment variables and fail when the required
-model files are missing. `gen_dualarm_decks.py` also requires all Arm A ring
-nets in the SPEF and placement centroids for all 16 oscillators in the matching
-DEF. Its checked-in default inputs are an intentionally rejected mixed-stage
-snapshot. Use `--spef`, `--def`, and `--output-dir` with a coherent final run;
-the output directory keeps regenerated decks and CSV data separate from the
-archived evidence. Inspect `git diff` before accepting any regenerated data.
+include paths, in a temporary copy of the deck; it never mutates the tracked
+deck. The generators use the same environment variables and fail when the
+model files are missing. `gen_dualarm_decks.py` needs all Arm A ring nets in
+the SPEF and placement centroids for all 16 oscillators in a matching DEF
+from the same final run. Its checked-in default inputs are a mixed-stage
+snapshot that it rejects on purpose, so pass `--spef`, `--def`, and
+`--output-dir` from a coherent build and keep regenerated files outside the
+archived evidence directories. Inspect `git diff` before accepting any
+regenerated data.
 
-The go/no-go verifiers accept `--ctrl`, `--par`, `--log-5p`, `--log-1p`,
-`--csv`, `--spef`, and related path options shown by `--help`, so a fresh run
-can be checked without replacing the archived logs.
+The verifiers accept `--ctrl`, `--par`, `--log-5p`, `--log-1p`, `--csv`,
+`--spef`, and related path options (see `--help`), so a fresh run can be
+checked without touching the archived logs.
 
-The archived go/no-go decks use nominal TT models at 1.8 V and transfer only
-SPEF `*D_NET` total capacitance as lumped capacitors. Distributed resistance,
-coupling topology, mismatch, PVT sweeps, supply noise, and measured-die effects
-are out of scope. The Monte Carlo sqrt(31) scaling is a first-order sensitivity
-approximation; its virtual 50% uniqueness follows from symmetric IID sampling
-and is not empirical validation.
+The archived decks use nominal TT models at 1.8 V and transfer only SPEF
+`*D_NET` total capacitance as lumped loads. Distributed resistance, coupling
+topology, mismatch, PVT sweeps, and supply noise are out of scope here; the
+paper's limitations section says what that means for the claims.
 
 ## Recorded development environment
 
-The devcontainer now includes ngspice and pins the revisions that are actually
+The devcontainer includes ngspice and pins the revisions that are actually
 known:
 
 - base distribution: Ubuntu 24.04 devcontainer image tag;
-- TinyTapeout support tools:
-  `d65690eeb1d4afd26aef795c805a23d9d9daf9d1`;
+- TinyTapeout support tools: `d65690eeb1d4afd26aef795c805a23d9d9daf9d1`;
 - LibreLane: `2.4.2`;
 - Verible: `v0.0-4023-gc1271a00`;
 - cocotb: `2.0.1`; pytest: `8.4.2`; matplotlib: `3.10.8`.
 
-Ubuntu APT packages, the base-image digest, transitive Python dependencies, the
-SKY130 PDK, and the `ttsky26c` GitHub Action tag are not immutably locked by the
-historical repository. Record `python --version`, `ngspice --version`,
-`iverilog -V`, `verilator --version`, `pip freeze`, container image digest, PDK
-commit, source commit, and resolved action SHAs for a publishable rerun.
+APT packages, the base-image digest, transitive Python dependencies, the
+SKY130 PDK, and the `ttsky26c` GitHub Action tag are not immutably locked by
+the historical repository. For a publishable rerun, record `python
+--version`, `ngspice --version`, `iverilog -V`, the container image digest,
+the PDK commit, the source commit, and the resolved action SHAs.
 
-The post-start helper now links `./tt` to the exact image checkout. It never
-performs an implicit `git pull` and preserves an existing non-symlink `tt`
+The post-start helper links `./tt` to the exact image checkout. It never
+performs an implicit `git pull` and leaves an existing non-symlink `tt`
 directory unchanged.
 
 ## Physical evidence
 
-See `SIGNOFF.md`. The macro and standalone-array directories contain broad
-final bundles, while `dualarm/build_debug/` is a partial mixed-stage snapshot.
-Do not use the latter to claim a complete final GDS or KLayout signoff.
+See [SIGNOFF.md](SIGNOFF.md) for the per-artifact status.

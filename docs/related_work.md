@@ -58,24 +58,19 @@ in nominal post-layout simulation, and does a repeated hard macro reduce it?
 
 ## 5. Scope of this project
 
-The current evidence supports three limited claims:
+The current evidence supports three limited claims. Separately routed
+standard-cell oscillators show a nominal post-layout frequency spread that
+tracks their extracted ring capacitance: 8.8% peak-to-peak in an earlier
+32-oscillator build and 5.4% in Arm A of the archived dual-arm layout. Arm B
+reuses one hardened oscillator GDS sixteen times, and its single extracted
+simulation, 569.5 MHz, appears in the comparison figures as a reference line
+for that shared internal layout. And extraction followed by nominal SPICE is
+a practical pre-fabrication check for deterministic layout sensitivity.
 
-1. In nominal post-layout simulation, separately routed standard-cell
-   oscillators show a frequency spread associated closely with their extracted
-   ring capacitance: 8.8% peak-to-peak in an earlier 32-oscillator build and
-   5.4% in Arm A of the archived dual-arm layout.
-2. Arm B reuses one hardened oscillator GDS sixteen times. One simulation of
-   that macro's extracted internal parasitics gives 569.5 MHz and is repeated
-   in the comparison figure to represent the common internal layout. It is not
-   sixteen independent simulated or physical measurements.
-3. Extraction followed by nominal SPICE is a practical pre-fabrication check
-   for deterministic layout sensitivity.
-
-The data do not yet establish cross-die repeatability, response uniqueness,
-attack success, or entropy. Those are registered predictions for measurement
-on multiple fabricated chips. The matched-layout principle is not new; the
-project's intended contribution is an open ASIC case study and a reproducible
-pre-silicon diagnostic.
+Cross-die repeatability, uniqueness, attack success, and entropy are
+registered predictions for the fabricated chips. The matched-layout principle
+itself is not new; the intended contribution is an open ASIC case study and a
+pre-silicon diagnostic that others can rerun.
 
 ## References
 

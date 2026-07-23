@@ -9,6 +9,21 @@ from cocotb.triggers import ClockCycles, FallingEdge, ReadOnly, RisingEdge, Time
 WINDOW = 1000
 CLK_NS = 20
 
+async def setup(dut):
+    """Start the clock, then reset the design to a known state.
+
+    cocotb starts each test with a fresh scheduler, so the clock is launched
+    per test rather than once for the module.
+    """
+    cocotb.start_soon(Clock(dut.clk, CLK_NS, unit="ns").start())
+    dut.ena.value = 1
+    dut.ui_in.value = 0
+    dut.uio_in.value = 0
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 8)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
 
 def ui_word(arm, idx, *, start=False, high_byte=False):
     return (
@@ -188,26 +203,21 @@ async def measure(
 
 
 @cocotb.test()
-async def test_ro_puf(dut):
-    cocotb.start_soon(Clock(dut.clk, CLK_NS, unit="ns").start())
-
-    dut.ena.value = 1
-    dut.ui_in.value = 0
-    dut.uio_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 8)
-    dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 5)
-
+async def test_power_on_defaults(dut):
+    """After reset the outputs are quiet and only done drives the bidir bus."""
+    await setup(dut)
     assert int(dut.uio_oe.value) == 0x01
     assert int(dut.uio_out.value) == 0
     assert int(dut.uo_out.value) == 0
 
+
+@cocotb.test()
+async def test_all_selectors_and_bytes(dut):
+    """Every arm/index selection measures, and both result bytes read back."""
+    await setup(dut)
     counts = {0: [], 1: []}
     en_window, _ = rtl_handles(dut)
-    rtl_mode = en_window is not None
 
-    # Exercise every hardware selector and both result bytes.
     for arm in (0, 1):
         for idx in range(16):
             count = await measure(dut, arm, idx)
@@ -216,7 +226,7 @@ async def test_ro_puf(dut):
             assert 0 < count < 65536
             assert int(dut.uio_oe.value) == 0x01
 
-    if rtl_mode:
+    if en_window is not None:
         # Arm A's behavioral model deliberately slows with IDX.
         assert all(a > b for a, b in zip(counts[0], counts[0][1:])), counts[0]
         for idx, count in enumerate(counts[0]):
@@ -228,8 +238,13 @@ async def test_ro_puf(dut):
         assert max(counts[1]) - min(counts[1]) <= 1, counts[1]
         assert all(abs(count - expected_b) <= 2 for count in counts[1])
 
-    # Holding start high must create one run, not repeated restarts.
-    held_count = await measure(
+
+@cocotb.test()
+async def test_held_start_is_one_run(dut):
+    """Holding start high creates one measurement, not repeated restarts."""
+    await setup(dut)
+    baseline = await measure(dut, 0, 5)
+    held = await measure(
         dut,
         0,
         5,
@@ -237,26 +252,39 @@ async def test_ro_puf(dut):
         check_window=False,
         require_active_while_held=True,
     )
-    assert abs(held_count - counts[0][5]) <= 2
+    assert abs(held - baseline) <= 2
 
-    # Changing the raw arm/index during a run must not change the captured
-    # selection. Arm A has distinguishable model frequencies, so this catches
-    # a non-latched selector.
-    latched_count = await measure(dut, 0, 2, mutate_to=(1, 14))
-    assert abs(latched_count - counts[0][2]) <= 2
 
-    # A second start aborts/re-arms the in-flight run cleanly.
+@cocotb.test()
+async def test_selector_is_latched(dut):
+    """Changing arm/index mid-run must not change the captured selection."""
+    await setup(dut)
+    baseline = await measure(dut, 0, 2)
+    # Arm A has distinguishable model frequencies, so a non-latched selector
+    # would produce a visibly different count here.
+    latched = await measure(dut, 0, 2, mutate_to=(1, 14))
+    assert abs(latched - baseline) <= 2
+
+
+@cocotb.test()
+async def test_restart_during_measurement(dut):
+    """A second start aborts the in-flight run and re-arms cleanly."""
+    await setup(dut)
+    baseline = await measure(dut, 0, 15)
     await pulse_start(dut, 0, 0)
     await ClockCycles(dut.clk, 100)
     await pulse_start(dut, 0, 15)
     await wait_for_result(
         dut, 0, 15, require_rearm=True, rearm_low_already_seen=True
     )
-    restarted_count = await read_count(dut, 0, 15)
-    assert abs(restarted_count - counts[0][15]) <= 2
+    restarted = await read_count(dut, 0, 15)
+    assert abs(restarted - baseline) <= 2
 
-    # Reset during a run must clear done and the exposed snapshot; a subsequent
-    # measurement must still work.
+
+@cocotb.test()
+async def test_reset_during_measurement(dut):
+    """Reset mid-run clears done and the snapshot; the core still works after."""
+    await setup(dut)
     await pulse_start(dut, 1, 0)
     await ClockCycles(dut.clk, 50)
     await FallingEdge(dut.clk)
@@ -267,12 +295,14 @@ async def test_ro_puf(dut):
     dut.rst_n.value = 1
     dut.ui_in.value = 0
     await ClockCycles(dut.clk, 5)
-    post_reset = await measure(dut, 1, 0)
-    assert post_reset > 0
+    assert await measure(dut, 1, 0) > 0
 
-    # Project deselection is an asynchronous shutdown path. It must clear the
-    # exposed result and disable the running RO without waiting for a clock
-    # edge; this also protects a deselected project if its clock is stopped.
+
+@cocotb.test()
+async def test_deselect_shutdown(dut):
+    """Deselecting the project shuts the RO down asynchronously and recovers."""
+    await setup(dut)
+    en_window, _ = rtl_handles(dut)
     await pulse_start(dut, 1, 3)
     await ClockCycles(dut.clk, 20)
     if en_window is not None:
@@ -280,6 +310,8 @@ async def test_ro_puf(dut):
     await FallingEdge(dut.clk)
     dut.ena.value = 0
     await Timer(1, unit="ns")
+    # The shutdown path must not wait for a clock edge; this protects a
+    # deselected project whose clock has been stopped.
     assert int(dut.uio_out.value) == 0
     assert int(dut.uo_out.value) == 0
     _, armb_en = rtl_handles(dut)

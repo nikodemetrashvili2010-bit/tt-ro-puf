@@ -1,200 +1,159 @@
 # Deterministic layout contribution in an RO-PUF: pre-silicon results
 
-This note records the nominal post-layout simulations used by the SILICON
-project. Inputs, generated decks, raw ngspice logs, and analysis scripts are
-under `sim/spice/gono/`.
+This note records the nominal post-layout simulations behind the SILICON
+project's numbers. Inputs, generated decks, raw ngspice logs, and analysis
+scripts live under `sim/spice/gono/`. The scientific argument and the
+limitations discussion are in the paper; this file keeps the run detail.
 
 ## Summary
 
 An earlier build routed 32 logically identical ring oscillators separately.
-With transistors held at the nominal corner, a lumped-capacitance model derived
-from the routed SPEF produced an 8.8% peak-to-peak frequency spread. Frequency
-was strongly associated with extracted ring capacitance (Pearson *r* =
--0.997). Arm A of an archived dual-arm layout showed the same mechanism at
-5.4% peak-to-peak and *r* = -0.999.
-
-These simulations isolate a deterministic layout contribution in two routed
-designs. They do not show that complete frequency patterns or response bits
-will repeat across fabricated chips. Device mismatch, voltage, temperature,
-stress, and measurement noise have not yet been observed. Cross-die
-repeatability is the hypothesis the fabricated experiment is meant to test.
-
-Arm B uses sixteen instances of one hardened oscillator macro. Its comparison
-point is one nominal simulation of that macro's extracted internal parasitics,
-569.5 MHz, shown sixteen times because every instance uses the same internal
-GDS. This is a structural prediction about internal layout matching, not
-sixteen independent simulations or measurements.
+With transistors held at the nominal corner, a lumped-capacitance model from
+the routed SPEF produced an 8.8% peak-to-peak frequency spread, and
+frequency tracked extracted ring capacitance with Pearson *r* = -0.997.
+Arm A of the archived dual-arm layout shows the same mechanism at 5.4%
+peak-to-peak and *r* = -0.999. Arm B's comparison point is one nominal
+simulation of the hardened macro's extracted internal parasitics, 569.5 MHz,
+drawn as a reference line because all sixteen instances share that internal
+GDS.
 
 ## Design under test
 
-The current top module, `tt_um_nikodemetrashvili20_ro_puf`, contains two
-16-oscillator arms and one shared counter. Each oscillator has an enable NAND,
-30 inverters, and a buffered tap at the middle of the ring. Arm A is built from
-standard cells placed and routed with the surrounding logic. Arm B instantiates
-the hardened `ro_macro_hard` block sixteen times.
+The top module, `tt_um_nikodemetrashvili20_ro_puf`, contains two
+16-oscillator arms and one shared counter. Each oscillator has an enable
+NAND, 30 inverters, and a buffered tap at the middle of the ring. Arm A is
+built from standard cells placed and routed with the surrounding logic.
+Arm B instantiates the hardened `ro_macro_hard` block sixteen times.
 
-The earlier baseline build placed all 32 oscillators as standard cells. It is
-retained because it provides a second routed layout on which to check whether
-the capacitance association was peculiar to one flow run.
+The earlier 32-oscillator baseline is retained because it provides a second
+routed layout on which to check whether the capacitance association was
+peculiar to one flow run. It was not.
 
 ## Method
 
 ### Routed inputs
 
-The generator reads the nominal-corner routed netlist, SPEF, and DEF emitted by
-the flow. The netlist identifies every Arm A ring node, the SPEF gives each
-net's total capacitance, and the DEF supplies placement centroids. No new RC
-extraction is performed by the analysis scripts.
+The generator reads the nominal-corner routed netlist, SPEF, and DEF emitted
+by the flow. The netlist identifies every Arm A ring node, the SPEF gives
+each net's total capacitance, and the DEF supplies placement centroids. The
+analysis scripts perform no new RC extraction.
 
 ### SPICE model
 
 For each Arm A oscillator, the generator reproduces the ring topology and
 places the SPEF `*D_NET` total capacitance on each ring node as a grounded
-lumped load. Two combined decks are generated:
+lumped load. Two combined decks come out: a control deck with no extracted
+capacitance, and a nominal post-layout deck with it.
 
-- a control deck with no extracted capacitance; and
-- a nominal post-layout deck with the extracted capacitance.
-
-Only one oscillator is enabled during a chip measurement. The model therefore
-treats coupling to inactive neighboring logic as a fixed grounded load. Series
-wire resistance is omitted; a separate estimate put its stage-delay effect
-below 0.1% for these nets. This is an approximation and is one reason the work
-should be described as a nominal post-layout model rather than a sign-off or
-silicon model.
-
-Transistors are held at nominal values to isolate implementation differences.
-Each oscillator starts with enable low and is released with an enable pulse.
-Frequency is measured over twenty periods after startup.
+Only one oscillator is enabled during a chip measurement, so coupling to
+inactive neighbours is treated as a fixed grounded load. Series wire
+resistance is omitted; a separate estimate put its stage-delay effect below
+0.1% for these nets. Transistors stay at nominal values to isolate
+implementation differences. Each oscillator starts with enable low and is
+released with an enable pulse, and frequency is measured over twenty periods
+after startup.
 
 ## Earlier 32-oscillator build
 
-### Control
+All 32 no-parasitic instances read 633.640 MHz in the generated control
+deck, which checks that the generator gave them the same topology and
+stimulus.
 
-All 32 no-parasitic instances read 633.640 MHz in the generated control deck.
-This checks that the generator gave them the same topology and stimulus.
-
-### Nominal extracted-capacitance result
-
-The mean frequency is 567.6 MHz. The population standard deviation across the
-32 routed instances is 10.9 MHz, or 1.93% of the mean. Frequencies range from
-about 539.1 MHz for RO10 to 589.2 MHz for RO4, a 50.2 MHz or 8.8%
-peak-to-peak spread. Extracted ring capacitance ranges from 7.4 to 17.8 fF.
-
-Across these 32 routed instances, frequency and ring capacitance have Pearson
-*r* = -0.997 with a fitted slope of -4.93 MHz/fF. Correlation with placement
-centroid is weak (absolute *r* below 0.27 for the tested coordinates). These
-are descriptive statistics for one routed layout, not a random sample of
-layouts or chips, so no population confidence interval is claimed.
+With extracted capacitance the mean is 567.6 MHz. The population standard
+deviation across the 32 routed instances is 10.9 MHz, 1.93% of the mean.
+Frequencies run from about 539.1 MHz (RO10) to 589.2 MHz (RO4), a 50.2 MHz
+or 8.8% peak-to-peak spread. Extracted ring capacitance runs from 7.4 to
+17.8 fF. Frequency and capacitance have Pearson *r* = -0.997 with a fitted
+slope of -4.93 MHz/fF. Correlation with placement centroid is weak
+(absolute *r* below 0.27 for the tested coordinates), so the spread behaves
+like a per-instance routing fingerprint rather than a die-wide gradient.
 
 ![frequency association and spatial map](../sim/spice/gono/ro_gono.png)
 
 ## Hardened Arm B macro
 
-The `ro_macro_hard` layout passes the checked-in DRC, LVS, and antenna checks.
-Its standalone 16-copy array also has clean checked-in DRC, LVS, antenna, and
-power-connectivity results. Reusing the macro means that each instance has the
-same internal ring geometry. It does not guarantee identical frequencies in
-fabricated silicon or remove top-level environmental effects.
-
-### Macro frequency reference
+The `ro_macro_hard` layout passes the checked-in DRC, LVS, and antenna
+checks, and its standalone 16-copy array passes DRC, LVS, antenna, and
+power-connectivity checks. Reusing the macro gives each instance the same
+internal ring geometry.
 
 The macro's own nominal SPEF is simulated with the same startup and
 lumped-capacitance method. The no-parasitic control reads 633.15 MHz, within
-0.08% of the earlier Arm A control. The extracted macro result is 569.5 MHz,
-10.1% below its control. Its extracted ring capacitance is 11.01 fF. Applying
-the earlier Arm A capacitance fit to that load predicts 570.2 MHz, 0.12% above
-the macro simulation.
+0.08% of the earlier control. The extracted result is 569.5 MHz, 10.1% below
+its control, with 11.01 fF of extracted ring capacitance. Applying the
+earlier Arm A capacitance fit to that load predicts 570.2 MHz, 0.12% above
+the macro simulation, and the macro lands within 0.35% of the earlier Arm A
+mean. A 5 ps versus 1 ps timestep comparison moves the result by about 0.2%,
+which bounds the numerical error well below the layout effect.
 
-The 569.5 MHz point is within 0.35% of the earlier Arm A mean. A 5 ps versus
-1 ps timestep comparison changes it by about 0.2%. Those checks support the
-numerical consistency of the macro-level model; they do not quantify model
-error against silicon.
-
-![earlier Arm A distribution and one Arm B macro reference](../sim/spice/gono/armB_prediction.png)
+![earlier Arm A distribution and the matched-macro reference line](../sim/spice/gono/armB_prediction.png)
 
 ## Archived dual-arm layout
 
 The archived design occupies a TinyTapeout 2x2 block. `gen_dualarm_decks.py`
-was used to build the Arm A decks from that run's nominal SPEF and DEF. Its
-no-parasitic control gives all 16 generated Arm A instances 633.64 MHz. With
-extracted capacitance, Arm A ranges from 534.8 to 564.5 MHz: 29.7 MHz or 5.4%
-peak-to-peak, with a mean of 551.7 MHz and a population standard deviation of
-1.34%. Frequency and ring capacitance have *r* = -0.999 across the 16
-instances.
+built the Arm A decks from that run's nominal SPEF and DEF. The no-parasitic
+control gives all 16 instances 633.64 MHz. With extracted capacitance, Arm A
+runs from 534.8 to 564.5 MHz: 29.7 MHz or 5.4% peak-to-peak, mean 551.7 MHz,
+population standard deviation 1.34%, and *r* = -0.999 against ring
+capacitance.
 
-The current RTL is newer than this physical snapshot: it adds synchronized
-controls, selector latching, and a stopped-counter stability handshake. The
-archived DEF is also a mixed-stage checkpoint and is now rejected by the deck
-generator instead of producing missing coordinates. A coherent fresh final
-DEF/SPEF is required before regenerating or applying these values to the
-current candidate.
+The top-level SPEF does not expand the sealed macro internals (the extractor
+cannot tell the sixteen copies apart), so Arm B is represented by the single
+569.5 MHz macro result as a reference line.
 
-The top-level SPEF does not expand the sealed macro internals. Arm B is
-therefore represented by the one 569.5 MHz macro result repeated for its
-sixteen common internal layouts. The green points in the figure are not
-sixteen extracted top-level frequencies.
+Two cross-build checks are worth recording. The earlier build's fitted
+capacitance relation predicts the archived Arm A mean within 0.10%, and its
+fitted slope predicts the peak-to-peak span within about 3%. At the same
+time the two layouts have clearly different patterns and spreads (8.8%
+versus 5.4%, different orderings), so each place-and-route run fixes its own
+deterministic component while the mechanism stays the same.
 
-The earlier build's fitted capacitance relation predicts the archived Arm A
-mean within 0.10%, and its fitted slope predicts the peak-to-peak span within
-about 3%. The two layouts have different Arm A patterns and spreads. This is
-consistent with each place-and-route result fixing its own deterministic
-component, but cross-die persistence cannot be inferred from two layout runs.
+The current RTL is newer than this snapshot, and the archived DEF is a
+mixed-stage checkpoint that the deck generator now rejects. A coherent fresh
+final DEF and SPEF pair is required before these values can be regenerated
+for the current candidate.
 
-![archived dual-arm Arm A result and repeated Arm B macro reference](../sim/spice/gono/dualarm_gono.png)
+![archived dual-arm Arm A result with the matched-macro reference line](../sim/spice/gono/dualarm_gono.png)
 
 ## Preliminary mismatch scale
 
-The separate study under `sim/spice/mc/` runs the matched macro with the PDK's
-mismatch switch enabled and process variation disabled. The PDK parameters
-used by ngspice are global draws for a device class, so 40 runs measure a
-common-draw frequency standard deviation of 0.345%, not independent mismatch
-among devices in one ring.
+The study under `sim/spice/mc/` runs the matched macro with the PDK's
+mismatch switch enabled and process variation disabled. The parameters used
+by ngspice are global draws per device class, so 40 runs measure a
+common-draw frequency standard deviation of 0.345%, not independent
+mismatch inside one ring.
 
-The analysis divides that value by `sqrt(31)` to obtain a first-order 0.062%
-per-ring estimate under equal, independent stage sensitivities. The NAND's
-series/parallel structure and unequal device sensitivities make the scaling
-approximate. Forty draws also leave substantial sampling uncertainty. The
-analyzer reports a sampling-only interval of 0.051% to 0.080% for the scaled
-value at roughly 95% coverage, while leaving model-form uncertainty
-unquantified. The resulting layout-to-mismatch ratios
-(about 21.6 by standard deviation and 87 by peak-to-peak) are scale estimates,
-not measured entropy or security metrics.
+Dividing by `sqrt(31)` gives a first-order 0.062% per-ring estimate under
+equal, independent stage sensitivities. The NAND's structure and unequal
+device sensitivities make that scaling approximate, and 40 draws leave real
+sampling uncertainty: the analyzer reports a sampling-only interval of
+0.051% to 0.080% at roughly 95% coverage. The implied layout-to-mismatch
+ratios (about 21.6 by standard deviation, 87 by peak-to-peak against the
+archived Arm A build) are scale estimates that inherit these assumptions,
+which is why the paper quotes them only as motivation for the silicon
+measurement.
 
-## Limitations and registered silicon test
+## Registered silicon test
 
-- The electrical model uses total capacitance as grounded lumped loads and
-  omits distributed resistance and active coupling.
-- Only nominal device and extraction corners are used for the main comparison.
-- The correlation coefficients describe routed instances in one layout each;
-  they are not estimates over a population of chips.
-- Arm B contributes one internal-macro simulation, repeated in figures to show
-  common geometry. Top-level supply, thermal, stress, and fabrication effects
-  remain unmodelled.
-- The mismatch scale uses a first-order transformation of 40 global PDK draws,
-  not direct independent-device Monte Carlo.
-- The architectural uniqueness and attack examples in the paper are
-  parametric illustrations, not measurements.
-
-The registered hardware prediction is that, under matched measurement
-conditions, Arm A will have greater centred-pattern correlation across chips
-than Arm B. Multiple chips and repeated voltage/temperature measurements are
-needed to test that prediction. A negative or weak result would be informative
-and would require revising the interpretation above.
+The registered prediction: under matched measurement conditions, Arm A will
+show greater centred-pattern correlation across chips than Arm B. Multiple
+chips and repeated voltage and temperature measurements are needed to test
+it, and a weak or negative result would force a revision of the
+interpretation above. The model limitations behind all of these numbers are
+collected in the paper's limitations section rather than repeated here.
 
 ## Reproducibility map
 
-- `gen_decks.py`, `ro_all_*.spice`, `ctrl2.txt`, `par2.txt`, and `verify.py`:
+- `gen_decks.py`, `ro_all_*.spice`, `ctrl2.txt`, `par2.txt`, `verify.py`:
   earlier 32-oscillator build.
-- `gen_dualarm_decks.py`, `dualarm_*.spice`, `dualarm_*_out.txt`, and
+- `gen_dualarm_decks.py`, `dualarm_*.spice`, `dualarm_*_out.txt`,
   `verify_dualarm.py`: Arm A in the archived dual-arm layout.
-- `gen_macro_deck.py`, `ro_macro_matched*.spice`, `macro*_out.txt`, and
-  `verify_macro.py`: one hardened-macro reference.
-- `analyze.py` and the figure scripts: descriptive tables and plots.
-- `first_build/` and `dualarm/build_debug/`: routed inputs retained for the
-  two Arm A analyses.
+- `gen_macro_deck.py`, `ro_macro_matched*.spice`, `macro*_out.txt`,
+  `verify_macro.py`: the hardened-macro reference.
+- `analyze.py` plus the figure scripts: descriptive statistics and plots.
+- `first_build/` and `dualarm/build_debug/`: routed inputs for the two Arm A
+  analyses.
 
-The verify scripts recompute selected headline quantities from the archived
-logs. They are useful consistency checks, not independent experimental
-replications. The portable runner resolves local PDK paths in a temporary deck
-without editing the checked-in file. The original tool/PDK revision is still
-unknown and should not be invented when reporting a reproduction.
+The verify scripts recompute the headline quantities from the archived logs
+and exit nonzero on any mismatch. The portable runner resolves local PDK
+paths in a temporary deck without editing the checked-in files.
