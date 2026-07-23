@@ -94,33 +94,33 @@ chips.
 
 ![earlier Arm A distribution and the matched-macro reference line](../sim/spice/gono/armB_prediction.png)
 
-## Archived dual-arm layout
+## Coherent dual-arm build
 
-The archived design occupies a TinyTapeout 2x2 block. `gen_dualarm_decks.py`
-built the Arm A decks from that run's nominal SPEF and DEF. The no-parasitic
-control gives all 16 instances 633.64 MHz. With extracted capacitance, Arm A
-runs from 534.8 to 564.5 MHz: 29.7 MHz or 5.4% peak-to-peak, mean 551.7 MHz,
-population standard deviation 1.34%, and *r* = -0.999 against ring
-capacitance.
+The current design is built in one coherent flow run on a TinyTapeout 2x2
+block, and `gen_dualarm_decks.py` reads that run's nominal SPEF and DEF. The
+build passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with
+zero violations, so these numbers and the manufacturable GDS come from the
+same place. The no-parasitic control gives all 16 instances 633.64 MHz. With
+extracted capacitance, Arm A runs from 508.5 to 566.5 MHz: 58.0 MHz or 10.5%
+peak-to-peak, mean 551.7 MHz, population standard deviation 2.36%, and
+*r* = -0.9989 against ring capacitance. One oscillator picked up an unusually
+heavy routing load (24.4 fF) and sits near 508 MHz, which widens the spread
+past the earlier builds.
 
 The top-level SPEF does not expand the sealed macro internals (the extractor
 cannot tell the sixteen copies apart), so Arm B is represented by the single
 569.5 MHz macro result as a reference line.
 
-Two cross-build checks are worth recording. The earlier build's fitted
-capacitance relation predicts the archived Arm A mean within 0.10%, and its
-fitted slope predicts the peak-to-peak span within about 3%. At the same
-time the two layouts have clearly different patterns and spreads (8.8%
-versus 5.4%, different orderings). Two builds are not a distribution, but a
-difference this clear points to a run-specific deterministic component while
-the underlying mechanism stays the same.
+Two cross-build checks are worth recording. The 32-oscillator build's fitted
+capacitance relation predicts this build's mean to 0.04%, so the mechanism
+holds across independent runs. At the same time the three builds have clearly
+different patterns and spreads (10.5% here, 8.8% and 5.4% earlier, different
+orderings). A few layouts are not a distribution, but differences this clear
+point to a run-specific deterministic component while the underlying mechanism
+stays the same. The archived `dualarm/build_debug/` snapshot (5.4%, older RTL,
+KLayout checks off) is kept for contrast; this coherent build supersedes it.
 
-The current RTL is newer than this snapshot, and the archived DEF is a
-mixed-stage checkpoint that the deck generator now rejects. A coherent fresh
-final DEF and SPEF pair is required before these values can be regenerated
-for the current candidate.
-
-![archived dual-arm Arm A result with the matched-macro reference line](../sim/spice/gono/dualarm_gono.png)
+![Arm A of the coherent dual-arm build with the matched-macro reference line](../sim/spice/gono/dualarm_gono.png)
 
 ## Preliminary mismatch scale
 

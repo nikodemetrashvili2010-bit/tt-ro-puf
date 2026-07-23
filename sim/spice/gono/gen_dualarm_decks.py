@@ -37,7 +37,7 @@ import sys
 
 HERE  = os.path.dirname(os.path.abspath(__file__))
 PROJ  = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-FINAL = os.path.join(PROJ, "dualarm", "build_debug")
+FINAL = os.path.join(PROJ, "dualarm", "build_current")
 SPEF  = os.path.join(FINAL, "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
 DEFF  = os.path.join(FINAL, "tt_um_nikodemetrashvili20_ro_puf.def")
 sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..")))

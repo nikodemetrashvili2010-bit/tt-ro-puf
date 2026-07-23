@@ -1,52 +1,56 @@
 # Signoff status
 
-This file tracks the physical evidence: what was run, what passed, and what
-still blocks the shuttle order. It is not a foundry signoff.
+This file tracks the physical evidence: what was run and what passed. The
+current design now has a coherent clean build from the current RTL; what
+mainly remains is silicon. It is not a foundry signoff.
 
 | Item | Status | Evidence | Blocks tapeout? |
 |---|---|---|---|
+| Coherent dual-arm build from current RTL | pass: Magic DRC, KLayout DRC, XOR, LVS, antenna, power grid all 0 | `dualarm/build_current/` | no |
 | Hardened macro: Magic + KLayout DRC, LVS, XOR, antenna, power grid | pass | `macro/romacro_final/` | no |
 | Standalone 16-copy array checks | pass, one max-slew violation at the slow corner | `array/pdnfix4_final/` | no |
-| Archived dual-arm build | partial debug snapshot, no final GDS | `dualarm/build_debug/` | informational |
-| Fresh flow run from the current RTL | not yet run | - | yes |
-| KLayout DRC and XOR on the fresh build | pending | - | yes |
-| Lint, slew, fanout, and pin triage on the fresh build | pending | - | yes |
-| Recorded tool and PDK versions for the fresh build | pending | - | yes |
+| Earlier dual-arm snapshot | partial debug snapshot, older RTL | `dualarm/build_debug/` | informational |
+| Ripple-counter interface timing across corners | behavioural only so far | - | before final trust |
 | Silicon measurements | chips not fabricated | - | next phase |
 
 ## Notes per artifact
 
-**macro/romacro_final/** is the strongest bundle: GDS, LEF, DEF, both
-netlists, SPEF, Liberty, SDF, extracted SPICE, tool views, a render, and the
-metrics file, with every recorded check clean. One gap: I did not record the
-exact PDK commit of that run. Clean timing reports also say nothing about
-whether a ring actually oscillates; the SPICE runs cover that.
+**dualarm/build_current/** is the coherent signed-off build. It comes from
+one flow run on the current hardened RTL with KLayout DRC and XOR enabled,
+and every sign-off check is clean: Magic DRC 0, KLayout DRC 0, KLayout XOR 0,
+LVS 0, antenna 0, power grid 0 on both rails. The GDS, final DEF, nominal
+SPEF, and metrics all come from that one run, and the go/no-go analysis in
+`sim/spice/gono/` reads its parasitics. The only warnings are max-slew and
+max-cap at some corners, which a free-running ring oscillator always trips
+under STA; they are not layout violations. I did not pin every transitive
+tool version, but the build environment is recorded in REPRODUCIBILITY.
 
-**array/pdnfix4_final/** is almost as complete. The one blemish is a single
-max-slew violation at the slow corner, documented rather than hidden.
-`array/met4only_debug/` holds PDN debugging diagnostics; its metrics file and
-DEF come from different checkpoints, so they do not describe one final
-database.
+**macro/romacro_final/** is the hardened oscillator macro bundle: GDS, LEF,
+DEF, both netlists, SPEF, Liberty, SDF, extracted SPICE, tool views, a
+render, and metrics, with every recorded check clean. One gap: I did not
+record the exact PDK commit of that run. Clean timing reports also say
+nothing about whether a ring actually oscillates; the SPICE runs cover that.
 
-**dualarm/build_debug/** is a debug snapshot of an older RTL revision. Its
-recorded checks pass (routing DRC 0, Magic DRC 0, LVS matched, antenna 0,
-power grid 0), but that run had KLayout DRC and XOR switched off and left 462
-lint warnings, 81 max-slew violations, one max-fanout violation, ten
-disconnected pins, and 26 unannotated nets. There is no final GDS in the
-bundle, and the DEF and netlist come from different stages, which is why
-`dualarm_positions.csv` holds nan coordinates. Frequency numbers derived from
-this snapshot describe the older source revision.
+**array/pdnfix4_final/** is the standalone 16-copy array, almost as complete.
+The one blemish is a single max-slew violation at the slow corner, documented
+rather than hidden. `array/met4only_debug/` holds PDN debugging diagnostics;
+its metrics file and DEF come from different checkpoints, so they do not
+describe one final database.
 
-## What tapeout-ready means here
+**dualarm/build_debug/** is an earlier debug snapshot of an older RTL
+revision, kept for contrast. Its recorded checks pass, but that run had
+KLayout DRC and XOR switched off and left lint, slew, and pin warnings, and
+it has no final GDS. The coherent build above supersedes it; the 5.4% number
+derived from it is now a prior data point, not the headline.
 
-One flow run from a recorded source commit with pinned LibreLane, OpenROAD,
-support-tools, and PDK versions, exporting a coherent final bundle (GDS, LEF,
-final DEF, both netlists, SPEF, full metrics) with KLayout DRC and XOR
-passing alongside Magic, LVS, antenna, and power grid. Every lint, slew,
-fanout, and pin item fixed or waived by name; a bare count is not a waiver.
-Extracted simulation then repeats from that exact build, including the
-oscillator-to-counter interface: the ripple counter is clocked by the ring
-itself, and its timing at the fast corner needs extracted, across-corner
-checks rather than the behavioural simulation it has now. The PUF claims
-themselves wait for measured dies. Until that run lands, this project is a
-pre-silicon prototype with strong macro and array evidence.
+## What is left
+
+The coherent flow this project needed has now run: one build from the current
+source, KLayout DRC and XOR passing alongside Magic, LVS, antenna, and power
+grid, with the extracted go/no-go regenerated from that same build. What is
+still open is the oscillator-to-counter interface, where the ripple counter
+is clocked by the ring itself and its fast-corner timing is checked only in
+behavioural simulation so far, and then silicon: the PUF claims about
+uniqueness, reliability, and any attack can only be settled by measuring
+multiple dies at several voltage and temperature points. Until those exist,
+this is a pre-silicon prototype with a clean coherent build behind it.

@@ -24,17 +24,23 @@ a circuit whose whole job is to be unpredictable.
 
 ## What the post-layout model predicts
 
-In the archived dual-arm build, Arm A's oscillators spread 5.4% peak to peak
-in nominal post-layout simulation. An earlier 32-oscillator build spread 8.8%.
-The two builds produced different frequency patterns, which fits the idea that
-placement and routing set the bias run by run rather than the circuit carrying
-one fixed signature.
+The current design has a coherent build: one flow run from the current RTL
+that passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with
+zero violations, and whose extracted parasitics drive the go/no-go below. In
+that build Arm A spreads 10.5% peak to peak in nominal post-layout simulation.
+Two earlier builds show the same effect at different sizes: an archived
+dual-arm snapshot at 5.4% and a 32-oscillator layout at 8.8%. The three builds
+produced different frequency patterns, which fits placement and routing
+setting the bias run by run rather than the circuit carrying one fixed
+signature.
 
 The model takes each ring net's extracted capacitance from the SPEF and puts
 it back into the SPICE deck as a load, so the tight frequency-versus-capacitance fit (r near -0.999) is mostly the model doing what a
 capacitance-loaded oscillator has to do. The point is not the coefficient. It
 is that the spread is large and is driven by routing capacitance that the mask
-freezes in place.
+freezes in place. Usefully, the earliest build's capacitance fit predicts the
+coherent build's mean to 0.04%, so the mechanism carries across builds even
+though the pattern does not.
 
 The hardened macro simulates at 569.5 MHz. Its 16 Arm B copies are the same
 GDS, so the matched arm removes internal-layout variation by construction.
@@ -48,22 +54,21 @@ on each copy, and only silicon can settle that:
 These are nominal simulations of specific routed layouts. Whether the pattern
 survives on fabricated dies, and how it compares with real device mismatch,
 is exactly what the chip is built to measure. [SIGNOFF.md](SIGNOFF.md) lists
-what each archived artifact shows and where the gaps are.
+what each build shows and where the gaps are.
 
-An archived render of the dual-arm layout: the matched 4x4 macro grid on the
-left, the auto-placed standard-cell sea on the right. A fresh build will
-replace it before submission.
+A render of the dual-arm layout: the matched 4x4 macro grid on the left, the
+auto-placed standard-cell sea on the right.
 
 ![chip render](dualarm/build_debug/gds_render.png)
 
 ## Status
 
-The measurement core was improved after the archived build, so the current
-source needs one fresh flow run, with KLayout DRC and XOR enabled, before the
-shuttle order. Target: TTSKY26c. After fabrication the plan is to measure
-both arms across chips, voltage, and temperature with the scripts in
-`firmware/`. What I expect on silicon: Arm A shows more cross-chip pattern
-correlation than Arm B. The data can also prove me wrong.
+The current two-arm design has a clean coherent build from its own RTL (all
+sign-off checks zero; see [SIGNOFF.md](SIGNOFF.md)) and is ready for the
+TTSKY26c shuttle. After fabrication the plan is to measure both arms across
+chips, voltage, and temperature with the scripts in `firmware/`. What I expect
+on silicon: Arm A shows more cross-chip pattern correlation than Arm B. The
+data can also prove me wrong.
 
 Operating notes for the chip itself are in [docs/info.md](docs/info.md). The
 paper source is [docs/paper_draft.md](docs/paper_draft.md); build it with

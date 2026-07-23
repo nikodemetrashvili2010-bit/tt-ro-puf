@@ -16,14 +16,16 @@ layouts produced by the OpenLane/OpenROAD flow with the open SKY130 process
 design kit, by simulating routed netlists and extracted capacitances at the
 nominal device corner. No fabricated devices have been measured yet.
 
-In an archived dual-arm build, the 16 automatically placed oscillators of
-Arm A spread 5.4% peak to peak in nominal post-layout simulation; an earlier
-automatically placed 32-oscillator layout spread 8.8%. The two layouts
-produced different frequency patterns, which fits placement and routing
+In a coherent build from the current RTL, one that passes Magic DRC, KLayout
+DRC, XOR, LVS, antenna, and power grid with zero violations, the 16
+automatically placed oscillators of Arm A spread 10.5% peak to peak in nominal
+post-layout simulation. Two earlier builds show the same effect at 8.8%
+(a 32-oscillator layout) and 5.4% (an archived dual-arm snapshot). The three
+builds produced different frequency patterns, which fits placement and routing
 setting the bias run by run. Within this lumped-capacitance model the spread
 is almost entirely explained by the extracted ring capacitance the model puts
-back in as a load (Pearson *r* = -0.999 and -0.997), so the result worth
-keeping is the size of the spread and its physical cause, not the coefficient.
+back in as a load (Pearson *r* near -0.999), so the result worth keeping is
+the size of the spread and its physical cause, not the coefficient.
 The comparison arm, Arm B, uses one hardened oscillator macro sixteen times.
 A single extraction of that macro gives a 569.5 MHz reference for the shared
 internal layout, which removes internal-layout variation by construction but
@@ -104,11 +106,10 @@ method is the experimental variable. Figure 1 summarizes the design.
 
 Two caveats on the comparison itself. Arm B has a macro boundary and
 different top-level connectivity, so the arms are not perfect experimental
-twins. And the dual-arm physical results below come from an archived build
-of an earlier RTL revision; the current source adds synchronized controls,
-selector latching, and a stopped-counter stability handshake, and will go
-through a fresh flow run before the shuttle order (see SIGNOFF.md in the
-repository).
+twins. The main results below come from a coherent build of the current RTL
+that passes every sign-off check with zero violations; two earlier builds, an
+archived dual-arm snapshot and a 32-oscillator layout, are reported for
+contrast (see SIGNOFF.md in the repository).
 
 ## 4. Method
 
@@ -161,20 +162,23 @@ instance-specific routing load, not a smooth die-wide gradient.
 
 ![Figure 2. Nominal post-layout results for the earlier 32-oscillator layout: frequency versus extracted ring capacitance with the no-parasitic control, and a spatial frequency map.](../sim/spice/gono/ro_gono.png)
 
-### 5.2 Archived dual-arm Arm A
+### 5.2 Coherent dual-arm build
 
-Arm A of the archived dual-arm layout contains 16 automatically placed
+Arm A of the coherent dual-arm build contains 16 automatically placed
 oscillators. Their nominal post-layout frequencies have a mean of 551.7 MHz
-and a 29.7 MHz peak-to-peak range, 5.4% of the mean, with *r* = -0.999
-against extracted ring capacitance (Figure 4).
+and a 58.0 MHz peak-to-peak range, 10.5% of the mean, with *r* = -0.999
+against extracted ring capacitance (Figure 4). This build passes Magic DRC,
+KLayout DRC, XOR, LVS, antenna, and power grid with zero violations, so the
+spread and the manufacturable GDS come from the same run.
 
-The two builds do not share a frequency pattern or a spread. Two layouts are
-not a distribution, but a difference this large fits placement and routing
-setting the bias for each run. It also means a single layout cannot say what
-fraction of the response will be common across dies.
-Usefully, the earlier build's capacitance fit predicts the archived Arm A
-mean within 0.10%, so the mechanism transfers between builds even though the
-pattern does not.
+The three builds do not share a frequency pattern or a spread: 10.5% here,
+5.4% in an earlier archived dual-arm snapshot, and 8.8% in the 32-oscillator
+build. A handful of layouts is not a distribution, but differences this large
+fit placement and routing setting the bias for each run, and mean a single
+layout cannot say what fraction of the response will be common across dies.
+Usefully, the 32-oscillator build's capacitance fit predicts this build's mean
+to 0.04%, so the mechanism carries across builds even though the pattern does
+not.
 
 ## 6. Matched-macro arm
 
@@ -199,7 +203,7 @@ measurement the chip exists to make, not something these simulations show.
 
 ![Figure 3. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
 
-![Figure 4. Arm A of the archived dual-arm build beside the same matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
+![Figure 4. Arm A of the coherent dual-arm build (10.5% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
 ## 7. Security interpretation and planned silicon test
 
@@ -266,22 +270,19 @@ from it.
 
 ## 9. Conclusion
 
-Two automatically placed SKY130 RO arrays show a nominal post-layout
-frequency pattern that tracks extracted ring capacitance closely: 5.4% peak
-to peak with *r* = -0.999 in the archived dual-arm Arm A, 8.8% with
-*r* = -0.997 in an earlier 32-oscillator build. A hardened macro provides a
-569.5 MHz shared-internal-layout reference for Arm B. The supported
-conclusion is that the automated physical implementation introduced a
-sizeable deterministic component in these routed designs, and that the
-mechanism, capacitive routing load, transfers between builds while the
-pattern itself does not.
+Three automatically placed SKY130 RO arrays show a nominal post-layout
+frequency pattern that tracks extracted ring capacitance closely: 10.5% peak
+to peak with *r* = -0.999 in a coherent build of the current RTL, and 8.8%
+and 5.4% in two earlier builds. A hardened macro provides a 569.5 MHz
+shared-internal-layout reference for Arm B. The supported conclusion is that
+the automated physical implementation introduced a sizeable deterministic
+component in these routed designs, and that the mechanism, capacitive routing
+load, carries between builds while the pattern itself does not.
 
 The stronger claims stay open on purpose. Whether the pattern survives
 fabrication, dominates mismatch, reduces uniqueness, or supports a real
 attack will be settled by measuring both arms of the fabricated chip under
-the measurement protocol in the firmware, after a fresh physical flow replaces
-the archived
-snapshot.
+the measurement protocol in the firmware.
 
 ## References
 

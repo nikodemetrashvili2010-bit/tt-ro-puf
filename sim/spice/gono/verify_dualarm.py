@@ -9,9 +9,9 @@ import argparse, re, os, csv, math
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJ = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-SPEF = os.path.join(PROJ, "dualarm", "build_debug", "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
-CTRL = os.path.join(HERE, "dualarm_ctrl_out.txt")
-PAR  = os.path.join(HERE, "dualarm_par_out.txt")
+SPEF = os.path.join(PROJ, "dualarm", "build_current", "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
+CTRL = os.path.join(PROJ, "dualarm", "build_current", "dualarm_ctrl_out.txt")
+PAR  = os.path.join(PROJ, "dualarm", "build_current", "dualarm_par_out.txt")
 MACRO = os.path.join(HERE, "macro_out.txt")
 ORIGINAL_CTRL = os.path.join(HERE, "ctrl2.txt")
 CSV  = os.path.join(HERE, "gono_results.csv")

@@ -28,7 +28,7 @@ def read_named(path, name):
     raise ValueError(f"{name} not found in {path}")
 
 ARMB = read_named(os.path.join(HERE, "macro_out.txt"), "f_b") / 1e6
-t = open(os.path.join(HERE, "dualarm_par_out.txt")).read()
+t = open(os.path.join(HERE, "..", "..", "..", "dualarm", "build_current", "dualarm_par_out.txt")).read()
 f = [float(m.group(2))/1e6 for m in sorted(re.finditer(r'f(\d+) = ([0-9.e+-]+)', t), key=lambda m: int(m.group(1)))]
 mean = sum(f)/len(f); ptp = max(f)-min(f); n = len(f); pct = 100*ptp/mean
 random.seed(3)
@@ -55,6 +55,6 @@ axR.text(1, pct*0.24, "0% by construction\n(same internal GDS)", ha="center", va
 axR.set_ylabel("modeled internal-layout spread  (%, peak-to-peak)")
 axR.set_title("(b)  modeled internal-layout spread", loc="left", fontsize=11.5, color="#444444", pad=8)
 axR.grid(axis="x", visible=False)
-fig.text(0.02, 0.95, "The archived dual-arm build: Arm A spreads, Arm B is one layout", ha="left", va="top", fontsize=14, fontweight="bold", color="#1a1a1a")
+fig.text(0.02, 0.95, "The dual-arm chip: Arm A spreads, Arm B is one layout", ha="left", va="top", fontsize=14, fontweight="bold", color="#1a1a1a")
 fig.savefig(os.path.join(HERE, "dualarm_gono.png"))
 print(f"dualarm_gono | Arm A mean {mean:.2f} ptp {ptp:.2f} = {pct:.2f}%")

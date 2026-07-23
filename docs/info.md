@@ -24,10 +24,10 @@ asynchronous ripple counter. When the window closes, the oscillator stops; the
 counter crosses a two-flop sampler and must produce three consecutive equal
 samples before the frozen count and `done` are published.
 
-An archived nominal post-layout simulation predicts a 5.4% peak-to-peak spread
-in an earlier dual-arm Arm A layout, associated closely with extracted routing
-capacitance. The current RTL is newer than that physical snapshot and requires
-a fresh green build before submission.
+A coherent nominal post-layout simulation of the current build predicts a
+10.5% peak-to-peak spread in Arm A, associated closely with extracted routing
+capacitance. That build passes all sign-off checks with zero violations, so
+the prediction and the manufacturable GDS come from the same run.
 Arm B's sixteen instances reuse the same internal macro layout; its plotted
 pre-silicon value is one extracted-macro result repeated sixteen times, not
 sixteen separate measurements. The experiment will test whether Arm A's

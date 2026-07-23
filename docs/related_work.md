@@ -60,8 +60,8 @@ in nominal post-layout simulation, and does a repeated hard macro reduce it?
 
 The current evidence supports three limited claims. Separately routed
 standard-cell oscillators show a nominal post-layout frequency spread that
-tracks their extracted ring capacitance: 8.8% peak-to-peak in an earlier
-32-oscillator build and 5.4% in Arm A of the archived dual-arm layout. Arm B
+tracks their extracted ring capacitance: 10.5% peak-to-peak in Arm A of a
+coherent build of the current RTL, and 8.8% and 5.4% in two earlier builds. Arm B
 reuses one hardened oscillator GDS sixteen times, and its single extracted
 simulation, 569.5 MHz, appears in the comparison figures as a reference line
 for that shared internal layout. And extraction followed by nominal SPICE is
