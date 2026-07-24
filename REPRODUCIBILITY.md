@@ -79,11 +79,11 @@ include paths, in a temporary copy of the deck; it never mutates the tracked
 deck. The generators use the same environment variables and fail when the
 model files are missing. `gen_dualarm_decks.py` needs all Arm A ring nets in
 the SPEF and placement centroids for all 16 oscillators in a matching DEF
-from the same final run. Its checked-in default inputs are a mixed-stage
-snapshot that it rejects on purpose, so pass `--spef`, `--def`, and
-`--output-dir` from a coherent build and keep regenerated files outside the
-archived evidence directories. Inspect `git diff` before accepting any
-regenerated data.
+from the same final run. Its defaults point at the coherent
+`dualarm/build_current/` bundle; the older `dualarm/build_debug/` snapshot is
+a mixed-stage checkpoint that the generator rejects if given. Keep regenerated
+files outside the evidence directories and inspect `git diff` before accepting
+any regenerated data.
 
 The verifiers accept `--ctrl`, `--par`, `--log-5p`, `--log-1p`, `--csv`,
 `--spef`, and related path options (see `--help`), so a fresh run can be
@@ -117,8 +117,8 @@ directory unchanged.
 
 ## Which file is which
 
-The repository keeps failed and superseded builds on purpose, so here is the
-short answer to "which one is current":
+The repository keeps failed and superseded builds as provenance, so here is
+the short answer to "which one is current":
 
 - Tapeout candidate GDS and its checks: `dualarm/build_current/` (the coherent
   build from the current RTL). This is what the headline 10.5% comes from, via

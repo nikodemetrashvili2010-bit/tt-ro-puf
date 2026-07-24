@@ -35,8 +35,12 @@ per-oscillator table it produces.
 
 The later runs live here too. `gen_macro_deck.py` and `ro_macro_matched.spice`
 predict the matched Arm B nominal internal frequency. `gen_dualarm_decks.py`
-and the `dualarm_*` files model Arm A from the partial dual-arm snapshot; Arm B
-is represented separately by the macro run. Figures come from
+and the `dualarm_*` files model Arm A of the coherent current build; the deck
+inputs and raw logs sit in `dualarm/build_current/`, and Arm B is represented
+separately by the macro run. `verify_ring_topology.py` proves the final
+netlist kept every Arm A ring intact before any deck is trusted, and
+`sensitivity.py` recomputes the outlier leave-one-out numbers and the
+cross-build per-oscillator prediction from raw files. Figures come from
 `make_figures.py` and `make_dualarm_figure.py`.
 
 ## Reproducing and checking

@@ -45,10 +45,12 @@ places the SPEF `*D_NET` total capacitance on each ring node as a grounded
 lumped load. Two combined decks come out: a control deck with no extracted
 capacitance, and a nominal post-layout deck with it.
 
-Only one oscillator is enabled during a chip measurement, so coupling to
-inactive neighbours is treated as a fixed grounded load. Series wire
-resistance is omitted; a separate estimate put its stage-delay effect below
-0.1% for these nets. Transistors stay at nominal values to isolate
+On the chip only one oscillator is enabled at a time. In the generated deck
+all 16 reconstructed oscillators run concurrently; under this reduced model
+that changes nothing, since they share only an ideal 1.8 V source and no
+coupling elements are carried over. Series wire resistance is dropped
+entirely, and I have not quantified its effect yet, which is one of the jobs
+of the planned distributed-RC comparison. Transistors stay at nominal values to isolate
 implementation differences. Each oscillator starts with enable low and is
 released with an enable pulse, and frequency is measured over twenty periods
 after startup.

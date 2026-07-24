@@ -35,6 +35,14 @@ than isolating the contribution of an open place-and-route flow.
 
 ## 3. Mitigation work on FPGAs
 
+Feiten and colleagues measured 38 identical Altera FPGAs and traced
+non-device-specific systemic RO frequency biases to internal LUT routing, RO
+location, and payload activity [15]; that is the closest FPGA analogue of the
+question asked here. On the ASIC side, SCALLER showed in fabricated 65 nm
+silicon that deliberate local layout effects (well proximity) deterministically
+shift standard-cell RO frequencies by design [16], which is direct physical
+evidence that mask-level layout detail moves RO frequency in silicon.
+
 FPGA implementations have used matched hard macros, controlled placement,
 placement selection, configurable oscillators, and statistical correction to
 reduce implementation bias [2, 5, 6]. Other work proposes constructions that
@@ -73,9 +81,14 @@ predictions I will test on the fabricated chips rather than claims here. What I
 did not find is the exact combination this project targets. Prior mitigation
 work matches layout on FPGAs [2, 5, 6], large ASIC studies characterize RO-PUFs
 across many dies [3, 12], and temperature-aware designs tackle RO reliability
-[14], but I have not seen a controlled open-source RTL-to-GDS array compared
-against a matched hardened macro, quantified from the flow's own extraction
-before fabrication and then checked on the same dies. That gap, together with a
+[14], To the best of my literature search (IEEE Xplore, arXiv, and the references
+of the papers above, through July 2026), no prior work compares a controlled
+open-source RTL-to-GDS array against a matched hardened macro, quantified from
+the flow's own extraction before fabrication and then checked on the same
+dies. Feiten et al. establish the systemic-bias phenomenon on FPGAs [15] and
+SCALLER establishes deliberate layout-driven frequency control in ASIC silicon
+[16]; neither quantifies what an automated open ASIC flow does to a PUF array
+by accident, pre-fabrication, with the artifacts open. That gap, together with a
 diagnostic anyone can rerun, is the contribution. The matched-layout principle
 itself is old.
 
@@ -143,3 +156,12 @@ no. 8, pp. 1126–1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516
 [14] C.-E. Yin and G. Qu, “Temperature-aware cooperative ring oscillator PUF,”
 *2009 IEEE International Workshop on Hardware-Oriented Security and Trust
 (HOST)*, pp. 36–42, 2009. https://doi.org/10.1109/HST.2009.5225055
+
+[15] L. Feiten, et al., “Systemic Frequency Biases in Ring Oscillator PUFs on
+FPGAs,” *IEEE Transactions on Multi-Scale Computing Systems*, vol. 2, no. 3,
+pp. 174–185, 2016. https://ieeexplore.ieee.org/document/7539304
+
+[16] M. J. Aljafar, Z. U. Abideen, A. Peetermans, B. Gierlichs, and
+S. Pagliarini, “SCALLER: Standard Cell Assembled and Local Layout
+Effect-Based Ring Oscillators,” *IEEE Embedded Systems Letters*, vol. 16,
+no. 4, 2024. arXiv:2406.01258

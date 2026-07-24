@@ -24,6 +24,8 @@ jobs:
           python3 sim/spice/gono/verify_macro.py
           python3 sim/spice/gono/verify_dualarm.py
           python3 sim/spice/gono/verify_provenance.py
+          python3 sim/spice/gono/verify_ring_topology.py
+          python3 sim/spice/gono/sensitivity.py
           python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
 
   gds:

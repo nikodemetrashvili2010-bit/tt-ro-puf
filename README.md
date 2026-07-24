@@ -1,4 +1,4 @@
-# SILICON: deterministic layout bias in a ring-oscillator PUF
+# SILICON: routing-induced frequency dispersion in a ring-oscillator PUF
 
 A ring-oscillator PUF is supposed to get its secret from manufacturing
 randomness. This repository asks how much frequency variation the automated
@@ -36,10 +36,12 @@ signature.
 
 The model takes each ring net's extracted capacitance from the SPEF and puts
 it back into the SPICE deck as a load, so the tight frequency-versus-capacitance fit (r near -0.999) is mostly the model doing what a
-capacitance-loaded oscillator has to do. The point is not the coefficient. It
-is that the spread is large and is driven by routing capacitance that the mask
-freezes in place. Usefully, the earliest build's capacitance fit predicts the
-coherent build's mean to 0.04%, so the mechanism carries across builds even
+capacitance-loaded oscillator has to do. Since capacitance is the only
+per-instance input, the coefficient is not an independent validation; the
+informative quantities are the spread itself and the routing capacitance that
+the mask freezes in place. A capacitance fit trained on the earliest build
+predicts the coherent build's 16 frequencies with 0.14% mean absolute error
+and rank correlation 0.997, so the mechanism carries across builds even
 though the pattern does not.
 
 The hardened macro simulates at 569.5 MHz. Its 16 Arm B copies are the same
@@ -63,9 +65,11 @@ auto-placed standard-cell sea on the right.
 
 ## Status
 
-The current two-arm design has a clean coherent build from its own RTL (all
-sign-off checks zero; see [SIGNOFF.md](SIGNOFF.md)) and is ready for the
-TTSKY26c shuttle. After fabrication the plan is to measure both arms across
+The current two-arm design has a coherent DRC/LVS-clean candidate build from
+its own RTL (see [SIGNOFF.md](SIGNOFF.md)). It is a candidate for the TTSKY26c
+shuttle, not a finished tapeout: the high-speed oscillator-to-counter path is
+validated only in behavioural simulation so far, and the remaining hardware
+work is listed in [docs/hardware_todo.md](docs/hardware_todo.md). After fabrication the plan is to measure both arms across
 chips, voltage, and temperature with the scripts in `firmware/`. What I expect
 on silicon: Arm A shows more cross-chip pattern correlation than Arm B. The
 data can also prove me wrong.

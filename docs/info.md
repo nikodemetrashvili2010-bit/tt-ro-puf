@@ -28,7 +28,7 @@ A coherent nominal post-layout simulation of the current build predicts a
 10.5% peak-to-peak spread in Arm A, associated closely with extracted routing
 capacitance. That build passes Magic and KLayout DRC, XOR, LVS, antenna, detailed
 routing, and power-grid connectivity with zero violations, so the prediction
-and the manufacturable GDS come from the same run; the ring-oscillator STA
+and the candidate GDS come from the same flow run; the ring-oscillator STA
 warnings are listed separately in SIGNOFF.
 Arm B's sixteen instances reuse the same internal macro layout; its plotted
 pre-silicon value is one extracted-macro result repeated sixteen times, not

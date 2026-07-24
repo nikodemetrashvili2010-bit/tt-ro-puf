@@ -26,7 +26,7 @@ NRO = 16
 # with --positions (also fixed before seeing frequencies).
 LOGICAL_PAIRS = tuple((i, i + 1) for i in range(0, NRO, 2))
 BOOTSTRAP = 2000
-NEAR_TIE_MARGIN = 1.0  # counts of separation below which a bit is called fragile
+LOW_MARGIN_SIGMA = 3.0  # pair margin below this multiple of repeat noise = fragile
 
 
 def mean(xs):
@@ -75,8 +75,13 @@ def load_files(paths):
         lines = raw_bytes.splitlines(keepends=True)
         meta = parse_meta(lines)
         setting = None
+        measured = {}
         if meta:
             setting = (meta.get("clk_hz_requested"), meta.get("window"))
+            for k in ("clk_hz_measured", "vdd_v_measured", "temp_c_measured"):
+                v = meta.get(k)
+                if v:
+                    measured[k] = v
         rows = csv.DictReader(l for l in lines if not l.startswith("#"))
         required = {"run_id", "chip_id", "condition", "round", "arm", "idx", "count"}
         if not rows.fieldnames or not required.issubset(rows.fieldnames):
@@ -104,10 +109,12 @@ def load_files(paths):
             g = groups.setdefault(
                 (chip_id, condition),
                 {"raw": {}, "by_round": {}, "runs": set(), "sources": set(),
-                 "settings": set(), "timeouts": 0, "saturated": 0})
+                 "settings": set(), "timeouts": 0, "saturated": 0,
+                 "measured": {}})
             g["sources"].add(path)
             g["runs"].add(run_id)
             g["settings"].add(setting)
+            g["measured"].update(measured)
             if count < 0:
                 g["timeouts"] += 1
                 continue
@@ -119,7 +126,26 @@ def load_files(paths):
 
 
 def osc_means(g, arm):
-    return {idx: mean(s) for (a, idx), s in g["raw"].items() if a == arm and s}
+    # Per-run means first, then average the runs, so one long run cannot
+    # outweigh a short one for the same chip/condition.
+    per_run = {}
+    for (run_id, rnd), rc in g["by_round"].items():
+        for (a, idx), c in rc.items():
+            if a == arm:
+                per_run.setdefault(run_id, {}).setdefault(idx, []).append(c)
+    out = {}
+    for idx in range(NRO):
+        run_means = [mean(v[idx]) for v in per_run.values() if idx in v]
+        if run_means:
+            out[idx] = mean(run_means)
+    return out
+
+
+def centered(vec):
+    # Remove the chip-wide speed offset: (f - mean) / mean. The scientific
+    # object is the spatial pattern, not how fast the whole chip is.
+    m = mean(vec)
+    return [(x - m) / m for x in vec]
 
 
 def complete_vector(g, arm):
@@ -150,41 +176,77 @@ def hamming_pct(a, b):
     return 100.0 * sum(x != y for x, y in zip(a, b)) / len(a)
 
 
+# Tolerances for measured values, applied when both runs recorded them.
+CLK_TOL = 0.001     # 0.1% relative on measured reference clock
+VDD_TOL = 0.02      # volts
+TEMP_TOL = 3.0      # degrees C
+
+
 def settings_ok(entries):
     ss = []
+    meas = []
     for e in entries:
         s = e[1]["settings"]
         if len(s) != 1 or None in s:
             return False
         ss.append(next(iter(s)))
-    return len(set(ss)) == 1
+        meas.append(e[1].get("measured", {}))
+    if len(set(ss)) != 1:
+        return False
+    # Requested settings match; now compare measured values where present.
+    # A shared label like room_1v8 is not experimental control by itself.
+    def spread_bad(key, tol, relative=False):
+        vals = [m[key] for m in meas if m.get(key)]
+        if len(vals) < 2:
+            return False
+        lo, hi = min(vals), max(vals)
+        return ((hi - lo) / lo > tol) if relative else ((hi - lo) > tol)
+    if spread_bad("clk_hz_measured", CLK_TOL, relative=True):
+        return False
+    if spread_bad("vdd_v_measured", VDD_TOL):
+        return False
+    if spread_bad("temp_c_measured", TEMP_TOL):
+        return False
+    return True
 
 
 def bit_reliability(g, arm, pairs):
-    """Per-pair bit-error rate across rounds, and a fragile-bit count.
+    """Enrollment/evaluation bit-error rate and a margin-based fragile count.
 
-    A bit whose two oscillators sit within NEAR_TIE_MARGIN counts on average, or
-    that flips across repeats, is unreliable even if the pooled means order it.
-    """
-    per_round = [rc for (rid, rnd), rc in g["by_round"].items()]
+    The reference bit for each pair is enrolled from the first half of the
+    rounds only; the error rate is evaluated on the held-out second half.
+    Deciding the reference from the same rounds it is scored on would
+    understate the error. A pair is fragile when its mean separation is
+    below LOW_MARGIN_SIGMA times its own repeat noise."""
+    keys = sorted(g["by_round"])
+    if len(keys) < 4:
+        return None, None, 0
+    half = len(keys) // 2
+    enroll = [g["by_round"][k] for k in keys[:half]]
+    evaluate = [g["by_round"][k] for k in keys[half:]]
+
+    def votes_in(rounds, l, r):
+        out = []
+        for rc in rounds:
+            if (arm, l) in rc and (arm, r) in rc and rc[(arm, l)] != rc[(arm, r)]:
+                out.append(int(rc[(arm, l)] > rc[(arm, r)]))
+        return out
+
     fragile = 0
     bers = []
     for l, r in pairs:
-        votes = []
-        for rc in per_round:
-            if (arm, l) in rc and (arm, r) in rc and rc[(arm, l)] != rc[(arm, r)]:
-                votes.append(int(rc[(arm, l)] > rc[(arm, r)]))
-        if not votes:
+        ev = votes_in(enroll, l, r)
+        hv = votes_in(evaluate, l, r)
+        if not ev or not hv:
             continue
-        ref = 1 if sum(votes) * 2 >= len(votes) else 0
-        ber = mean([int(v != ref) for v in votes])
-        bers.append(ber)
+        ref = 1 if sum(ev) * 2 >= len(ev) else 0
+        bers.append(mean([int(v != ref) for v in hv]))
         ml = g["raw"].get((arm, l))
         mr = g["raw"].get((arm, r))
-        if ml and mr and abs(mean(ml) - mean(mr)) < NEAR_TIE_MARGIN:
-            fragile += 1
-        elif ber > 0.02:
-            fragile += 1
+        if ml and mr and len(ml) > 1 and len(mr) > 1:
+            noise = max(population_sd(ml), population_sd(mr), 1e-9)
+            if abs(mean(ml) - mean(mr)) < LOW_MARGIN_SIGMA * noise:
+                fragile += 1
     return (mean(bers) if bers else None), fragile, len(bers)
 
 
@@ -228,6 +290,46 @@ def boot_ci(values, chips, stat, reps=BOOTSTRAP):
 def mean_pairwise_corr(vectors):
     cs = [c for a, b in combinations(vectors, 2) for c in [correlation(a, b)] if c is not None]
     return mean(cs) if cs else None
+
+
+def loco_scores(vectors):
+    """Leave-one-chip-out template correlation, one score per chip.
+
+    For each chip, build the mean centered pattern of the other chips and
+    correlate the held-out chip's centered pattern against it. This gives a
+    per-chip repeatability score and avoids treating dependent chip pairs as
+    a large sample."""
+    if len(vectors) < 3:
+        return None
+    cvs = {k: centered(v) for k, v in vectors.items()}
+    scores = {}
+    for k in cvs:
+        rest = [cvs[j] for j in cvs if j != k]
+        template = [mean([r[i] for r in rest]) for i in range(NRO)]
+        c = correlation(cvs[k], template)
+        if c is not None:
+            scores[k] = c
+    return scores or None
+
+
+def paired_delta_ci(scores_a, scores_b, reps=BOOTSTRAP):
+    """Bootstrap the mean Arm A - Arm B LOCO-score difference over chips.
+
+    Scores are per-chip numbers, so the resample unit is the chip and the
+    statistic is a plain mean of paired differences."""
+    common = sorted(set(scores_a) & set(scores_b))
+    if len(common) < 3:
+        return None
+    diffs = [scores_a[c] - scores_b[c] for c in common]
+    rng = random.Random(20260723)
+    samples = []
+    for _ in range(reps):
+        pick = [rng.choice(diffs) for _ in diffs]
+        samples.append(mean(pick))
+    samples.sort()
+    lo = samples[int(0.025 * len(samples))]
+    hi = samples[min(len(samples) - 1, int(0.975 * len(samples)))]
+    return mean(diffs), lo, hi, len(common)
 
 
 def load_positions(path):
@@ -305,9 +407,11 @@ def print_across_chips(groups, pairings):
                 print("    %s: incompatible acquisition settings across chips" % name)
                 continue
             vectors = {chip: vec for chip, _, vec in entries}
-            point = mean_pairwise_corr(list(vectors.values()))
-            ci = boot_ci(vectors, list(vectors), mean_pairwise_corr)
-            ratio = shared_position_ratio(list(vectors.values()))
+            cvecs = [centered(v) for v in vectors.values()]
+            point = mean_pairwise_corr(cvecs)
+            ci = boot_ci(vectors, list(vectors),
+                         lambda vs: mean_pairwise_corr([centered(v) for v in vs]))
+            ratio = shared_position_ratio(cvecs)
             npairs = len(list(combinations(entries, 2)))
             if point is not None and ci:
                 _, lo, hi = ci
@@ -329,6 +433,38 @@ def print_across_chips(groups, pairings):
                       % (label, mean(hd), len(good), len(hd), len(pairs)))
 
 
+def print_primary_delta(groups):
+    print("\n== Primary comparison: Arm A minus Arm B pattern repeatability")
+    print("   (leave-one-chip-out template correlation per chip, paired by chip)")
+    for cond in sorted({c for _, c in groups}):
+        per_arm = {}
+        for arm in (0, 1):
+            entries = []
+            for (chip, gc), g in sorted(groups.items()):
+                if gc != cond:
+                    continue
+                vec = complete_vector(g, arm)
+                if vec is not None:
+                    entries.append((chip, g, vec))
+            if len(entries) >= 3 and settings_ok(entries):
+                per_arm[arm] = loco_scores({c: v for c, _, v in entries})
+        a, b = per_arm.get(0), per_arm.get(1)
+        if not a or not b:
+            print("  %s: needs complete, compatible data from >=3 chips in both arms"
+                  % cond)
+            continue
+        res = paired_delta_ci(a, b)
+        if res is None:
+            print("  %s: fewer than 3 chips with both arms complete" % cond)
+            continue
+        d, lo, hi, n = res
+        print("  %s: mean LOCO r  A=%.3f  B=%.3f  ->  delta=%+.3f "
+              "[bootstrap 95%%: %+.3f, %+.3f], n_chips=%d"
+              % (cond, mean(list(a.values())), mean(list(b.values())), d, lo, hi, n))
+        print("    prediction: delta > 0 (Arm A pattern repeats across chips more"
+              " than Arm B). An interval covering 0 means not resolved.")
+
+
 def print_reliability(groups, pairings):
     print("\n== Bit reliability within chip/condition (needs repeated rounds)")
     for (chip, cond), g in sorted(groups.items()):
@@ -337,8 +473,10 @@ def print_reliability(groups, pairings):
                 ber, fragile, nb = bit_reliability(g, arm, pairs)
                 if ber is None:
                     continue
-                print("  %s/%s %s %s: mean BER %.3f, %d/%d fragile bits"
-                      % (chip, cond, name, label, ber, fragile, nb))
+                print("  %s/%s %s %s: held-out BER %.3f over %d pairs, "
+                      "%d low-margin (<%.0f sigma)"
+                      % (chip, cond, name, label, ber, nb, fragile,
+                         LOW_MARGIN_SIGMA))
 
 
 def print_across_conditions(groups, pairings):
@@ -391,6 +529,7 @@ def main(argv=None):
 
     print_summaries(groups)
     print_across_chips(groups, pairings)
+    print_primary_delta(groups)
     print_reliability(groups, pairings)
     print_across_conditions(groups, pairings)
     print("\nDescriptive metrics only. The physical die is the unit; pairwise "

@@ -72,18 +72,27 @@ community-submitted CSVs stay interpretable.
 - Per chip and condition: mean, peak-to-peak, standard deviation, median and
   MAD (peak-to-peak alone is outlier-sensitive), and the within-oscillator
   repeat noise.
-- Across chips at one condition: the centred pattern correlation as a point
-  estimate with a 95% interval bootstrapped over whole chips, the shared
-  per-position variance fraction, and inter-chip uniqueness for each predeclared
-  pairing. The physical die is the unit; the chip-pair count is dependent, so
-  read the bootstrap interval as the sample size, not the pair count.
-- Bit reliability within a chip: per-pair bit-error rate across rounds and a
-  count of fragile bits (near-tied oscillators or bits that flip across
-  repeats). A bit that is 51/49 over repeats is unreliable even if its pooled
-  means order it.
-- The analyzer refuses to compare files with incompatible clock/window settings
-  (across chips and across conditions), rejects a duplicate file or a repeated
-  run UUID, and keeps raw files unmodified.
+- The primary comparison: for each chip, a leave-one-chip-out template
+  correlation (the chip's centred pattern against the mean centred pattern of
+  the other chips), then the paired Arm A minus Arm B difference of those
+  per-chip scores, with a bootstrap interval over chips. The prediction is a
+  positive difference. This is the statistic to preregister; everything else
+  is descriptive support.
+- Per chip and arm: pattern correlations on centred vectors
+  ((f - mean) / mean per chip, so chip-wide speed cancels), the shared
+  per-position variance fraction, and uniqueness for each predeclared pairing.
+- Bit reliability with a proper split: the reference bit is enrolled from the
+  first half of the rounds and the error rate is scored on the held-out second
+  half. Scoring rounds against a majority taken from those same rounds would
+  flatter the result. A pair is flagged low-margin when its separation is
+  under three times its own repeat noise.
+- The analyzer refuses to compare files with incompatible acquisition settings,
+  and this includes measured values: runs whose measured reference clock,
+  supply, or temperature disagree beyond preset tolerances (0.1%, 0.02 V, 3 C)
+  are not pooled even if their labels match. Duplicate files and repeated run
+  UUIDs are rejected. Raw files are never modified.
+- Oscillator means weight runs equally (per-run means first), so one long run
+  cannot dominate a chip's summary.
 
 ## Limits to keep in mind
 

@@ -1,7 +1,7 @@
 # Monte Carlo mismatch-sensitivity study
 
 This is a first-order model study, not a silicon entropy characterization.
-The first version of this run taught me something worth keeping: sky130's
+The first version of this run taught me a fact I did not expect: sky130's
 mismatch parameters are global .param statements, so ngspice draws ONE value
 per run shared by every transistor of a model. My first 16-oscillator deck gave
 16 identical frequencies per virtual chip (within-chip sigma exactly 0.000),

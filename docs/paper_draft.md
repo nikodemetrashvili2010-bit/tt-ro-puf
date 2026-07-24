@@ -1,6 +1,6 @@
-# Deterministic Layout Bias in a Ring-Oscillator PUF: A Pre-Silicon Study on the Open SKY130 Flow
+# Quantifying Routing-Induced Frequency Dispersion in an Open-Source SKY130 Ring-Oscillator PUF: A Pre-Silicon Study
 
-**Nikoloz Demetrashvili** · Independent researcher · Georgia
+**Nikoloz Demetrashvili** · Student researcher · Georgia
 
 Draft, 2026-07-23
 
@@ -10,22 +10,28 @@ Draft, 2026-07-23
 
 A ring-oscillator physical unclonable function (RO-PUF) turns manufacturing
 variation between nominally identical oscillators into a device secret. The
-physical implementation can add a deterministic frequency pattern of its own
-on top of that variation. I isolate this implementation contribution for
-layouts produced by the OpenLane/OpenROAD flow with the open SKY130 process
-design kit, by simulating routed netlists and extracted capacitances at the
-nominal device corner. No fabricated devices have been measured yet.
+physical implementation can add a frequency pattern of its own on top of that
+variation. This paper quantifies one component of that pattern, the
+instance-to-instance routing capacitance assigned by the automated
+OpenLane/OpenROAD flow on the open SKY130 process design kit, using a reduced
+model: nominal transistor-level models of the verified post-route oscillator
+topology, loaded with each ring net's total extracted capacitance from the
+final SPEF. No fabricated devices have been measured yet, and distributed
+resistance and coupling are not represented.
 
-In a coherent build from the current RTL, one that passes Magic DRC, KLayout
-DRC, XOR, LVS, antenna, and power grid with zero violations, the 16
-automatically placed oscillators of Arm A spread 10.5% peak to peak in nominal
-post-layout simulation. Two earlier builds show the same effect at 8.8%
-(a 32-oscillator layout) and 5.4% (an archived dual-arm snapshot). The three
-builds produced different frequency patterns, which fits placement and routing
-setting the bias run by run. Within this lumped-capacitance model the spread
-is almost entirely explained by the extracted ring capacitance the model puts
-back in as a load (Pearson *r* near -0.999), so the result worth keeping is
-the size of the spread and its physical cause, not the coefficient.
+Under this model, the 16 automatically placed oscillators of Arm A in a
+coherent build of the current RTL spread 10.5% peak to peak (population SD
+2.36%, mean 551.7 MHz). One oscillator with an unusually heavy routing load
+(24.4 fF against a 11.7 to 17.0 fF range for the rest) contributes much of the
+extreme range: without it the peak-to-peak figure is 4.6% and the SD 1.25%,
+while the capacitance-frequency relation is essentially unchanged. Two earlier
+uncontrolled builds showed dispersions of 8.8% and 5.4% with different
+per-instance patterns; they are supporting historical observations, not
+controlled replicates. A linear capacitance fit trained on the earlier
+32-oscillator build predicts the current build's 16 frequencies with a mean
+absolute error of 0.14% and rank correlation 0.997, so the capacitive
+mechanism transfers across builds even though each pattern is unique to its
+routing run.
 The comparison arm, Arm B, uses one hardened oscillator macro sixteen times.
 A single extraction of that macro gives a 569.5 MHz reference for the shared
 internal layout, which removes internal-layout variation by construction but
@@ -109,9 +115,9 @@ from internal-layout matching. Hardening inserts input and output delay
 buffers at the Arm B macro boundary that Arm A does not have, the sixteen
 Arm B macros occupy a regular block on one side of the tile while Arm A fills
 the rest, and the two arms differ in local decap and power-delivery geometry.
-The honest description is therefore a matched hardened-macro implementation
-against a conventional automated standard-cell implementation, not two circuits
-that differ only in internal routing; the ring loops themselves stay logically
+The comparison is therefore a matched hardened-macro implementation against
+a conventional automated standard-cell implementation, not two circuits that
+differ only in internal routing; the ring loops themselves stay logically
 equivalent. The main results below come from a coherent build of the current
 RTL that passes the physical checks (Magic and KLayout DRC, XOR, LVS, antenna,
 detailed route, power grid) with zero violations; two earlier builds, an
@@ -120,19 +126,27 @@ contrast (see SIGNOFF.md in the repository).
 
 ## 4. Method
 
-The analysis starts from the routed gate-level netlist and the OpenROAD SPEF
-at the nominal corner. A generator identifies each oscillator, takes the
-total extracted capacitance from each ring net's SPEF `*D_NET` record, and
-places it as a grounded lumped load. It emits two ngspice decks per
-automatically placed oscillator: a control deck without parasitics and a
-post-layout deck with them. Device models stay at the nominal corner, which
-isolates the layout contribution instead of simulating a population of
-fabricated parts.
+The analysis is four separate operations, each traceable to a checked-in
+file. First, the physical flow produces the gate-level netlist, DEF, and
+nominal-corner SPEF. Second, a structural verifier
+(`verify_ring_topology.py`) parses the final netlist and confirms that every
+Arm A oscillator kept exactly one enable NAND, 30 inverters, and one tap
+buffer, with no cell inserted into the loop; the deck generation is only valid
+if this holds. Third, the generator reconstructs that verified topology from
+nominal SKY130 transistor-level cell models and attaches each ring net's SPEF
+`*D_NET` total capacitance to the matching node as a grounded lumped
+capacitor. It does not simulate the extracted network itself. Fourth, ngspice
+transient simulation (1.8 V, 27 C, nominal TT models) measures each
+oscillator's frequency, with a parallel control deck carrying no extracted
+capacitance. The SPEF declares `PIN_CAP NONE`, so pin capacitance is not part
+of the transferred load.
 
-Only one oscillator runs at a time in a real measurement, so coupling to
-inactive neighbours is treated as a fixed grounded load, and distributed
-wire resistance is omitted; a separate estimate put its stage-delay effect
-below 0.1% for these nets. Each oscillator starts disabled and is released
+On the chip, one oscillator runs at a time. The combined simulation deck
+enables all 16 reconstructed oscillators concurrently, which is equivalent
+under this model because they share only an ideal supply and the reduced model
+carries no coupling between them. Distributed wire resistance is omitted
+entirely; its effect is not quantified here and is one reason the
+distributed-RC comparison is required. Each oscillator starts disabled and is released
 by an enable pulse, which avoids a simulation artefact where an artificial
 initial condition excited an unintended ring mode. Frequency is measured
 over 20 periods after startup.
@@ -177,23 +191,31 @@ instance-specific routing load, not a smooth die-wide gradient.
 Arm A of the coherent dual-arm build contains 16 automatically placed
 oscillators. Their nominal post-layout frequencies have a mean of 551.7 MHz
 and a 58.0 MHz peak-to-peak range, 10.5% of the mean, with *r* = -0.999
-against extracted ring capacitance (Figure 4). One oscillator picked up an
-unusually heavy routing load and sits well below the rest, so the peak-to-peak
-figure is outlier-sensitive; the standard deviation is 2.36% and the median
-absolute deviation is smaller still. That outlier is itself an automated-layout
-artifact, not a measurement error, but the distribution matters more than the
-single peak-to-peak number. This build passes Magic DRC, KLayout DRC, XOR, LVS,
-antenna, and power grid with zero violations, so the spread and the
-manufacturable GDS come from the same run.
+against extracted ring capacitance (Figure 4). RO15 carries an unusually
+heavy routing load, 24.35 fF where the other fifteen span 11.7 to 16.95 fF,
+and sits at 508.5 MHz. Because peak-to-peak is outlier-sensitive, a
+leave-one-out check matters: without RO15 the spread is 4.60% peak to peak
+and the SD 1.25%, while the capacitance-frequency relation barely moves
+(*r* = -0.9987, rank correlation -0.996). The outlier is a real product of
+the router, not a measurement fault, so it stays in the primary result; the
+sensitivity numbers show exactly how much of the extreme range it carries
+(`sensitivity.py` recomputes all of this from the raw logs). This build
+passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with zero
+violations, so the dispersion estimate and the candidate GDS come from the
+same run.
 
 The three builds do not share a frequency pattern or a spread: 10.5% here,
-5.4% in an earlier archived dual-arm snapshot, and 8.8% in the 32-oscillator
-build. A handful of layouts is not a distribution, but differences this large
-fit placement and routing setting the bias for each run, and mean a single
-layout cannot say what fraction of the response will be common across dies.
-Usefully, the 32-oscillator build's capacitance fit predicts this build's mean
-to 0.04%, so the mechanism carries across builds even though the pattern does
-not.
+5.4% in an earlier archived dual-arm snapshot, 8.8% in the 32-oscillator
+build. These are historical observations consistent with run-specific routing
+assignments; they are not controlled replicates, since the builds differ in
+source revision and settings as well as seed. The planned multi-seed study
+addresses that properly. A stronger cross-build check than comparing spread
+numbers is per-instance prediction: a linear capacitance fit trained only on
+the 32-oscillator build (624.6 MHz - 4.93 MHz/fF) predicts this build's 16
+frequencies with MAE 0.77 MHz (0.14% of the mean), RMSE 1.18 MHz, and rank
+correlation 0.997, with the largest error on the outlier RO15 (-0.80%). The
+capacitive mechanism transfers between independent routing runs even though
+each pattern is unique.
 
 ## 6. Matched-macro arm
 
@@ -212,46 +234,31 @@ Figures 3 and 4 draw Arm B as a single horizontal reference line at
 569.5 MHz, because the sixteen instances share one internal layout and there
 is only one extracted simulation behind it. By construction the internal
 layout contributes zero spread; fabricated Arm B instances will still differ
-through device mismatch, top-level routing, supply, and temperature. So the
-honest pre-silicon claim is narrow. The matched arm removes the internal-layout term, and whether that gives a smaller total spread than Arm A is the
-measurement the chip exists to make, not something these simulations show.
+through device mismatch, top-level routing, supply, and temperature. The
+simulation establishes only the internal-layout contribution under nominal
+device parameters. Total Arm B dispersion requires per-instance integration
+parasitics and fabricated-device measurements, and whether Arm B ends up with
+a smaller total spread than Arm A is the measurement the chip exists to make.
 
 ![Figure 3. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
 
 ![Figure 4. Arm A of the coherent dual-arm build (10.5% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
-## 7. Security interpretation and planned silicon test
+## 7. Planned silicon test
 
-### 7.1 Parametric examples
+Why could a repeatable mask-defined pattern matter to a PUF at all? A layout
+component shared across dies can reduce uniqueness or make some comparisons
+predictable, but prior work also shows systematic structure is not
+automatically exploitable: Wilde, Hiller, and Pehl found adjacent-oscillator
+comparisons suppressed the spatial structure in their data and their
+predictor could not beat its baseline [4]. Which way this design falls is a
+question for fabricated dies, not for the nominal model. A toy population
+model and a first-order mismatch-scale estimate live in the repository's
+supplementary material (`sim/montecarlo.py`, `sim/spice/mc/`); their outputs
+depend on assumed amplitudes and a sqrt(31) scaling that the PDK's global
+mismatch draw does not really support, so no number from them appears here.
 
-The repository includes a simple virtual-population model in which each
-oscillator frequency is a shared layout term plus an independent mismatch
-term. Its behaviour is governed mainly by one dimensionless quantity, the
-ratio of the shared layout amplitude to the mismatch amplitude: as that ratio
-grows, the modelled inter-chip Hamming distance falls below the ideal and a
-position-based predictor beats its per-bit baseline. I use the model only to
-show that dependence. The specific percentages it produces are outputs of the
-assumed amplitudes, not measurements, so I keep them out of the results and
-leave the real ratio to silicon.
-
-### 7.2 Mismatch scale estimate
-
-A 40-run ngspice Monte Carlo exercise with the PDK's global mismatch draw
-gave a frequency standard deviation of 0.345%. Dividing by `sqrt(31)` gives
-0.062% as a first-order estimate of the per-ring contribution from 31
-similar stages, with a sampling-only interval of roughly 0.051% to 0.080%.
-The scaling assumes equal, independent stage sensitivities, which the NAND
-stage in particular violates, and 40 global draws are not independent local
-mismatch. On this estimate the archived Arm A layout spread is roughly
-twenty times the mismatch scale by standard deviation. I treat that ratio as
-an argument that the layout term is large enough to be worth measuring, not
-as a measured entropy figure. Because the sqrt(31) step rests on assumptions
-the PDK draw does not support, this estimate belongs in supplementary material,
-not the headline; silicon will measure the denominator directly.
-
-### 7.3 What silicon has to show
-
-The main question for silicon is whether Arm A retains more of its nominal
+The question for silicon is whether Arm A retains more of its nominal
 layout pattern across dies than Arm B. The threat model I have in mind is
 concrete: an attacker knows the public design and mask and holds measurements
 from other dies of the same design, but none from the target die, and asks
@@ -287,27 +294,32 @@ The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
 measurement-system effects are uncharacterized until chips exist, and
 uniqueness, reliability, min-entropy, and attack success all need a
-multi-chip data set with a stated threat model. The ripple counter is clocked by the oscillator itself, and its behaviour at
-the fastest corner is checked only in behavioural simulation; the standard-cell flop at the oscillator-to-counter boundary still needs extracted,
-across-corner timing before I trust the fast end of the range. None of this
-erases the observed nominal layout component; it bounds what can be concluded
-from it.
+multi-chip data set with a stated threat model. The ripple counter is
+clocked by the oscillator itself, and its behaviour at the fastest corner is
+checked only in behavioural simulation; the standard-cell flop at the
+oscillator-to-counter boundary still needs extracted, across-corner timing
+before the fast end of the range can be trusted. None of this erases the
+modelled dispersion; it bounds what can be concluded from it.
 
 ## 9. Conclusion
 
-Three automatically placed SKY130 RO arrays show a nominal post-layout
-frequency pattern that tracks extracted ring capacitance closely: 10.5% peak
-to peak with *r* = -0.999 in a coherent build of the current RTL, and 8.8%
-and 5.4% in two earlier builds. A hardened macro provides a 569.5 MHz
-shared-internal-layout reference for Arm B. The supported conclusion is that
-the automated physical implementation introduced a sizeable deterministic
-component in these routed designs, and that the mechanism, capacitive routing
-load, carries between builds while the pattern itself does not.
+Under a reduced lumped-capacitance model of the verified post-route
+topology, automated physical implementation gave the 16 oscillators of the
+coherent current build a 10.5% peak-to-peak nominal frequency dispersion
+(4.6% without the single heavy-routing outlier; SD 2.36% and 1.25%
+respectively). Two earlier uncontrolled builds showed 8.8% and 5.4% with
+different per-instance patterns, and a capacitance fit trained on one build
+predicts another's frequencies to 0.14% mean absolute error. A hardened
+macro provides a 569.5 MHz shared-internal-layout reference for Arm B. What
+this establishes is that the automated flow assigned substantially different
+routing capacitance to logically identical oscillators, and that under
+nominal device assumptions this predicts a frequency dispersion much larger
+than zero, with a mechanism that transfers across routing runs.
 
-The stronger claims stay open on purpose. Whether the pattern survives
-fabrication, dominates mismatch, reduces uniqueness, or supports a real
-attack will be settled by measuring both arms of the fabricated chip under
-the measurement protocol in the firmware.
+Uniqueness, reliability, min-entropy, and attack success are not evaluated
+pre-silicon. Whether the mask-defined pattern survives fabrication, and how
+it compares against real device mismatch, will be settled by measuring both
+arms of the fabricated chips under the protocol in the firmware.
 
 ## References
 

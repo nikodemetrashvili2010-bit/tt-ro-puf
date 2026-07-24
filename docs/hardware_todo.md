@@ -95,18 +95,18 @@ bound, or an overflow flag, is part of acceptance.
 ## 7. Distributed-RC validation
 
 The current deck lumps each ring net's total SPEF capacitance to ground and
-drops distributed resistance and coupling. Fine as a diagnostic, weaker than it
-sounds. Take the fastest, slowest, and a middle Arm A oscillator, plus the Arm B
-macro, and re-simulate with as much of the real distributed extraction as I can.
+drops distributed resistance and coupling. That is a usable diagnostic, but a
+reviewer will ask whether the result survives the real RC network. Take the
+fastest, slowest, and a middle Arm A oscillator, plus the Arm B macro, and re-simulate with as much of the real distributed extraction as I can.
 Then check whether the ordering, the spread, and the heavy-load outlier all
 survive. If the lumped and distributed results agree, the model earns a lot of
 credibility.
 
 ## 8. Arm B per-instance integration
 
-Arm B today is one macro, simulated once, drawn as a line. Honest about the
-internal geometry, silent about integration. The sixteen instances share the
-GDS, but each has its own enable route, output route, neighbours, and location,
+Arm B today is one macro, simulated once, drawn as a line. That covers the
+internal geometry and says nothing about integration. The sixteen instances
+share the GDS, but each has its own enable route, output route, neighbours, and location,
 and the top SPEF does carry per-instance `u_rob` nets even though it cannot see
 inside the macro. Plan: keep the one internal macro model for all sixteen,
 attach each instance's real external en and out parasitics from the top SPEF,

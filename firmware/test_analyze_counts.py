@@ -111,5 +111,39 @@ class AnalyzeCountsTests(unittest.TestCase):
         self.assertIn("error:", se.getvalue())
 
 
+class NewStatisticsTests(unittest.TestCase):
+    def test_centered_removes_offset(self):
+        v = [100.0, 110.0, 90.0]
+        c = analyzer.centered(v)
+        self.assertAlmostEqual(sum(c), 0.0)
+        # a chip 2x faster gives the same centered pattern
+        c2 = analyzer.centered([200.0, 220.0, 180.0])
+        for a, b in zip(c, c2):
+            self.assertAlmostEqual(a, b)
+
+    def test_loco_scores_shared_pattern(self):
+        pat = list(range(16))
+        vectors = {"c1": [500 + 3 * x for x in pat],
+                   "c2": [520 + 3 * x + 0.1 for x in pat],
+                   "c3": [480 + 3 * x - 0.1 for x in pat]}
+        scores = analyzer.loco_scores(vectors)
+        self.assertEqual(set(scores), {"c1", "c2", "c3"})
+        for s in scores.values():
+            self.assertGreater(s, 0.99)
+
+    def test_paired_delta_ci_positive_when_a_repeats(self):
+        a = {"c1": 0.9, "c2": 0.95, "c3": 0.92, "c4": 0.88}
+        b = {"c1": 0.1, "c2": -0.05, "c3": 0.02, "c4": 0.15}
+        d, lo, hi, n = analyzer.paired_delta_ci(a, b)
+        self.assertEqual(n, 4)
+        self.assertGreater(d, 0.7)
+        self.assertGreater(lo, 0.0)
+
+    def test_holdout_ber_needs_enough_rounds(self):
+        g = {"by_round": {("r", 0): {}, ("r", 1): {}}, "raw": {}}
+        ber, fragile, nb = analyzer.bit_reliability(g, 0, analyzer.LOGICAL_PAIRS)
+        self.assertIsNone(ber)
+
+
 if __name__ == "__main__":
     unittest.main()

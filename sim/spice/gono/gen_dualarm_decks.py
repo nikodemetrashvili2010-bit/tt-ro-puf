@@ -20,7 +20,10 @@ injects an edge and favors the intended oscillation mode. (A naive
 "tie enable high + .ic kick" start lets uneven loading excite spurious higher-
 order modes that read as impossibly high frequencies, so we avoid it.)
 
-Model: only ONE oscillator runs at a time. Each SPEF *D_NET total is represented
+Model: the deck instantiates all 16 reconstructed oscillators and enables
+them together. They are uncoupled here (ideal shared supply, no coupling
+elements carried over), so this matches the one-at-a-time hardware protocol
+under this reduced model. Each SPEF *D_NET total is represented
 by one capacitor to ground. Distributed resistance, explicit coupling topology,
 PVT variation, mismatch, and noise are outside this experiment. This is a
 pre-silicon nominal prediction, not a measurement of fabricated silicon.
