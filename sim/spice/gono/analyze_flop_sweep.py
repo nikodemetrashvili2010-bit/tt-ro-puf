@@ -22,10 +22,17 @@ import glob
 import os
 import sys
 
+# Set with --vdd so the rail and forbidden-band checks match the corner supply.
 VDD = 1.8
 TH = VDD / 2.0
 LO = 0.2 * VDD          # forbidden band low edge
 HI = 0.8 * VDD          # forbidden band high edge
+
+
+def set_vdd(v):
+    """Rescale the logic thresholds for a non-nominal supply."""
+    global VDD, TH, LO, HI
+    VDD, TH, LO, HI = v, v / 2.0, 0.2 * v, 0.8 * v
 
 
 def load(path):
@@ -77,7 +84,10 @@ def main(argv=None):
     ap.add_argument("sweep_dir")
     ap.add_argument("--tail-ns", type=float, default=2.0,
                     help="window at the end of the run to test for a settled rail")
+    ap.add_argument("--vdd", type=float, default=1.8,
+                    help="supply of the swept corner (1.6 for ss, 1.95 for ff)")
     args = ap.parse_args(argv)
+    set_vdd(args.vdd)
 
     files = sorted(glob.glob(os.path.join(args.sweep_dir, "flop_*.raw.txt")))
     if not files:
@@ -102,15 +112,33 @@ def main(argv=None):
                  100 * frac_band, "settled" if settled else "NOT-SETTLED"))
 
     print()
-    spread = (max(counts) - min(counts)) if counts else 99
-    if counts:
-        print("counted toggles across phases: min %d, max %d, spread %d"
-              % (min(counts), max(counts), spread))
-    if unsettled == 0 and counts and spread <= 1:
-        print("PASS: every enable-fall phase settled to a clean rail; "
-              "captured count varies by at most one edge")
+    if not counts:
+        print("FAIL: no usable phases")
+        return 1
+
+    # The sweep deliberately spans slightly more than one ring period, and the
+    # period shrinks at the fast corner, so the total count spread is not the
+    # right test: crossing a whole period legitimately adds one more edge. What
+    # must hold is that stepping the enable fall later never adds two edges at
+    # once and never loses one. That is the claim the counter depends on.
+    steps = [b - a for a, b in zip(counts, counts[1:])]
+    bad = [(i, d) for i, d in enumerate(steps) if d < 0 or d > 1]
+    print("counted toggles across phases: min %d, max %d, spread %d"
+          % (min(counts), max(counts), max(counts) - min(counts)))
+    print("per-step changes: %s"
+          % ", ".join("%+d" % d for d in sorted(set(steps))) if steps else "n/a")
+    print("monotonic in unit steps: %s" % ("yes" if not bad else "NO"))
+
+    if unsettled == 0 and not bad:
+        print("PASS: every enable-fall phase settled to a clean rail, and the "
+              "captured count only ever steps up by one as the fall moves later")
         return 0
-    print("FAIL: %d unsettled phase(s); count spread %d" % (unsettled, spread))
+    if bad:
+        print("FAIL: %d phase transition(s) changed the count by more than one "
+              "edge or went backwards: %s"
+              % (len(bad), ", ".join("phase %d->%d: %+d" % (i, i + 1, d) for i, d in bad[:6])))
+    if unsettled:
+        print("FAIL: %d phase(s) did not settle to a rail" % unsettled)
     return 1
 
 

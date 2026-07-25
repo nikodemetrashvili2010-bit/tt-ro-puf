@@ -33,9 +33,19 @@ Run (WSL, after the usual PDK_ROOT/PDK exports):
 
 import argparse
 import os
+import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "ro_macro_matched.spice")
+
+# Same PVT corners as gen_dualarm_decks.py. The fast corner matters most here: the
+# ring runs near 888 MHz there against 570 at nominal, so the boundary pulse the
+# first counter flop has to resolve is proportionally shorter.
+CORNERS = {
+    "tt": dict(section="tt", temp=27,  supply=1.80),
+    "ss": dict(section="ss", temp=100, supply=1.60),
+    "ff": dict(section="ff", temp=-40, supply=1.95),
+}
 
 T_BASE_NS = 30.0     # earliest enable-fall time
 STEP_PS = 50         # fine phase step, to resolve the short-pulse window
@@ -53,15 +63,22 @@ FLOP = [
 ]
 
 
-def build(k, template):
+def build(k, template, cn):
     t_fall_ns = T_BASE_NS + k * STEP_PS * 1e-3
     t_end_ns = T_BASE_NS + (N_STEPS - 1) * STEP_PS * 1e-3 + T_TAIL_NS
+    v = cn["supply"]
     out = []
     for line in template.splitlines():
-        if line.startswith("Ven "):
-            out.append("Ven EN 0 PULSE(0 1.8 2n 50p 50p %.4fn 1)" % (t_fall_ns - 2.0))
+        if line.startswith(".lib "):
+            out.append(re.sub(r'(\.lib\s+\S+)\s+\w+$', r'\1 ' + cn["section"], line))
+            if cn["temp"] != 27:
+                out.append(".temp %g" % cn["temp"])
+        elif line.startswith(".param SUPPLY"):
+            out.append(".param SUPPLY=%g" % v)
+        elif line.startswith("Ven "):
+            out.append("Ven EN 0 PULSE(0 %g 2n 50p 50p %.4fn 1)" % (v, t_fall_ns - 2.0))
         elif line.startswith(".save") or line.startswith(".tran ") or line.startswith(".control"):
-            out += FLOP
+            out += [l.replace("PULSE(0 1.8", "PULSE(0 %g" % v) for l in FLOP]
             out.append(".save v(q) v(b_out)")
             out.append(".tran 1p %.1fn" % t_end_ns)
             out.append(".control")
@@ -80,12 +97,16 @@ def build(k, template):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--output-dir", default="/tmp/flopsweep")
+    ap.add_argument("--corner", default="tt", choices=sorted(CORNERS),
+                    help="PVT corner (default tt). ff is the demanding one.")
     args = ap.parse_args()
+    cn = CORNERS[args.corner]
     template = open(TEMPLATE, encoding="utf-8").read()
     os.makedirs(args.output_dir, exist_ok=True)
     for k in range(N_STEPS):
         path = os.path.join(args.output_dir, "flop_%02d.spice" % k)
-        open(path, "w", newline="\n").write(build(k, template))
+        open(path, "w", newline="\n").write(build(k, template, cn))
+    print("corner %s: %g C, %g V" % (args.corner, cn["temp"], cn["supply"]))
     print("wrote %d decks to %s (EN falls %.1f ns .. %.1f ns in %d ps steps)"
           % (N_STEPS, args.output_dir, T_BASE_NS,
              T_BASE_NS + (N_STEPS - 1) * STEP_PS * 1e-3, STEP_PS))

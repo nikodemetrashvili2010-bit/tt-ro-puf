@@ -111,10 +111,19 @@ community-submitted CSVs stay interpretable.
 
 ## Protocol notes
 
-- The counter is 16 bit; the window is fixed at 1000 reference-clock cycles. At
-  25 MHz the overflow ceiling is about 1.6 GHz. Confirm the fastest process
-  corner cannot overflow before trusting a run; a silent 16-bit wrap returns a
-  plausible-looking lower count, not an error.
+- The counter is 16 bit and the window is fixed at 1000 reference-clock cycles, so
+  at 25 MHz the window lasts 40 us and the count wraps above 1638 MHz. That has
+  now been checked against corners rather than assumed: the fast corner (ff,
+  -40 C, 1.95 V) puts the oscillators at 840 to 888 MHz, giving a worst-case count
+  of 35532 out of 65535, so 1.84x headroom. A silent wrap would return a
+  plausible-looking lower count rather than an error, so the margin matters.
+- Two limits follow from that, and both bite if you change the clock. The lowest
+  safe reference clock at the fast corner is 13.55 MHz, below which the window
+  gets long enough to wrap. The longest safe window at 25 MHz is 1844 cycles. Stay
+  inside both or add an overflow flag first.
+- Expect roughly 276 to 888 MHz across corners, a 3.2x range, so a count near
+  11000 at a hot low-voltage board and near 35000 at a cold high-voltage one are
+  both normal. Every oscillator still starts at 1.6 V and 100 C in simulation.
 - A count of `-1` is a timeout marker; the analyzer skips it and reports the
   count. The script also flags counts near the ceiling and zero counts.
 - The script fails hard if the exact project `tt_um_nikodemetrashvili20_ro_puf`
