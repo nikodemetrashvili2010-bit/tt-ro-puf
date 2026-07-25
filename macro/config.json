@@ -1,4 +1,6 @@
 {
+  "//": "Standalone hardening config for ro_macro_hard, the Arm B oscillator. FP_PDN_MULTILAYER must be false: the core is only 16.32 um tall so met5 straps do not fit (PDN-0185), and met5 is forbidden in the TinyTapeout user area. The shipped macro has met4-only power pins centred at x=21.84 (VPWR) and 25.14 (VGND); the top-level PDN alignment depends on those, so PDN offsets and widths stay at their defaults.",
+  "//2": "Port buffering is deliberately left at the flow defaults, which insert a clkdlybuf4s25_1 on en and on out. Turning both off was tried and rejected on 2026-07-25; see docs/hardware_todo.md item 3. With them off, the resizer instead swapped the ring tap buffer from buf_1 to clkbuf_1 and added a clkbuf_4 on the output. The tap buffer's input capacitance loads ring node n[15], which is inside the oscillator loop, so changing that cell shifts the frequency and breaks comparability with Arm A, whose tap is a buf_1. The en-side buffer is harmless by comparison because en is static during a measurement window. Keeping the defaults keeps buf_1 on the loop in both arms.",
   "DESIGN_NAME": "ro_macro_hard",
   "VERILOG_FILES": ["dir::ro_macro_hard.v", "dir::ro_macro.v"],
   "DESIGN_IS_CORE": false,
@@ -9,7 +11,7 @@
   "FP_SIZING": "absolute",
   "DIE_AREA": [0, 0, 60, 40],
   "PL_TARGET_DENSITY_PCT": 45,
-  "FP_PDN_MULTILAYER": true,
+  "FP_PDN_MULTILAYER": false,
   "MAGIC_WRITE_LEF_PINONLY": true,
   "MAGIC_DEF_LABELS": false,
   "GRT_ALLOW_CONGESTION": true

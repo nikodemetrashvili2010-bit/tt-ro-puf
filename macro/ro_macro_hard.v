@@ -16,6 +16,15 @@
 // Arm B external interfaces are not identical. The go/no-go compares the
 // internal-layout term, not a perfectly matched boundary.
 //
+// Those boundary buffers are kept on purpose. Building the macro without them
+// makes the resizer swap the ring tap buffer from buf_1 to clkbuf_1, and the tap
+// loads n[15] inside the oscillator loop, so that swap shifts the frequency and
+// stops matching Arm A, whose tap is a buf_1. Both boundary buffers sit outside
+// the loop and cannot affect the frequency; the enable buffer is doubly harmless
+// because en is static while a window is open. Full reasoning, and the measured
+// output-load gap that makes the output buffer necessary, are in
+// docs/hardware_todo.md item 3.
+//
 // This module is part of the integrated dual-arm design: src/tt_um_ro_puf.v
 // instantiates 16 copies as u_rob0..u_rob15.
 

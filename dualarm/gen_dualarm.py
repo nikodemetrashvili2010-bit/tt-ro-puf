@@ -20,9 +20,25 @@
 #   centerline = core_x0 + FP_PDN_VOFFSET; VGND follows at +3.3 with the
 #   VWIDTH/VSPACING of 2.4/0.9, matching the macro's 3.3 um pin pitch.)
 #   After floorplan, verify core_x0: grep "ROW ROW_0" in the DEF -> x=2760.
-import json, os
+import argparse, json, math, os
 HERE = os.path.dirname(os.path.abspath(__file__))
-N, COLS = 16, 4
+N = 16
+
+# Column x positions. The default four abut into one block on the left of the
+# tile, which is what the signed-off build uses. Any column list works as long as
+# every entry sits on the 60 um PDN grid (see the POWER note above), because one
+# FP_PDN_VOFFSET has to serve every column at once.
+#
+# The interleaved variant skips the middle grid column so a 60 um standard-cell
+# channel runs down the centre of the macro field. That matters because in the
+# default floorplan the macros tile x=3.22..243.22 and every Arm A oscillator
+# ends up crammed into the remaining strip on the right, inside a box about
+# 44 x 78 um. Arm A therefore samples one small region of the die while Arm B
+# samples nearly all of it, which confounds a hypothesis about spatial pattern,
+# and it is also why Arm A output nets carry about 0.84 fF against Arm B\'s
+# 14.46 fF. See docs/hardware_todo.md items 3 and 4.
+COLUMNS_ABUTTED = [3.22, 63.22, 123.22, 183.22]
+COLUMNS_INTERLEAVED = [3.22, 63.22, 183.22, 243.22]
 # Columns ABUT (pitch 60 = macro width) - proven by array run pdnfix4
 # (full DRC/LVS/antenna/PSM pass): no row slivers between columns, so no
 # untappable well fragments. 8um horizontal bands between macro rows hold
@@ -31,12 +47,61 @@ PITCH_X, PITCH_Y = 60, 48
 CORE_X0 = 6 * 0.46          # LEFT_MARGIN_MULT 6 (TT green config)
 X0, Y0 = round(CORE_X0 + 0.46, 2), 20   # one site in from core edge
 PIN_VPWR_X = 21.84          # VPWR centerline inside the macro (from LEF)
+MACRO_W, MACRO_H = 60, 40   # ro_macro_hard.lef SIZE
+CORE_X1, CORE_Y1 = 332.12, 223.04   # core far edge (die 334.88 x 225.76)
 
-insts = {}
-for i in range(N):
-    c, r = i % COLS, i // COLS
-    insts[f"u_rob{i}"] = {"location": [X0 + c * PITCH_X, Y0 + r * PITCH_Y],
-                          "orientation": "N"}
+def build_instances(columns):
+    """One instance per macro, filling columns left to right, row by row."""
+    insts = {}
+    for i in range(N):
+        c, r = i % len(columns), i // len(columns)
+        insts[f"u_rob{i}"] = {"location": [columns[c], Y0 + r * PITCH_Y],
+                              "orientation": "N"}
+    return insts
+
+
+def check_columns(columns):
+    """Refuse a layout the power grid cannot serve, or one that leaves the die."""
+    for x in columns:
+        k = (x - X0) / PITCH_X
+        if abs(k - round(k)) > 1e-9:
+            raise SystemExit(
+                f"column x={x} is off the {PITCH_X} um PDN grid; the met4 stripe "
+                f"would miss the macro power pins (x must be {X0} + {PITCH_X}k)")
+    right = max(columns) + MACRO_W
+    if right > CORE_X1:
+        raise SystemExit(f"rightmost macro ends at {right}, past the core edge {CORE_X1}")
+    rows = math.ceil(N / len(columns))
+    top = Y0 + (rows - 1) * PITCH_Y + MACRO_H
+    if top > CORE_Y1:
+        raise SystemExit(f"top macro row ends at {top}, past the core edge {CORE_Y1}")
+
+
+ap = argparse.ArgumentParser(description=__doc__)
+ap.add_argument("--interleaved", action="store_true",
+                help="skip the middle PDN column so a standard-cell channel runs "
+                     "through the macro field (see COLUMNS_INTERLEAVED)")
+ap.add_argument("--columns", help="explicit comma-separated column x positions")
+ap.add_argument("--out", help="output path (default: src/config.json)")
+ap.add_argument("--pitch-y", type=float, default=PITCH_Y,
+                help="macro row pitch (default %(default)s). The gap between rows "
+                     "is pitch minus the 40 um macro height, and 2 um of that is "
+                     "halo at each side, so pitch 48 leaves a single 2.72 um "
+                     "standard-cell row per band. That single row is a trap: with "
+                     "the interleaved columns the placer strung one whole "
+                     "oscillator along it, 125.6 x 2.7 um, tripling that ring's "
+                     "routing load. Pitch 52 gives two rows per band instead.")
+args = ap.parse_args()
+PITCH_Y = args.pitch_y
+
+if args.columns:
+    columns = [float(v) for v in args.columns.split(",")]
+elif args.interleaved:
+    columns = list(COLUMNS_INTERLEAVED)
+else:
+    columns = list(COLUMNS_ABUTTED)
+check_columns(columns)
+insts = build_instances(columns)
 
 config = {
     "//": "TinyTapeout green config + Arm B macro block. Comments: gen_dualarm.py",
@@ -85,10 +150,13 @@ config = {
     "FP_PDN_VWIDTH": 2.4,
     "FP_PDN_VSPACING": 0.9,
     "FP_PDN_VPITCH": PITCH_X,
-    "FP_PDN_VOFFSET": round(X0 + PIN_VPWR_X - CORE_X0, 2),
+    "FP_PDN_VOFFSET": round(min(columns) + PIN_VPWR_X - CORE_X0, 2),
 }
-open(os.path.join(HERE, "src", "config.json"), "w").write(json.dumps(config, indent=2))
-right_edge = X0 + (COLS - 1) * PITCH_X + 60
+out_path = args.out or os.path.join(HERE, "src", "config.json")
+open(out_path, "w", newline="\n").write(json.dumps(config, indent=2))
+right_edge = max(columns) + MACRO_W
+print(f"columns={columns}")
+print(f"wrote {out_path}")
 print(f"macros={len(insts)} Vpitch={config['FP_PDN_VPITCH']} "
       f"Voffset={config['FP_PDN_VOFFSET']} macro_right_edge={right_edge} "
       f"(die 334.88 x 225.76, core x 2.76..332.12 y 2.72..223.04)")

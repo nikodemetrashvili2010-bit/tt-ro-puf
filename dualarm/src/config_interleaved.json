@@ -1,0 +1,180 @@
+{
+  "//": "TinyTapeout green config + Arm B macro block. Comments: gen_dualarm.py",
+  "PL_TARGET_DENSITY_PCT": 60,
+  "CLOCK_PERIOD": 20,
+  "PL_RESIZER_HOLD_SLACK_MARGIN": 0.1,
+  "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.05,
+  "RUN_LINTER": 1,
+  "LINTER_INCLUDE_PDK_MODELS": 1,
+  "CLOCK_PORT": "clk",
+  "RUN_KLAYOUT_XOR": 1,
+  "RUN_KLAYOUT_DRC": 1,
+  "DESIGN_REPAIR_BUFFER_OUTPUT_PORTS": 0,
+  "TOP_MARGIN_MULT": 1,
+  "BOTTOM_MARGIN_MULT": 1,
+  "LEFT_MARGIN_MULT": 6,
+  "RIGHT_MARGIN_MULT": 6,
+  "FP_SIZING": "absolute",
+  "GRT_ALLOW_CONGESTION": 1,
+  "FP_IO_HLENGTH": 2,
+  "FP_IO_VLENGTH": 2,
+  "RUN_CTS": 1,
+  "FP_PDN_MULTILAYER": 0,
+  "MAGIC_DEF_LABELS": 0,
+  "FP_MACRO_HORIZONTAL_HALO": 2,
+  "FP_MACRO_VERTICAL_HALO": 2,
+  "MAGIC_WRITE_LEF_PINONLY": 1,
+  "VERILOG_FILES_BLACKBOX": [
+    "dir::ro_macro_hard_bb.v"
+  ],
+  "MACROS": {
+    "ro_macro_hard": {
+      "gds": [
+        "dir::ro_macro_hard.gds"
+      ],
+      "lef": [
+        "dir::ro_macro_hard.lef"
+      ],
+      "nl": [
+        "dir::ro_macro_hard.nl.v"
+      ],
+      "instances": {
+        "u_rob0": {
+          "location": [
+            3.22,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob1": {
+          "location": [
+            63.22,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob2": {
+          "location": [
+            183.22,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob3": {
+          "location": [
+            243.22,
+            20
+          ],
+          "orientation": "N"
+        },
+        "u_rob4": {
+          "location": [
+            3.22,
+            68
+          ],
+          "orientation": "N"
+        },
+        "u_rob5": {
+          "location": [
+            63.22,
+            68
+          ],
+          "orientation": "N"
+        },
+        "u_rob6": {
+          "location": [
+            183.22,
+            68
+          ],
+          "orientation": "N"
+        },
+        "u_rob7": {
+          "location": [
+            243.22,
+            68
+          ],
+          "orientation": "N"
+        },
+        "u_rob8": {
+          "location": [
+            3.22,
+            116
+          ],
+          "orientation": "N"
+        },
+        "u_rob9": {
+          "location": [
+            63.22,
+            116
+          ],
+          "orientation": "N"
+        },
+        "u_rob10": {
+          "location": [
+            183.22,
+            116
+          ],
+          "orientation": "N"
+        },
+        "u_rob11": {
+          "location": [
+            243.22,
+            116
+          ],
+          "orientation": "N"
+        },
+        "u_rob12": {
+          "location": [
+            3.22,
+            164
+          ],
+          "orientation": "N"
+        },
+        "u_rob13": {
+          "location": [
+            63.22,
+            164
+          ],
+          "orientation": "N"
+        },
+        "u_rob14": {
+          "location": [
+            183.22,
+            164
+          ],
+          "orientation": "N"
+        },
+        "u_rob15": {
+          "location": [
+            243.22,
+            164
+          ],
+          "orientation": "N"
+        }
+      }
+    }
+  },
+  "PDN_MACRO_CONNECTIONS": [
+    "u_rob0 VPWR VGND VPWR VGND",
+    "u_rob1 VPWR VGND VPWR VGND",
+    "u_rob2 VPWR VGND VPWR VGND",
+    "u_rob3 VPWR VGND VPWR VGND",
+    "u_rob4 VPWR VGND VPWR VGND",
+    "u_rob5 VPWR VGND VPWR VGND",
+    "u_rob6 VPWR VGND VPWR VGND",
+    "u_rob7 VPWR VGND VPWR VGND",
+    "u_rob8 VPWR VGND VPWR VGND",
+    "u_rob9 VPWR VGND VPWR VGND",
+    "u_rob10 VPWR VGND VPWR VGND",
+    "u_rob11 VPWR VGND VPWR VGND",
+    "u_rob12 VPWR VGND VPWR VGND",
+    "u_rob13 VPWR VGND VPWR VGND",
+    "u_rob14 VPWR VGND VPWR VGND",
+    "u_rob15 VPWR VGND VPWR VGND"
+  ],
+  "PDN_CFG": "dir::pdn_cfg.tcl",
+  "FP_PDN_VWIDTH": 2.4,
+  "FP_PDN_VSPACING": 0.9,
+  "FP_PDN_VPITCH": 60,
+  "FP_PDN_VOFFSET": 22.3
+}
