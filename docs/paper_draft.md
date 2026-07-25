@@ -2,7 +2,7 @@
 
 **Nikoloz Demetrashvili** · Student researcher · Georgia
 
-Draft, 2026-07-23
+Draft, 2026-07-24
 
 ---
 
@@ -19,19 +19,23 @@ topology, loaded with each ring net's total extracted capacitance from the
 final SPEF. No fabricated devices have been measured yet, and distributed
 resistance and coupling are not represented.
 
-Under this model, the 16 automatically placed oscillators of Arm A in a
-coherent build of the current RTL spread 10.5% peak to peak (population SD
-2.36%, mean 551.7 MHz). One oscillator with an unusually heavy routing load
-(24.4 fF against a 11.7 to 17.0 fF range for the rest) contributes much of the
-extreme range: without it the peak-to-peak figure is 4.6% and the SD 1.25%,
-while the capacitance-frequency relation is essentially unchanged. Two earlier
-uncontrolled builds showed dispersions of 8.8% and 5.4% with different
-per-instance patterns; they are supporting historical observations, not
-controlled replicates. A linear capacitance fit trained on the earlier
-32-oscillator build predicts the current build's 16 frequencies with a mean
-absolute error of 0.14% and rank correlation 0.997, so the capacitive
-mechanism transfers across builds even though each pattern is unique to its
-routing run.
+Under this model, the 16 automatically placed oscillators of Arm A in the
+candidate build spread 5.53% peak to peak (population SD 1.65%, mean
+554.7 MHz), with extracted ring capacitance running from 10.9 to 17.0 fF.
+Because a single build only shows one draw of the router, I repeated the whole
+flow nine times over a narrow band of placement density with the source,
+floorplan, constraints, tool, and PDK frozen. Dispersion across those nine
+builds has a median of 5.75% and a range of 4.19% to 6.99%. What does not move
+is the mechanism: every build gives a frequency-capacitance correlation of
+about -0.999, and the fitted slope of -4.94 MHz/fF in the candidate build
+matches the -4.93 MHz/fF obtained earlier from an independent 32-oscillator
+layout. That earlier fit also predicts this build's 16 individual frequencies
+to a mean absolute error near 0.1%. An older build reported 10.5%, well above
+the sweep, and it owed most of that range to one oscillator the router had
+loaded with 24.4 fF; no oscillator in the candidate build is loaded that way. So
+a peak-to-peak number describes the build it came from, and I report the nine
+builds together for that reason.
+
 The comparison arm, Arm B, uses one hardened oscillator macro sixteen times.
 A single extraction of that macro gives a 569.5 MHz reference for the shared
 internal layout, which removes internal-layout variation by construction but
@@ -109,6 +113,29 @@ logical circuit is identical in both arms; the physical implementation
 method is the experimental variable. Figure 1 summarizes the design.
 
 ![Figure 1. Block diagram of the two-arm design. Arm A lets the flow place and route each oscillator separately; Arm B repeats one hardened macro with a common internal layout.](figures/chip_block.png)
+
+How the measurement window is closed turned out to matter more than I first
+assumed. An earlier revision clocked the ripple counter through an AND gate
+that combined the selected oscillator with the window enable. That enable is
+generated in the reference-clock domain and can fall at any point in a 570 MHz
+cycle, so the gate could cut the final pulse on the counter's clock net down to
+a sliver, which is the classic way to put a flip-flop into an illegal state.
+The current design removes the gate. The counter is clocked straight from the
+selected ring, and the window is enforced by enabling and disabling the ring
+itself through its own NAND stage.
+
+That change moves the boundary problem rather than removing it. Whenever the
+enable drops, the last pulse the ring produces can be almost any width depending
+on the phase, and a sweep of the extracted oscillator shows this directly: at
+some phases the final pulse falls to about 175 ps against a nominal half-period
+of 846 ps. The question is whether the counter minds. To find out I drove a real
+SKY130 `dfrtp` flip-flop, wired as the first ripple stage, from the extracted
+ring and dropped the enable at 38 phases covering a full period. At every phase
+the flop settled to a clean rail, never sat near mid-supply, and the captured
+total varied by exactly one count between phases. The ring stop therefore costs
+at most one edge in roughly twenty thousand, which the core's settle handshake
+absorbs by publishing a count only after three consecutive equal reads. Decks
+and checkers are in `sim/spice/gono/`.
 
 One caveat matters for interpretation: the two arms are not identical apart
 from internal-layout matching. Hardening inserts input and output delay
@@ -188,34 +215,67 @@ instance-specific routing load, not a smooth die-wide gradient.
 
 ### 5.2 Coherent dual-arm build
 
-Arm A of the coherent dual-arm build contains 16 automatically placed
-oscillators. Their nominal post-layout frequencies have a mean of 551.7 MHz
-and a 58.0 MHz peak-to-peak range, 10.5% of the mean, with *r* = -0.999
-against extracted ring capacitance (Figure 4). RO15 carries an unusually
-heavy routing load, 24.35 fF where the other fifteen span 11.7 to 16.95 fF,
-and sits at 508.5 MHz. Because peak-to-peak is outlier-sensitive, a
-leave-one-out check matters: without RO15 the spread is 4.60% peak to peak
-and the SD 1.25%, while the capacitance-frequency relation barely moves
-(*r* = -0.9987, rank correlation -0.996). The outlier is a real product of
-the router, not a measurement fault, so it stays in the primary result; the
-sensitivity numbers show exactly how much of the extreme range it carries
-(`sensitivity.py` recomputes all of this from the raw logs). This build
-passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with zero
-violations, so the dispersion estimate and the candidate GDS come from the
-same run.
+Arm A of the candidate build contains 16 automatically placed oscillators.
+Their nominal post-layout frequencies average 554.7 MHz and span 30.7 MHz from
+end to end, which is 5.53% of the mean, with a population SD of 9.15 MHz
+(1.65%). The slowest ring is RO14 at 540.0 MHz carrying 17.0 fF; the fastest is
+RO7 at 570.7 MHz carrying 10.9 fF. Correlation against extracted ring
+capacitance is -0.9997 and the fitted slope is -4.94 MHz/fF (Figure 4). The
+loads in this build form a fairly smooth band rather than a distribution with a
+straggler: the two heaviest rings differ by 0.34 fF, so no single instance
+dominates the range, and dropping any one oscillator leaves the spread between
+4.7% and 5.5%. The build passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and
+power grid with zero violations, and the netlist verifier confirms all 16 rings
+survived place and route with no cell inserted into a loop, so the dispersion
+estimate and the candidate GDS come from the same signed-off run.
 
-The three builds do not share a frequency pattern or a spread: 10.5% here,
-5.4% in an earlier archived dual-arm snapshot, 8.8% in the 32-oscillator
-build. These are historical observations consistent with run-specific routing
-assignments; they are not controlled replicates, since the builds differ in
-source revision and settings as well as seed. The planned multi-seed study
-addresses that properly. A stronger cross-build check than comparing spread
-numbers is per-instance prediction: a linear capacitance fit trained only on
-the 32-oscillator build (624.6 MHz - 4.93 MHz/fF) predicts this build's 16
-frequencies with MAE 0.77 MHz (0.14% of the mean), RMSE 1.18 MHz, and rank
-correlation 0.997, with the largest error on the outlier RO15 (-0.80%). The
-capacitive mechanism transfers between independent routing runs even though
-each pattern is unique.
+An earlier build of this design reported 10.5%. That number came from a layout
+in which the router gave one oscillator 24.35 fF while the other fifteen sat
+between 11.7 and 16.95 fF, and that single instance carried most of the extreme
+range; without it the same build measured 4.60%. Nothing was wrong with the
+build, and the heavy instance was a real routing outcome rather than a
+measurement fault, but a peak-to-peak statistic computed over sixteen instances
+is sensitive to exactly that kind of draw. The sweep in Section 5.3 is what
+settles how typical it was.
+
+Putting two builds' spread figures side by side is a fairly weak comparison. A
+better one is whether a fit from one build predicts the individual oscillators
+of another. A linear capacitance fit trained only on the 32-oscillator build
+(624.6 MHz - 4.93 MHz/fF) predicts the frequencies of later builds to roughly
+0.1% mean absolute error with rank correlation near 0.997, and the candidate
+build's own fitted slope, -4.94 MHz/fF, sits within a fraction of a percent of
+that independently trained value. Each layout gets its own pattern of loads. The
+relationship converting those loads into frequencies is the same one every time.
+
+### 5.3 Dispersion across nine builds
+
+A peak-to-peak figure from one layout says little about what the flow does in
+general. LibreLane 3.0.3 does not expose the
+place-and-route seed, so a strict seed-only replicate set was not available.
+Instead I varied one neutral placement knob, the target placement density, in
+1% steps from 56% to 64%, and froze everything else: the RTL, the macro
+locations, the floorplan, the constraints, the tool version, and the PDK. All
+nine builds hardened, and all nine kept every ring intact. Read the result as a
+placement-sensitivity band rather than a seed distribution.
+
+Dispersion across the nine builds has a median of 5.75%, a range of 4.19% to
+6.99%, and a standard deviation of 0.80% (Figure 5). The candidate build sits at
+5.53%, close to the middle. Density itself explains little of the variation
+(*r* = 0.32), which is what I expected: the knob is a way to perturb placement,
+not a physical cause. Ring capacitance spread and frequency spread move
+together across the whole set, from 4.7 fF and 4.19% at the tightest build to
+7.8 fF and 6.99% at the widest.
+
+Two details make the band trustworthy. The build at 60% density reproduces the
+shipped configuration exactly and returned 5.53%, matching the candidate build
+to the digit, and running the entire sweep a second time reproduced all nine
+values without change. The flow is deterministic, so the band measures genuine
+placement sensitivity rather than run-to-run noise. Against that band the older
+10.5% build looks like a wide draw rather than a typical outcome. If I had run
+this sweep before writing up that build, I would not have quoted its number on
+its own.
+
+![Figure 5. Nominal Arm A dispersion for nine builds that differ only in target placement density. The dashed line is the median, and the highlighted point is the shipped configuration.](../dualarm/placement_sweep/placement_sweep.png)
 
 ## 6. Matched-macro arm
 
@@ -230,6 +290,16 @@ at that load, 0.12% away, a useful cross-check on the model. The macro
 result also lands within 0.35% of the earlier Arm A mean, so matching did
 not move the operating point.
 
+The macro is faster than the typical routed ring, 569.5 MHz against an Arm A
+mean of 554.7 MHz, which is what the lighter load predicts. It is not faster
+than every Arm A ring. RO7 in the candidate build reaches 570.7 MHz because the
+router happened to give it 10.9 fF, slightly less than the macro carries. The
+gap is about 0.2%, below what this lumped-capacitance model resolves, and the
+macro also pays for the boundary buffers that hardening inserted and Arm A does
+not have. So the defensible statement is that matching the internal layout put
+the macro ahead of the average automatically routed oscillator, not ahead of
+all of them.
+
 Figures 3 and 4 draw Arm B as a single horizontal reference line at
 569.5 MHz, because the sixteen instances share one internal layout and there
 is only one extracted simulation behind it. By construction the internal
@@ -242,7 +312,7 @@ a smaller total spread than Arm A is the measurement the chip exists to make.
 
 ![Figure 3. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
 
-![Figure 4. Arm A of the coherent dual-arm build (10.5% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
+![Figure 4. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
 ## 7. Planned silicon test
 
@@ -281,40 +351,45 @@ This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. Lumped capacitance omits
 distributed RC and dynamic coupling; a distributed-RC extraction would test
 whether the frequency ordering and the spread survive a fuller electrical
-model, and running it on the fresh build is the obvious next check. The three
-builds reported here are not a controlled replicate set; they differ in source
-revision and tool settings as well as seed, so I do not aggregate their spreads
-into one distribution. A planned multi-seed study that varies only the
-place-and-route seed from one frozen source, config, and toolchain will give a
-proper spread distribution at essentially no cost next to fabrication. Instances
-within a single layout are also related observations, so instance-level
-confidence intervals would overstate the evidence. The Arm B reference is
+model, and running it on the candidate build is the obvious next check. The
+nine-build sweep is a controlled set in the sense that only one flow knob
+changed, but that knob is placement density and not the place-and-route seed,
+which LibreLane 3.0.3 does not expose. A seed sweep would be the cleaner
+experiment, and the band reported here should be read as placement sensitivity
+measured one particular way. Builds from earlier revisions are not part of that
+set and their spreads are not pooled with it. Instances within a single layout
+are also related observations, so instance-level confidence intervals would
+overstate the evidence. The Arm B reference is
 one simulation of one macro and cannot quantify fabricated Arm B variation.
 The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
 measurement-system effects are uncharacterized until chips exist, and
 uniqueness, reliability, min-entropy, and attack success all need a
-multi-chip data set with a stated threat model. The ripple counter is
-clocked by the oscillator itself, and its behaviour at the fastest corner is
-checked only in behavioural simulation; the standard-cell flop at the
-oscillator-to-counter boundary still needs extracted, across-corner timing
-before the fast end of the range can be trusted. None of this erases the
+multi-chip data set with a stated threat model. The ripple counter is clocked
+by the oscillator itself. Its boundary behaviour is now checked in
+transistor-level simulation at the nominal corner, as described in Section 3,
+but that check has not been repeated at the fast and slow process corners, and
+the 16-bit counter's overflow margin at the fast corner still needs proving
+before the top of the frequency range can be trusted. None of this erases the
 modelled dispersion; it bounds what can be concluded from it.
 
 ## 9. Conclusion
 
-Under a reduced lumped-capacitance model of the verified post-route
-topology, automated physical implementation gave the 16 oscillators of the
-coherent current build a 10.5% peak-to-peak nominal frequency dispersion
-(4.6% without the single heavy-routing outlier; SD 2.36% and 1.25%
-respectively). Two earlier uncontrolled builds showed 8.8% and 5.4% with
-different per-instance patterns, and a capacitance fit trained on one build
-predicts another's frequencies to 0.14% mean absolute error. A hardened
-macro provides a 569.5 MHz shared-internal-layout reference for Arm B. What
-this establishes is that the automated flow assigned substantially different
-routing capacitance to logically identical oscillators, and that under
-nominal device assumptions this predicts a frequency dispersion much larger
-than zero, with a mechanism that transfers across routing runs.
+Under a reduced lumped-capacitance model of the verified post-route topology,
+the automated flow gave the 16 oscillators of the candidate build a 5.53%
+peak-to-peak nominal frequency dispersion (population SD 1.65%, mean
+554.7 MHz). Nine builds that differ only in placement density put that figure
+in context: median 5.75%, range 4.19% to 6.99%. Any single build reports one
+draw of the router, which is why I no longer quote one of them on its own.
+What repeats is the mechanism. Every build shows frequency tracking extracted
+ring capacitance at about -0.999, the fitted slope stays near -4.94 MHz/fF
+across independent layouts, and a fit trained on one build predicts another's
+individual frequencies to roughly 0.1%. A hardened macro provides a 569.5 MHz
+shared-internal-layout reference for Arm B, ahead of the Arm A mean though not
+of every Arm A instance. The finding is that the flow assigns materially
+different routing capacitance to logically identical oscillators, and that
+under nominal device assumptions this converts into a dispersion of several
+percent through a relationship that holds from one routing run to the next.
 
 Uniqueness, reliability, min-entropy, and attack success are not evaluated
 pre-silicon. Whether the mask-defined pattern survives fabrication, and how

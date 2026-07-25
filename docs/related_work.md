@@ -68,12 +68,13 @@ in nominal post-layout simulation, and does a repeated hard macro reduce it?
 
 The current evidence supports three limited claims. Separately routed
 standard-cell oscillators show a nominal post-layout frequency spread that
-tracks their extracted ring capacitance: 10.5% peak-to-peak in Arm A of a
-coherent build of the current RTL, and 8.8% and 5.4% in two earlier builds. Arm B
-reuses one hardened oscillator GDS sixteen times, and its single extracted
-simulation, 569.5 MHz, appears in the comparison figures as a reference line
-for that shared internal layout. And extraction followed by nominal SPICE is
-a practical pre-fabrication check for deterministic layout sensitivity.
+tracks their extracted ring capacitance: 5.53% peak-to-peak in Arm A of the
+candidate build, and a median of 5.75% across nine builds that differ only in
+placement density. Arm B reuses one hardened oscillator GDS sixteen times, and
+its single extracted simulation, 569.5 MHz, appears in the comparison figures
+as a reference line for that shared internal layout. And extraction followed by
+nominal SPICE is a practical pre-fabrication check for deterministic layout
+sensitivity.
 
 Uniqueness, reliability, and entropy have standard definitions in the PUF
 literature [13], and cross-die repeatability, uniqueness, and any attack are
@@ -81,7 +82,7 @@ predictions I will test on the fabricated chips rather than claims here. What I
 did not find is the exact combination this project targets. Prior mitigation
 work matches layout on FPGAs [2, 5, 6], large ASIC studies characterize RO-PUFs
 across many dies [3, 12], and temperature-aware designs tackle RO reliability
-[14], To the best of my literature search (IEEE Xplore, arXiv, and the references
+[14]. To the best of my literature search (IEEE Xplore, arXiv, and the references
 of the papers above, through July 2026), no prior work compares a controlled
 open-source RTL-to-GDS array against a matched hardened macro, quantified from
 the flow's own extraction before fabrication and then checked on the same
@@ -94,74 +95,74 @@ itself is old.
 
 ## References
 
-[1] G. E. Suh and S. Devadas, “Physical Unclonable Functions for Device
-Authentication and Secret Key Generation,” *Proceedings of the 44th Design
-Automation Conference (DAC)*, pp. 9–14, 2007.
+[1] G. E. Suh and S. Devadas, "Physical Unclonable Functions for Device
+Authentication and Secret Key Generation," *Proceedings of the 44th Design
+Automation Conference (DAC)*, pp. 9-14, 2007.
 https://doi.org/10.1145/1278480.1278484
 
-[2] A. Maiti and P. Schaumont, “Improved Ring Oscillator PUF: An FPGA-friendly
-Secure Primitive,” *Journal of Cryptology*, vol. 24, no. 2, pp. 375–397,
+[2] A. Maiti and P. Schaumont, "Improved Ring Oscillator PUF: An FPGA-friendly
+Secure Primitive," *Journal of Cryptology*, vol. 24, no. 2, pp. 375-397,
 2011. https://doi.org/10.1007/s00145-010-9088-4
 
-[3] A. Maiti, J. Casarona, L. McHale, and P. Schaumont, “A Large Scale
-Characterization of RO-PUF,” *IEEE International Symposium on
-Hardware-Oriented Security and Trust (HOST)*, pp. 66–71, 2010.
+[3] A. Maiti, J. Casarona, L. McHale, and P. Schaumont, "A Large Scale
+Characterization of RO-PUF," *IEEE International Symposium on
+Hardware-Oriented Security and Trust (HOST)*, pp. 66-71, 2010.
 https://schaumont.dyn.wpi.edu/schaum/pdf/papers/2010hostm.pdf
 
-[4] F. Wilde, M. Hiller, and M. Pehl, “Statistic-Based Security Analysis of
-Ring Oscillator PUFs,” *2014 International Symposium on Integrated Circuits
-(ISIC)*, pp. 148–151, 2014.
+[4] F. Wilde, M. Hiller, and M. Pehl, "Statistic-Based Security Analysis of
+Ring Oscillator PUFs," *2014 International Symposium on Integrated Circuits
+(ISIC)*, pp. 148-151, 2014.
 https://doi.org/10.1109/ISICIR.2014.7029528
 
-[5] A. S. Chauhan, V. Sahula, and A. S. Mandal, “Novel Randomized Placement
-for FPGA Based Robust ROPUF with Improved Uniqueness,” *Journal of Electronic
-Testing*, vol. 35, no. 5, pp. 581–601, 2019.
+[5] A. S. Chauhan, V. Sahula, and A. S. Mandal, "Novel Randomized Placement
+for FPGA Based Robust ROPUF with Improved Uniqueness," *Journal of Electronic
+Testing*, vol. 35, no. 5, pp. 581-601, 2019.
 https://doi.org/10.1007/s10836-019-05829-5
 
-[6] K. A. Asha, L. E. Hsu, A. Patyal, and H.-M. Chen, “Improving the Quality
-of FPGA RO-PUF by Principal Component Analysis (PCA),” *ACM Journal on
+[6] K. A. Asha, L. E. Hsu, A. Patyal, and H.-M. Chen, "Improving the Quality
+of FPGA RO-PUF by Principal Component Analysis (PCA)," *ACM Journal on
 Emerging Technologies in Computing Systems*, vol. 17, no. 3, article 34,
 2021. https://doi.org/10.1145/3442444
 
 [7] W.-C. Wang, Z. Li, J. Skudlarek, M. Larouche, M. Chen, and P. Gupta,
-“UNBIAS PUF: A Physical Implementation Bias Agnostic Strong PUF,”
+"UNBIAS PUF: A Physical Implementation Bias Agnostic Strong PUF,"
 arXiv:1703.10725, 2017. https://arxiv.org/abs/1703.10725
 
-[8] J. Miskelly, C. Gu, Q. Ma, Y. Cui, W. Liu, and M. O’Neill, “Modelling
-Attack Analysis of Configurable Ring Oscillator (CRO) PUF Designs,” *2018
+[8] J. Miskelly, C. Gu, Q. Ma, Y. Cui, W. Liu, and M. O'Neill, "Modelling
+Attack Analysis of Configurable Ring Oscillator (CRO) PUF Designs," *2018
 IEEE 23rd International Conference on Digital Signal Processing (DSP)*,
-pp. 1–5, 2018. https://doi.org/10.1109/ICDSP.2018.8631638
+pp. 1-5, 2018. https://doi.org/10.1109/ICDSP.2018.8631638
 
-[9] M. Shalan and T. Edwards, “Building OpenLANE: A 130nm OpenROAD-based
-Tapeout-Proven Flow,” *2020 IEEE/ACM International Conference on Computer
-Aided Design (ICCAD)*, article 110, pp. 1–6, 2020.
+[9] M. Shalan and T. Edwards, "Building OpenLANE: A 130nm OpenROAD-based
+Tapeout-Proven Flow," *2020 IEEE/ACM International Conference on Computer
+Aided Design (ICCAD)*, article 110, pp. 1-6, 2020.
 https://doi.org/10.1145/3400302.3415735
 
-[10] SkyWater Technology and Google, “SkyWater Open Source PDK (SKY130).”
+[10] SkyWater Technology and Google, "SkyWater Open Source PDK (SKY130)."
 https://github.com/google/skywater-pdk
 
-[11] litneet64, “RO-based Physically Unclonable Function in sky130
-(TinyTapeout tt07).” https://github.com/litneet64/tt07-RO-based-PUF
+[11] litneet64, "RO-based Physically Unclonable Function in sky130
+(TinyTapeout tt07)." https://github.com/litneet64/tt07-RO-based-PUF
 
 [12] S. Katzenbeisser, U. Kocabas, V. Rožić, A.-R. Sadeghi, I. Verbauwhede,
-and C. Wachsmann, “PUFs: Myth, Fact or Busted? A Security Evaluation of
-Physically Unclonable Functions (PUFs) Cast in Silicon,” *Cryptographic
-Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283–301, 2012.
+and C. Wachsmann, "PUFs: Myth, Fact or Busted? A Security Evaluation of
+Physically Unclonable Functions (PUFs) Cast in Silicon," *Cryptographic
+Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283-301, 2012.
 https://doi.org/10.1007/978-3-642-33027-8_17
 
-[13] C. Herder, M.-D. Yu, F. Koushanfar, and S. Devadas, “Physical Unclonable
-Functions and Applications: A Tutorial,” *Proceedings of the IEEE*, vol. 102,
-no. 8, pp. 1126–1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516
+[13] C. Herder, M.-D. Yu, F. Koushanfar, and S. Devadas, "Physical Unclonable
+Functions and Applications: A Tutorial," *Proceedings of the IEEE*, vol. 102,
+no. 8, pp. 1126-1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516
 
-[14] C.-E. Yin and G. Qu, “Temperature-aware cooperative ring oscillator PUF,”
+[14] C.-E. Yin and G. Qu, "Temperature-aware cooperative ring oscillator PUF,"
 *2009 IEEE International Workshop on Hardware-Oriented Security and Trust
-(HOST)*, pp. 36–42, 2009. https://doi.org/10.1109/HST.2009.5225055
+(HOST)*, pp. 36-42, 2009. https://doi.org/10.1109/HST.2009.5225055
 
-[15] L. Feiten, et al., “Systemic Frequency Biases in Ring Oscillator PUFs on
-FPGAs,” *IEEE Transactions on Multi-Scale Computing Systems*, vol. 2, no. 3,
-pp. 174–185, 2016. https://ieeexplore.ieee.org/document/7539304
+[15] L. Feiten, et al., "Systemic Frequency Biases in Ring Oscillator PUFs on
+FPGAs," *IEEE Transactions on Multi-Scale Computing Systems*, vol. 2, no. 3,
+pp. 174-185, 2016. https://ieeexplore.ieee.org/document/7539304
 
 [16] M. J. Aljafar, Z. U. Abideen, A. Peetermans, B. Gierlichs, and
-S. Pagliarini, “SCALLER: Standard Cell Assembled and Local Layout
-Effect-Based Ring Oscillators,” *IEEE Embedded Systems Letters*, vol. 16,
+S. Pagliarini, "SCALLER: Standard Cell Assembled and Local Layout
+Effect-Based Ring Oscillators," *IEEE Embedded Systems Letters*, vol. 16,
 no. 4, 2024. arXiv:2406.01258

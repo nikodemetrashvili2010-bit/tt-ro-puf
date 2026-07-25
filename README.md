@@ -27,12 +27,19 @@ a circuit whose whole job is to be unpredictable.
 The current design has a coherent build: one flow run from the current RTL
 that passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with
 zero violations, and whose extracted parasitics drive the go/no-go below. In
-that build Arm A spreads 10.5% peak to peak in nominal post-layout simulation.
-Two earlier builds show the same effect at different sizes: an archived
-dual-arm snapshot at 5.4% and a 32-oscillator layout at 8.8%. The three builds
-produced different frequency patterns, which fits placement and routing
-setting the bias run by run rather than the circuit carrying one fixed
-signature.
+that build Arm A spreads 5.53% peak to peak in nominal post-layout simulation.
+
+A single build only shows what the router happened to do that once, so I
+repeated the flow nine times with the source, floorplan, constraints, tool, and
+PDK frozen and only the placement density varied. Those nine builds land between
+4.19% and 6.99%, with a median of 5.75%, so the shipped build sits near the
+middle of the group.
+
+The spread moves around, but the mechanism behind it does not. In every build
+frequency tracks extracted ring capacitance at about -0.999 with a slope near
+-4.94 MHz/fF, and a capacitance fit trained on one build predicts another
+build's individual frequencies to roughly 0.1%. Details in
+`dualarm/placement_sweep/`.
 
 The model takes each ring net's extracted capacitance from the SPEF and puts
 it back into the SPICE deck as a load, so the tight frequency-versus-capacitance fit (r near -0.999) is mostly the model doing what a

@@ -121,8 +121,9 @@ The repository keeps failed and superseded builds as provenance, so here is
 the short answer to "which one is current":
 
 - Tapeout candidate GDS and its checks: `dualarm/build_current/` (the coherent
-  build from the current RTL). This is what the headline 10.5% comes from, via
-  its `.nom.spef` and the go/no-go logs in `sim/spice/gono/`.
+  build from the current RTL). This is what the headline 5.53% comes from, via
+  its `.nom.spef` and the go/no-go logs in `sim/spice/gono/`. The nine-build
+  dispersion band around it lives in `dualarm/placement_sweep/`.
 - Figures 2 and 3 come from the earlier 32-oscillator build under
   `sim/spice/gono/first_build/`; Figure 4 comes from `dualarm/build_current/`.
 - Everything under `dualarm/build_debug/`, `array/`, and

@@ -1,42 +1,52 @@
 # Pre-tapeout hardware work
 
-This is my ordered list of the hardware and physical-design work I still owe
-before I order silicon. None of it is solved yet. Every item changes the RTL or
-the flow, so nothing here counts as done until a fresh coherent build and its
-checks exist.
+This is my ordered list of the hardware and physical-design work I owe before I
+order silicon. Items 1 and 9 are now done and I have left them in with what
+actually happened, because the results changed how I read the rest. Everything
+else is still open. Every open item changes the RTL or the flow, so none of them
+counts as finished until a fresh coherent build and its checks exist.
 
-## 1. The RO-to-counter gate (fix this first)
+## 1. The RO-to-counter gate (done, 2026-07-24)
 
-This is the one that worries me most. The core picks one oscillator,
-`sel_ro = ro_out[active_sel]`, and today the counter clock is a plain
-combinational gate, roughly `gated_ro = sel_ro & en_window`. The catch:
+This was the one that worried me most. The core picks one oscillator,
+`sel_ro = ro_out[active_sel]`, and the old counter clock was a plain
+combinational gate, `gated_ro = sel_ro & en_window`. The problem is that
 `en_window` comes from the reference-clock domain and can fall at any phase of a
-570 MHz ring. If it drops just after a rising edge, the last high pulse into the
-first ripple flop gets chopped into a runt, and a runt can miss the flop's
-minimum pulse width. Behavioral cocotb never sees this, because the models are
-ideal. The unit-delay gate sim does not carry real high-speed timing either. So
-the sim is green and the hardware is still a question.
+570 MHz ring, so the gate could chop the last pulse on the clock net into a
+sliver and drive the first ripple flop below its minimum pulse width. Behavioral
+cocotb never showed it, because the models are ideal, and the unit-delay gate sim
+carries no real high-speed timing either.
 
-The fix is a real redesign, not a patch. `tff_clk[0] = sel_ro` is not a safe
-swap: when the ring is disabled it settles through a last transition, and that
-changes what the window even counts. Two options I am weighing.
+I took the enable-gating option. The counter is clocked straight from the raw
+ring output and the window is enforced by switching the selected ring on and off
+through its own NAND. No gate sits on the clock net any more, so every edge the
+flop sees is a full-swing ring transition.
 
-Gate the enable, not the output. Run the window by enabling and disabling the
-selected ring through its NAND, and clock the counter straight from the raw RO
-output. RO edges are full-swing, so no runt. The only ambiguity is one edge at
-each boundary, about one count in twenty thousand. Cost: I have to define and
-characterize how the ring settles when it is switched off.
+What I got wrong at first was the justification. I assumed the ring would coast
+to a stop through full-width edges. It does not. I swept the enable fall across
+a ring period in ngspice against the extracted macro, and the final pulse at the
+tap turns out to depend on phase, dropping to about 175 ps where the nominal
+half-period is 846 ps. That is inherent to stopping any free-running ring, and
+the old gated version had the same exposure at both window edges.
 
-Or use a real clock-gating cell. A sky130 transparent-low latch gate with the RO
-as the clock lets the enable change only while the RO is low, which kills the
-runt. But then the window enable has to cross into the RO domain first, and that
-transfer is itself high-speed and needs validating.
+Measuring the pulse at the tap was the wrong test anyway. What decides whether
+the boundary matters is the flop, so I moved the check there. I wired a real
+`sky130_fd_sc_hd__dfrtp_2` as the first ripple stage, clocked it from the
+extracted ring, and dropped the enable at 38 phases across a full period. Every
+phase settled to a clean rail, 0.000 V or 1.800 V, nothing sitting near
+mid-supply in the tail, and the captured count moved by exactly one between
+phases. One count out of roughly twenty thousand. The settle handshake in the
+core already tolerates that, since it publishes only after three consecutive
+equal reads and otherwise leaves `done` low.
 
-Either way the acceptance evidence is the same. Sweep the gate closing across
-every RO phase in extracted-timing simulation, show the first flop always sees a
-legal pulse, no edge is dropped or ambiguously captured, and the ripple settles.
-Then re-verify against a real gate model, then gate-level with back-annotated
-timing, then re-harden.
+The files: `sim/spice/gono/gen_flop_sweep.py` and `analyze_flop_sweep.py` are the
+acceptance test, `gen_gate_sweep.py` and `analyze_gate_sweep.py` characterize the
+tap. The re-hardened build passes DRC, LVS, antenna, and the XOR with no setup
+or hold violations, and the final netlist has one flop clocked by `sel_ro` and no
+`gated_ro` net left anywhere.
+
+Still outstanding: the phase sweep ran at the nominal corner only. Repeat it at
+the fast and slow corners as part of item 6.
 
 ## 2. The 32-to-1 selection path
 
@@ -115,15 +125,35 @@ a few percent. If it is the second one, that is a confound I want to find before
 I pay for silicon. Same ngspice flow as the go/no-go, so it rides along with the
 SPICE work above.
 
-## 9. Controlled multi-seed spread
+## 9. Controlled multi-build spread (done, 2026-07-24)
 
-The three builds I have (5.4%, 8.8%, 10.5%) are not replicates. They differ in
-source and settings, not just seed, so I will not pool them. The clean version
-is 10 to 20 builds from one frozen RTL, floorplan, constraint set, tool version,
-and PDK, changing only the place-and-route seed, reported as a distribution
-(median and spread of the peak-to-peak, not a single number). Next to a fab run
-this costs nothing, and it turns "three different percentages" into a real
-result.
+The builds I had (5.4%, 8.8%, 10.5%) were not replicates. They differed in
+source and settings, not just placement, so pooling them would have been wrong.
+
+I wanted a seed sweep and could not have one. LibreLane 3.0.3 does not expose
+OpenROAD's global-placement random seed, and patching the tool would have broken
+the point of the experiment, which is that everything except one knob stays
+frozen. So I varied target placement density instead, 56% to 64% in 1% steps,
+with the RTL, macro locations, floorplan, constraints, tool, and PDK held fixed.
+It perturbs standard-cell placement without touching the design. It is a
+placement-sensitivity sweep and I label it that way rather than calling it a
+seed study.
+
+All nine builds hardened and all nine kept every ring intact. Dispersion came
+out at a median of 5.75%, a range of 4.19% to 6.99%, and an SD of 0.80%. The
+shipped build at 5.53% sits near the middle. Density explains almost none of the
+variation on its own (r = 0.32), which is the expected result for a knob that is
+a perturbation rather than a cause.
+
+Two things make me trust the band. The density-60 build reproduces the shipped
+config and returned 5.53%, matching to the digit, and I ran the whole sweep
+twice and got identical numbers, so the flow is deterministic and this is real
+placement sensitivity rather than noise. Against that, the old 10.5% build was a
+wide draw, not the normal case, and it owed most of its range to one oscillator
+the router loaded with 24.4 fF.
+
+Driver and summary: `dualarm/placement_sweep/`. A real seed sweep is still the
+cleaner experiment if a future LibreLane exposes the seed.
 
 ## 10. Optional observability
 
@@ -136,7 +166,10 @@ re-harden, or none.
 
 ## Order of work
 
-Item 1 first, then 3, then 4. Then run 6, 7, and the item-2 chain check, then 8.
-Then 9. Only once the architecture is frozen do I lock the acquisition protocol
-(that part is already done in `firmware/`), preregister the analysis, freeze the
+Items 1 and 9 are behind me. Next is 3, then 4, since both change the floorplan
+and both need a full re-run anyway. After that 6, 7, and the item-2 chain check,
+then 8. Item 6 now carries a piece of item 1 with it: the enable-fall phase
+sweep has to be repeated at the fast and slow corners, not just nominal. Only
+once the architecture is frozen do I lock the acquisition protocol (that part is
+already done in `firmware/`), preregister the analysis, freeze the
 reproducibility release, and tape out.

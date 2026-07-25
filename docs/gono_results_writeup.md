@@ -103,24 +103,28 @@ block, and `gen_dualarm_decks.py` reads that run's nominal SPEF and DEF. The
 build passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with
 zero violations, so these numbers and the manufacturable GDS come from the
 same place. The no-parasitic control gives all 16 instances 633.64 MHz. With
-extracted capacitance, Arm A runs from 508.5 to 566.5 MHz: 58.0 MHz or 10.5%
-peak-to-peak, mean 551.7 MHz, population standard deviation 2.36%, and
-*r* = -0.9989 against ring capacitance. One oscillator picked up an unusually
-heavy routing load (24.4 fF) and sits near 508 MHz, which widens the spread
-past the earlier builds.
+extracted capacitance, Arm A runs from 540.0 to 570.7 MHz: 30.7 MHz or 5.53%
+peak-to-peak, mean 554.7 MHz, population standard deviation 1.65%, and
+*r* = -0.9997 against ring capacitance with a fitted slope of -4.94 MHz/fF.
+Ring loads span 10.9 to 17.0 fF and form a smooth band; the two heaviest
+differ by 0.34 fF, so no single instance drives the range here.
 
 The top-level SPEF does not expand the sealed macro internals (the extractor
 cannot tell the sixteen copies apart), so Arm B is represented by the single
-569.5 MHz macro result as a reference line.
+569.5 MHz macro result as a reference line. That reference sits above the Arm A
+mean but not above every instance: RO7 reaches 570.7 MHz on a 10.9 fF load,
+about 0.2% past the macro, which is finer than this model resolves.
 
-Two cross-build checks are worth recording. The 32-oscillator build's fitted
-capacitance relation predicts this build's mean to 0.04%, so the mechanism
-holds across independent runs. At the same time the three builds have clearly
-different patterns and spreads (10.5% here, 8.8% and 5.4% earlier, different
-orderings). A few layouts are not a distribution, but differences this clear
-point to a run-specific deterministic component while the underlying mechanism
-stays the same. The archived `dualarm/build_debug/` snapshot (5.4%, older RTL,
-KLayout checks off) is kept for contrast; this coherent build supersedes it.
+Two things are worth recording beyond the single build. The 32-oscillator
+build's fitted capacitance relation predicts this build's mean to about 0.1%,
+so the mechanism carries across independent runs, and this build's own slope of
+-4.94 MHz/fF is within a fraction of a percent of that earlier fit. The
+peak-to-peak figure is much less stable than the mechanism: across nine builds
+that vary only placement density it moves between 4.19% and 6.99%, median 5.75%
+(`dualarm/placement_sweep/`). An older build reported 10.5%, above that band,
+with most of its range coming from one oscillator loaded at 24.4 fF. The
+archived `dualarm/build_debug/` snapshot (5.4%, older RTL, KLayout checks off)
+is kept for contrast; this coherent build supersedes it.
 
 ![Arm A of the coherent dual-arm build with the matched-macro reference line](../sim/spice/gono/dualarm_gono.png)
 

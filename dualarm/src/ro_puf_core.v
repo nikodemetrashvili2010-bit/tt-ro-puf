@@ -73,14 +73,33 @@ module ro_puf_core #(
 
     wire sel_ro = ro_out[active_sel];
 
-    wire gated_ro  = sel_ro & en_window;
+    // The counter is clocked by the raw selected ring output. An earlier
+    // revision put `sel_ro & en_window` here, but en_window belongs to the
+    // xclk domain and can fall at any phase of the ~570 MHz ring, so that AND
+    // gate could chop the final high pulse into a runt on the clock net.
+    // Clocking from the raw ring removes the gate: every edge the flop sees is
+    // a clean full-swing ring transition, and the window is enforced through
+    // the oscillator enables instead (see g_ro_bank / g_armb above).
+    //
+    // Stopping a free ring still leaves one boundary effect. When en_window
+    // falls the NAND disables the selected ring, and the final tap pulse before
+    // it settles can be any width, down to nearly zero, depending on where the
+    // disable lands in the cycle. A SPICE phase sweep of the extracted ring
+    // driving a real dfrtp flop (sim/spice/gono/gen_flop_sweep.py) shows the
+    // flop resolves that boundary cleanly at every phase: it either counts the
+    // last edge or it does not, the output never hangs mid-rail, and the
+    // captured value moves by at most one count. That one-count ambiguity,
+    // about one part in twenty thousand of the full window, is absorbed by the
+    // stopped-ring settle handshake below, which latches only after the
+    // synchronized counter reads equal three times and otherwise leaves done
+    // low rather than returning a torn word.
     wire cnt_rst_n = rst_n & ~start;        // clear before each measurement
 
     // Asynchronous ripple counter, one toggle flip-flop per bit (single-driver
     // per signal, as the linter requires).
     wire [CNT_W-1:0] cnt;
     wire [CNT_W:0]   tff_clk;
-    assign tff_clk[0] = gated_ro;
+    assign tff_clk[0] = sel_ro;
 
     genvar b;
     generate

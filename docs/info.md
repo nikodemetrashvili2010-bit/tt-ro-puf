@@ -25,11 +25,13 @@ counter crosses a two-flop sampler and must produce three consecutive equal
 samples before the frozen count and `done` are published.
 
 A coherent nominal post-layout simulation of the current build predicts a
-10.5% peak-to-peak spread in Arm A, associated closely with extracted routing
-capacitance. That build passes Magic and KLayout DRC, XOR, LVS, antenna, detailed
-routing, and power-grid connectivity with zero violations, so the prediction
-and the candidate GDS come from the same flow run; the ring-oscillator STA
-warnings are listed separately in SIGNOFF.
+5.53% peak-to-peak spread in Arm A, associated closely with extracted routing
+capacitance. Nine builds that vary only placement density put that number in
+context: they run from 4.19% to 6.99%, median 5.75%. That build passes Magic
+and KLayout DRC, XOR, LVS, antenna, detailed routing, and power-grid
+connectivity with zero violations, so the prediction and the candidate GDS come
+from the same flow run; the ring-oscillator STA warnings are listed separately
+in SIGNOFF.
 Arm B's sixteen instances reuse the same internal macro layout; its plotted
 pre-silicon value is one extracted-macro result repeated sixteen times, not
 sixteen separate measurements. The experiment will test whether Arm A's
