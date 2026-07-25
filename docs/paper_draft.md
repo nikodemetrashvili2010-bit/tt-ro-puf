@@ -145,7 +145,44 @@ the rest, and the two arms differ in local decap and power-delivery geometry.
 The comparison is therefore a matched hardened-macro implementation against
 a conventional automated standard-cell implementation, not two circuits that
 differ only in internal routing; the ring loops themselves stay logically
-equivalent. The main results below come from a coherent build of the current
+equivalent.
+
+The boundary difference is larger than the buffer count suggests, and worth
+quantifying rather than mentioning. Taken from the top-level extraction, the
+capacitance each arm's ring output drives spans 0.24 to 2.71 fF in Arm A, mean
+0.84, against 2.89 to 29.46 fF in Arm B, mean 14.46. Arm B drives roughly
+seventeen times the load, because its macros sit at fixed positions across the
+tile while Arm A's oscillators are placed near the shared multiplexer. That load
+is also why the flow puts a driver on the macro output; attempting to remove it
+only moves the problem, since the resizer then alters the ring's tap buffer
+instead.
+
+The same geometry places the two arms in different parts of the die. The sixteen
+macros tile a region roughly 300 by 184 micrometres, while the automatically
+placed oscillators occupy a box of about 44 by 78 on one side. I tested whether a
+less one-sided floorplan could remove this, by skipping the middle column of the
+power grid so a standard-cell channel runs through the macro field. Two variants
+built and passed every physical check, and both spread Arm A considerably wider,
+but in each one the placer stretched a single oscillator into a thin line, 126 and
+106 micrometres long, roughly doubling that instance's routing load and pushing
+the array's capacitance spread from 44% of the mean to 199% and 135%. Four macro
+rows is the maximum that fits the die, sixteen macros in four rows therefore need
+four columns, and only five column positions align with the power grid, so the
+shipped arrangement is the one that leaves the automatically placed arm a single
+contiguous region. The regional difference is a consequence of die area, macro
+footprint and grid pitch rather than a tuning choice, and removing it would need a
+larger tile. Both trials are recorded in the repository.
+
+What protects the frequency result is that all of this lies outside the
+oscillator loop. The loop is the enable NAND and thirty inverters with feedback,
+and the only boundary cell touching it is the tap buffer, which is a `buf_1` in
+both arms. The enable buffer is further irrelevant during a measurement, since
+the enable is static while the window is open and the ring is driven through the
+feedback node. So the extra output stage and the heavier output route cannot bias
+the frequencies reported here, though they would have to be accounted for in any
+comparison of edge quality or bit reliability between the arms.
+
+The main results below come from a coherent build of the current
 RTL that passes the physical checks (Magic and KLayout DRC, XOR, LVS, antenna,
 detailed route, power grid) with zero violations; two earlier builds, an
 archived dual-arm snapshot and a 32-oscillator layout, are reported for
@@ -277,6 +314,37 @@ its own.
 
 ![Figure 5. Nominal Arm A dispersion for nine builds that differ only in target placement density. The dashed line is the median, and the highlighted point is the shipped configuration.](../dualarm/placement_sweep/placement_sweep.png)
 
+### 5.4 The dispersion across process, voltage and temperature
+
+Everything above is at 27 C and 1.8 V with typical devices, which bounds nothing.
+Repeating the same deck and the same extracted capacitances at a slow corner
+(100 C, 1.60 V) and a fast one (-40 C, 1.95 V) gives absolute frequencies of 276.2
+to 291.7 MHz and 840.3 to 888.3 MHz, against 540.0 to 570.7 at nominal. All
+sixteen oscillators start at every corner, including the slow low-voltage one, and
+the no-parasitic control decks return a single identical frequency per corner
+(323.140, 633.640 and 987.948 MHz), which is what validates the corner setup.
+
+The dispersion is essentially unchanged: 5.46%, 5.53% and 5.56% peak to peak at
+slow, nominal and fast. The frequency-capacitance correlation is -0.9997 in every
+case. The fitted slope scales with the operating frequency, -2.478, -4.936 and
+-7.783 MHz/fF, but expressed as a fraction of the mean it barely moves, -0.873,
+-0.890 and -0.902 percent per fF.
+
+That is a stronger result than the nominal number alone. It says the routing
+contribution behaves as a relative perturbation of whatever speed the process and
+operating point set, rather than as a fixed frequency offset that a corner shift
+could swamp or amplify. For the silicon phase it predicts that the per-oscillator
+pattern should be recoverable from dies measured at different temperatures and
+supplies, which is convenient, because holding a hobby measurement setup at one
+temperature is difficult.
+
+Two practical bounds fall out of the same simulations. The reported count is the
+oscillator frequency times the window duration, so at the fast corner the 16-bit
+counter reaches 35532 of 65535, leaving 1.84x headroom at the 25 MHz reference
+clock and the 1000-cycle window in the design. Dropping the reference clock below
+13.55 MHz, or extending the window past 1844 cycles, would push the fast corner
+into a silent wrap that returns a believable smaller count instead of an error.
+
 ## 6. Matched-macro arm
 
 The matched construction hardens one oscillator as a 60 x 40 micrometre
@@ -363,15 +431,19 @@ overstate the evidence. The Arm B reference is
 one simulation of one macro and cannot quantify fabricated Arm B variation.
 The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
-measurement-system effects are uncharacterized until chips exist, and
-uniqueness, reliability, min-entropy, and attack success all need a
-multi-chip data set with a stated threat model. The ripple counter is clocked
-by the oscillator itself. Its boundary behaviour is now checked in
-transistor-level simulation at the nominal corner, as described in Section 3,
-but that check has not been repeated at the fast and slow process corners, and
-the 16-bit counter's overflow margin at the fast corner still needs proving
-before the top of the frequency range can be trusted. None of this erases the
-modelled dispersion; it bounds what can be concluded from it.
+measurement-system effects are partly characterized: the corner simulations in
+Section 5.4 bound the frequency range and the counter margin, but supply noise,
+ageing, package effects and the measurement instrument itself remain unknown until
+chips exist. Uniqueness, reliability, min-entropy and attack success all need a
+multi-chip data set with a stated threat model. The corner work pairs device
+corners with nominal interconnect rather than pairing the slow corner with maximum
+extracted capacitance and the fast corner with minimum; device spread dominates
+the frequency bound, so the bound holds, but the range would tighten slightly
+under the fuller pairing. The boundary behaviour of the oscillator-clocked ripple
+counter is checked at both nominal and the fast corner, which is where the shorter
+period makes it hardest, though the selector path feeding it has not yet been
+validated as a whole chain at 888 MHz. None of this erases the modelled
+dispersion; it bounds what can be concluded from it.
 
 ## 9. Conclusion
 

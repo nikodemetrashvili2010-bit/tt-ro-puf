@@ -60,27 +60,105 @@ instrumentation variable; it did not remove this one. The whole chain, RO buffer
 to top route to mux to gate to first flop, should be validated as one
 high-speed path at the fast corner.
 
-## 3. Arm A / Arm B boundary symmetry
+## 3. Arm A / Arm B boundary symmetry (investigated 2026-07-25, not removable)
 
 Hardening put input and output `clkdlybuf4s25_1` buffers on the Arm B macro
-boundary. Arm A has no such buffers. The output one is the problem: it changes
-drive and slew into the shared mux, so "Arm B is more reliable" could just mean
-"Arm B has a cleaner output stage." I need to either stop those buffers from
-being inserted while keeping a clean macro, or give Arm A the same boundary.
-Change the flow to produce the architecture I want and re-run the whole signoff.
-No hand-editing cells out of the GDS. If I cannot remove the difference, I
-characterize it and stop calling the arms layout-only, which the paper now does.
+boundary. Arm A has no such buffers. The output one worried me: it changes drive
+and slew into the shared mux, so "Arm B is more reliable" could just mean "Arm B
+has a cleaner output stage."
 
-## 4. Floorplan confound
+I found the cause. My macro config never set `DESIGN_REPAIR_BUFFER_INPUT_PORTS`
+or `DESIGN_REPAIR_BUFFER_OUTPUT_PORTS`, so both defaulted on and the flow
+buffered the ports. Setting them false and re-hardening does remove them, and
+that build passes DRC, LVS and antenna cleanly. I am not shipping it, because it
+trades a cosmetic gain for a real regression.
+
+What matters is which cells sit inside the oscillator loop. The loop is the
+enable NAND plus thirty inverters with feedback from `n[30]`. The tap buffer
+hangs off `n[15]`, so its input capacitance is a load inside the loop and its
+cell type does move the frequency. Everything after the tap buffer is outside the
+loop and cannot.
+
+    Arm A          n[15] -> buf_1    -> route -> mux
+    shipped Arm B  n[15] -> buf_1    -> clkdlybuf4s25_1 -> pin -> route -> mux
+    rebuilt Arm B  n[15] -> clkbuf_1 -> clkbuf_4        -> pin -> route -> mux
+
+The shipped macro already matches Arm A on the one cell that touches the loop.
+With port buffering off, the resizer swapped that tap buffer to `clkbuf_1` and
+added a `clkbuf_4` to drive the pin, so the rebuilt version puts a different
+capacitance on `n[15]` and makes the two arms less comparable in frequency, not
+more. The only thing removing the input buffer bought me is symmetry on the
+enable path, and `en` is held static for the whole measurement window while the
+ring is driven through `n[30]`, so buffering there cannot affect frequency or
+output edge quality. Cosmetic.
+
+There is also a bigger asymmetry underneath this that I had not measured. Taking
+each arm's ring-output net capacitance from the top SPEF: Arm A spans 0.24 to
+2.71 fF with a mean of 0.84, while Arm B spans 2.89 to 29.46 fF with a mean of
+14.46. Arm B drives roughly seventeen times the load. That is why the flow keeps
+putting a driver on the macro output, and `OUTPUT_CAP_LOAD` defaults to 33.4 fF,
+close to Arm B's real worst case, so the buffer is justified rather than
+gratuitous. The cause is the floorplan: the macros sit at fixed positions across
+the tile while Arm A's rings get placed near the mux. So this is item 4's
+problem, and no amount of macro-boundary tweaking fixes it.
+
+Where that leaves the claim. Both the extra buffer and the heavier output route
+are outside the ring loop, so neither biases the measured frequency, which is the
+result the chip exists to produce. What they can bias is edge quality arriving at
+the counter, so any reliability comparison between the arms has to account for
+them. The paper says the arms are a matched hardened macro against a conventional
+standard-cell implementation, not two circuits differing only in internal
+routing, and that stays the honest framing. Revisit properly as part of item 4.
+
+Rejected config is recorded in `macro/config.json`. While I was there I fixed a
+stale `FP_PDN_MULTILAYER: true` in that file, which could not have built the
+shipped macro at all: the core is 16.32 um tall and met5 straps do not fit.
+
+## 4. Floorplan confound (two trials run 2026-07-25, both rejected)
 
 Arm B is a 4x4 grid parked on one side of the tile, columns near x = 3, 63, 123,
-183 um. Arm A and the control logic take the rest. So part of what I am
-comparing is one region of the die against another, and my whole hypothesis is
-about spatial pattern. That is a bad thing to leave confounded. I want to try an
-interleaved or at least less one-sided floorplan on a branch, run the full flow,
-and compare congestion, parasitics, signoff, and where Arm A lands. The PDN
-pitch is 60 um, so moving macro columns on that pitch is geometrically legal.
-Whether it routes is another matter. Assume nothing.
+183 um. Arm A and the control logic take the rest. Measured, that means all
+sixteen Arm A oscillators sit inside a box about 44 by 78 um while Arm B spans
+roughly 300 by 184. I am comparing one region of the die against another, and my
+whole hypothesis is about spatial pattern, so this needed testing rather than
+assuming.
+
+I tried the obvious fix twice and it failed twice. Skipping the middle power-grid
+column puts a 60 um standard-cell channel down the centre of the macro field, so
+Arm A spreads out instead of hiding on one edge. Both variants hardened and passed
+DRC, LVS, antenna and the power grid with no setup or hold violations, so signoff
+was never the issue. Placement quality was. In each build the placer stretched one
+whole oscillator into a thin line, RO9 at 126 by 3 um in the first and RO4 at 106
+by 19 um in the second, and that ring's loop then routes back and forth across the
+span. Its capacitance roughly doubles against the field: spread went from 6.18 fF
+(44% of mean) in the shipped block to 26.68 fF (199%) and 20.11 fF (135%).
+
+My hypothesis for the first failure was the 8 um gap between macro rows, which
+leaves a single 2.72 um cell row after halos, so I raised the row pitch to 52 for
+two rows per band. Wrong. The outlier moved to a different oscillator and the
+spread among the remaining fifteen got worse, 74% to 84%. Two trials, two
+different victims: the cause is fragmented space, not band height.
+
+What interleaving did buy: Arm A's x-span nearly tripled, 43.5 to 123.9 um, and
+Arm B's output loads tightened from 2.89-29.46 fF to 7.28-18.30. Real gains, but
+not worth a layout whose headline number depends on one stretched ring. That is
+the fragility I deliberately removed when I stopped quoting a single build.
+
+The reason this cannot be tuned away is geometric. Four macro rows is the maximum
+that fits, since at pitch 48 the top row already ends at 204 um against a 223.04
+core limit. Sixteen macros in four rows need four columns, and only five column
+positions exist because each must sit on the 60 um grid for the met4 stripes to
+reach the macro power pins. So the only choice is which four of five columns, and
+the shipped grouping is the one that leaves Arm A a contiguous 92 um strip. Every
+alternative leaves a 60 um channel plus a 29 um remnant.
+
+So the confound follows from die size, macro footprint and grid pitch. Removing it
+needs more area, a larger tile, or fewer or smaller macros, and each of those
+changes the experiment or the budget. For this tapeout the block floorplan ships
+and the region difference is stated as a limitation in the paper. Item 3's output
+load gap stays open for the same reason.
+
+Evidence and both configs: `dualarm/floorplan_trials/`.
 
 ## 5. Power and decap confound
 
@@ -92,15 +170,54 @@ modeled as normal switching, so that number is meaningless here. Instead model
 RO frequency versus VDD and confirm a plausible local IR-drop difference is far
 below the Arm A spread, then revisit it with measured supply on silicon.
 
-## 6. PVT corners
+## 6. PVT corners (done 2026-07-25)
 
-The go/no-go is nominal TT at 1.8 V. That is not enough to set operating bounds.
-I need RO simulations at real corners, slow 100C/1.6 V and fast -40C/1.95 V: the
-fastest and slowest plausible frequency, whether it starts reliably, whether the
-measurement chain passes those frequencies, and whether the 16-bit counter can
-wrap at the fast corner. A silent wrap is nasty. It returns a believable lower
-count, not an error, so it corrupts the ranking quietly. A proven frequency
-bound, or an overflow flag, is part of acceptance.
+The go/no-go was nominal TT at 1.8 V, which sets no operating bounds. I re-ran the
+whole Arm A deck at slow (ss, 100 C, 1.60 V) and fast (ff, -40 C, 1.95 V) against
+the same extracted capacitances, and re-ran the boundary flop sweep at the fast
+corner.
+
+    corner            min      mean       max    p-p     max count   headroom
+    ss 100C 1.60V   276.2     283.6     291.7   5.46%        11667      5.62x
+    tt  27C 1.80V   540.0     554.7     570.7   5.53%        22828      2.87x
+    ff -40C 1.95V   840.3     863.1     888.3   5.56%        35532      1.84x
+
+All sixteen oscillators started at every corner, so the ring self-starts at 1.6 V
+and 100 C, which was the startup worry. The control decks (no parasitics) return a
+single identical frequency per corner, 323.140, 633.640 and 987.948 MHz, which is
+what validates the corner decks themselves rather than just trusting them.
+
+The counter does not wrap. Worst case is the fast corner at 35532 of 65535, so
+1.84x headroom. Two numbers worth writing down because they constrain the
+firmware: at 888.3 MHz the lowest safe reference clock is 13.55 MHz, and the
+longest safe window at 25 MHz is 1844 cycles against the 1000 the RTL uses. So the
+existing 25 MHz choice is sound and the margin is quantified rather than assumed.
+
+Item 1 owed a corner repeat of the enable-fall sweep, and that is now done at ff,
+where the ring runs 888 MHz and the boundary pulse is proportionally shorter than
+at nominal. All 38 phases settled to a clean rail at 1.95 V with nothing near
+mid-supply, and the count steps up strictly one edge at a time as the fall moves
+later. One correction came out of this: my original pass condition asked for a
+total count spread of at most one, which quietly assumed the sweep spanned exactly
+one ring period. At the fast corner the period shrinks to about 1.13 ns while the
+sweep still spans 1.9 ns, so crossing a full period legitimately adds an edge and
+the old test reported a false failure. The condition now checks what the design
+actually relies on, that a later fall adds at most one edge and never loses one.
+
+The most interesting result is that the dispersion barely moves with corner:
+5.46%, 5.53% and 5.56% peak to peak, with the frequency-capacitance correlation at
+-0.9997 in all three. The absolute slope tracks frequency, -2.478, -4.936 and
+-7.783 MHz/fF, but normalised it is nearly constant at -0.873, -0.890 and
+-0.902 percent per fF. The routing fingerprint is a relative effect that survives
+process, voltage and temperature, which is a much stronger statement than the
+nominal result alone and predicts the pattern should reappear on silicon measured
+at any temperature.
+
+Still owed here: these pair device corners with nominal interconnect. The fuller
+job pairs ss with the max SPEF and ff with the min SPEF. Device spread dominates
+the frequency bound, so the bound stands, but the RC pairing would tighten it.
+Tools: `gen_dualarm_decks.py --corner {tt,ss,ff}`, `analyze_corners.py`,
+`gen_flop_sweep.py --corner ff`.
 
 ## 7. Distributed-RC validation
 
@@ -166,10 +283,12 @@ re-harden, or none.
 
 ## Order of work
 
-Items 1 and 9 are behind me. Next is 3, then 4, since both change the floorplan
-and both need a full re-run anyway. After that 6, 7, and the item-2 chain check,
-then 8. Item 6 now carries a piece of item 1 with it: the enable-fall phase
-sweep has to be repeated at the fast and slow corners, not just nominal. Only
+Items 1, 6 and 9 are done, and 6 closed out the corner repeat that item 1 owed.
+Items 3 and 4 are tested and closed as not fixable on this die, with the reasoning
+and measurements recorded above; both come back only if I move to a larger tile.
+Next is 7, then the item-2 chain check, then 8. Item 2 now has a concrete target
+from the corner work: the selector path has to pass 888 MHz at the fast corner, not
+just the 570 MHz of the nominal case. Only
 once the architecture is frozen do I lock the acquisition protocol (that part is
 already done in `firmware/`), preregister the analysis, freeze the
 reproducibility release, and tape out.
