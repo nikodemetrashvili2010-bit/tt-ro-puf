@@ -345,6 +345,50 @@ clock and the 1000-cycle window in the design. Dropping the reference clock belo
 13.55 MHz, or extending the window past 1844 cycles, would push the fast corner
 into a silent wrap that returns a believable smaller count instead of an error.
 
+### 5.5 Does the lumped model survive the real RC network?
+
+Section 4 grounds each net's total capacitance on a single node. That discards the
+series resistance, collapses the split of capacitance between the ends of a net,
+and treats coupling as though the far end were held quiet. The last of those is the
+one to worry about here, because 47 to 62 of each ring's coupling capacitors have
+their far end on another node of the same ring, usually the neighbouring inverter.
+Adjacent inverter outputs move in antiphase, so grounding such a coupling
+understates the load it presents.
+
+To test it I rebuilt all sixteen oscillators from the extraction's own network,
+with per-node capacitances, the series resistors as extracted, and node-to-node
+capacitors wherever both ends lie inside the oscillator, then simulated the lumped
+and distributed versions of each ring under otherwise identical conditions. The
+reconstruction accounts for the whole of every net's declared capacitance.
+
+Every oscillator is slower under the fuller model, by 2.16% to 5.69%, and the size
+of the shift tracks the ring's extracted load (*r* = -0.589). Because the heavier
+rings lose the most, the dispersion widens rather than shrinking: 5.55%
+peak-to-peak becomes 7.60%. The simplification is therefore conservative with
+respect to the paper's central claim. It understates the layout contribution by
+roughly a third instead of manufacturing it, which is the opposite of the failure
+mode a reduced model is usually suspected of.
+
+The per-oscillator pattern also survives. Rank correlation between the two models
+is 0.912 and the fastest ring is the same under both. The slowest label moves
+between two oscillators that the lumped model separated by 0.7%, which is a near-tie
+changing hands rather than the fingerprint dissolving.
+
+Where the fuller model does change the answer is in the individual response bits.
+The design forms bits by comparing neighbouring oscillators, and two of the eight
+comparisons reverse. Both involved pairs separated by 0.28% and 0.32% under the
+lumped model, while every pair separated by 0.69% or more kept its ordering. So
+predicted bits from closely matched pairs are model-dependent and are not reported
+here as predictions; the analysis code already flags such pairs as low-margin when
+scoring measured silicon, and this gives an independent pre-silicon reason to
+expect which ones will be fragile.
+
+Two limits on this check. The Arm B macro has a separate extraction and has not
+been redone this way, so its 569.5 MHz reference remains a lumped-model result.
+And the extraction itself is a reduced per-net network rather than a field
+solution, with coupling to nets outside a given oscillator still grounded, which
+ranges from four such nets on the lightest ring to seventy-two on the heaviest.
+
 ## 6. Matched-macro arm
 
 The matched construction hardens one oscillator as a 60 x 40 micrometre
@@ -416,10 +460,13 @@ not support a population claim.
 ## 8. Limitations
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
-transistor models carry no random local mismatch. Lumped capacitance omits
-distributed RC and dynamic coupling; a distributed-RC extraction would test
-whether the frequency ordering and the spread survive a fuller electrical
-model, and running it on the candidate build is the obvious next check. The
+transistor models carry no random local mismatch. The lumped-capacitance model has
+now been checked against the extraction's full RC network, as Section 5.5 reports:
+the dispersion survives and in fact grows, but individual comparisons between
+closely matched oscillators do not, and the Arm B macro has not been re-extracted
+that way. Neither model represents dynamic supply coupling between simultaneously
+active oscillators, which does not arise here because the hardware enables one at a
+time. The
 nine-build sweep is a controlled set in the sense that only one flow knob
 changed, but that knob is placement density and not the place-and-route seed,
 which LibreLane 3.0.3 does not expose. A seed sweep would be the cleaner

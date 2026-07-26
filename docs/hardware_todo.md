@@ -219,15 +219,56 @@ the frequency bound, so the bound stands, but the RC pairing would tighten it.
 Tools: `gen_dualarm_decks.py --corner {tt,ss,ff}`, `analyze_corners.py`,
 `gen_flop_sweep.py --corner ff`.
 
-## 7. Distributed-RC validation
+## 7. Distributed-RC validation (done 2026-07-25, Arm A)
 
-The current deck lumps each ring net's total SPEF capacitance to ground and
-drops distributed resistance and coupling. That is a usable diagnostic, but a
-reviewer will ask whether the result survives the real RC network. Take the
-fastest, slowest, and a middle Arm A oscillator, plus the Arm B macro, and re-simulate with as much of the real distributed extraction as I can.
-Then check whether the ordering, the spread, and the heavy-load outlier all
-survive. If the lumped and distributed results agree, the model earns a lot of
-credibility.
+The go/no-go deck hangs each ring net's total SPEF capacitance on one node, which
+drops the series resistance, collapses the split between the two ends of a net,
+and grounds the coupling as though the neighbour were quiet. I rebuilt all sixteen
+Arm A oscillators from the SPEF's actual network instead and simulated both, so the
+only difference between the two runs is the parasitic model.
+
+What the SPEF actually holds, per ring: 33 resistors, 65 grounded capacitors, and
+between 47 and 62 coupling capacitors whose far end is another node of the same
+ring, usually the neighbouring inverter. That last part is the interesting bit.
+Neighbouring inverter outputs swing in antiphase, so grounding those couplings
+understates them, while a real capacitor between the two moving nodes reproduces
+them. The parser accounts for 100% of each net's declared capacitance, which is how
+I know nothing is being silently dropped.
+
+Results. Every ring runs slower with the real network, from -2.16% on the lightest
+to -5.69% on the worst, and the shift tracks ring load at r = -0.589. Because the
+heavier rings lose more, the dispersion gets wider rather than narrower: 5.55%
+lumped becomes 7.60%. So the lumped model I have been quoting is conservative. It
+understates the effect by about a third instead of inventing it, which is the
+opposite of what a reviewer would suspect from a simplification.
+
+The per-oscillator fingerprint survives. Rank correlation between the two models is
+0.912 and the fastest ring is RO7 either way. The slowest label moves from RO14 to
+RO2, but those two sat 0.7% apart under the lumped model, so that is a near-tie
+changing hands rather than the pattern breaking.
+
+The finding that changes what I can claim is about the response bits. The design
+compares neighbouring oscillators, and two of those eight comparisons reverse under
+the fuller model. Both reversed pairs were separated by 0.28% and 0.32%. Every pair
+separated by 0.69% or more held. So predicted bits from pairs closer than roughly a
+third of a percent are model-dependent and I should not present them as
+predictions. That lines up with the low-margin flagging already in
+`firmware/analyze_counts.py`, and it gives a pre-silicon reason to expect exactly
+which pairs will be fragile.
+
+My first pass at the acceptance test asked for identical rankings across all
+sixteen rings. That was the wrong test: several rings sit within a few tenths of a
+percent, so near-ties reorder without telling you anything. The check now reports
+spread agreement, rank correlation, the pair-bit reversals with their gaps, and the
+load dependence of the shift. It still fails a scrambled control.
+
+Two things remain. The Arm B macro has its own SPEF and has not been redone this
+way, so the 569.5 MHz reference is still lumped-only. And "distributed" here means
+OpenROAD's own reduced per-net network, which is itself a reduction of the field
+problem; coupling to nets outside the oscillator is still grounded, and that ranges
+from 4 nets on RO7 to 72 on RO14.
+
+Tools: `gen_rc_decks.py --ro N`, `analyze_rc.py --dir ... --ro 0..15`.
 
 ## 8. Arm B per-instance integration
 
@@ -283,12 +324,13 @@ re-harden, or none.
 
 ## Order of work
 
-Items 1, 6 and 9 are done, and 6 closed out the corner repeat that item 1 owed.
-Items 3 and 4 are tested and closed as not fixable on this die, with the reasoning
-and measurements recorded above; both come back only if I move to a larger tile.
-Next is 7, then the item-2 chain check, then 8. Item 2 now has a concrete target
-from the corner work: the selector path has to pass 888 MHz at the fast corner, not
-just the 570 MHz of the nominal case. Only
+Items 1, 6, 7 and 9 are done. Item 6 closed out the corner repeat item 1 owed, and
+item 7 leaves only the Arm B macro re-extraction behind. Items 3 and 4 are tested
+and closed as not fixable on this die, with the reasoning and measurements recorded
+above; both come back only if I move to a larger tile. Next is the item-2 chain
+check, then 8. Item 2 now has a concrete target from the corner work: the selector
+path has to pass 888 MHz at the fast corner, not just the 570 MHz of the nominal
+case. Only
 once the architecture is frozen do I lock the acquisition protocol (that part is
 already done in `firmware/`), preregister the analysis, freeze the
 reproducibility release, and tape out.
