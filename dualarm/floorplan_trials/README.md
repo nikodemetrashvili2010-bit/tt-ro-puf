@@ -16,10 +16,14 @@ I measured, because the negative result is worth keeping.
 Both trials keep everything else frozen: same RTL, same macro GDS, same
 constraints, same PDN settings, same tool and PDK. Only macro locations move, and
 in the second trial the row pitch. The configs are committed, so either build can
-be reproduced:
+be reproduced. Run these from `dualarm/`:
 
-    python3 gen_dualarm.py --interleaved            --out src/config_interleaved.json
-    python3 gen_dualarm.py --interleaved --pitch-y 52 --out src/config_interleaved_p52.json
+    python3 gen_dualarm.py --interleaved            --out floorplan_trials/config_interleaved.json
+    python3 gen_dualarm.py --interleaved --pitch-y 52 --out floorplan_trials/config_interleaved_p52.json
+
+They live here and not in `src/` for a practical reason. `src/config.json` is the
+input the shipped chip is built from, and I once copied a trial config over it and
+then rebuilt, which cost me the metrics file for the real build.
 
 Interleaving means skipping the middle column of the 60 um power grid, so a 60 um
 standard-cell channel runs down the centre of the macro field instead of Arm A

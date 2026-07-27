@@ -68,15 +68,16 @@ what each build shows and where the gaps are.
 A render of the dual-arm layout: the matched 4x4 macro grid on the left, the
 auto-placed standard-cell sea on the right.
 
-![chip render](dualarm/build_debug/gds_render.png)
+![chip render](dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.png)
 
 ## Status
 
 The current two-arm design has a coherent DRC/LVS-clean candidate build from
 its own RTL (see [SIGNOFF.md](SIGNOFF.md)). It is a candidate for the TTSKY26c
-shuttle, not a finished tapeout: the high-speed oscillator-to-counter path is
-validated only in behavioural simulation so far, and the remaining hardware
-work is listed in [docs/hardware_todo.md](docs/hardware_todo.md). After fabrication the plan is to measure both arms across
+shuttle, not a finished tapeout: the 32-to-1 selection path from the
+oscillators to the counter has not been simulated at the fast corner yet, and
+the remaining hardware work is listed in
+[docs/hardware_todo.md](docs/hardware_todo.md). After fabrication the plan is to measure both arms across
 chips, voltage, and temperature with the scripts in `firmware/`. What I expect
 on silicon: Arm A shows more cross-chip pattern correlation than Arm B. The
 data can also prove me wrong.

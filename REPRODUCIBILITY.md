@@ -18,6 +18,9 @@ python3 sim/spice/gono/verify.py
 python3 sim/spice/gono/verify_macro.py
 python3 sim/spice/gono/verify_dualarm.py
 python3 sim/spice/gono/verify_provenance.py
+python3 sim/spice/gono/verify_ring_topology.py
+python3 sim/spice/gono/verify_build_bundle.py
+python3 sim/spice/gono/sensitivity.py
 python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
 ```
 
@@ -25,7 +28,9 @@ Each verifier exits nonzero on failure. A pass means the headline numbers
 match the checked-in raw logs and CSV files; independent replication still
 needs a fresh SPICE run against your own PDK install. The provenance check
 binds the archived source and evidence blobs to a reachable historical
-commit.
+commit. The bundle check is narrower and asks one question: did the DEF,
+netlist, SPEF and metrics in an archived build folder come from the same flow
+run. It says nothing about whether that run was any good.
 
 Figures regenerate with the pinned packages in `requirements-analysis.txt`:
 

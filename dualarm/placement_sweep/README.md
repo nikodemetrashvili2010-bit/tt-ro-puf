@@ -24,14 +24,10 @@ tried to describe it that way everywhere it gets cited.
 
 ## Result
 
-Nine builds, all hardened, all with their sixteen rings structurally intact.
-
-| statistic | value |
-|---|---|
-| median dispersion | 5.75% peak-to-peak |
-| range | 4.19% to 6.99% |
-| standard deviation | 0.80% |
-| shipped build (density 60) | 5.53% |
+Nine builds, all hardened, all with their sixteen rings structurally intact. The
+median dispersion is 5.75% peak-to-peak and the nine run from 4.19% to 6.99%,
+with a standard deviation of 0.80%. The shipped build is the density-60 point at
+5.53%, near the middle of the band.
 
 Density on its own barely predicts dispersion (r = 0.32). That is the expected
 outcome: the knob perturbs placement, it is not a physical cause of spread. Ring
