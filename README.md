@@ -68,7 +68,7 @@ what each build shows and where the gaps are.
 A render of the dual-arm layout: the matched 4x4 macro grid on the left, the
 auto-placed standard-cell sea on the right.
 
-![chip render](dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.png)
+![chip render](dualarm/build_current/gds_render.png)
 
 ## Status
 
