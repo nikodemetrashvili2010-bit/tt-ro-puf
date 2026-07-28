@@ -146,6 +146,72 @@ archived Arm A build) are scale estimates that inherit these assumptions,
 which is why the paper quotes them only as motivation for the silicon
 measurement.
 
+## Predicting the layout term and subtracting it
+
+Deterministic ought to mean predictable. If I can work out each ring's share of
+the dispersion in advance and take it back out, the layout term stops being a
+wall and becomes a correction that costs nothing on the die.
+
+The RO-PUF papers already have a correction for systematic variation and it
+works on position. Die gradients are spatially correlated, so you fit a surface
+in x and y and subtract it. That is the thing to beat.
+
+It does not work here. Cross validated against the shipped build's full RC
+frequencies, a quadratic surface in x and y comes out worse than leaving the
+data alone. On the 32-oscillator first build it reaches 27.8%, and that is
+in-sample with six free parameters, so it is a generous number. The plain
+correlations agree: frequency against x is +0.35, against y it is -0.17, and
+against radius from the centroid it is -0.07. A per-instance routing fingerprint
+has no smooth surface under it. Fitting one adds noise instead of removing bias.
+
+The design database is a different story. Every ring has a total capacitance and
+a total series resistance sitting in the SPEF long before a wafer exists. Scored
+the same cross-validated way against the full RC frequencies:
+
+    corrector                        residual spread   removed
+    nothing                                   2.412%         -
+    position, quadratic in x and y            3.165%    -31.2%
+    position, linear in x and y               2.868%    -18.9%
+    ring resistance alone                     2.071%    +14.1%
+    sum of per-net R times C                  1.245%    +48.4%
+    ring capacitance alone                    0.937%    +61.1%
+    capacitance and resistance                0.832%    +65.5%
+
+Two thirds of it, then. Against the mismatch estimate from the previous section,
+0.062% with a sampling interval of 0.051% to 0.080%, the uncorrected dispersion
+is somewhere around 30 to 47 times the random term and the corrected one is 10
+to 16 times. An improvement, and still far too large to leave the mismatch
+readable.
+
+One caveat belongs on the record. Against the lumped decks a capacitance model
+removes 97.6% and lands under the mismatch floor. I do not count that. The
+lumped deck is handed one capacitance per net and nothing else varies, so the
+fit is recovering its own input, and the full RC run is the honest test. What
+the lumped runs are good for is transfer. The first build's fit, a different RTL
+on a different placement, reproduces the shipped build's pattern without being
+refitted.
+
+Why the scalar correctors stop where they do is not mysterious. Two numbers
+cannot stand in for 33 resistors and 65 capacitors per ring. Getting closer
+means predicting from the network rather than from summaries of it, and
+`gen_rc_decks.py` already runs that simulation.
+
+What I cannot settle here is whether any of this survives fabrication. Comparing
+two parasitic models of one layout bounds a pre-fab prediction from below, and
+says nothing about how either model compares to a real die. The per-ring numbers
+are frozen before the chips arrive, so at least the comparison will be a test
+and not a fit.
+
+There is also no noise floor anywhere in this project yet. Compensation is worth
+something only if the residual sits above jitter and supply noise in a real
+reading, and I have measured neither. A 1000-cycle window averages uncorrelated
+jitter down, but averaging it down is not the same as knowing what is left. That
+one goes with the silicon measurements.
+
+The script is `sim/spice/gono/compensation.py`. It recomputes ring capacitance
+from both SPEFs and refuses to run if it disagrees with the checked-in tables by
+more than 0.01 fF.
+
 ## The silicon test
 
 The prediction: under matched measurement conditions, Arm A will show greater

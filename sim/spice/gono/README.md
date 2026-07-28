@@ -40,7 +40,9 @@ inputs and raw logs sit in `dualarm/build_current/`, and Arm B is represented
 separately by the macro run. `verify_ring_topology.py` proves the final
 netlist kept every Arm A ring intact before any deck is trusted, and
 `sensitivity.py` recomputes the outlier leave-one-out numbers and the
-cross-build per-oscillator prediction from raw files. Figures come from
+cross-build per-oscillator prediction from raw files. `compensation.py` asks whether the
+layout term can be predicted and taken back out, and puts a position-based
+correction up against ones built from the SPEF's capacitance and resistance. Figures come from
 `make_figures.py` and `make_dualarm_figure.py`.
 
 ## Reproducing and checking
