@@ -41,6 +41,15 @@ A single extraction of that macro gives a 569.5 MHz reference for the shared
 internal layout, which removes internal-layout variation by construction but
 does not on its own prove a smaller total spread once the chips are made.
 
+Sweeping the same arm over supply and temperature shows that the sensitivity is
+almost entirely common to the sixteen oscillators. Ten percent supply excursions
+leave a ring-to-ring departure of 0.03 percent, and the temperature coefficient
+at 1.80 V is close to zero because the stage sits near the crossover between the
+threshold-voltage and mobility effects, which a supply sweep confirms by moving
+that coefficient from +0.053 to -0.024 percent per degree. Estimated thermal
+jitter and the counter's own granularity put the resolution floor of a single
+reading at 0.0013 percent, 48 times below the mismatch scale.
+
 The contribution is a pre-fabrication diagnostic, traceable in the
 repository, that separates nominal layout bias from the variation a PUF is
 supposed to use. Whether the layout pattern repeats across dies, reduces
@@ -389,6 +398,81 @@ And the extraction itself is a reduced per-net network rather than a field
 solution, with coupling to nets outside a given oscillator still grounded, which
 ranges from four such nets on the lightest ring to seventy-two on the heaviest.
 
+### 5.6 What a single reading can resolve
+
+The residual left by Section 5.5 and the mismatch scale of Section 7 are both
+small, and neither means anything unless a measurement can resolve them. Three
+effects set that limit. The operating point drifts between readings, the
+oscillator carries thermal noise, and the counter returns an integer. The decks
+in `sim/spice/gono/gen_noise_decks.py` address all three. They read the shipped
+netlist and SPEF used everywhere else in this work and they call the same ring
+builder, and the 1.80 V deck is the nominal deck of Section 5.2 under a
+different title, which the analysis verifies against the archived log before
+reporting anything.
+
+Supply comes first. Between 1.62 and 1.98 V the fitted pushing figure is 105.9
+percent per volt, so a ten millivolt change moves a ring by about one percent,
+seventeen times the mismatch scale. A response bit is the sign of a difference
+between two rings sharing one supply, so only the part of the shift that is not
+common can affect it. The sixteen pushing figures span 105.57 to 106.17 percent
+per volt. After removing a single common scaling at each point, the rings depart
+from one another by 0.027 percent standard deviation at 1.62 V and 0.034 percent
+at 1.98 V, with worst-ring departures of 0.048 and 0.063 percent. Ten percent
+supply excursions therefore leave the differential term below the 0.062 percent
+mismatch scale.
+
+Temperature needed checking before it could be reported. At 1.80 V the arm mean
+runs 549.7, 553.4, 554.7, 555.1 and 553.9 MHz at -40, 0, 27, 85 and 125 C, a
+total movement of 0.97 percent with the maximum inside the range rather than at
+an end. A ring oscillator with almost no temperature coefficient is a reason to
+suspect the simulator. Two checks rule that out. Every log states the
+temperature ngspice used and each matches its deck, and four minimal decks that
+request 125 C by different mechanisms all read 125 C back through a resistor of
+known temperature coefficient.
+
+The physical explanation is a threshold-voltage effect and a mobility effect
+that cancel near a particular gate overdrive, and it makes a falsifiable
+prediction, because that balance point has to move with the supply. Repeating
+the two temperature extremes at the two other supplies confirms it. Over the
+same -40 to 125 C span the coefficient is +0.053 percent per degree at 1.62 V,
++0.005 at 1.80 V and -0.024 at 1.98 V, crossing zero close to the nominal
+operating supply. Temperature-aware RO-PUF design has been treated before by
+compensating for the drift [15]; here the operating point happens to sit where
+there is little to compensate. Dispersion is steadier than the mean, moving only
+from 5.66 to 5.36 percent across the five temperatures, so the routing signature
+is nearly independent of temperature over the range a bench measurement will
+see.
+
+Across all eleven operating points, which include both supply extremes, both
+temperature extremes and the four combinations of them, the eight Arm A
+adjacent-pair bits keep their sign. The margin is real but not large. The
+closest pair is separated by 0.270 percent of the arm mean and the largest
+ring-to-ring departure in the box is 0.150 percent, a factor of 1.8. This is a
+statement about one simulated layout at nominal process and not a reliability
+result.
+
+Thermal noise is estimated rather than simulated. A separate deck measures dV/dt
+at the switching threshold on all 31 nodes of three rings, chosen as the
+lightest, median and heaviest by ring capacitance, at a 0.5 ps timestep because
+the measured band is crossed in roughly four picoseconds. Taking the noise
+voltage on a node as the square root of gamma k T over C and dividing by the
+local slope gives a per-transition timing error, and the 62 transitions in one
+period are summed as independent, which follows the capacitance scaling of
+Weigandt, Kim and Gray [13] and the single-ended ring treatment of Hajimiri,
+Limotyrakis and Lee [14]. The result is 0.94, 0.78 and 0.78 ps of period jitter.
+Both inputs are chosen to overstate it, with gamma set to 2 and the capacitance
+taken as the extracted wire capacitance alone, which is less than the real node
+capacitance.
+
+The counting window is 1000 reference-clock cycles at 25 MHz, about 22000 ring
+periods, over which independent period jitter averages down by the square root
+of the count. The 0.94 ps figure becomes 0.00036 percent of frequency. The
+counter is coarser than that. One count in 22189 is 0.00451 percent and the
+rounding error is 0.00130 percent rms, so the instrument rather than the
+oscillator sets the floor. Taking the larger of the two, the resolution floor is
+0.00130 percent, which sits 48 times below the mismatch scale, 207 times below
+the closest pair separation and 640 times below the compensation residual.
+
 ## 6. Matched-macro arm
 
 The matched construction hardens one oscillator as a 60 x 40 micrometre
@@ -478,10 +562,15 @@ overstate the evidence. The Arm B reference is
 one simulation of one macro and cannot quantify fabricated Arm B variation.
 The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
-measurement-system effects are partly characterized: the corner simulations in
-Section 5.4 bound the frequency range and the counter margin, but supply noise,
-ageing, package effects and the measurement instrument itself remain unknown until
-chips exist. Uniqueness, reliability, min-entropy and attack success all need a
+measurement-system effects are partly characterized. The corner simulations in
+Section 5.4 bound the frequency range and the counter margin, and Section 5.6
+measures how the arm responds to supply and temperature and where the resolution
+floor of a single reading sits. Its supply points are static offsets rather than
+a ripple that varies during a reading and reaches different oscillators at
+different phases, and its thermal-noise figure is a first-order estimate from
+node slopes and capacitances rather than a transient noise simulation. Ageing,
+package effects and the measurement instrument itself remain unknown until chips
+exist. Uniqueness, reliability, min-entropy and attack success all need a
 multi-chip data set with a stated threat model. The corner work pairs device
 corners with nominal interconnect rather than pairing the slow corner with maximum
 extracted capacitance and the fast corner with minimum; device spread dominates
@@ -570,3 +659,16 @@ and C. Wachsmann, "PUFs: Myth, Fact or Busted? A Security Evaluation of
 Physically Unclonable Functions (PUFs) Cast in Silicon," *Cryptographic
 Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283-301, 2012.
 https://doi.org/10.1007/978-3-642-33027-8_17
+
+[13] T. C. Weigandt, B. Kim, and P. R. Gray, "Analysis of Timing Jitter in CMOS
+Ring Oscillators," *Proceedings of the IEEE International Symposium on Circuits
+and Systems (ISCAS)*, vol. 4, pp. 27-30, 1994.
+https://doi.org/10.1109/ISCAS.1994.409188
+
+[14] A. Hajimiri, S. Limotyrakis, and T. H. Lee, "Jitter and Phase Noise in Ring
+Oscillators," *IEEE Journal of Solid-State Circuits*, vol. 34, no. 6,
+pp. 790-804, 1999. https://doi.org/10.1109/4.766813
+
+[15] C.-E. Yin and G. Qu, "Temperature-Aware Cooperative Ring Oscillator PUF,"
+*2009 IEEE International Workshop on Hardware-Oriented Security and Trust
+(HOST)*, pp. 36-42, 2009. https://doi.org/10.1109/HST.2009.5225055

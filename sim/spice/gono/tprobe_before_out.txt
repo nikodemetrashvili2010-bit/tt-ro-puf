@@ -1,0 +1,21 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * temperature mechanism probe: before
+
+Doing analysis at TEMP = 125.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+nprobe                                    1.98
+
+
+No. of Data Rows : 59
+vprobe              =  1.980000e+00
+Note: Simulation executed from .control section 

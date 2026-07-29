@@ -45,6 +45,21 @@ layout term can be predicted and taken back out, and puts a position-based
 correction up against ones built from the SPEF's capacitance and resistance. Figures come from
 `make_figures.py` and `make_dualarm_figure.py`.
 
+`gen_noise_decks.py` and `analyze_noise.py` answer a separate question, which is
+what a single reading can resolve at all. The decks sweep supply from 1.62 to
+1.98 V, temperature from -40 to 125 C, and the four corners where the two
+extremes combine, and one deck measures dV/dt at the switching threshold on
+every node of three rings so that thermal noise can be turned into a period
+jitter. The analysis separates the part of each shift that moves all sixteen
+rings together from the part that differs between them, since only the second
+kind can flip a bit, and it compares the resulting floor against the mismatch
+scale and the compensation residual. It also verifies that the 1.80 V deck
+reproduces the archived nominal frequencies and that every log ran at the
+temperature its deck asked for. `python3 analyze_noise.py --selftest` checks the
+arithmetic against planted answers without needing ngspice. The four
+`tprobe_*.spice` decks are a one-off check that the SKY130 corner library really
+does let a temperature request through.
+
 ## Reproducing and checking
 
     python3 verify.py

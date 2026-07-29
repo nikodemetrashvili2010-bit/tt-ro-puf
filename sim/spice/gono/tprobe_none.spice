@@ -1,0 +1,12 @@
+* temperature mechanism probe: none
+.lib "/home/pc/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+* temperature readback, isolated from the rings
+Iprobe 0 nprobe DC 0.001
+Rprobe nprobe 0 1000 tc1=0.01
+
+.tran 1n 10n
+.control
+run
+meas tran vprobe FIND v(nprobe) AT=5n
+.endc
+.end

@@ -213,6 +213,15 @@ process, voltage and temperature, which is a much stronger statement than the
 nominal result alone and predicts the pattern should reappear on silicon measured
 at any temperature.
 
+A finer sweep now sits alongside this one. The three corners move device, supply
+and temperature together, which bounds the range but cannot say which axis did
+what. `gen_noise_decks.py` holds the devices typical and moves supply and
+temperature one at a time instead, so the supply pushing figure and the
+temperature coefficient come out separately, and it splits each shift into the
+part that moves all sixteen rings together and the part that does not. Only the
+second kind can flip a bit. That work is written up in the results document
+under what a reading can resolve.
+
 Still owed here: these pair device corners with nominal interconnect. The fuller
 job pairs ss with the max SPEF and ff with the min SPEF. Device spread dominates
 the frequency bound, so the bound stands, but the RC pairing would tighten it.

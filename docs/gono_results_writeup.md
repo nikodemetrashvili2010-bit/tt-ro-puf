@@ -202,15 +202,195 @@ says nothing about how either model compares to a real die. The per-ring numbers
 are frozen before the chips arrive, so at least the comparison will be a test
 and not a fit.
 
-There is also no noise floor anywhere in this project yet. Compensation is worth
-something only if the residual sits above jitter and supply noise in a real
-reading, and I have measured neither. A 1000-cycle window averages uncorrelated
-jitter down, but averaging it down is not the same as knowing what is left. That
-one goes with the silicon measurements.
+Whether the residual is worth chasing at all depends on what a single reading
+can resolve, and until now nothing in this project answered that. The section
+below answers it in simulation. The short version is that the residual sits
+about 640 times above the floor, so it is not buried.
 
 The script is `sim/spice/gono/compensation.py`. It recomputes ring capacitance
 from both SPEFs and refuses to run if it disagrees with the checked-in tables by
 more than 0.01 fF.
+
+## How many bits does the design database already decide?
+
+Everything above is frequencies, and what the chip hands out is bits. The two
+are not the same thing, so it is worth converting one into the other.
+
+The core compares neighbouring rings, 0 against 1 and so on up, which makes
+eight bits out of Arm A. Each pair's frequency difference has two parts.
+Routing sets one of them and the mask freezes it, so it is the same on every die
+and it can be read out of the SPEF before anything is fabricated. Mismatch sets
+the other, and that one is different on every die. The bit is the sign of the
+sum. So if the routing part is much larger than the mismatch part, the sign was
+settled at layout time and every chip returns the same bit.
+
+Writing the per-die difference as a fixed offset plus noise, with the mismatch
+estimate of 0.062% per ring giving 0.088% per pair across two independent rings,
+the across-die probability and its entropy follow directly:
+
+    pair    routing offset   offset/sigma   entropy   guessed
+     0/1           -0.391%            4.5     0.000    100.0%
+     2/3           -0.041%            0.5     0.904     68.1%
+     4/5           -0.122%            1.4     0.411     91.7%
+     6/7           -4.416%           50.4     0.000    100.0%
+     8/9           +2.866%           32.7     0.000    100.0%
+    10/11          -4.796%           54.7     0.000    100.0%
+    12/13          -1.561%           17.8     0.000    100.0%
+    14/15          -3.654%           41.7     0.000    100.0%
+
+Six of the eight bits land under a hundredth of a bit of entropy. Those are
+fixed. Arm A's response carries about 1.3 bits of device-specific entropy rather
+than 8, and someone holding nothing but the public design files would call 7.6
+of the 8 correctly on average. Pushing the mismatch estimate to the ends of its
+sampling interval moves that to 1.1 to 1.5 bits and 7.5 to 7.7 correct, so the
+conclusion does not hinge on the exact mismatch figure.
+
+The two pairs that survive are the two the item 7 comparison already flagged.
+They are also the two where the lumped and full RC models disagree about which
+ring is faster. That is consistent rather than coincidental: a pair only stays
+ambiguous when its separation is small enough for the choice of parasitic model
+to matter, and small separations are exactly the ones mismatch can still flip.
+On the other six the cheap model and the careful one agree.
+
+Arm B needs no arithmetic here. Sixteen instances of one macro have identical
+internal routing, so the offset is zero, every bit is a coin flip decided by
+mismatch, and the design files predict none of them.
+
+This is the part I think matters most for an open shuttle. My GDS, netlist and
+extracted parasitics are all on GitHub. For a proprietary chip an attacker would
+have to obtain the design database first. Here it is a download.
+
+The obvious limit is that eight bits is a small response and both arms are still
+simulations. The offsets in that table are model output, not measurement, and a
+die that disagrees with them refutes the whole argument. That is what the
+tapeout is for. Script is `sim/spice/gono/predictable_bits.py`.
+
+## What a reading can resolve
+
+A residual of 0.83 percent and a mismatch scale of 0.062 percent are only
+interesting if a measurement can see numbers that small. Three things decide
+that. The operating point can drift between readings, the oscillator has thermal
+noise of its own, and the counter returns an integer. I looked at all three. The
+last one turned out to be the limit, which I did not expect.
+
+The decks come from `gen_noise_decks.py`. They read the same shipped netlist and
+SPEF as everything else here and they call `gen_dualarm_decks.py`'s own ring
+builder, so the topology cannot drift between the two scripts. The 1.80 V deck
+is the shipped nominal deck with a different title line. `analyze_noise.py`
+refuses to report anything unless that deck returns the archived nominal
+frequencies, and it checks the temperature ngspice printed in each log against
+the temperature the deck asked for.
+
+### Supply
+
+The ring is very sensitive to its supply. Across 1.62 to 1.98 V the fitted
+pushing figure is 105.9 percent per volt, so ten millivolts move a ring by about
+one percent. That is seventeen times the mismatch scale. If the PUF read
+absolute frequencies this would sink it.
+
+It does not read absolute frequencies. A bit is the sign of a difference between
+two rings on one die sharing one supply, so the part of the shift that hits all
+sixteen equally cancels. The question is how nearly it does. The sixteen pushing
+figures span 105.57 to 106.17 percent per volt, a spread of about half a percent
+of the value. Taking out a single common scaling at each point, the rings depart
+from each other by 0.027 percent standard deviation at 1.62 V, worst ring 0.048,
+and 0.034 percent at 1.98 V, worst ring 0.063. Those are ten percent supply
+excursions, well past what a regulator does, and the differential term still
+lands under the mismatch scale.
+
+### Temperature
+
+This one surprised me and I nearly deleted it. At 1.80 V the arm mean runs
+549.7 MHz at -40 C, 553.4 at 0, 554.7 at 27, 555.1 at 85, then back down to
+553.9 at 125. The whole 165 degree range moves it by 0.97 percent and the
+fastest point sits in the middle. My first thought was that the temperature card
+never reached the models, because a ring oscillator that ignores temperature is
+not a ring oscillator.
+
+Two checks said otherwise. Every ngspice log states the temperature it ran at,
+and all five matched their decks. Then four tiny decks asked for 125 C in four
+different ways, using a resistor with a known temperature coefficient as the
+readback, and every one of them came back at 125 C.
+
+So I went after the physical explanation instead. A CMOS stage has two competing
+temperature effects. Threshold voltage falls with heat, which speeds the stage
+up, and carrier mobility falls with heat, which slows it down. Near a particular
+gate overdrive the two cancel. If that is what is happening at 1.80 V, the
+cancellation belongs to the overdrive and not to the circuit, so moving the
+supply has to move it. Less overdrive should give a positive coefficient and
+more should give a negative one. That prediction can fail.
+
+It did not. Over the same -40 to 125 C span the coefficient is +0.053 percent
+per degree at 1.62 V, +0.005 at 1.80 V, and -0.024 at 1.98 V. The sign crosses
+zero close to the supply the chip actually runs at. The flat response is the
+circuit.
+
+For my measurement plan that is convenient. I have no temperature chamber and
+the chips will be read in a room, so a design whose frequency barely moves
+between 0 and 85 C is the one I want. The dispersion is steadier than the mean:
+across those five temperatures it goes 5.66, 5.58, 5.53, 5.43, 5.36 percent. The
+routing signature is close to temperature independent.
+
+### The eight bits
+
+Eleven operating points now exist. Both supply extremes, both temperature
+extremes, and the four combinations of them. All eight Arm A pair bits keep the
+same sign at every one.
+
+That is less comfortable than it sounds. The tightest pair is separated by 0.270
+percent of the arm mean, and the largest ring-to-ring departure anywhere in the
+box is 0.150 percent, at 1.98 V and 125 C. The margin on that pair is a factor
+of 1.8, not orders of magnitude. A pair sitting twice as close would flip
+somewhere in the box, and on a real die mismatch will shift every separation.
+Eight bits from one simulated layout is not a reliability result.
+
+### Thermal noise
+
+The oscillator's own noise needs a different deck. `noise_jitter.spice` runs
+three rings, the lightest, the median and the heaviest by ring capacitance, and
+measures dV/dt at the switching threshold on all 31 nodes of each, rising and
+falling. It runs at a 0.5 ps step rather than 5 ps, because the band it times is
+crossed in about four picoseconds and a coarse step would return the
+interpolation instead of the circuit.
+
+Noise on a node moves the crossing time by roughly the noise voltage divided by
+that slope, and the noise voltage on a capacitance is about the square root of
+gamma k T over C. One period contains 62 transitions and I add them as
+independent. That gives period jitter of 0.94, 0.78 and 0.78 ps for rings 7, 13
+and 14. The scaling follows Weigandt, Kim and Gray, and the single-ended ring
+case is treated by Hajimiri, Limotyrakis and Lee.
+
+Both assumptions push the answer upward on purpose. I set the excess noise
+factor gamma to 2, the short-channel end. The capacitance is the extracted wire
+capacitance alone, which is smaller than the real node capacitance once the
+driven gate is counted, and a smaller capacitance means more noise. This is a
+first-order estimate with a known direction of error, not a transient noise
+simulation.
+
+Counting flattens it. The window is 1000 reference cycles at 25 MHz, so 40
+microseconds, which is about 22000 ring periods. Independent period jitter
+averages down as the square root of that count, and 0.94 ps becomes 0.00036
+percent of the frequency.
+
+### The counter is the floor
+
+Twenty-two thousand counts means one count is 0.0045 percent and the rounding
+error is 0.0013 percent rms. That is roughly four times the thermal figure. The
+oscillator is quieter than the thing reading it, which is the opposite of what I
+assumed when I started.
+
+Taking the larger of the two, the floor is 0.0013 percent. The mismatch scale
+sits 48 times above it. The tightest pair separation sits 207 times above it.
+The compensation residual sits 640 times above it. So the residual is not hiding
+under noise, and neither is the device-specific entropy the whole design depends
+on.
+
+What this does not cover. The supply points are static offsets, not a ripple
+that moves during a reading and catches different rings at different phases.
+Ageing, package and the measurement instrument are absent. Every number is
+nominal process on one layout. It is a simulated floor, and the silicon phase is
+what turns it into a measured one. Scripts are
+`sim/spice/gono/gen_noise_decks.py` and `analyze_noise.py`.
 
 ## The silicon test
 
@@ -229,6 +409,8 @@ collected in the paper's limitations section rather than repeated here.
   `verify_dualarm.py`: Arm A in the archived dual-arm layout.
 - `gen_macro_deck.py`, `ro_macro_matched*.spice`, `macro*_out.txt`,
   `verify_macro.py`: the hardened-macro reference.
+- `gen_noise_decks.py`, `noise_*.spice`, `noise_*_out.txt`, `tprobe_*`,
+  `analyze_noise.py`: supply, temperature and the resolution floor.
 - `analyze.py` plus the figure scripts: descriptive statistics and plots.
 - `first_build/` and `dualarm/build_debug/`: routed inputs for the two Arm A
   analyses.
