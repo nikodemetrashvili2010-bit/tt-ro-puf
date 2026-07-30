@@ -11,11 +11,18 @@ extraction actually recorded:
   the split of capacitance between the two ends of a net, collapsed to one point;
   the coupling capacitance, which gets grounded as if the neighbour were quiet.
 
-The third one is the interesting one. In this design 47 of the 49 coupling
-capacitors on a ring are between nodes of the same ring, mostly to the immediately
-neighbouring inverter. Those neighbours swing in antiphase, so grounding the
-coupling understates the load it presents, while a real coupling capacitor between
-the two moving nodes reproduces it.
+The third one is the interesting one. A ring here carries 23 to 39 coupling
+capacitors whose far end is another node of the same ring, mostly the immediately
+neighbouring inverter, and 4 to 72 more whose far end belongs to something else.
+Neighbouring inverters swing in antiphase, so grounding the coupling understates
+the load it presents, while a real coupling capacitor between the two moving nodes
+reproduces it.
+
+Counting those internal ones takes care. The SPEF records each of them under both
+of the nets it joins, with the same value in each place, so a pass over all 31
+ring nets meets every internal coupling twice. The second sighting is dropped
+here. An earlier version of this script did not drop it and built each of those
+capacitors twice.
 
 This script emits, for one oscillator index, two decks that differ only in the
 parasitic model:
@@ -165,7 +172,13 @@ def build(ro, spef_path, cn, lumped):
     if missing:
         raise SystemExit(f"oscillator {ro}: SPEF lacks ring nets {missing[:5]}")
 
-    body, stats = [], dict(res=0, cg=0, ccoup=0, cgrounded_ext=0, shorted=0)
+    body, stats = [], dict(res=0, cg=0, ccoup=0, cgrounded_ext=0, shorted=0,
+                           coup_listed_twice=0)
+    # A coupling capacitor between two nets of this ring is one component, but
+    # IEEE 1481 records it in the *CAP block of both nets with the same value.
+    # Walking all 31 nets therefore reaches every internal coupling twice, so the
+    # second sighting has to be dropped or the capacitor is built twice over.
+    seen_coup = {}
 
     for lbl, num in sorted(labels.items()):
         net = nets[num]
@@ -194,6 +207,15 @@ def build(ro, spef_path, cn, lumped):
                 stats["cg"] += 1
             elif na is not None and nb is not None:
                 # both ends move: model the coupling as it really is
+                key = (min(na, nb), max(na, nb))
+                if key in seen_coup:
+                    if abs(seen_coup[key] - pf) > 1e-9:
+                        raise SystemExit(
+                            f"oscillator {ro}: coupling {key} appears twice with "
+                            f"different values, {seen_coup[key]} and {pf} pF")
+                    stats["coup_listed_twice"] += 1
+                    continue
+                seen_coup[key] = pf
                 body.append(f"Cc{stats['ccoup']} {na} {nb} {pf*1e-12:.6e}")
                 stats["ccoup"] += 1
             else:
@@ -252,7 +274,8 @@ def main(argv=None):
         else:
             print(f"{os.path.basename(path)}: {stats['res']} resistors, "
                   f"{stats['cg']} grounded caps, {stats['ccoup']} real coupling caps, "
-                  f"{stats['cgrounded_ext']} external couplings grounded")
+                  f"{stats['cgrounded_ext']} external couplings grounded, "
+                  f"{stats['coup_listed_twice']} second listings dropped")
     print(f"corner {args.corner}: {cn['temp']:g} C, {cn['supply']:g} V")
     return 0
 

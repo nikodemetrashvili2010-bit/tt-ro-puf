@@ -9,7 +9,7 @@ move when the operating point moves, and how much does it move when nothing
 moves at all.
 
 The reason it matters is that the compensation residual is only interesting if a
-real measurement can resolve it. A residual of 0.83 percent means nothing if a
+real measurement can resolve it. A residual of 0.18 percent means nothing if a
 returned count wanders by more than that between windows.
 
 Three sets of decks come out of here, all built from the same shipped netlist

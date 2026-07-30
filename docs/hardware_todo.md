@@ -228,7 +228,7 @@ the frequency bound, so the bound stands, but the RC pairing would tighten it.
 Tools: `gen_dualarm_decks.py --corner {tt,ss,ff}`, `analyze_corners.py`,
 `gen_flop_sweep.py --corner ff`.
 
-## 7. Distributed-RC validation (done 2026-07-25, Arm A)
+## 7. Distributed-RC validation (done 2026-07-25, redone 2026-07-30 after a bug, Arm A)
 
 The go/no-go deck hangs each ring net's total SPEF capacitance on one node, which
 drops the series resistance, collapses the split between the two ends of a net,
@@ -237,39 +237,55 @@ Arm A oscillators from the SPEF's actual network instead and simulated both, so 
 only difference between the two runs is the parasitic model.
 
 What the SPEF actually holds, per ring: 33 resistors, 65 grounded capacitors, and
-between 47 and 62 coupling capacitors whose far end is another node of the same
+between 23 and 39 coupling capacitors whose far end is another node of the same
 ring, usually the neighbouring inverter. That last part is the interesting bit.
 Neighbouring inverter outputs swing in antiphase, so grounding those couplings
 understates them, while a real capacitor between the two moving nodes reproduces
 them. The parser accounts for 100% of each net's declared capacitance, which is how
 I know nothing is being silently dropped.
 
-Results. Every ring runs slower with the real network, from -2.16% on the lightest
-to -5.69% on the worst, and the shift tracks ring load at r = -0.589. Because the
-heavier rings lose more, the dispersion gets wider rather than narrower: 5.55%
-lumped becomes 7.60%. So the lumped model I have been quoting is conservative. It
-understates the effect by about a third instead of inventing it, which is the
-opposite of what a reviewer would suspect from a simplification.
+The coupling count is also where I got this section wrong the first time, and it
+took until 2026-07-30 to catch. A coupling capacitor joins two nets, and IEEE 1481
+records it under both of them with the same value, so walking the 31 nets of one
+ring reaches every internal coupling twice. I wrote it out both times. Each of
+those capacitors was therefore built twice in the deck, which added 0.56 to 2.08 fF
+per ring, five to fourteen percent of the ring's extracted load. What hid it was
+the sentence above about accounting for 100% of each net's declared capacitance.
+That test passes either way, because each net does declare its share of a shared
+capacitor. `gen_rc_decks.py` now drops the second sighting, prints how many it
+dropped, and stops if a repeated pair ever carries two different values. Everything
+below is from the rebuilt decks, and the old figures are in the git history if
+anyone wants the comparison.
+
+Results. Every ring runs slower with the real network, from -0.66% on the lightest
+to -1.34% on the worst, and the shift tracks ring load at r = -0.429. Because the
+heavier rings lose more, the dispersion gets slightly wider rather than narrower:
+5.55% lumped becomes 5.84%. So the lumped model I have been quoting is conservative,
+by about five percent of the figure. My double-counted version said a third, which
+flattered the simplification I was trying to defend.
 
 The per-oscillator fingerprint survives. Rank correlation between the two models is
-0.912 and the fastest ring is RO7 either way. The slowest label moves from RO14 to
-RO2, but those two sat 0.7% apart under the lumped model, so that is a near-tie
-changing hands rather than the pattern breaking.
+0.994, and both the fastest and the slowest ring are RO7 and RO14 either way. Under
+the double-counted decks the slowest label moved to RO2, so that reordering was an
+artefact too.
 
-The finding that changes what I can claim is about the response bits. The design
-compares neighbouring oscillators, and two of those eight comparisons reverse under
-the fuller model. Both reversed pairs were separated by 0.28% and 0.32%. Every pair
-separated by 0.69% or more held. So predicted bits from pairs closer than roughly a
-third of a percent are model-dependent and I should not present them as
-predictions. That lines up with the low-margin flagging already in
-`firmware/analyze_counts.py`, and it gives a pre-silicon reason to expect exactly
-which pairs will be fragile.
+The response bits survive as well. The design compares neighbouring oscillators and
+none of the eight comparisons reverses, including the two closest pairs at 0.28%
+and 0.32%. I am still not going to present bits from pairs that close as
+predictions, because a third of a percent is inside the range that separates two
+plausible parasitic models of the same layout, and `firmware/analyze_counts.py`
+already flags them as low margin when it scores real counts. What I can no longer
+claim is a pre-silicon list of which pairs will flip, since the two models now
+agree everywhere.
 
 My first pass at the acceptance test asked for identical rankings across all
 sixteen rings. That was the wrong test: several rings sit within a few tenths of a
 percent, so near-ties reorder without telling you anything. The check now reports
 spread agreement, rank correlation, the pair-bit reversals with their gaps, and the
-load dependence of the shift. It still fails a scrambled control.
+load dependence of the shift. It still fails a scrambled control. Worth noting that
+none of those checks caught the duplicate capacitors, since they all compare one
+model against another rather than either against the component counts. The new
+dropped-listing count in the generator output is the check that would have.
 
 Two things remain. The Arm B macro has its own SPEF and has not been redone this
 way, so the 569.5 MHz reference is still lumped-only. And "distributed" here means

@@ -1,83 +1,102 @@
-# Quantifying Routing-Induced Frequency Dispersion in an Open-Source SKY130 Ring-Oscillator PUF: A Pre-Silicon Study
+# How Much of an RO-PUF Response Is Decided Before Fabrication? A Pre-Silicon Study of an Open-Source SKY130 Design
 
 **Nikoloz Demetrashvili** · Student researcher · Georgia
 
-Draft, 2026-07-27
+Draft, 2026-07-30
 
 ---
 
 ## Abstract
 
 A ring-oscillator physical unclonable function (RO-PUF) turns manufacturing
-variation between nominally identical oscillators into a device secret. The
-physical implementation can add a frequency pattern of its own on top of that
-variation. This paper quantifies one component of that pattern, the
-instance-to-instance routing capacitance assigned by the automated
-OpenLane/OpenROAD flow on the open SKY130 process design kit, using a reduced
-model: nominal transistor-level models of the verified post-route oscillator
-topology, loaded with each ring net's total extracted capacitance from the
-final SPEF. No fabricated devices have been measured yet, and distributed
-resistance and coupling are not represented.
+variation between nominally identical oscillators into a device secret. Building
+one through an automated ASIC flow adds a second source of frequency difference,
+the parasitic load the router assigns to each instance, and that one is set by
+the mask rather than by the die. On an open shuttle it is also public. The GDS,
+the post-route netlist and the parasitic extraction are downloads. This paper
+asks how much of the response is left for the silicon to decide once those files
+exist.
 
-Under this model, the 16 automatically placed oscillators of Arm A in the
-candidate build spread 5.53% peak to peak (population SD 1.65%, mean
-554.7 MHz), with extracted ring capacitance running from 10.9 to 17.0 fF.
-Because a single build only shows one draw of the router, I repeated the whole
-flow nine times over a narrow band of placement density with the source,
-floorplan, constraints, tool, and PDK frozen. Dispersion across those nine
-builds has a median of 5.75% and a range of 4.19% to 6.99%. What does not move
-is the mechanism: every build gives a frequency-capacitance correlation of
-about -0.999, and the fitted slope of -4.94 MHz/fF in the candidate build
-matches the -4.93 MHz/fF obtained earlier from an independent 32-oscillator
-layout. That earlier fit also predicts this build's 16 individual frequencies
-to a mean absolute error near 0.1%. An older build reported 10.5%, well above
-the sweep, and it owed most of that range to one oscillator the router had
-loaded with 24.4 fF; no oscillator in the candidate build is loaded that way. So
-a peak-to-peak number describes the build it came from, and I report the nine
-builds together for that reason.
+For the design I am taping out, less than I expected. Arm A of the shipped build
+forms eight response bits by comparing neighbouring oscillators. Under a
+first-order mismatch estimate of 0.062% per ring, six of those eight carry under
+a hundredth of a bit of across-die entropy, the arm holds 0.46 bits out of 8,
+and someone with nothing but the public design files would call 7.91 of the 8
+correctly on average. Moving the mismatch estimate to the ends of its sampling
+interval gives 0.30 to 0.69 bits and 7.84 to 7.95 bits guessed, so the
+conclusion does not rest on the exact figure.
 
-The comparison arm, Arm B, uses one hardened oscillator macro sixteen times.
-A single extraction of that macro gives a 569.5 MHz reference for the shared
-internal layout, which removes internal-layout variation by construction but
-does not on its own prove a smaller total spread once the chips are made.
+The correction the RO-PUF literature applies to systematic variation does not
+reach this effect. Scored by leave-one-out cross validation against the shipped
+build's full RC frequencies, a quadratic surface in x and y comes out 20.0%
+worse than leaving the data alone, because a per-instance routing fingerprint
+has no smooth spatial surface under it. Reading the design database does work:
+ring capacitance and series resistance together remove 89.5% of the dispersion
+out of sample, from 1.739% down to 0.183%.
 
-Sweeping the same arm over supply and temperature shows that the sensitivity is
-almost entirely common to the sixteen oscillators. Ten percent supply excursions
-leave a ring-to-ring departure of 0.03 percent, and the temperature coefficient
-at 1.80 V is close to zero because the stage sits near the crossover between the
-threshold-voltage and mobility effects, which a supply sweep confirms by moving
-that coefficient from +0.053 to -0.024 percent per degree. Estimated thermal
+The mechanism behind the fixed term is measured rather than assumed. Across nine
+builds that differ only in target placement density, the 16 automatically placed
+oscillators of Arm A spread 4.19% to 6.99% peak to peak with a median of 5.75%,
+and every build gives a frequency-capacitance correlation near -0.999 with a
+fitted slope near -4.94 MHz/fF that transfers between independent layouts. The
+comparison arm places 16 copies of one hardened macro, which sets the routing
+offset of every pair to zero by construction and hands all 8 bits back to
+mismatch.
+
+Whether any of this is resolvable is checked separately. Estimated thermal
 jitter and the counter's own granularity put the resolution floor of a single
-reading at 0.0013 percent, 48 times below the mismatch scale.
+reading at 0.0013%, which is 141 times below the compensation residual, and the
+eight bits keep their sign across eleven supply and temperature points.
 
-The contribution is a pre-fabrication diagnostic, traceable in the
-repository, that separates nominal layout bias from the variation a PUF is
-supposed to use. Whether the layout pattern repeats across dies, reduces
-uniqueness, or enables a practical prediction attack is left for the silicon
-phase, not claimed here.
+All of it is simulation of one design, the response is only eight bits wide, and
+the predicted offsets are model output rather than measurement. A fabricated die
+that disagrees with them refutes the argument, which is what the tapeout is for.
 
 ## 1. Introduction
 
-An RO-PUF compares the frequencies of nominally identical ring oscillators
-and converts comparisons into response bits [1]. Ideally the useful
-chip-to-chip differences come from manufacturing variation. In practice,
-placement and routing give instances different parasitic loads, which adds a
-deterministic component to the comparison.
+An RO-PUF compares the frequencies of nominally identical ring oscillators and
+turns each comparison into a response bit [1]. The security argument behind it
+is that those frequencies come from manufacturing variation, which nobody
+controls and nobody can read off a drawing.
 
-A fixed layout pattern is not automatically a security failure. Random
-mismatch may be larger, comparisons may cancel shared structure, and response
-processing may absorb bias. But a layout component that repeats across chips
-could reduce uniqueness or make some comparisons predictable, and deciding
-between those outcomes takes measurements from multiple fabricated devices.
+Place and route weakens part of that argument. The tool gives each instance its
+own wire lengths, its own via counts and its own neighbours, so oscillators that
+are identical in the source arrive at the end of the flow carrying materially
+different parasitic loads. Every die cut from that mask inherits the same
+pattern. The pattern is also written down, because the extraction the flow runs
+to check timing already lists a capacitance and a resistance for every net in
+every ring.
 
-This paper reports the pre-silicon part of that investigation. The question
-is narrow: with transistor parameters held fixed, how much frequency
-variation does the physical implementation of one open-source RO-PUF design
-introduce? I contribute nominal post-layout results for two automatically
-placed oscillator arrays, a capacitance-based explanation for the observed
-spread, a matched-macro arm that gives every instance the same internal
-geometry, the scripts to run the same diagnostic before any fabrication, and
-the specific predictions I plan to test once chips come back.
+In a closed flow that extraction is an internal file. In an open one it is not.
+This design goes to a TinyTapeout shuttle, and the repository holding its GDS,
+its post-route netlist and its SPEF is public, which is the normal way that
+community works. So the question here is not whether an automated flow adds a
+systematic term. Maiti and Schaumont measured systematic variation in RO-PUFs
+years ago [2], and the effect is expected. The question is how much of the
+response someone can work out from files they can download, holding no device
+and no challenge-response pairs.
+
+That framing changes what counts as evidence. A dispersion figure in megahertz
+does not answer it, because a PUF hands out signs of differences rather than
+frequencies, and a large shared shift cancels in a comparison while a small
+uncancelled one can flip a bit. The quantity that answers it is the across-die
+entropy of each response bit, which is what this paper computes.
+
+What I contribute is a per-bit predictability figure for one open-flow RO-PUF,
+worked out entirely from its public extraction and frozen before any chip
+exists. Alongside it I show that the position-based correction the literature
+uses for systematic variation actually makes things worse here under cross
+validation, while the design database removes almost nine tenths of the term. The
+same die carries a matched-macro arm that drives the predictable component to
+zero by construction, so the mitigation is tested rather than proposed. I also
+measure what a single reading can resolve, since a residual that sits under the
+instrument's floor would not be worth arguing about. All the scripts run on the
+flow's own outputs, so the same check works on any design before it is
+fabricated.
+
+Everything below is pre-silicon. The predicted offsets are the output of a model
+of one layout, and a measured die is what turns them into a result or refutes
+them.
 
 ## 2. Background and related work
 
@@ -97,14 +116,29 @@ predictor to beat the relevant baseline [4]. That is important
 counterevidence: layout bias has to be judged together with the comparison
 scheme, the mismatch distribution, and the attacker model.
 
-Open-source ASIC flows allow an experiment that closed flows make awkward:
-the designer can read the routed netlist and the parasitic extraction before
+What an attacker needs is the part of that literature closest to this paper.
+Modelling attacks fit a predictor to challenge-response pairs read out of a
+working device, which is how configurable ring-oscillator PUFs were broken [8].
+Shiozaki and Fujino went at an ASIC RO-PUF physically and recovered 94.2% of its
+response from a single electromagnetic trace, using the geometric regularity of
+the oscillator array to locate the active ring; that needs the packaged part and
+a near-field probe [16]. Compensation schemes that model systematic variation
+have to fit their surface on a population of measured dies before they can
+correct anything [2]. From the constructive direction, Aljafar and colleagues
+manipulate local layout effects to tune ring-oscillator frequency in a
+predictable, repeatable way and confirm it on 65 nm silicon [17], which is the
+same determinism this paper treats as a leak. Maes gives the standard treatment
+of the entropy and unpredictability properties a PUF is supposed to have [18].
+
+Every one of those needs either a fabricated device or a population of them.
+Open-source ASIC flows remove that requirement, because the designer, and anyone
+else, can read the routed netlist and the parasitic extraction before
 fabrication instead of treating the implementation as opaque.
 OpenLane/OpenROAD [9] and the open SKY130 PDK [10] provide that setting, and
 a TinyTapeout RO-PUF project shows the circuit family works in the same
-ecosystem [11]. What I did not find is the measurement this paper makes: the
-nominal frequency component tied to instance-dependent routing in one
-automated ASIC layout, quantified from the flow's own extraction.
+ecosystem [11]. What I did not find is the pre-fabrication version of the
+question: for a design whose extraction is public, how many response bits does
+that file already decide, with no device access at all.
 
 ## 3. Design under test
 
@@ -228,6 +262,19 @@ For the matched arm, the hardened macro is extracted and simulated once.
 The 16 instances share one internal GDS, so this single result serves as
 the internal-layout reference for all of them.
 
+Two analyses in Sections 6 and 7 use the same files a second time, without
+running SPICE. The first scores correctors against measured frequencies by
+leave-one-out cross validation, refitting with each oscillator held out in turn
+and collecting the residual on the held-out point, which matters because a
+quadratic surface has six free parameters against sixteen oscillators and would
+otherwise flatter itself. Frequencies are centred as a fraction of the arm mean,
+since a PUF reads the pattern across oscillators and not the absolute value. The
+second converts frequencies into bits by writing each pair's per-die difference
+as a fixed routing offset plus a Gaussian mismatch term, then taking the sign.
+Both scripts recompute ring capacitance from the SPEF and stop if the result
+disagrees with the checked-in tables by more than 0.01 fF, so a mismatched file
+set fails loudly instead of quietly.
+
 For each automatically placed array I report mean, standard deviation,
 range, peak-to-peak spread relative to the mean, and the Pearson correlation
 between frequency and extracted ring capacitance. Instances inside one
@@ -239,7 +286,7 @@ the only spread-producing input to the model, so a strong frequency-capacitance 
 confirms the model behaves; the spread it produces, and the slope, are the
 physically interesting parts.
 
-## 5. Automatically placed arrays
+## 5. The layout term in automatically placed arrays
 
 ### 5.1 Earlier 32-oscillator layout
 
@@ -266,7 +313,7 @@ Their nominal post-layout frequencies average 554.7 MHz and span 30.7 MHz from
 end to end, which is 5.53% of the mean, with a population SD of 9.15 MHz
 (1.65%). The slowest ring is RO14 at 540.0 MHz carrying 17.0 fF; the fastest is
 RO7 at 570.7 MHz carrying 10.9 fF. Correlation against extracted ring
-capacitance is -0.9997 and the fitted slope is -4.94 MHz/fF (Figure 4). The
+capacitance is -0.9997 and the fitted slope is -4.94 MHz/fF (Figure 6). The
 loads in this build form a fairly smooth band rather than a distribution with a
 straggler: the two heaviest rings differ by 0.34 fF, so no single instance
 dominates the range, and dropping any one oscillator leaves the spread between
@@ -305,7 +352,7 @@ nine builds hardened, and all nine kept every ring intact. Read the result as a
 placement-sensitivity band rather than a seed distribution.
 
 Dispersion across the nine builds has a median of 5.75%, a range of 4.19% to
-6.99%, and a standard deviation of 0.80% (Figure 5). The candidate build sits at
+6.99%, and a standard deviation of 0.80% (Figure 3). The candidate build sits at
 5.53%, close to the middle. Density itself explains little of the variation
 (*r* = 0.32), which is what I expected: the knob is a way to perturb placement,
 not a physical cause. Ring capacitance spread and frequency spread move
@@ -321,7 +368,7 @@ placement sensitivity rather than run-to-run noise. Against that band the older
 this sweep before writing up that build, I would not have quoted its number on
 its own.
 
-![Figure 5. Nominal Arm A dispersion for nine builds that differ only in target placement density. The dashed line is the median, and the highlighted point is the shipped configuration.](../dualarm/placement_sweep/placement_sweep.png)
+![Figure 3. Nominal Arm A dispersion for nine builds that differ only in target placement density. The dashed line is the median, and the highlighted point is the shipped configuration.](../dualarm/placement_sweep/placement_sweep.png)
 
 ### 5.4 The dispersion across process, voltage and temperature
 
@@ -359,38 +406,48 @@ into a silent wrap that returns a believable smaller count instead of an error.
 Section 4 grounds each net's total capacitance on a single node. That discards the
 series resistance, collapses the split of capacitance between the ends of a net,
 and treats coupling as though the far end were held quiet. The last of those is the
-one to worry about here, because 47 to 62 of each ring's coupling capacitors have
+one to worry about here, because 23 to 39 of each ring's coupling capacitors have
 their far end on another node of the same ring, usually the neighbouring inverter.
 Adjacent inverter outputs move in antiphase, so grounding such a coupling
 understates the load it presents.
 
-To test it I rebuilt all sixteen oscillators from the extraction's own network,
-with per-node capacitances, the series resistors as extracted, and node-to-node
-capacitors wherever both ends lie inside the oscillator, then simulated the lumped
-and distributed versions of each ring under otherwise identical conditions. The
-reconstruction accounts for the whole of every net's declared capacitance.
+Counting those capacitors is where this check first went wrong. The extraction
+follows IEEE 1481 and records a coupling capacitor in the capacitance block of both
+nets it joins, carrying the same value in each place, so a pass over the 31 nets of
+one ring meets every internal coupling twice. My first version of the deck
+generator emitted both sightings and therefore built each of those capacitors
+twice, which added 0.56 to 2.08 fF of capacitance that does not exist, between five
+and fourteen percent of a ring's extracted load. The generator now drops the second
+sighting and refuses to continue if a repeated pair ever carries a different value.
+Everything reported below comes from decks built after that fix.
 
-Every oscillator is slower under the fuller model, by 2.16% to 5.69%, and the size
-of the shift tracks the ring's extracted load (*r* = -0.589). Because the heavier
-rings lose the most, the dispersion widens rather than shrinking: 5.55%
-peak-to-peak becomes 7.60%. The simplification is therefore conservative with
-respect to the paper's central claim. It understates the layout contribution by
-roughly a third instead of manufacturing it, which is the opposite of the failure
-mode a reduced model is usually suspected of.
+To test the reduced model I rebuilt all sixteen oscillators from the extraction's
+own network, with per-node capacitances, the series resistors as extracted, and
+node-to-node capacitors wherever both ends lie inside the oscillator, then
+simulated the lumped and distributed versions of each ring under otherwise
+identical conditions. The reconstruction accounts for the whole of every net's
+declared capacitance.
 
-The per-oscillator pattern also survives. Rank correlation between the two models
-is 0.912 and the fastest ring is the same under both. The slowest label moves
-between two oscillators that the lumped model separated by 0.7%, which is a near-tie
-changing hands rather than the fingerprint dissolving.
+Every oscillator is slower under the fuller model, by 0.66% to 1.34%, and the size
+of the shift tracks the ring's extracted load (*r* = -0.429). Because the heavier
+rings lose the most, the dispersion widens slightly rather than shrinking: 5.55%
+peak-to-peak becomes 5.84%. The simplification is therefore conservative with
+respect to the paper's central claim, and only mildly so. It understates the layout
+contribution by about five percent of the figure, not by the third my earlier
+double-counted decks suggested.
 
-Where the fuller model does change the answer is in the individual response bits.
-The design forms bits by comparing neighbouring oscillators, and two of the eight
-comparisons reverse. Both involved pairs separated by 0.28% and 0.32% under the
-lumped model, while every pair separated by 0.69% or more kept its ordering. So
-predicted bits from closely matched pairs are model-dependent and are not reported
-here as predictions; the analysis code already flags such pairs as low-margin when
-scoring measured silicon, and this gives an independent pre-silicon reason to
-expect which ones will be fragile.
+The per-oscillator pattern survives almost intact. Rank correlation between the two
+models is 0.994, and the fastest and the slowest ring are the same under both,
+which they were not when the coupling was counted twice.
+
+The individual response bits survive as well. The design forms bits by comparing
+neighbouring oscillators, and none of the eight comparisons reverses, including the
+two closest pairs at 0.28% and 0.32% separation under the lumped model. That does
+not make close pairs safe to report as predictions, since a gap of a third of a
+percent is smaller than the spread between plausible parasitic models of the same
+layout, and the analysis code flags such pairs as low-margin when it scores
+measured silicon. It does mean the reduced model and the full network now agree on
+every bit rather than on six of eight.
 
 Two limits on this check. The Arm B macro has a separate extraction and has not
 been redone this way, so its 569.5 MHz reference remains a lumped-model result.
@@ -398,10 +455,40 @@ And the extraction itself is a reduced per-net network rather than a field
 solution, with coupling to nets outside a given oscillator still grounded, which
 ranges from four such nets on the lightest ring to seventy-two on the heaviest.
 
-### 5.6 What a single reading can resolve
+### 5.6 The mismatch scale everything is compared against
 
-The residual left by Section 5.5 and the mismatch scale of Section 7 are both
-small, and neither means anything unless a measurement can resolve them. Three
+Every comparison from here on measures something against the size of the random
+part, so that number deserves its own subsection rather than a footnote, and it
+deserves an honest account of how weak it is. It comes out of the PDK's own
+mismatch models. Running the matched macro with the mismatch switch enabled and
+process variation disabled, 40 draws give a frequency standard deviation of
+0.345%. That is not per-ring mismatch and should not be read as such. ngspice
+applies the SKY130 mismatch parameters as global draws per device class, so every
+device of a class moves together inside a single run, which makes 0.345% the
+common-draw figure rather than the independent scatter a comparison between two
+neighbouring rings would actually see. Dividing by the square root of 31, the
+factor thirty-one independent and equally weighted stages would give, converts it
+into an estimate of 0.062% per ring. Two separate objections apply to that
+step. The enable NAND is not an inverter and the thirty inverters do not
+contribute equally to the loop delay, so the scaling is first order at best rather
+than exact. Forty draws is also a small sample, which leaves a sampling-only
+interval running from 0.051% to 0.080% at roughly 95% coverage, nearly half as
+wide as the central value it brackets.
+
+An earlier version of this paper quoted no figure from that study at all, for
+precisely those reasons, and a change of position ought to be stated rather than
+quietly made. Sections 6 and 7 both need a denominator and neither can be written
+without one, so the estimate is used. Every result that depends on it is reported
+across the whole interval rather than at the point value, which lets a reader see
+for themselves how much of the conclusion rests on the weakest input in the
+chain. It is still an estimate, produced by a model of devices that
+have never been fabricated. Replacing it with a measurement is the first thing
+the chips should be used for.
+
+### 5.7 What a single reading can resolve
+
+The compensation residual of Section 6 and the mismatch scale just above are
+both small, and neither means anything unless a measurement can resolve them. Three
 effects set that limit. The operating point drifts between readings, the
 oscillator carries thermal noise, and the counter returns an integer. The decks
 in `sim/spice/gono/gen_noise_decks.py` address all three. They read the shipped
@@ -471,9 +558,144 @@ counter is coarser than that. One count in 22189 is 0.00451 percent and the
 rounding error is 0.00130 percent rms, so the instrument rather than the
 oscillator sets the floor. Taking the larger of the two, the resolution floor is
 0.00130 percent, which sits 48 times below the mismatch scale, 207 times below
-the closest pair separation and 640 times below the compensation residual.
+the closest pair separation and 141 times below the compensation residual.
 
-## 6. Matched-macro arm
+## 6. Can the layout term be predicted?
+
+Deterministic and predictable are not the same thing. The dispersion in Section
+5 is fixed by the mask, but that only becomes a security problem if somebody can
+work out which oscillator received which share of it. This section asks whether
+they can. Section 7 turns the answer into bits.
+
+The RO-PUF literature already corrects systematic variation, and it does so with
+position. Die gradients are spatially correlated, so a surface in x and y is
+fitted and subtracted [2]. That is the method to beat, and it is the natural
+first move for anyone told that a layout has added a systematic term.
+
+It does not work here. Scored by leave-one-out cross validation against the
+shipped build's full RC frequencies, whose uncorrected spread is 1.739%
+standard deviation, a quadratic surface in x and y leaves 2.086%, which is 20.0%
+worse than leaving the data alone. The linear version leaves 1.970%, worse by
+13.3%. Raw correlations against the placement coordinates point the same way, and it
+is worth saying which frequencies they belong to. For the full RC frequencies
+scored above they are +0.32 in x, -0.14 in y and -0.05 against radius from the
+array centroid. For the lumped frequencies of the same build the same three are
++0.35, -0.17 and -0.07, so the two parasitic models now say the same thing about
+position, which they did not before the coupling fix in Section 5.5.
+Neither set is strong, and Section 5.1 reported the same
+weak positional dependence in the earlier build. The reason a fitted surface then does active harm is that there
+is nothing smooth for it to describe. Each oscillator's load is set by its own
+wiring rather than by where it sits, so the surface is fitting noise and
+subtracting it moves every point in the wrong direction.
+
+The design database is a different matter. Ring capacitance alone, read straight
+out of the SPEF, leaves 0.190% and removes 89.1%. Series resistance alone
+manages 28.8%. An Elmore-like sum of per-net R times C reaches 70.3%.
+Capacitance and resistance together leave 0.183%, a reduction of 89.5%. Every
+one of those is an out-of-sample figure.
+
+Nearly nine tenths of the deterministic term therefore follows from two numbers
+per ring, while none of it follows from position. That does not make the
+mismatch visible. Measured against the scale in Section 5.6, the dispersion
+starts at something like 22 to 34 times the random term and correction leaves it
+at 2 to 4 times, which is a large improvement and still not silence. The result
+that Section 7 depends on is the narrower one, that the deterministic part
+behaves as something a reader of the design files can compute.
+
+One figure from the same script should not be read as evidence. Scored against
+the lumped decks instead of the full RC ones, a capacitance model removes 97.6%
+and finishes below the mismatch floor, which sounds far better than the honest
+result and is an artefact of how those decks are built. They receive one
+capacitance per net and vary nothing else, so a capacitance fit is measuring the
+deck's only input. Where the lumped runs do carry information is across builds,
+since the fit trained on the 32-oscillator layout reproduces the shipped build's
+per-oscillator pattern with no refitting at all, which is the cross-build check
+already reported in Section 5.2.
+
+The size of the remaining third is not surprising. Each loop carries 33 series
+resistors spread over its 31 nets, plus dozens of capacitors both to ground and
+to neighbouring nodes, and collapsing all of that into one total capacitance and
+one total resistance throws away where on the ring each element sits. Recovering the rest would mean simulating the network rather than
+summarising it, which is what the distributed-RC decks of Section 5.5 do, and
+those decks run from the same public files.
+
+The script is `sim/spice/gono/compensation.py`. It recomputes ring capacitance
+from both extractions and refuses to run if the result disagrees with the
+checked-in tables.
+
+## 7. How many response bits the design files decide
+
+Section 6 works in frequencies. The chip hands out bits, and the two are not
+interchangeable, so this section converts one into the other.
+
+The core compares neighbouring rings, 0 against 1, 2 against 3 and so on up, so
+Arm A's sixteen oscillators produce eight bits. Decompose a pair's frequency
+difference on any given die into a term the mask fixes and a term the wafer
+supplies. The first is the routing difference, identical on every die and
+present in the extraction long before fabrication. The second is device
+mismatch, redrawn for each die. Since the bit is the sign of their sum, the
+ratio between them decides who chose the bit: a routing term far larger than the
+mismatch term leaves nothing for the die to contribute, and every chip returns
+the value the extraction already implies.
+
+Writing the per-die difference as a fixed offset plus a Gaussian term, with the
+0.062% per-ring estimate of Section 5.6 giving 0.088% per pair across two
+independent rings, the across-die probability of each bit is the normal integral
+of the offset over that width and its entropy is the binary entropy of that
+probability.
+
+The eight offsets are not evenly spread. Five pairs sit between 1.16% and 3.67%
+of the arm mean, which is 13 to 42 standard deviations of the mismatch term, and
+a sixth sits at 0.69%, still 7.9 standard deviations out. Those six bits carry
+less than a hundredth of a bit of across-die entropy. They are fixed. Only the
+two closest pairs keep anything, and one of them barely. The closest is separated
+by 0.116%, or 1.3 standard deviations, and holds 0.44 bits. The next, at 0.267%
+and 3.0 standard deviations, is already down to 0.01 bits, which sits right on the
+line where I stop calling a bit undecided.
+
+Added up, Arm A's eight-bit response carries 0.46 bits of device-specific
+entropy, and somebody holding only the public design files would call 7.91 of
+the 8 correctly on average. Moving the mismatch estimate to the ends of the
+sampling interval in Section 5.6 gives 0.30 to 0.69 bits and 7.84 to 7.95 bits
+guessed. Where in that interval the true value sits does not change the
+conclusion.
+
+The pair that keeps its entropy is also the pair with the smallest routing
+separation, which is what the argument predicts rather than a coincidence: the
+routing term and the mismatch term compete, and only where the first is small does
+the second get a say. Nothing about the choice of parasitic model changes that
+picture. The lumped decks and the full RC network of Section 5.5 return the same
+sign on all eight comparisons, and so does the cruder attack of ranking rings by
+extracted capacitance alone. An attacker does not need a careful model, and I
+cannot claim two ambiguous bits on the strength of models disagreeing, because
+after the coupling fix they do not disagree.
+
+Arm B needs no arithmetic. Sixteen instances of one macro share their internal
+routing, so every pair's routing offset is zero, every bit is decided by
+mismatch alone, and the design files predict none of them. That is 8.00 bits
+against Arm A's 0.46, from the same source through the same flow on the same
+die.
+
+For an open shuttle this is the part that concerns me most. Against a
+proprietary chip an attacker has to obtain the design database first, and that
+is the expensive step. Here it is a download, and everything above used no
+measurement equipment and no fabricated part.
+
+Two limits belong next to the number. Eight bits is a small response, so 0.46 of
+8 characterises this block rather than RO-PUFs in general. And the offsets are
+model output. A die whose pair orderings disagree with them refutes the argument
+directly, which is the cleanest reason I have for building the chip.
+
+Figure 4 puts the eight pairs side by side, in units of the mismatch standard
+deviation on the left and in bits on the right.
+
+![Figure 4. Arm A's eight adjacent-pair bits. On the left, each pair's routing-induced separation in standard deviations of the estimated mismatch term; the shaded strip is where mismatch can still decide the sign. On the right, the across-die entropy left in each bit, against Arm B's full bit per pair.](../sim/spice/gono/predictable_bits.png)
+
+The script is `sim/spice/gono/predictable_bits.py`, and
+`make_bits_figure.py` imports it so the figure and the reported totals cannot
+drift apart.
+
+## 8. Matched-macro arm
 
 The matched construction hardens one oscillator as a 60 x 40 micrometre
 macro. The macro layout passes the available DRC, LVS, antenna, and
@@ -496,7 +718,7 @@ not have. So the defensible statement is that matching the internal layout put
 the macro ahead of the average automatically routed oscillator, not ahead of
 all of them.
 
-Figures 3 and 4 draw Arm B as a single horizontal reference line at
+Figures 5 and 6 draw Arm B as a single horizontal reference line at
 569.5 MHz, because the sixteen instances share one internal layout and there
 is only one extracted simulation behind it. By construction the internal
 layout contributes zero spread; fabricated Arm B instances will still differ
@@ -506,31 +728,36 @@ device parameters. Total Arm B dispersion requires per-instance integration
 parasitics and fabricated-device measurements, and whether Arm B ends up with
 a smaller total spread than Arm A is the measurement the chip exists to make.
 
-![Figure 3. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
+![Figure 5. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
 
-![Figure 4. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
+![Figure 6. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
-## 7. Planned silicon test
+## 9. Planned silicon test
 
-Why could a repeatable mask-defined pattern matter to a PUF at all? A layout
-component shared across dies can reduce uniqueness or make some comparisons
-predictable, but prior work also shows systematic structure is not
-automatically exploitable: Wilde, Hiller, and Pehl found adjacent-oscillator
-comparisons suppressed the spatial structure in their data and their
-predictor could not beat its baseline [4]. Which way this design falls is a
-question for fabricated dies, not for the nominal model. A toy population
-model and a first-order mismatch-scale estimate live in the repository's
-supplementary material (`sim/montecarlo.py`, `sim/spice/mc/`); their outputs
-depend on assumed amplitudes and a sqrt(31) scaling that the PDK's global
-mismatch draw does not really support, so no number from them appears here.
+Sections 6 and 7 make a prediction that a measurement can refute, and that is
+the main reason to build the chip. The prediction is specific. On every die of
+this design the six high-margin Arm A pairs should return the sign the
+extraction gives them, the two low-margin pairs should not, and the Arm B pairs
+should behave like coin flips that repeat within a die and differ between dies.
 
-The question for silicon is whether Arm A retains more of its nominal
-layout pattern across dies than Arm B. The threat model I have in mind is
-concrete: an attacker knows the public design and mask and holds measurements
-from other dies of the same design, but none from the target die, and asks
-whether the shared deterministic layout component lets them predict the target
-die's pair ordering above the relevant per-bit baseline. Predictor accuracy is
-then judged against that baseline with whole chips held out, not against 50%. Testing it needs multiple chip IDs, repeated
+It could fail in an interesting way. Wilde, Hiller, and Pehl found that
+adjacent-oscillator comparisons suppressed the spatial structure in their data
+well enough that their predictor could not beat its baseline [4]. If fabricated
+mismatch turns out to be much larger than the 0.062% estimate of Section 5.6,
+the same thing happens here, the six fixed bits stop being fixed, and the
+entropy figure moves back toward 8. That estimate is the weakest input in the
+whole chain, which is why the per-die measurement should replace it first. A toy
+population model also lives in the repository's supplementary material
+(`sim/montecarlo.py`), and no number from it appears in this paper, because its
+outputs depend on assumed amplitudes rather than on anything extracted.
+
+The threat model splits in two, and only one half needs silicon. The half this
+paper answers hands the attacker the public design files and nothing else, no
+device and no challenge-response pairs, and asks how many bits they call
+correctly. The other half hands them repeated measurements from other dies of
+the same design but none from the target die, and asks whether pooling real dies
+beats the design-file prediction. In both cases accuracy is judged against the
+relevant per-bit baseline with whole chips held out, not against 50%. Testing it needs multiple chip IDs, repeated
 measurements, matched voltage and temperature settings, and a fixed
 comparison rule; the firmware records chip and condition labels so groups
 stay separate. The planned metrics are repeatability within chip and
@@ -541,7 +768,7 @@ temperature. Results count only when the grouping and completeness
 requirements are met; a single chip or an incomplete oscillator vector does
 not support a population claim.
 
-## 8. Limitations
+## 10. Limitations
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. The lumped-capacitance model has
@@ -563,7 +790,7 @@ one simulation of one macro and cannot quantify fabricated Arm B variation.
 The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
 measurement-system effects are partly characterized. The corner simulations in
-Section 5.4 bound the frequency range and the counter margin, and Section 5.6
+Section 5.4 bound the frequency range and the counter margin, and Section 5.7
 measures how the arm responds to supply and temperature and where the resolution
 floor of a single reading sits. Its supply points are static offsets rather than
 a ripple that varies during a reading and reaches different oscillators at
@@ -581,28 +808,61 @@ period makes it hardest, though the selector path feeding it has not yet been
 validated as a whole chain at 888 MHz. None of this erases the modelled
 dispersion; it bounds what can be concluded from it.
 
-## 9. Conclusion
+The predictability result of Section 7 carries limits of its own, and they are
+not the same ones. Its mismatch term is treated as Gaussian and independent
+between rings, which the PDK's global draw does not directly support, and the
+0.062% figure it is scaled to has a sampling interval nearly half as wide as
+itself. I report the interval rather than the point value for that reason, but a
+per-die measurement is what settles it. The routing offsets come from the full
+RC model of one layout. Section 5.5 finds no pair reversing between the two
+parasitic models, which is reassuring but is two reductions of one extraction
+agreeing rather than a model validated against silicon, and the two smallest
+separations, 0.116% and 0.267%, are still small enough that a third model could
+move them. The attacker figure of 7.91 also assumes the attacker reproduces my
+model. A weaker attacker who only orders the rings by extracted capacitance, with
+no simulation at all, gets the same sign on all eight pairs, which is the number
+to quote if the simulation is doubted.
 
-Under a reduced lumped-capacitance model of the verified post-route topology,
-the automated flow gave the 16 oscillators of the candidate build a 5.53%
-peak-to-peak nominal frequency dispersion (population SD 1.65%, mean
-554.7 MHz). Nine builds that differ only in placement density put that figure
-in context: median 5.75%, range 4.19% to 6.99%. Any single build reports one
-draw of the router, which is why I no longer quote one of them on its own.
-What repeats is the mechanism. Every build shows frequency tracking extracted
-ring capacitance at about -0.999, the fitted slope stays near -4.94 MHz/fF
-across independent layouts, and a fit trained on one build predicts another's
-individual frequencies to roughly 0.1%. A hardened macro provides a 569.5 MHz
-shared-internal-layout reference for Arm B, ahead of the Arm A mean though not
-of every Arm A instance. The finding is that the flow assigns materially
-different routing capacitance to logically identical oscillators, and that
-under nominal device assumptions this converts into a dispersion of several
-percent through a relationship that holds from one routing run to the next.
+Two structural limits sit above all of that. Eight bits is a very small
+response, and an entropy total over eight pairs of one block should not be read
+as a statement about RO-PUFs generally. And a deployed PUF would pass its raw
+bits through error correction and a randomness extractor, neither of which is
+modelled here. That processing cannot create entropy that the comparison did not
+produce, so it does not rescue the six fixed bits, but it does mean the numbers
+here describe the raw response and not a fielded key.
 
-Uniqueness, reliability, min-entropy, and attack success are not evaluated
-pre-silicon. Whether the mask-defined pattern survives fabrication, and how
-it compares against real device mismatch, will be settled by measuring both
-arms of the fabricated chips under the protocol in the firmware.
+## 11. Conclusion
+
+For the design going to this shuttle, the public files decide most of the
+response. Six of Arm A's eight adjacent-pair bits carry under a hundredth of a
+bit of across-die entropy under a first-order 0.062% per-ring mismatch estimate.
+The arm holds 0.46 bits of 8. A reader of the design database alone would call
+7.91 of the 8 correctly, and across the sampling interval of that estimate the
+range runs 0.30 to 0.69 bits and 7.84 to 7.95 guessed.
+
+What makes those bits readable is a layout term that position cannot describe and
+the design database can. Cross validated, a quadratic surface in x and y does
+20.0% worse than no correction at all. Ring capacitance and series resistance
+together remove 89.5%. The term is not an artefact of one build either: nine
+builds differing only in placement density span 4.19% to 6.99% peak to peak with
+a median of 5.75%, every one of them shows frequency tracking extracted ring
+capacitance at about -0.999, and a fit trained on one layout predicts another's
+individual frequencies to roughly 0.1%. The residual left after correction sits
+141 times above what a single reading can resolve, so none of it hides in the
+instrument.
+
+The same die carries the mitigation. Sixteen instances of one hardened macro
+share their internal routing, which sets every pair's routing offset to zero and
+gives all 8 bits back to mismatch. It is not free. The matched arm has
+integration asymmetries of its own, and its 569.5 MHz reference is one
+simulation rather than sixteen.
+
+None of this is measured on silicon. The offsets are model output, eight bits is
+a small response, and the mismatch estimate is the weakest link in the chain.
+That is also what makes the result testable. The per-pair predictions are frozen
+in the repository before the chips exist, so measuring both arms of the
+fabricated parts either confirms them or refutes them, and a refutation would
+teach me as much.
 
 ## References
 
@@ -672,3 +932,18 @@ pp. 790-804, 1999. https://doi.org/10.1109/4.766813
 [15] C.-E. Yin and G. Qu, "Temperature-Aware Cooperative Ring Oscillator PUF,"
 *2009 IEEE International Workshop on Hardware-Oriented Security and Trust
 (HOST)*, pp. 36-42, 2009. https://doi.org/10.1109/HST.2009.5225055
+
+[16] M. Shiozaki and T. Fujino, "Simple Electromagnetic Analysis Attacks based
+on Geometric Leak on an ASIC Implementation of Ring-Oscillator PUF,"
+*Proceedings of the 3rd ACM Workshop on Attacks and Solutions in Hardware
+Security (ASHES)*, pp. 13-21, 2019. https://doi.org/10.1145/3338508.3359569
+Extended version: *Journal of Cryptographic Engineering*, vol. 11, pp. 201-212,
+2021. https://doi.org/10.1007/s13389-020-00240-9
+
+[17] J. Aljafar, Z. Ul Abideen, A. Peetermans, B. Gierlichs, and S. Pagliarini,
+"SCALLER: Standard Cell Assembled and Local Layout Effect-Based Ring
+Oscillators," *IEEE Embedded Systems Letters*, vol. 16, no. 4, pp. 493-496,
+2024. https://arxiv.org/abs/2406.01258
+
+[18] R. Maes, *Physically Unclonable Functions: Constructions, Properties and
+Applications*. Springer, 2013. https://doi.org/10.1007/978-3-642-41395-7

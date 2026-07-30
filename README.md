@@ -1,11 +1,13 @@
-# SILICON: routing-induced frequency dispersion in a ring-oscillator PUF
+# SILICON: how much of a ring-oscillator PUF response is decided before fabrication
 
 A ring-oscillator PUF is supposed to get its secret from manufacturing
-randomness. This repository asks how much frequency variation the automated
-open-source layout flow adds on its own, before a single chip is made. The
-design is a TinyTapeout 2x2 tile in the SkyWater 130 nm process, and
-everything here is pre-silicon: routed layouts, extracted parasitics, and
-nominal SPICE.
+randomness. On an open shuttle the layout is not secret. The GDS, the routed
+netlist and the extracted parasitics are public downloads, and the automated
+flow hands each oscillator its own parasitic load, which every die from that
+mask then inherits. So this repository asks how much of the response those
+files already decide, before a single chip is made. The design is a TinyTapeout
+2x2 tile in the SkyWater 130 nm process, and everything here is pre-silicon:
+routed layouts, extracted parasitics, and nominal SPICE.
 
 I am a self-taught student and built the project with open tools on a home
 PC. The raw logs, the analysis code, and scripts that recompute every headline
@@ -22,7 +24,34 @@ internal layout. If Arm A carries a frequency pattern that repeats from chip
 to chip and Arm B does not, the automated flow is building a shared bias into
 a circuit whose whole job is to be unpredictable.
 
-## What the post-layout model predicts
+## What the design files already decide
+
+Arm A forms eight response bits by comparing neighbouring oscillators. Taking
+each pair's routing-induced frequency difference from the extraction, and a
+first-order 0.062% per-ring mismatch estimate for the part a die contributes,
+six of those eight bits carry less than a hundredth of a bit of across-die
+entropy. They are the same on every chip. The arm holds 0.46 bits of 8, and
+someone with nothing but the files in this repository would call 7.91 of the 8
+correctly on average.
+
+![the eight Arm A pair bits, in mismatch standard deviations and in bits](sim/spice/gono/predictable_bits.png)
+
+The mismatch estimate is the weakest number in that chain, so the totals are
+also reported across its sampling interval: 0.30 to 0.69 bits and 7.84 to 7.95
+bits guessed. What is left sits almost entirely in one bit, the pair with the
+smallest routing separation, which is where the argument says it should sit.
+
+The correction the RO-PUF literature uses for systematic variation does not
+help here. Cross validated, a quadratic surface in x and y comes out 20.0%
+worse than doing nothing, because a per-instance routing fingerprint has no
+smooth spatial surface underneath it. Reading the design database does work:
+ring capacitance and series resistance together remove 89.5% of the dispersion
+out of sample. Arm B needs none of this. Sixteen instances of one macro share
+their internal routing, so every pair's routing offset is zero and all 8 bits
+go back to mismatch. Scripts: `sim/spice/gono/predictable_bits.py` and
+`compensation.py`.
+
+## Where that comes from
 
 The current design has a coherent build: one flow run from the current RTL
 that passes Magic DRC, KLayout DRC, XOR, LVS, antenna, and power grid with

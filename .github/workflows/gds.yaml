@@ -26,9 +26,11 @@ jobs:
           python3 sim/spice/gono/verify_provenance.py
           python3 sim/spice/gono/verify_ring_topology.py
           python3 sim/spice/gono/verify_build_bundle.py
+          python3 sim/spice/gono/verify_noise.py
           python3 sim/spice/gono/sensitivity.py
           python3 sim/spice/gono/compensation.py
           python3 sim/spice/gono/predictable_bits.py
+          python3 sim/spice/gono/verify_predictability.py
           python3 sim/spice/gono/analyze_noise.py --selftest
           python3 sim/spice/gono/analyze_noise.py
           python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt

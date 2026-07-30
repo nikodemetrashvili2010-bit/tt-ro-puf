@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Turn the operating-point and slope logs into a noise floor.
 
-The compensation work leaves a residual of about 0.83 percent of the arm mean,
+The compensation work leaves a residual of about 0.18 percent of the arm mean,
 and the mismatch study puts the device-specific part near 0.062 percent. Neither
 number means anything until I know what a single reading can resolve. This
 script produces that floor from three directions.
@@ -87,7 +87,7 @@ T_KELVIN = 300.15
 WINDOW_CYCLES = 1000           # reference-clock cycles, fixed in the RTL
 FREF_HZ = 25e6
 SIGMA_RING = 0.062             # percent, from sim/spice/mc
-RESIDUAL_PCT = 0.832           # percent, compensation.py leave-one-out residual
+RESIDUAL_PCT = 0.183           # percent, compensation.py leave-one-out residual
 MATCH_TOL = 2e-4               # relative, nominal deck against the archived log
 
 

@@ -160,8 +160,12 @@ It does not work here. Cross validated against the shipped build's full RC
 frequencies, a quadratic surface in x and y comes out worse than leaving the
 data alone. On the 32-oscillator first build it reaches 27.8%, and that is
 in-sample with six free parameters, so it is a generous number. The plain
-correlations agree: frequency against x is +0.35, against y it is -0.17, and
-against radius from the centroid it is -0.07. A per-instance routing fingerprint
+correlations agree, and it is worth saying which frequencies they belong to.
+Against the full RC frequencies used for the scoring above, x gives +0.32, y
+gives -0.14, and radius from the centroid gives -0.05. Against the lumped
+frequencies of the same build the same three are +0.35, -0.17 and -0.07. Weak
+either way, and now the two models agree, which they did not while the RC decks
+were double counting coupling. A per-instance routing fingerprint
 has no smooth surface under it. Fitting one adds noise instead of removing bias.
 
 The design database is a different story. Every ring has a total capacitance and
@@ -169,19 +173,20 @@ a total series resistance sitting in the SPEF long before a wafer exists. Scored
 the same cross-validated way against the full RC frequencies:
 
     corrector                        residual spread   removed
-    nothing                                   2.412%         -
-    position, quadratic in x and y            3.165%    -31.2%
-    position, linear in x and y               2.868%    -18.9%
-    ring resistance alone                     2.071%    +14.1%
-    sum of per-net R times C                  1.245%    +48.4%
-    ring capacitance alone                    0.937%    +61.1%
-    capacitance and resistance                0.832%    +65.5%
+    nothing                                   1.739%         -
+    position, quadratic in x and y            2.086%    -20.0%
+    position, linear in x and y               1.970%    -13.3%
+    ring resistance alone                     1.238%    +28.8%
+    sum of per-net R times C                  0.516%    +70.3%
+    ring capacitance alone                    0.190%    +89.1%
+    capacitance and resistance                0.183%    +89.5%
 
-Two thirds of it, then. Against the mismatch estimate from the previous section,
-0.062% with a sampling interval of 0.051% to 0.080%, the uncorrected dispersion
-is somewhere around 30 to 47 times the random term and the corrected one is 10
-to 16 times. An improvement, and still far too large to leave the mismatch
-readable.
+Almost nine tenths of it, then. Against the mismatch estimate from the previous
+section, 0.062% with a sampling interval of 0.051% to 0.080%, the uncorrected
+dispersion is somewhere around 22 to 34 times the random term and the corrected
+one is 2 to 4 times. That is a much better corrector than the version of this
+table I had before the coupling fix, and it still does not get down to where
+mismatch would be readable.
 
 One caveat belongs on the record. Against the lumped decks a capacitance model
 removes 97.6% and lands under the mismatch floor. I do not count that. The
@@ -205,7 +210,7 @@ and not a fit.
 Whether the residual is worth chasing at all depends on what a single reading
 can resolve, and until now nothing in this project answered that. The section
 below answers it in simulation. The short version is that the residual sits
-about 640 times above the floor, so it is not buried.
+about 141 times above the floor, so it is not buried.
 
 The script is `sim/spice/gono/compensation.py`. It recomputes ring capacitance
 from both SPEFs and refuses to run if it disagrees with the checked-in tables by
@@ -229,28 +234,33 @@ estimate of 0.062% per ring giving 0.088% per pair across two independent rings,
 the across-die probability and its entropy follow directly:
 
     pair    routing offset   offset/sigma   entropy   guessed
-     0/1           -0.391%            4.5     0.000    100.0%
-     2/3           -0.041%            0.5     0.904     68.1%
-     4/5           -0.122%            1.4     0.411     91.7%
-     6/7           -4.416%           50.4     0.000    100.0%
-     8/9           +2.866%           32.7     0.000    100.0%
-    10/11          -4.796%           54.7     0.000    100.0%
-    12/13          -1.561%           17.8     0.000    100.0%
-    14/15          -3.654%           41.7     0.000    100.0%
+     0/1           -1.864%           21.3     0.000    100.0%
+     2/3           +0.116%            1.3     0.444     90.8%
+     4/5           +0.267%            3.0     0.013     99.9%
+     6/7           -3.265%           37.2     0.000    100.0%
+     8/9           +1.156%           13.2     0.000    100.0%
+    10/11          -2.504%           28.6     0.000    100.0%
+    12/13          -0.690%            7.9     0.000    100.0%
+    14/15          -3.668%           41.8     0.000    100.0%
+
+![Arm A's eight pair bits, in mismatch standard deviations and in bits](../sim/spice/gono/predictable_bits.png)
 
 Six of the eight bits land under a hundredth of a bit of entropy. Those are
-fixed. Arm A's response carries about 1.3 bits of device-specific entropy rather
-than 8, and someone holding nothing but the public design files would call 7.6
+fixed. Arm A's response carries about 0.5 bits of device-specific entropy rather
+than 8, and someone holding nothing but the public design files would call 7.9
 of the 8 correctly on average. Pushing the mismatch estimate to the ends of its
-sampling interval moves that to 1.1 to 1.5 bits and 7.5 to 7.7 correct, so the
+sampling interval moves that to 0.3 to 0.7 bits and 7.8 to 8.0 correct, so the
 conclusion does not hinge on the exact mismatch figure.
 
-The two pairs that survive are the two the item 7 comparison already flagged.
-They are also the two where the lumped and full RC models disagree about which
-ring is faster. That is consistent rather than coincidental: a pair only stays
-ambiguous when its separation is small enough for the choice of parasitic model
-to matter, and small separations are exactly the ones mismatch can still flip.
-On the other six the cheap model and the careful one agree.
+Almost all of what is left sits in pair 2/3, at 0.44 bits. Pair 4/5 is the next
+closest and it is already down to 0.013 bits, right on the line. That the
+surviving entropy sits in the closest pair is what the argument predicts, since
+the routing term and the mismatch term compete and only a small routing term
+leaves the die a say. The lumped decks and the full RC network agree on the sign
+of all eight pairs, so a cheap model is enough to read them. An earlier version of
+this file said the two closest pairs were the two the models disagreed about. That
+was an artefact of the RC decks building each internal coupling capacitor twice,
+and once that is fixed nothing disagrees.
 
 Arm B needs no arithmetic here. Sixteen instances of one macro have identical
 internal routing, so the offset is zero, every bit is a coin flip decided by
@@ -267,7 +277,7 @@ tapeout is for. Script is `sim/spice/gono/predictable_bits.py`.
 
 ## What a reading can resolve
 
-A residual of 0.83 percent and a mismatch scale of 0.062 percent are only
+A residual of 0.18 percent and a mismatch scale of 0.062 percent are only
 interesting if a measurement can see numbers that small. Three things decide
 that. The operating point can drift between readings, the oscillator has thermal
 noise of its own, and the counter returns an integer. I looked at all three. The
@@ -381,7 +391,7 @@ assumed when I started.
 
 Taking the larger of the two, the floor is 0.0013 percent. The mismatch scale
 sits 48 times above it. The tightest pair separation sits 207 times above it.
-The compensation residual sits 640 times above it. So the residual is not hiding
+The compensation residual sits 141 times above it. So the residual is not hiding
 under noise, and neither is the device-specific entropy the whole design depends
 on.
 
@@ -410,7 +420,8 @@ collected in the paper's limitations section rather than repeated here.
 - `gen_macro_deck.py`, `ro_macro_matched*.spice`, `macro*_out.txt`,
   `verify_macro.py`: the hardened-macro reference.
 - `gen_noise_decks.py`, `noise_*.spice`, `noise_*_out.txt`, `tprobe_*`,
-  `analyze_noise.py`: supply, temperature and the resolution floor.
+  `analyze_noise.py`, `verify_noise.py`: supply, temperature and the
+  resolution floor.
 - `analyze.py` plus the figure scripts: descriptive statistics and plots.
 - `first_build/` and `dualarm/build_debug/`: routed inputs for the two Arm A
   analyses.

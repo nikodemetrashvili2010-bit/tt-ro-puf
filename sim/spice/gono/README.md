@@ -42,8 +42,16 @@ netlist kept every Arm A ring intact before any deck is trusted, and
 `sensitivity.py` recomputes the outlier leave-one-out numbers and the
 cross-build per-oscillator prediction from raw files. `compensation.py` asks whether the
 layout term can be predicted and taken back out, and puts a position-based
-correction up against ones built from the SPEF's capacitance and resistance. Figures come from
-`make_figures.py` and `make_dualarm_figure.py`.
+correction up against ones built from the SPEF's capacitance and resistance.
+`predictable_bits.py` turns the same frequencies into the eight adjacent-pair
+response bits and reports how much across-die entropy each one still carries.
+`verify_predictability.py` re-derives both of those results from the SPEF and
+the two frequency tables with its own parser and its own least-squares solver,
+hardcodes the figures that appear in the paper, and ends on a scrambled control
+so that a check which cannot fail does not sit in the suite pretending to pass.
+Figures come from `make_figures.py`, `make_dualarm_figure.py` and
+`make_bits_figure.py`, and the last of those imports `predictable_bits.py`
+rather than repeating its arithmetic.
 
 `gen_noise_decks.py` and `analyze_noise.py` answer a separate question, which is
 what a single reading can resolve at all. The decks sweep supply from 1.62 to
@@ -56,7 +64,9 @@ kind can flip a bit, and it compares the resulting floor against the mismatch
 scale and the compensation residual. It also verifies that the 1.80 V deck
 reproduces the archived nominal frequencies and that every log ran at the
 temperature its deck asked for. `python3 analyze_noise.py --selftest` checks the
-arithmetic against planted answers without needing ngspice. The four
+arithmetic against planted answers without needing ngspice, and `verify_noise.py`
+re-derives every published figure from the twelve logs with code that imports
+neither script. The four
 `tprobe_*.spice` decks are a one-off check that the SKY130 corner library really
 does let a temperature request through.
 

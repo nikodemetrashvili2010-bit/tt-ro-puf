@@ -20,9 +20,11 @@ python3 sim/spice/gono/verify_dualarm.py
 python3 sim/spice/gono/verify_provenance.py
 python3 sim/spice/gono/verify_ring_topology.py
 python3 sim/spice/gono/verify_build_bundle.py
+python3 sim/spice/gono/verify_noise.py
 python3 sim/spice/gono/sensitivity.py
 python3 sim/spice/gono/compensation.py
 python3 sim/spice/gono/predictable_bits.py
+python3 sim/spice/gono/verify_predictability.py
 python3 sim/spice/gono/analyze_noise.py --selftest
 python3 sim/spice/gono/analyze_noise.py
 python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
@@ -46,6 +48,7 @@ python3 sim/spice/gono/analyze.py
 python3 docs/figures/make_block_diagram.py
 python3 sim/spice/gono/make_figures.py
 python3 sim/spice/gono/make_dualarm_figure.py
+python3 sim/spice/gono/make_bits_figure.py
 ```
 
 The paper builds with pandoc and LibreOffice: `sh docs/build_paper.sh`. PNG
@@ -97,6 +100,24 @@ any regenerated data.
 The verifiers accept `--ctrl`, `--par`, `--log-5p`, `--log-1p`, `--csv`,
 `--spef`, and related path options (see `--help`), so a fresh run can be
 checked without touching the archived logs.
+
+The distributed-RC comparison behind Section 5.5 of the paper and item 7 of
+`docs/hardware_todo.md` has no archived logs, so it is regenerated like this:
+
+```sh
+for i in $(seq 0 15); do python3 sim/spice/gono/gen_rc_decks.py --ro $i --output-dir /tmp/rc16; done
+for f in /tmp/rc16/*.spice; do ngspice -b $f -o ${f%.spice}_out.txt; done
+python3 sim/spice/gono/analyze_rc.py --dir /tmp/rc16 --ro $(seq 0 15)
+```
+
+Each `_rc.spice` line of the generator output ends with the number of second
+listings it dropped, 21 to 36 depending on the ring. That number is worth
+reading. A coupling capacitor is recorded under both of the nets it joins, so a
+generator that writes out every listing builds each internal coupling twice, and
+mine did until 2026-07-30. The lumped frequencies are unaffected by that fix, so
+they double as a check on the environment: they should come back matching the
+`lumped_MHz` column of `sim/spice/gono/rc_validation.csv`, which holds the
+frequencies from the corrected run.
 
 The archived decks use nominal TT models at 1.8 V and transfer only SPEF
 `*D_NET` total capacitance as lumped loads. Distributed resistance, coupling
