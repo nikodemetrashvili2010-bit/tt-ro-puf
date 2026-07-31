@@ -119,6 +119,21 @@ they double as a check on the environment: they should come back matching the
 `lumped_MHz` column of `sim/spice/gono/rc_validation.csv`, which holds the
 frequencies from the corrected run.
 
+The fast-corner selector sweep behind item 2 of `docs/hardware_todo.md` has no
+archived logs either, and regenerates like this:
+
+```sh
+python3 sim/spice/gono/gen_mux_sweep.py --output-dir /tmp/muxsweep --corner ff --control
+cd /tmp/muxsweep && for f in mux_*.spice; do python3 <repo>/sim/spice/run_ngspice.py "$f" --log "${f%.spice}.log"; done
+python3 <repo>/sim/spice/gono/analyze_mux_sweep.py /tmp/muxsweep --csv <repo>/sim/spice/gono/mux_validation.csv
+```
+
+Sixty-four decks at roughly twelve seconds each. The generator prints the cell
+chain of every path, and those chains should match the `chain` column of the
+committed `mux_validation.csv` exactly, since both come from the same routed
+netlist. If they do not, the build in `dualarm/build_current/` is not the one the
+csv was made from.
+
 The archived decks use nominal TT models at 1.8 V and transfer only SPEF
 `*D_NET` total capacitance as lumped loads. Distributed resistance, coupling
 topology, mismatch, PVT sweeps, and supply noise are out of scope here; the

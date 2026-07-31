@@ -70,6 +70,23 @@ neither script. The four
 `tprobe_*.spice` decks are a one-off check that the SKY130 corner library really
 does let a temperature request through.
 
+`gen_mux_sweep.py` and `analyze_mux_sweep.py` ask whether every oscillator's
+edges actually reach the counter. One oscillator at a time is selected through a
+synthesized 32-to-1 path, and that path is not a tree: the sources reach `sel_ro`
+through three to five cells of six types, and eight of them go through a mux4_2.
+The generator lifts the real cells of one path out of the routed netlist, loads
+each intermediate net with its own SPEF total, holds the side inputs at the
+levels that open that path, drives all 32 from the same extracted ring so that
+any difference belongs to the path, and ends in a real dfrtp_2 wired as a toggle.
+Cell pin order comes from the PDK's own subckt lines rather than from anything
+written down here, and the script stops if a cell or a pin is missing. Passing
+`--control` writes the same paths deliberately closed, which have to fall silent;
+without that the open runs would rest on an assumption about the side inputs
+rather than on evidence. The analysis matches each ring edge to the selector edge
+it produced instead of comparing totals over a window, because the selector
+delays every edge and a total count reports the last one as lost. Results land in
+`mux_validation.csv`, one row per oscillator with its cell chain.
+
 ## Reproducing and checking
 
     python3 verify.py

@@ -48,17 +48,90 @@ or hold violations, and the final netlist has one flop clocked by `sel_ro` and n
 Still outstanding: the phase sweep ran at the nominal corner only. Repeat it at
 the fast and slow corners as part of item 6.
 
-## 2. The 32-to-1 selection path
+## 2. The 32-to-1 selection path (done, 2026-07-31)
 
-`ro_out[active_sel]` picks one of 32 outputs through a synthesized mux. Constant
-delay is fine, a fixed delay does not change a frequency. What I have not shown
-is that every path passes every RO edge without narrowing or dropping pulses at
-the fast corner. That matters scientifically, not just electrically. If RO4's
-selector path loses the odd pulse, RO4 reads slow, and now the count depends on
-routing rather than on the oscillator. The shared counter removed one
-instrumentation variable; it did not remove this one. The whole chain, RO buffer
-to top route to mux to gate to first flop, should be validated as one
-high-speed path at the fast corner.
+`ro_out[active_sel]` picks one of 32 outputs through a synthesized mux. A
+constant delay is harmless, because a fixed delay does not change a frequency.
+What I had never shown is that every path passes every ring edge without
+narrowing or dropping a pulse at the fast corner. That matters scientifically and
+not only electrically. If RO4's selector path loses the odd pulse, RO4 reads slow,
+and the count then depends on routing rather than on the oscillator, which is the
+confound this whole chip exists to measure.
+
+The first thing I learned came out of the netlist, before any simulation. The
+selector is not a tree. The 32 sources reach `sel_ro` through three to five cells
+drawn from six types, a221o_2, a22o_2, a21o_2, a211o_2, mux4_2 and a final
+o21a_2, and no two oscillators are wired the same way. Ten paths are three cells.
+Eight of the Arm B paths pick up a mux4_2 and run five deep. So checking one path
+and generalising would have proved nothing about the other 31.
+
+Each deck carries the real cells of one path, taken from the routed netlist, with
+every intermediate net loaded by its own total capacitance from that build's
+SPEF. The side inputs of each cell are held at the levels that open that one
+path. The stimulus is identical for all 32, the extracted Arm B ring, which at
+this corner runs near the 888 MHz the corner sweep found, so the edge shape
+driving the selector is a real ring edge and anything that differs between the
+results belongs to the path. Each deck ends in the same first ripple stage item 1
+used, a real dfrtp_2 wired as a toggle.
+
+Two things I did to stop myself from writing a deck that passes for the wrong
+reason. Cell pin order is not written down in the generator at all; it is read
+from the PDK's own subckt lines, and the script stops if a cell is missing or if a
+pin it needs does not exist. And `--control` writes the same 32 paths with the
+last cell deliberately closed. Those have to produce nothing. The side-input
+levels are an assumption, and a wrong one would leave a cell stuck at a constant,
+which reads as zero edges, so showing that a closed path really does read as zero
+is what turns a passing open path into evidence.
+
+The result. All 32 paths carried all 30 judged edges through to the flop, the
+flop toggled at half that rate on every one of them, and all 32 blocked controls
+were silent. Nothing is dropped and nothing is added.
+
+The delays are more interesting than the pass.
+
+    cells  mux4    n   mean delay   delay range     narrowest level
+      3     no    10     173.9 ps   157 to 188 ps   415 to 476 ps
+      4     no    12     213.5 ps   198 to 226 ps   423 to 483 ps
+      5     no     2     252.5 ps   249 to 256 ps   437 to 438 ps
+      5    yes     8     367.2 ps   360 to 375 ps   403 to 419 ps
+
+Ignoring the mux4_2 paths, delay tracks cell count at 39.4 ps per cell on a 56 ps
+intercept, with a correlation of 0.944. The two five-cell paths that avoid the
+mux4_2 measure 252.5 ps and that line predicts 252.8, so the model holds where it
+can be tested. The eight paths through the mux4_2 sit at 367.2 ps, which puts the
+cost of that one cell at about 114 ps, close to three ordinary cells. The spread
+across the whole selector is 218 ps. None of it reaches the measurement, since a
+delay that is fixed for a given oscillator cannot change that oscillator's
+frequency.
+
+What does need writing down is that levels shorten on the way through, by 9.8% at
+best and 25.0% at worst. In steady state that is comfortable. The narrowest level
+arriving anywhere is 403 ps against a 563 ps half period at this corner, so 72% of
+it survives.
+
+The part I am not happy about is what this does to item 1. That sweep clocked the
+flop straight from the ring tap with no selector in between, and the shortest
+boundary pulse it found was 175 ps. Through the worst path's 25% shortening, a
+pulse like that would arrive at the flop as roughly 131 ps. I never simulated
+that combination. My expectation is that it costs at most one count, which the
+settle handshake already tolerates, but an expectation is not what item 1 claims,
+and the honest position is that the boundary case is verified without the
+selector and the selector is verified without the boundary case. Repeating the
+item 1 phase sweep with the selector in the path is now cheap, because the deck
+generator already knows how to build the path, and it is the first thing I should
+do next.
+
+Derived record in `sim/spice/gono/mux_validation.csv`, one row per oscillator with
+its cell chain. Tools: `gen_mux_sweep.py --corner ff --control` and
+`analyze_mux_sweep.py`. Both were checked against synthetic waveforms before being
+pointed at real ones, because an analysis that has never failed has not been
+tested. A clean path passes, a swallowed cycle is caught at the time it happened,
+a pulse clipped to a sliver that still clocks is caught by the width rule, and a
+silent path counts as silent. The first version of the analyzer did fail, on A00,
+and it was wrong: it counted totals over a fixed window, so the last ring edge had
+no time to cross the selector before the transient ended and was reported as lost.
+That is the same mistake item 6 records, a pass condition that quietly assumed the
+window lined up with the period. It matches edges to their partners now.
 
 ## 3. Arm A / Arm B boundary symmetry (investigated 2026-07-25, not removable)
 
@@ -349,13 +422,15 @@ re-harden, or none.
 
 ## Order of work
 
-Items 1, 6, 7 and 9 are done. Item 6 closed out the corner repeat item 1 owed, and
-item 7 leaves only the Arm B macro re-extraction behind. Items 3 and 4 are tested
-and closed as not fixable on this die, with the reasoning and measurements recorded
-above; both come back only if I move to a larger tile. Next is the item-2 chain
-check, then 8. Item 2 now has a concrete target from the corner work: the selector
-path has to pass 888 MHz at the fast corner, not just the 570 MHz of the nominal
-case. Only
-once the architecture is frozen do I lock the acquisition protocol (that part is
-already done in `firmware/`), preregister the analysis, freeze the
-reproducibility release, and tape out.
+Items 1, 2, 6, 7 and 9 are done. Item 6 closed out the corner repeat item 1 owed,
+and item 7 leaves only the Arm B macro re-extraction behind. Items 3 and 4 are
+tested and closed as not fixable on this die, with the reasoning and measurements
+recorded above, and both come back only if I move to a larger tile.
+
+Item 2 passed but did not close the measurement chain, because it showed the
+selector shortens a level by up to a quarter and item 1's boundary sweep was run
+without the selector in the path. So the next job is small and specific, repeat
+the item 1 phase sweep through a selector path, and the worst path is already
+known to be B15. After that comes item 8. Only once the architecture is frozen do
+I lock the acquisition protocol (that part is already done in `firmware/`),
+preregister the analysis, freeze the reproducibility release, and tape out.
