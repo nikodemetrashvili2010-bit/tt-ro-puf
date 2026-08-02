@@ -87,6 +87,23 @@ it produced instead of comparing totals over a window, because the selector
 delays every edge and a total count reports the last one as lost. Results land in
 `mux_validation.csv`, one row per oscillator with its cell chain.
 
+`gen_boundary_sweep.py` and `analyze_boundary_sweep.py` ask item 1's question
+through item 2's path. The generator does not rebuild the selector, it calls
+`gen_mux_sweep.build` and rewrites the enable, the transient length and the
+output name, refusing to write a deck if any of them is not found exactly once.
+So the selector half of every boundary deck is the same code item 2 was checked
+with. `--base-ns`, `--step-ps` and `--steps` move the phase grid, which is how
+the width where a pulse stops surviving gets located. Results land in
+`boundary_validation_B15.csv`, `boundary_validation_A05.csv` and
+`boundary_validation_B15_fine.csv`.
+
+Both sweep analyzers take `--selftest`, which plants the faults they claim to
+catch and needs neither the PDK nor ngspice. It is worth running before a long
+simulation rather than after. `analyze_mux_sweep.py` grew its checks on
+2026-08-02 after a polarity mistake passed every one of the old ones: it had
+been comparing the narrowest level at the tap against the narrowest at `sel_ro`
+without noticing those are opposite polarities on every path.
+
 ## Reproducing and checking
 
     python3 verify.py

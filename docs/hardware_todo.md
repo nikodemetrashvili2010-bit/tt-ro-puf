@@ -48,7 +48,52 @@ or hold violations, and the final netlist has one flop clocked by `sel_ro` and n
 Still outstanding: the phase sweep ran at the nominal corner only. Repeat it at
 the fast and slow corners as part of item 6.
 
-## 2. The 32-to-1 selection path (done, 2026-07-31)
+### Repeated through the selector, 2026-08-02
+
+The sweep above clocked the flop straight from the ring tap. The chip does not.
+Item 2 put a selector in between and I had checked each half without ever
+checking the two together, so I ran the same phase sweep again with the real
+selector cells in the path. `gen_boundary_sweep.py` builds those decks. It does
+not rebuild the path, it calls item 2's generator and rewrites four lines, the
+enable, the transient length, the output name and a comment, and refuses to
+write anything if one of the four is not found exactly once. A deck that quietly
+kept item 2's always-on enable would leave the ring running and report a clean
+pass for a sweep that never swept.
+
+Thirty-eight phases through B15 at the fast corner, thirty-eight through A05,
+and then thirteen more through B15 at 5 ps steps to walk the width where the
+pulse stops surviving. Eighty-nine phases in total. Every one of them resolved
+the flop to exactly 0.000 V or 1.950 V. Not one landed in between.
+
+The interesting number is where the path gives up. On B15 a 97 ps high at the
+tap is swallowed and a 102 ps one gets through, arriving at the flop as 144 ps.
+The transition is that sharp, five picoseconds wide, and nothing hangs inside it.
+That is the answer to the question item 1 was really asking. The selector chain
+behaves as a filter. Either it passes a full pulse or it passes none, so the flop
+is never handed a marginal clock and never has the chance to sit at mid rail.
+The narrowest thing the flop saw across all three sweeps was 144 ps.
+
+A05 is the other bracket, the path that adds the least width, 102 ps against
+B15's 182. It survives a 69 ps tap pulse where B15 needs 102, so the shallower
+faster chain passes narrower pulses even though it helps them less. Chain depth
+matters more than asymmetry, and both facts come from the same response time:
+A05 reaches its full 102 ps by the time the pulse is 128 ps wide, while B15 needs
+about 380 ps to express its full 182.
+
+What a swallowed pulse costs is one edge, and in every sweep the phases that lost
+it were exactly the phases where the count steps up, so the step happens one
+phase later rather than a count going missing. The settle handshake tolerates
+that already, since the core publishes only after three equal reads.
+
+Two things this does not cover. It is the fast corner only, which is the corner
+where the pulse is shortest and so the right one to have, but not the only one.
+And B00 sits just outside the bracket on both criteria, a 375 ps rise against
+B15's 360 and 166 ps of asymmetry against 182, so B15 is the hardest path I
+measured rather than the hardest path there is. Records in
+`boundary_validation_B15.csv`, `boundary_validation_A05.csv` and
+`boundary_validation_B15_fine.csv`.
+
+## 2. The 32-to-1 selection path (done 2026-07-31, corrected 2026-08-02)
 
 `ro_out[active_sel]` picks one of 32 outputs through a synthesized mux. A
 constant delay is harmless, because a fixed delay does not change a frequency.
@@ -89,11 +134,11 @@ were silent. Nothing is dropped and nothing is added.
 
 The delays are more interesting than the pass.
 
-    cells  mux4    n   mean delay   delay range     narrowest level
-      3     no    10     173.9 ps   157 to 188 ps   415 to 476 ps
-      4     no    12     213.5 ps   198 to 226 ps   423 to 483 ps
-      5     no     2     252.5 ps   249 to 256 ps   437 to 438 ps
-      5    yes     8     367.2 ps   360 to 375 ps   403 to 419 ps
+    cells  mux4    n   mean rise   rise range     asymmetry      high at sel_ro
+      3     no    10    173.9 ps   157 to 188 ps  110 to 171 ps  646 to 707 ps
+      4     no    12    213.5 ps   198 to 226 ps  102 to 163 ps  639 to 699 ps
+      5     no     2    252.5 ps   249 to 256 ps  148 to 149 ps  684 to 685 ps
+      5    yes     8    367.2 ps   360 to 375 ps  166 to 182 ps  703 to 719 ps
 
 Ignoring the mux4_2 paths, delay tracks cell count at 39.4 ps per cell on a 56 ps
 intercept, with a correlation of 0.944. The two five-cell paths that avoid the
@@ -104,22 +149,41 @@ across the whole selector is 218 ps. None of it reaches the measurement, since a
 delay that is fixed for a given oscillator cannot change that oscillator's
 frequency.
 
-What does need writing down is that levels shorten on the way through, by 9.8% at
-best and 25.0% at worst. In steady state that is comfortable. The narrowest level
-arriving anywhere is 403 ps against a 563 ps half period at this corner, so 72% of
-it survives.
+### The correction, 2026-08-02
 
-The part I am not happy about is what this does to item 1. That sweep clocked the
-flop straight from the ring tap with no selector in between, and the shortest
-boundary pulse it found was 175 ps. Through the worst path's 25% shortening, a
-pulse like that would arrive at the flop as roughly 131 ps. I never simulated
-that combination. My expectation is that it costs at most one count, which the
-settle handshake already tolerates, but an expectation is not what item 1 claims,
-and the honest position is that the boundary case is verified without the
-selector and the selector is verified without the boundary case. Repeating the
-item 1 phase sweep with the selector in the path is now cheap, because the deck
-generator already knows how to build the path, and it is the first thing I should
-do next.
+The first version of this section said levels shorten on the way through, by 9.8%
+at best and 25.0% at worst, and warned that a short boundary pulse would arrive
+at the flop badly eroded. That was wrong, and wrong in a way worth recording
+because every check I had passed it.
+
+The analyzer took the narrowest level at the tap and the narrowest level at
+sel_ro and reported the difference as erosion. Those are not the same level. A
+rise and a fall cross a path at different speeds, and the difference moves each
+trailing edge without moving the leading one, so one polarity grows by exactly as
+much as the other shrinks. On B15 the tap runs 539 ps high and 583 ps low while
+sel_ro runs 721 ps high and 401 ps low, and the period is 1122 ps at both nodes to
+the picosecond. So the narrowest level at the tap is a high, the narrowest at
+sel_ro is a low, and the old figure compared one against the other. The 25.0%
+described no shortening of anything.
+
+Re-running all 32 decks with highs and lows kept apart says the same thing
+everywhere. Every path has its fall arriving after its rise, by 102 ps on A05 up
+to 182 ps on B15, so every path lengthens its high level and shortens its low.
+Nothing shortens a high. The rise delays reproduce the earlier run to the
+picosecond, which is the useful part: nothing about the circuit changed, only
+what I thought it was doing.
+
+The reason I found it is worth keeping too. It was not review. The boundary
+sweep reused the same comparison and reported a pulse arriving 182 ps wider than
+it left, and a selector cannot widen a pulse, so the impossible number was the
+only thing that sent me to look at the waveform.
+
+What survives untouched is the pass. It rested on every edge arriving, and a
+period preserved to the picosecond at both nodes is a stronger version of that
+claim than the edge matching was. What does not survive is the alarm this section
+raised about item 1. The counter's first stage is a rising-edge flop, and every
+selector path hands it a longer high than the tap did. Item 1 now carries the
+sweep that settles it.
 
 Derived record in `sim/spice/gono/mux_validation.csv`, one row per oscillator with
 its cell chain. Tools: `gen_mux_sweep.py --corner ff --control` and
@@ -132,6 +196,12 @@ and it was wrong: it counted totals over a fixed window, so the last ring edge h
 no time to cross the selector before the transient ended and was reported as lost.
 That is the same mistake item 6 records, a pass condition that quietly assumed the
 window lined up with the period. It matches edges to their partners now.
+
+The synthetic checks were the problem the second time. All four of them passed
+while the polarity mistake sat in the middle of the analysis, because none of
+them ever built a path where a high and a low behaved differently. There are
+three more now, and the first of them plants exactly that: a path that lengthens
+its high, which must not be reported as erosion.
 
 ## 3. Arm A / Arm B boundary symmetry (investigated 2026-07-25, not removable)
 
@@ -427,10 +497,15 @@ and item 7 leaves only the Arm B macro re-extraction behind. Items 3 and 4 are
 tested and closed as not fixable on this die, with the reasoning and measurements
 recorded above, and both come back only if I move to a larger tile.
 
-Item 2 passed but did not close the measurement chain, because it showed the
-selector shortens a level by up to a quarter and item 1's boundary sweep was run
-without the selector in the path. So the next job is small and specific, repeat
-the item 1 phase sweep through a selector path, and the worst path is already
-known to be B15. After that comes item 8. Only once the architecture is frozen do
+The gap item 2 left is closed. The boundary sweep now runs through the real
+selector, on the deepest path and on the one that helps least, and the flop has
+no width at which it hangs. Item 2's own claim about level shortening turned out
+to be a measuring error and is corrected above.
+
+So item 8 is next, the per-instance integration of Arm B, which decides whether
+the sixteen macro copies really behave as one number. Two smaller things are
+owed alongside it. The boundary sweep ran at the fast corner only, and B00 is
+marginally harder than B15 on both the rise delay and the asymmetry, so it is
+the one path I would still like to sweep. Only once the architecture is frozen do
 I lock the acquisition protocol (that part is already done in `firmware/`),
 preregister the analysis, freeze the reproducibility release, and tape out.

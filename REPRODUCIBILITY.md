@@ -134,6 +134,37 @@ committed `mux_validation.csv` exactly, since both come from the same routed
 netlist. If they do not, the build in `dualarm/build_current/` is not the one the
 csv was made from.
 
+That csv changed shape on 2026-08-02. It used to carry a single `narrowest_ps`
+column, which mixed high levels and low levels together and was the source of the
+error described in item 2 of `docs/hardware_todo.md`. It now carries the rise
+delay, the fall delay and the two polarities separately. The rise delays are
+unchanged from the earlier run, to the picosecond, so an older clone can be
+checked against a newer one on that column.
+
+The boundary sweeps behind item 1 have no archived logs either. Each takes about
+eight minutes:
+
+```sh
+python3 sim/spice/gono/gen_boundary_sweep.py --output-dir /tmp/bndsweep --corner ff --osc B15
+cd /tmp/bndsweep && for f in bnd_*.spice; do python3 <repo>/sim/spice/run_ngspice.py "$f" --log "${f%.spice}.log"; done
+python3 <repo>/sim/spice/gono/analyze_boundary_sweep.py /tmp/bndsweep --vdd 1.95 --csv <repo>/sim/spice/gono/boundary_validation_B15.csv
+```
+
+Swap `--osc A05` and the matching csv name for the other bracket. The fine sweep
+that located the surviving width adds three arguments and runs thirteen decks:
+
+```sh
+python3 sim/spice/gono/gen_boundary_sweep.py --output-dir /tmp/bndfine --corner ff --osc B15 --base-ns 30.10 --step-ps 5 --steps 13
+```
+
+Both analyzers carry planted-fault checks that need no PDK and no ngspice, so the
+analysis can be exercised on any machine before the decks are run:
+
+```sh
+python3 sim/spice/gono/analyze_mux_sweep.py --selftest
+python3 sim/spice/gono/analyze_boundary_sweep.py --selftest
+```
+
 The archived decks use nominal TT models at 1.8 V and transfer only SPEF
 `*D_NET` total capacitance as lumped loads. Distributed resistance, coupling
 topology, mismatch, PVT sweeps, and supply noise are out of scope here; the

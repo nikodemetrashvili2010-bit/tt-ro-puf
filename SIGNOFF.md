@@ -30,8 +30,9 @@ each carries inside it, and both kept the same length.
 | Hardened Arm B macro | recorded checks clean, bundle 8 of 8 | `macro/romacro_final/` | no |
 | Standalone 16-copy array | clean apart from one max-slew violation at the slow corner, bundle 8 of 8 | `array/pdnfix4_final/` | no |
 | Earlier dual-arm snapshot | mixed checkpoints, not a usable bundle | `dualarm/build_debug/` | informational |
-| 32-to-1 selector path at the fast corner | all 32 paths carry every edge into the flop, 32 blocked controls silent, selector delay 157 to 375 ps, levels shorten 9.8% to 25.0% | `mux_validation.csv`, `gen_mux_sweep.py`, `analyze_mux_sweep.py`, raw logs not archived | no |
-| Boundary pulse measured through the selector | not simulated | `docs/hardware_todo.md` item 2 | before final trust |
+| 32-to-1 selector path at the fast corner | all 32 paths carry every edge into the flop, 32 blocked controls silent, rise delay 157 to 375 ps, every path lengthens its high level by 102 to 182 ps and shortens its low by the same, period preserved at both nodes | `mux_validation.csv`, `gen_mux_sweep.py`, `analyze_mux_sweep.py`, raw logs not archived | no |
+| Boundary pulse measured through the selector | 89 phases on B15 and A05, every one settles to a rail, count steps by at most one, B15 drops a 97 ps tap pulse and passes a 102 ps one as 144 ps | `boundary_validation_B15.csv`, `boundary_validation_A05.csv`, `boundary_validation_B15_fine.csv`, raw logs not archived | no |
+| Boundary through the remaining 30 paths, and at ss and tt | not simulated | `docs/hardware_todo.md` item 1 | before final trust |
 | Arm B per-instance integration | not simulated | item 8 | before final trust |
 | Silicon measurements | chips not fabricated | - | next phase |
 
@@ -79,24 +80,33 @@ it stays in the paper as a prior run, not as a result of this design.
 
 In the order I care about them.
 
-The selector path is now simulated at the fast corner and it carries every edge,
-but it left a gap behind it rather than closing one cleanly. The boundary flop
-sweep clocked the flop straight from the ring tap with no selector in between,
-and its shortest pulse was 175 ps. The selector shortens levels by up to 25%, so a
-pulse like that reaches the flop as roughly 131 ps. Each half of that is checked
-and the combination is not. I expect it to cost at most one count, which the
-settle handshake tolerates, but expecting is not verifying. After that comes item
-8, the per-instance integration of Arm B, which decides whether the sixteen macro
-copies really behave as one number.
+The gap the selector left is closed. The boundary sweep now runs with the real
+selector cells in the path, on B15 which is the deepest and slowest, and on A05
+which adds the least width, 89 phases between them at the fast corner. Every one
+resolved the flop to a clean rail. The chain turns out to behave as a filter:
+below about 100 ps at the tap it passes nothing at all, above that it passes a
+full pulse, and the narrowest clock the flop ever saw was 144 ps. So there is no
+width at which the flop hangs, which is what item 1 was really claiming.
 
-Second, three results have no raw logs in the repository. The distributed-RC
-comparison, the boundary flop sweep and the selector sweep were all run in `/tmp`,
-and only their derived numbers survive. The selector sweep at least leaves a row
-per oscillator in `mux_validation.csv`, and the RC comparison leaves
-`rc_validation.csv`, so a stranger with a clone can read those. None of the three
-can be recomputed without rerunning ngspice. The decks are deterministic and
-regenerate byte for byte, so archiving the logs is mechanical work I owe rather
-than anything difficult.
+Getting there meant correcting item 2, and that correction is the part I would
+want a reader to see. Its headline, that the selector shortens levels by up to
+25%, came from comparing the narrowest level at the tap against the narrowest at
+sel_ro, and those are opposite polarities. No path shortens a high level. Every
+one lengthens it. `docs/hardware_todo.md` has the full account.
+
+What is next is item 8, the per-instance integration of Arm B, which decides
+whether the sixteen macro copies really behave as one number. Two smaller debts
+sit next to it. The boundary sweep is fast corner only. And B00 has both a slower
+rise and less asymmetry than B15, by about 15 ps each, so the path I swept is the
+hardest one I measured rather than the hardest one there is.
+
+Second, five results have no raw logs in the repository. The distributed-RC
+comparison, the boundary flop sweep, the selector sweep and the two boundary
+sweeps through the selector were all run in `/tmp`, and only their derived numbers
+survive. Each leaves a csv behind, so a stranger with a clone can read the
+numbers, but none can be recomputed without rerunning ngspice. The decks are
+deterministic and regenerate byte for byte, so archiving the logs is mechanical
+work I owe rather than anything difficult.
 
 Last is silicon. Uniqueness, reliability and any attack claim need measured dies
 at several supply voltages and temperatures. Until those exist this is a
