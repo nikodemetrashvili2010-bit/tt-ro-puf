@@ -93,9 +93,51 @@ through item 2's path. The generator does not rebuild the selector, it calls
 output name, refusing to write a deck if any of them is not found exactly once.
 So the selector half of every boundary deck is the same code item 2 was checked
 with. `--base-ns`, `--step-ps` and `--steps` move the phase grid, which is how
-the width where a pulse stops surviving gets located. Results land in
-`boundary_validation_B15.csv`, `boundary_validation_A05.csv` and
-`boundary_validation_B15_fine.csv`.
+the width where a pulse stops surviving gets located, and `--corner` moves the
+PVT point. The span has to cover a whole ring period or the enable fall never
+crosses an edge and the sweep passes without testing anything, which is what the
+first slow-corner run did: the 38-step default spans 1.9 ns and the ss period is
+3439 ps, so ss needs `--steps 76`. The analyzer rejects a sweep whose count never
+changes for exactly that reason. Seven `boundary_validation_*.csv` files are the
+records: B15, A05 and B00 at the fast corner, fine 5 ps sweeps around the B15 and
+B00 thresholds, and B15 again at tt and at ss.
+
+`check_pulse_width.py` reads what the PDK promises rather than what the simulator
+shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out
+of the Liberty files, handling both spellings vendors use for it, and compares
+the narrowest clock the sweeps actually delivered against the corner they ran at.
+It names that corner file explicitly and refuses to fall back on a near
+neighbour, since the first version matched on the substring "ff", picked a corner
+nothing had run at, and reported a failure that was not real.
+
+`gen_instance_decks.py` and `analyze_instance.py` ask whether Arm B's sixteen
+instances behave as one number once they are integrated. All sixteen share one
+GDS, so the deck gives all sixteen the identical internal macro model and hangs
+each instance's own external parasitics on it: the real enable driver, the enable
+route, the output route and the selector cell that route ends at, both routes
+distributed from the top SPEF. A control with no capacitance and a reference with
+the macro's extraction only run in the same file. Structural guards refuse to
+write a deck if a cell is missing from the PDK, if a route's capacitance does not
+match the SPEF net total, if a node carries capacitance without a resistor, or if
+an output net reaches no known selector cell. `verify_instance.py` re-derives the
+published numbers from the raw log with its own SPEF parser, netlist parser and
+correlation code. Records are `armb_instances_out.txt` and
+`instance_parasitics.csv`.
+
+`gen_supply_decks.py` and `analyze_supply.py` bound the supply confound, which is
+that Arm B sits on its own met4 straps and decap while Arm A sits on ordinary
+met1 rails. Rather than assume one path resistance, the sweep puts a series
+resistor in front of each ring across four decades and measures the current, the
+supply that arrives at the cells and the frequency at every point, so the verdict
+survives the geometry being wrong by a factor of ten. The rings are not new code,
+they come from the item 7 and item 8 generators. Two independent things have to
+close before the result is read: Ohm's law at every point, and the pushing figure
+the sweep implies against the one measured separately by moving an ideal supply.
+Worth knowing if you write a deck like this yourself: a `.save` line makes ngspice
+keep only the vectors it names, so a current measurement against `vdd#branch`
+silently returns nothing useful unless `i(Vdd)` is on that line. The sixteen raw logs are in
+`supply/`, so `python3 analyze_supply.py --dir supply` reproduces the verdict
+from a clone without ngspice.
 
 Both sweep analyzers take `--selftest`, which plants the faults they claim to
 catch and needs neither the PDK nor ngspice. It is worth running before a long

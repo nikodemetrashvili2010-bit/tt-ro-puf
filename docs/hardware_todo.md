@@ -71,7 +71,7 @@ The transition is that sharp, five picoseconds wide, and nothing hangs inside it
 That is the answer to the question item 1 was really asking. The selector chain
 behaves as a filter. Either it passes a full pulse or it passes none, so the flop
 is never handed a marginal clock and never has the chance to sit at mid rail.
-The narrowest thing the flop saw across all three sweeps was 144 ps.
+The narrowest thing the flop saw across those three sweeps was 144 ps.
 
 A05 is the other bracket, the path that adds the least width, 102 ps against
 B15's 182. It survives a 69 ps tap pulse where B15 needs 102, so the shallower
@@ -92,6 +92,86 @@ B15's 360 and 166 ps of asymmetry against 182, so B15 is the hardest path I
 measured rather than the hardest path there is. Records in
 `boundary_validation_B15.csv`, `boundary_validation_A05.csv` and
 `boundary_validation_B15_fine.csv`.
+
+### Four more sweeps, and the number that was wrong, 2026-08-04
+
+Two debts were left above. The sweep had run at the fast corner only, and B00 sat
+just outside the bracket on both criteria, so B15 was the hardest path I had
+measured rather than the hardest one there is. Both are now closed, with four
+more sweeps: B00 at ff over 38 phases and then 11 more at 5 ps steps, and B15
+repeated at tt and at ss. That makes 252 phases across seven sweeps in total, and
+every single one of them resolved the flop to a clean rail. Nothing has ever
+landed at mid supply.
+
+B00 is the strict path, as expected. In its own boundary decks it rises in 375 ps
+against B15's 360 and carries less asymmetry, 165 ps against 181. Both sit a
+picosecond off what item 2's decks measured for the same two paths, 166 and 182,
+which is two transients disagreeing at the resolution I read them at rather than
+a real difference. B00 swallows a 105 ps pulse at the tap and passes a 128 ps
+one, where B15 swallowed 97 and passed 102, and the fine sweep narrows B00's own
+edge to 111 swallowed and 116 passed. Five picoseconds wide again, and again
+nothing hangs inside it.
+
+Now the correction, and it is the reason I ran the fine sweep at all. This item
+and `SIGNOFF.md` both said the narrowest clock the flop ever saw was 144 ps. That
+is wrong. Right at its own threshold B00 hands the flop 80 ps, because at the
+edge the chain squeezes the pulse instead of stretching it. Away from the
+boundary every path lengthens a high, which is the corrected item 2 result and
+still true, but the last clipped pulse is exactly where that stops holding. So
+the number is 80 ps, and the one I had been quoting was 80 percent too
+generous.
+
+80 ps is narrow enough that I did not want only the simulator's opinion of it,
+so `check_pulse_width.py` reads what the PDK itself promises for the first
+flop. I get 77.5 ps for `sky130_fd_sc_hd__dfrtp_2` at ff_n40C_1v95, which is
+the corner that sweep ran at, so the 80 ps capture clears the library by 2.5
+ps. It is characterized, and I am calling it marginal rather than comfortable.
+The slower corners are not close: 484 ps against a 169.8 ps promise at tt, and
+810 ps against 353.8 ps at ss. The fast corner is the tight one on both sides
+at once, since it produces the shortest pulses and the library also promises
+the least there.
+
+That script had a bug worth recording, because it reported a failure that was not
+real. It picked the first Liberty whose filename contained "ff", which is
+ff_100C_1v65 at 109.4 ps, a corner nothing here has ever run at, and told me the
+80 ps capture failed. It names the exact file per corner now and refuses to
+substitute a near neighbour.
+
+I expected the threshold to be a property of the cells and it turns out to be a
+property of the ring. B15 gives up near 100 ps at ff on a 1123 ps period, near
+198 ps at tt on 1753 ps, and near 378 ps at ss on 3439 ps. Close to a tenth of
+the period every time, nine percent at ff where the fine sweep pins it, and
+somewhere between ten and thirteen at tt and ss where the 50 ps step is all the
+resolution I have. The asymmetry scales the same way, 181 ps at ff, 314 at tt,
+657 at ss.
+
+Fixed time beats fixed fraction at every corner, which settles an argument I had
+with myself on 08-02. Fitted on B15's own boundary pulses, the selector adds 176
+ps at ff, 310 at tt and 641 at ss, and what it leaves unexplained is between 10
+and 40 ps at every corner. A fixed-fraction model fitted to the same pulses
+leaves 59 to 220 ps behind, so it is worse everywhere and worst at the slow
+corner. The selector adds time. It does not scale what it is given.
+
+### The slow corner passed without testing anything
+
+The first ss run came back clean and it was worthless, and I nearly wrote it up.
+The count was 9 at all 38 phases. The default sweep is 38 steps of 50 ps, which
+is 1.9 ns, and I had put a comment on that constant saying it was longer than a
+ring period at any corner. I had checked tt and ff. The ss period is 3439 ps, so
+the enable fall never crossed a ring edge, and all 38 phases were the same easy
+case repeated 38 times.
+
+A pass that tested nothing is worse than a failure, because a failure gets
+investigated. `analyze_boundary_sweep.py` now rejects any sweep whose count never
+changes and says how wide the span was, so the fault reports itself instead of
+reading as a clean result. One of the analyzer's existing selftest cases turned
+out to contain exactly this fault, sitting there passing, and it is now an
+expect-fail case. The real ss run is 76 steps, 3.8 ns, and the count moves from 9
+to 10 with four phases losing the final edge.
+
+Records: `boundary_validation_B00.csv`, `boundary_validation_B00_fine.csv`,
+`boundary_validation_B15_tt.csv` and `boundary_validation_B15_ss.csv`, alongside
+the three from 08-02.
 
 ## 2. The 32-to-1 selection path (done 2026-07-31, corrected 2026-08-02)
 
@@ -257,6 +337,23 @@ Rejected config is recorded in `macro/config.json`. While I was there I fixed a
 stale `FP_PDN_MULTILAYER: true` in that file, which could not have built the
 shipped macro at all: the core is 16.32 um tall and met5 straps do not fit.
 
+### The edge quality, measured 2026-08-04
+
+This section left a debt and item 8 has now paid part of it. What I said was that
+the extra buffer and the heavier output route cannot bias frequency, both sitting
+outside the loop, but that they can bias the edge arriving at the counter, so any
+reliability comparison between the arms has to account for them. The per-instance
+run measures that edge inside Arm B. It spans 62.6 to 318.2 ps across the sixteen
+instances, a factor of 5.08, and it tracks output route capacitance at r = +0.999,
+which is about as clean as a correlation gets.
+
+So the sixteen copies agree on frequency to 0.0025 percent and disagree on edge
+quality by a factor of five. Frequency does not care, and that is item 8's whole
+result. Anything downstream that depends on slew would care, and the selector
+delays in item 2 are exactly that kind of thing. The debt is not closed, since
+this measures the spread within Arm B rather than the difference between the
+arms, but it is now a measured number instead of a worry.
+
 ## 4. Floorplan confound (two trials run 2026-07-25, both rejected)
 
 Arm B is a 4x4 grid parked on one side of the tile, columns near x = 3, 63, 123,
@@ -303,15 +400,88 @@ load gap stays open for the same reason.
 
 Evidence and both configs: `dualarm/floorplan_trials/`.
 
-## 5. Power and decap confound
+## 5. Power and decap confound (done 2026-08-05)
 
-Same theme, different axis. Arm B carries its own decap, filler, and power
-straps; Arm A sits in the normal cell fabric on met1 rails. That is one more way
-the arms differ beyond internal routing. One warning to myself: do not use the
-OpenROAD flow power number to wave away IR drop. A free-running ring is not
-modeled as normal switching, so that number is meaningless here. Instead model
-RO frequency versus VDD and confirm a plausible local IR-drop difference is far
-below the Arm A spread, then revisit it with measured supply on silicon.
+Same theme as item 3, different axis. Arm B carries its own decap, filler and
+met4 power straps, while Arm A sits in the ordinary cell fabric on met1 rails.
+One more way the arms differ beyond internal routing, and not a small one. The
+supply pushing figure I measured on 2026-07-29 is 105.9 percent per volt, so
+ten millivolts of difference between the arms would be a whole percent of
+frequency, against an Arm A dispersion of 5.84 percent. An argument was never
+going to settle that.
+
+One warning to myself, kept from when this item was still a plan: do not use the
+flow's own power number to wave this away. A free-running ring is not modelled as
+normal switching, so that number means nothing here.
+
+The honest test does not pick one resistance. I do not know the real supply path
+resistance to better than a factor of a few, and if the answer rested on my
+estimate then it would only ever be as good as the estimate. So the sweep runs
+the series resistance across four decades, from essentially ideal to a kilohm,
+and measures three things at each point: the current the ring draws, the supply
+that actually arrives at the cells, and the frequency. Neither ring is new code.
+Arm A comes from item 7's distributed RC generator and Arm B from item 8's macro
+builder, both of which already produce numbers this project quotes. The only
+things this adds are the resistor and two measurements.
+
+    ohm      Arm A uA   Arm A V   Arm A MHz    Arm B uA   Arm B V   Arm B MHz
+    ideal       118.7    1.8000     536.865       134.8    1.8000     570.616
+       10       118.5    1.7988     536.203       134.6    1.7987     569.830
+      100       116.5    1.7884     530.303       132.0    1.7868     562.758
+     1000        99.5    1.7005     478.447       110.3    1.6897     501.774
+
+The deck was wrong twice before it was right, and the reason is worth writing
+down because I misdiagnosed it the same way both times. The current column came
+back as exactly zero, and I assumed ngspice wanted a different spelling for a
+voltage source's branch current, so I wrote a second spelling next to the first.
+Spelling was not the problem. A deck carrying a `.save` line keeps only the
+vectors that line names, and neither of mine named a current, so `vdd#branch` was
+never in the plot for any spelling to find. Adding `i(Vdd)` to the save lines
+fixed it in one line. The reader now rejects a zero current outright instead of
+averaging it into a verdict, because a ring that is oscillating draws tens of
+microamps, and a zero there means the measurement did not happen rather than that
+the answer is small.
+
+I make the sweep prove it is real three ways before reading anything off it.
+The supply at the cells falls as the resistance rises, so the resistor is in
+the circuit and I am not reading a flat line. Ohm's law closes at every point
+in both arms, with the worst disagreement anywhere rounding to zero at four
+decimal places, and that one matters because the current and the voltage are
+separate measurements that did not have to agree. And the pushing figure the
+sweep implies, 108.3 percent per volt in Arm A and 105.7 in Arm B, reproduces
+the 105.9 I measured on 2026-07-29 by moving an ideal supply. Different
+mechanism, same number, and that is the agreement I actually trust.
+
+Then the question itself. The resistances are set by the layout and not by me, so
+they come out of the shipped DEF and the PDK's sheet resistances. Arm A: half a
+met4 stripe pitch of 0.48 um met1 rail at 0.125 ohm per square, 7.81 ohm. Arm B:
+the full 220.8 um of 2.4 um met4 stripe at 0.047, 4.32 ohm. Read off the sweep,
+that is 0.1055 percent of frequency for Arm A and 0.0707 for Arm B, so the two
+arms differ by 0.0348 percent.
+
+That is 168 times under Arm A's dispersion, and under the 0.062 percent
+transistor mismatch scale as well. If my geometry is wrong by a factor of ten in
+the bad direction it becomes 0.3417 percent, still seventeen times under. Being
+able to say that last part is the whole reason for sweeping four decades instead
+of computing one number.
+
+What I will not claim is that the effect is invisible. 0.0348 percent is about
+eight counts of the counter, and the counter resolves one, so the chip can see
+it. What makes it harmless is that it is an offset between the arms rather than a
+spread inside either one. Every Arm B ring sits on the same strap geometry.
+Inside Arm A the rail resistance runs from nearly nothing, for a cell sitting
+under a stripe, up to the 7.81 ohm worst case, and even charging that entire
+range to per-oscillator variation gives 0.1055 percent, which is 55 times under
+the dispersion Arm A actually shows. Supply is not what makes Arm A spread.
+
+Ideal in every deck: a fixed source behind one resistor, no decoupling, no
+package inductance, no neighbours switching. So this bounds the static IR-drop
+confound and says nothing about dynamic droop. That one needs a probe on a real
+supply pin, and it goes on the silicon list.
+
+Tools are `gen_supply_decks.py` and `analyze_supply.py`, the latter with
+`--selftest`, which plants nine faults including a log whose current measurement
+never happened.
 
 ## 6. PVT corners (done 2026-07-25)
 
@@ -438,18 +608,73 @@ from 4 nets on RO7 to 72 on RO14.
 
 Tools: `gen_rc_decks.py --ro N`, `analyze_rc.py --dir ... --ro 0..15`.
 
-## 8. Arm B per-instance integration
+## 8. Arm B per-instance integration (done 2026-08-04)
 
-Arm B today is one macro, simulated once, drawn as a line. That covers the
-internal geometry and says nothing about integration. The sixteen instances
-share the GDS, but each has its own enable route, output route, neighbours, and location,
-and the top SPEF does carry per-instance `u_rob` nets even though it cannot see
-inside the macro. Plan: keep the one internal macro model for all sixteen,
-attach each instance's real external en and out parasitics from the top SPEF,
-and simulate the sixteen separately. Maybe integration adds 0.2%. Maybe it adds
-a few percent. If it is the second one, that is a confound I want to find before
-I pay for silicon. Same ngspice flow as the go/no-go, so it rides along with the
-SPICE work above.
+Arm B was one macro, simulated once, and drawn in every figure as a single line.
+That covers the geometry inside the macro and says nothing about integration. The
+sixteen instances share the GDS, so their internal parasitics are identical by
+construction, but each one has its own enable route, its own output route, its
+own neighbours and its own place on the die. If integration puts a few percent of
+spread back into Arm B then the matched arm is not matched in the way I have been
+claiming, and I would much rather find that here than after paying for silicon.
+
+The deck keeps the one internal macro model for all sixteen and hangs each
+instance's real external parasitics on it: the real enable driver, the enable
+route, the output route, and the real selector cell that route ends at, both
+routes built distributed from the top SPEF rather than lumped. All sixteen run in
+one file alongside a control with no capacitance at all and a reference carrying
+the macro's own extraction only. The sixteen internal models are element for
+element identical to the reference, all 35 internal capacitors included, so
+anything that differs between the results belongs to the routes and to nothing
+else.
+
+The prediction went into `instance_run_steps.md` before the run, which is a habit
+I want to keep whether or not it makes me look good afterwards. Both boundary
+nets sit outside the oscillator loop, so the frequency should hardly move, and I
+wrote that I would be surprised by more than 0.01 percent. Arm A's own regression
+says 0.01 percent needs 0.011 fF of change on n[15], and the only route from an
+output net back to n[15] is Miller feedback through two buffers in series.
+
+I got 0.0025 percent peak to peak across the sixteen, standard deviation
+0.0008. Arm A on the same build spreads 5.84 percent, so integration is 2326
+times smaller than the effect this chip exists to measure.
+
+The better sentence is the one about the counter. The measurement window holds
+22826 Arm B periods, so one count is 0.0044 percent of frequency, and the whole
+per-instance spread is 0.57 of a single count. The chip cannot distinguish the
+sixteen copies even in principle. That is a stronger claim than "the difference
+is small", and I want it in the paper in those words.
+
+A number that small only means something if I can tell it from solver noise,
+which is why the discriminator was in the analyzer before the run and not after
+it. A real Miller path would make frequency correlate with output route
+capacitance, and the correlation would be negative. It is -0.160, which at
+fourteen degrees of freedom is t = 0.608 against a critical value of 2.145, so it
+cannot be told apart from zero. The sign is at least the one a real Miller path
+would need, so nothing is wired backwards. The honest phrasing is that Miller
+feedback is bounded above by 0.0025 percent here. Not that it was measured.
+
+The two correlations that ought to be real are real, which is the other half of
+trusting the deck. Route delay against route capacitance is +0.910. The edge
+arriving at the selector against route capacitance is +0.999, and that one pays a
+debt item 3 opened.
+
+`verify_instance.py` re-derives all of it from the raw log with its own SPEF
+parser, its own netlist parser and its own correlation code, sharing nothing with
+the analyzer except the log file itself. 37 checks, 37 pass.
+
+What this does not cover. The macro's internal parasitics are still net totals
+hung on single nodes, so the absolute Arm B frequency remains a lumped number.
+Item 7 moved Arm A from 5.55 to 5.84 percent by rebuilding it distributed, and
+the macro is owed the same treatment. It cannot touch this comparison, since all
+sixteen carry the identical internal model, but it is owed. The run is nominal
+corner only. And the enable route sits in the deck without its real job being
+tested, because enable is static for the whole measurement window, so what it
+actually affects is how the ring starts and stops, and that belongs to item 1.
+
+Tools are `gen_instance_decks.py`, `analyze_instance.py` with `--selftest`, and
+`verify_instance.py`. The raw log and the derived record are archived in
+`sim/spice/gono/`.
 
 ## 9. Controlled multi-build spread (done, 2026-07-24)
 
@@ -492,20 +717,23 @@ re-harden, or none.
 
 ## Order of work
 
-Items 1, 2, 6, 7 and 9 are done. Item 6 closed out the corner repeat item 1 owed,
-and item 7 leaves only the Arm B macro re-extraction behind. Items 3 and 4 are
-tested and closed as not fixable on this die, with the reasoning and measurements
-recorded above, and both come back only if I move to a larger tile.
+Items 1, 2, 5, 6, 7, 8 and 9 are done. Items 3 and 4 are tested and closed as not
+fixable on this die, with the reasoning and the measurements recorded above, and
+both come back only if I move to a larger tile. Item 10 is a judgement call I
+have not made yet, and the honest default is to make no change at all.
 
-The gap item 2 left is closed. The boundary sweep now runs through the real
-selector, on the deepest path and on the one that helps least, and the flop has
-no width at which it hangs. Item 2's own claim about level shortening turned out
-to be a measuring error and is corrected above.
+What is left is mostly not simulation any more. Item 7 still owes the Arm B macro
+a distributed re-extraction, which cannot move the per-instance comparison, since
+all sixteen carry the same internal model, but it does mean the absolute Arm B
+frequency is a lumped number while Arm A's is not. The boundary is now three
+corners deep on B15 and three paths deep at ff, and the other 29 selector paths
+have been swept for edges without being swept for the stopping boundary. I am
+treating those as covered by the filter behaviour rather than as open runs, which
+is a judgement and not a measurement. Several results still have no raw logs in
+the repository. And the flow's warning classes need per-net triage against the
+timing reports before I order anything.
 
-So item 8 is next, the per-instance integration of Arm B, which decides whether
-the sixteen macro copies really behave as one number. Two smaller things are
-owed alongside it. The boundary sweep ran at the fast corner only, and B00 is
-marginally harder than B15 on both the rise delay and the asymmetry, so it is
-the one path I would still like to sweep. Only once the architecture is frozen do
-I lock the acquisition protocol (that part is already done in `firmware/`),
-preregister the analysis, freeze the reproducibility release, and tape out.
+Then the freeze: lock the acquisition protocol, which is already written in
+`firmware/`, preregister the analysis, cut the reproducibility release, and
+submit. TTSKY26c closes on 2026-09-07 and it is the only sky130 shuttle I can
+reach with this build, so that date is the real constraint on everything above.

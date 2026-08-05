@@ -1,0 +1,93 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * arm a oscillator 0 on a 1e-06 ohm supply, item 5; distributed rc from spef
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vsrc                                       1.8
+vpwr                                       1.8
+en                                           0
+nand_y                                     1.8
+nand_b                                     1.8
+i1_a                                       1.8
+i1_y                               2.70603e-09
+i2_a                               2.70603e-09
+i2_y                                       1.8
+i3_a                                       1.8
+i3_y                               2.70603e-09
+i4_a                               2.70603e-09
+i4_y                                       1.8
+i5_a                                       1.8
+i5_y                               2.70603e-09
+i6_a                               2.70603e-09
+i6_y                                       1.8
+i7_a                                       1.8
+i7_y                               2.70603e-09
+i8_a                               2.70603e-09
+i8_y                                       1.8
+i9_a                                       1.8
+i9_y                               2.70603e-09
+i10_a                              2.70603e-09
+i10_y                                      1.8
+i11_a                                      1.8
+i11_y                              2.70603e-09
+i12_a                              2.70603e-09
+i12_y                                      1.8
+i13_a                                      1.8
+i13_y                              2.70603e-09
+i14_a                              2.70603e-09
+i14_y                                      1.8
+i15_a                                      1.8
+i15_y                              2.70603e-09
+i16_a                              2.70603e-09
+i16_y                                      1.8
+i17_a                                      1.8
+i17_y                              2.70603e-09
+i18_a                              2.70603e-09
+i18_y                                      1.8
+i19_a                                      1.8
+i19_y                              2.70603e-09
+i20_a                              2.70603e-09
+i20_y                                      1.8
+i21_a                                      1.8
+i21_y                              2.70603e-09
+i22_a                              2.70603e-09
+i22_y                                      1.8
+i23_a                                      1.8
+i23_y                              2.70603e-09
+i24_a                              2.70603e-09
+i24_y                                      1.8
+i25_a                                      1.8
+i25_y                              2.70603e-09
+i26_a                              2.70603e-09
+i26_y                                      1.8
+i27_a                                      1.8
+i27_y                              2.70603e-09
+i28_a                              2.70603e-09
+i28_y                                      1.8
+i29_a                                      1.8
+i29_y                              2.70604e-09
+i30_a                              2.70604e-09
+i30_y                                      1.8
+buf_x                              2.60627e-09
+buf_a                              2.70603e-09
+s555_6                             2.70603e-09
+ven#branch                                   0
+vdd#branch                         3.25963e-09
+
+
+No. of Data Rows : 140106
+tp                  =  3.725334e-08 targ=  4.726460e-08 trig=  1.001126e-08
+idd                 =  -1.187261e-04 from=  4.000000e-08 to=  1.400000e-07
+vlocal              =  1.800000e+00 from=  4.000000e-08 to=  1.400000e-07
+f = 5.368646e+08
+Note: Simulation executed from .control section 

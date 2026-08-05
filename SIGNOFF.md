@@ -31,9 +31,10 @@ each carries inside it, and both kept the same length.
 | Standalone 16-copy array | clean apart from one max-slew violation at the slow corner, bundle 8 of 8 | `array/pdnfix4_final/` | no |
 | Earlier dual-arm snapshot | mixed checkpoints, not a usable bundle | `dualarm/build_debug/` | informational |
 | 32-to-1 selector path at the fast corner | all 32 paths carry every edge into the flop, 32 blocked controls silent, rise delay 157 to 375 ps, every path lengthens its high level by 102 to 182 ps and shortens its low by the same, period preserved at both nodes | `mux_validation.csv`, `gen_mux_sweep.py`, `analyze_mux_sweep.py`, raw logs not archived | no |
-| Boundary pulse measured through the selector | 89 phases on B15 and A05, every one settles to a rail, count steps by at most one, B15 drops a 97 ps tap pulse and passes a 102 ps one as 144 ps | `boundary_validation_B15.csv`, `boundary_validation_A05.csv`, `boundary_validation_B15_fine.csv`, raw logs not archived | no |
-| Boundary through the remaining 30 paths, and at ss and tt | not simulated | `docs/hardware_todo.md` item 1 | before final trust |
-| Arm B per-instance integration | not simulated | item 8 | before final trust |
+| Boundary pulse measured through the selector | 252 phases over seven sweeps, three paths at ff plus B15 repeated at tt and ss, every one settles to a rail and the count steps by at most one; the narrowest clock any of them delivered is 80 ps on B00, against the 77.5 ps the library characterizes at that corner | seven `boundary_validation_*.csv`, `check_pulse_width.py`, raw logs not archived | no |
+| Boundary through the other 29 selector paths | not simulated; every one of them carries all 30 judged edges in the item 2 sweep, but none was swept at the stopping boundary | `docs/hardware_todo.md` item 1 | before final trust |
+| Arm B per-instance integration | sixteen instances carrying their own real enable and output routes spread 0.0025% peak to peak, which is 0.57 of one counter count, against 5.84% for Arm A on the same build; 37 of 37 checks re-derived by separate code | `armb_instances_out.txt`, `instance_parasitics.csv`, `verify_instance.py` | no |
+| Supply resistance confound | series resistance swept over four decades in both arms; at the layout's own 7.81 and 4.32 ohm the arms differ by 0.0348% of frequency, 168 times under Arm A's dispersion, with Ohm's law closing at every point and the implied pushing figure reproducing the independent 105.9 percent per volt | `gen_supply_decks.py`, `analyze_supply.py`, logs in `sim/spice/gono/supply/` | no |
 | Silicon measurements | chips not fabricated | - | next phase |
 
 ## Notes per artifact
@@ -80,13 +81,22 @@ it stays in the paper as a prior run, not as a result of this design.
 
 In the order I care about them.
 
-The gap the selector left is closed. The boundary sweep now runs with the real
-selector cells in the path, on B15 which is the deepest and slowest, and on A05
-which adds the least width, 89 phases between them at the fast corner. Every one
-resolved the flop to a clean rail. The chain turns out to behave as a filter:
-below about 100 ps at the tap it passes nothing at all, above that it passes a
-full pulse, and the narrowest clock the flop ever saw was 144 ps. So there is no
-width at which the flop hangs, which is what item 1 was really claiming.
+The gap the selector left is closed, and then some. The boundary sweep runs with
+the real selector cells in the path, on B15 which is the deepest and slowest, on
+A05 which adds the least width, and on B00 which turned out to be the strict one,
+plus B15 again at tt and at ss. That is 252 phases over seven sweeps and every
+one of them resolved the flop to a clean rail. The chain behaves as a filter:
+below a threshold at the tap it passes nothing at all, above it a full pulse, and
+the threshold sits between nine and eleven percent of the ring period at every
+corner measured.
+
+One number in an earlier version of this file was wrong. It said the narrowest
+clock the flop ever saw was 144 ps. Right at its own threshold B00 hands the flop
+80 ps, because at the boundary the chain squeezes the last pulse instead of
+lengthening it, which is the one place item 2's corrected result stops applying.
+80 ps clears what the library characterizes for that flop at that corner, 77.5 ps
+at ff_n40C_1v95, by 2.5 ps. Characterized, and marginal. The slow corners are not
+close, 484 ps against 169.8 at tt and 810 ps against 353.8 at ss.
 
 Getting there meant correcting item 2, and that correction is the part I would
 want a reader to see. Its headline, that the selector shortens levels by up to
@@ -94,16 +104,20 @@ want a reader to see. Its headline, that the selector shortens levels by up to
 sel_ro, and those are opposite polarities. No path shortens a high level. Every
 one lengthens it. `docs/hardware_todo.md` has the full account.
 
-What is next is item 8, the per-instance integration of Arm B, which decides
-whether the sixteen macro copies really behave as one number. Two smaller debts
-sit next to it. The boundary sweep is fast corner only. And B00 has both a slower
-rise and less asymmetry than B15, by about 15 ps each, so the path I swept is the
-hardest one I measured rather than the hardest one there is.
+Item 8 answered its own question. The sixteen Arm B copies carrying their real
+routes spread 0.0025 percent, which is 0.57 of one counter count, so the chip
+cannot tell them apart even in principle. Item 5 closed the supply confound the
+same week, with the arms differing by 0.0348 percent at the resistances the
+layout actually has. What is next is not a simulation. It is the Arm B macro's
+distributed re-extraction, the per-net triage of the flow's warning classes, and
+the decision on item 10.
 
-Second, five results have no raw logs in the repository. The distributed-RC
-comparison, the boundary flop sweep, the selector sweep and the two boundary
-sweeps through the selector were all run in `/tmp`, and only their derived numbers
-survive. Each leaves a csv behind, so a stranger with a clone can read the
+Second, several sweep results have no raw logs in the repository. The
+distributed-RC comparison, the boundary flop sweep, the selector sweep and all
+seven boundary sweeps through the selector were run in `/tmp`, and only their
+derived numbers survive. The per-instance run and the supply sweep are the
+exceptions, and both keep their logs, which is the pattern I want the rest to
+follow. Each leaves a csv behind, so a stranger with a clone can read the
 numbers, but none can be recomputed without rerunning ngspice. The decks are
 deterministic and regenerate byte for byte, so archiving the logs is mechanical
 work I owe rather than anything difficult.

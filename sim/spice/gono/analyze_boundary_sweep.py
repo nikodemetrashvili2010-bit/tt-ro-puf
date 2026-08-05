@@ -291,6 +291,19 @@ def report(rows, models, csv_path=None):
                         "phases: " + ", ".join("%d to %d: %+d" % (i, i + 1, d)
                                                for i, d in bad[:6]))
 
+    # A sweep that never changes the count never moved the enable fall past a
+    # ring edge, so it never reached the boundary it exists to test and every
+    # phase below is the same easy case repeated. The slow corner found this:
+    # the default 38 steps span 1.9 ns, which is longer than the ring period at
+    # tt and ff but only half of it at ss, and the run came back clean without
+    # having tested anything. A vacuous pass is worse than a failure.
+    if len(counts) > 1 and max(counts) == min(counts):
+        problems.append("the count is %d at every phase, so the sweep never "
+                        "crossed a ring edge and never reached the boundary. "
+                        "It spans %.2f ns; widen it past one ring period with "
+                        "--steps." % (counts[0],
+                                      (ordered[-1]["t_fall"] - ordered[0]["t_fall"]) * 1e9))
+
     if csv_path:
         with open(csv_path, "w", newline="\n", encoding="utf-8") as fh:
             w = csv.writer(fh, lineterminator="\n")
@@ -490,10 +503,16 @@ def selftest():
         check=lambda rows, text: "shortens every high level" in text)
 
     # Every fall lands in the same low level here, so every boundary pulse comes
-    # out the same width and neither model can be preferred.
-    run("a sweep too narrow to separate the models says so",
-        sweep(base=12.80e-9, step=0.10e-9, n=5), expect_fail=False,
-        check=lambda rows, text: "too alike" in text)
+    # out the same width and neither model can be preferred. It also never moves
+    # the fall past a ring edge, which is the second thing wrong with a sweep
+    # this narrow and the reason it now fails rather than passes with a note.
+    # The slow-corner run is what taught me these are the same mistake: it came
+    # back clean having never reached the boundary at all.
+    run("a sweep too narrow to separate the models says so, and fails for not "
+        "reaching the boundary",
+        sweep(base=12.80e-9, step=0.10e-9, n=5), expect_fail=True,
+        check=lambda rows, text: "too alike" in text
+        and "never crossed a ring edge" in text)
 
     print("self-test %s" % ("passed" if ok else "FAILED"))
     return 0 if ok else 1

@@ -81,7 +81,12 @@ from pdk_paths import atomic_write_text, sky130_spice_paths  # noqa: E402
 # interesting question is what happens in between.
 T_BASE_NS = 30.0     # earliest enable fall, well after the ring is steady
 STEP_PS = 50         # phase step
-N_STEPS = 38         # 38 x 50 ps = 1.9 ns, longer than a ring period at any corner
+N_STEPS = 38         # 38 x 50 ps = 1.9 ns, longer than a ring period at tt and ff
+# That default is NOT enough at ss, where the ring runs near 283 MHz and a period
+# is about 3.5 ns. A sweep shorter than one period never moves the enable fall
+# past a ring edge, so it never reaches the boundary and returns a clean result
+# that tested nothing. Use --steps 76 at ss. analyze_boundary_sweep now fails a
+# sweep whose count never changes, which is the symptom.
 T_TAIL_NS = 12.0     # settle window after the latest fall, so q can resolve
 
 
