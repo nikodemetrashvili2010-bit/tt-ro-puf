@@ -41,6 +41,11 @@ jobs:
           python3 sim/spice/gono/gen_macro_rc_deck.py --report
           python3 sim/spice/gono/analyze_macro_rc.py --selftest
           python3 sim/spice/gono/analyze_macro_rc.py
+          python3 sim/spice/gono/reduce_raw.py --selftest
+          python3 sim/spice/gono/verify_mux_archive.py --selftest
+          python3 sim/spice/gono/verify_mux_archive.py
+          python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux --csv /tmp/mux_check.csv
+          diff /tmp/mux_check.csv sim/spice/gono/mux_validation.csv
           python3 sim/spice/gono/verify_instance.py
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
           python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi

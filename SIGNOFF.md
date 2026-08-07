@@ -135,15 +135,32 @@ arms are finally quoted from the same parasitic model.
 What is left is not simulation at all. It is the decision on item 10, where the
 honest default is to change nothing, and the freeze.
 
-Second, several sweep results have no raw logs in the repository. The
-distributed-RC comparison, the boundary flop sweep, the selector sweep and all
-seven boundary sweeps through the selector were run in `/tmp`, and only their
-derived numbers survive. The per-instance run and the supply sweep are the
-exceptions, and both keep their logs, which is the pattern I want the rest to
-follow. Each leaves a csv behind, so a stranger with a clone can read the
-numbers, but none can be recomputed without rerunning ngspice. The decks are
-deterministic and regenerate byte for byte, so archiving the logs is mechanical
-work I owe rather than anything difficult.
+Second, some sweep results still have no run behind them in the repository. The
+selector sweep was the first to be fixed and it is now archived in
+`sim/spice/gono/mux/`, alongside the supply sweep, the per-instance run and the
+macro RC comparison. What is left is the distributed-RC comparison over the
+sixteen Arm A rings, the boundary flop sweep, and the seven boundary sweeps
+through the selector. Each leaves a csv behind, so a stranger with a clone can
+read the numbers, but those three cannot yet be recomputed without rerunning
+ngspice.
+
+Archiving turned out not to be the mechanical work I had called it. The 64
+selector decks produce 180 MB of waveform and a repository cannot hold that, so
+`reduce_raw.py` keeps only the samples the analysis reads, which is the two
+either side of every threshold crossing plus the peaks that set the threshold
+and the final timepoint. That is 2.08 percent of the rows and 4.5 MB with the
+decks and console logs included, and it is lossless for this analysis in a
+checkable sense: the real analyzer returns identical fields from the reduced and
+the full file for every deck, and CI regenerates the csv from the archive and
+diffs it against the committed one. The same tool will do for the other three
+sweeps.
+
+Worth recording what the rerun found, because it is the argument for doing this
+at all. All 256 values in `mux_validation.csv` came back identical, so the
+result was right. What was wrong was a sentence in item 2 that quoted B15's tap
+levels from the boundary decks in a paragraph about the mux decks, two
+picoseconds out. Rerunning to archive cannot change a result, but it can catch a
+number quoted from the wrong file.
 
 Last is silicon. Uniqueness, reliability and any attack claim need measured dies
 at several supply voltages and temperatures. Until those exist this is a

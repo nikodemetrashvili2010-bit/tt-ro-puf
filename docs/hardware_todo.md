@@ -240,11 +240,22 @@ The analyzer took the narrowest level at the tap and the narrowest level at
 sel_ro and reported the difference as erosion. Those are not the same level. A
 rise and a fall cross a path at different speeds, and the difference moves each
 trailing edge without moving the leading one, so one polarity grows by exactly as
-much as the other shrinks. On B15 the tap runs 539 ps high and 583 ps low while
-sel_ro runs 721 ps high and 401 ps low, and the period is 1122 ps at both nodes to
+much as the other shrinks. On B15 the tap runs 537 ps high and 585 ps low while
+sel_ro runs 719 ps high and 403 ps low, and the period is 1122 ps at both nodes to
 the picosecond. So the narrowest level at the tap is a high, the narrowest at
 sel_ro is a low, and the old figure compared one against the other. The 25.0%
 described no shortening of anything.
+
+Those four numbers were 539, 583, 721 and 401 until 2026-08-07, and the
+correction is the same one this section already makes further down about the
+asymmetry. I had quoted B15 from the boundary decks in a paragraph about the mux
+decks. The boundary decks give 539 and 583 at the tap and 721 and 401 at sel_ro;
+the mux decks give 537, 585, 719 and 403. Two transients disagreeing by two
+picoseconds, not a real difference, and both give the same 1122 ps period and
+the same conclusion. Quoting the mux decks here is simply the right file to read
+from. I found it by rerunning all 32 decks to archive their logs, and every one
+of the 256 values in `mux_validation.csv` came back identical, so the CSV was
+right and only the prose was wrong.
 
 Re-running all 32 decks with highs and lows kept apart says the same thing
 everywhere. Every path has its fall arriving after its rise, by 102 ps on A05 up
@@ -265,9 +276,41 @@ raised about item 1. The counter's first stage is a rising-edge flop, and every
 selector path hands it a longer high than the tap did. Item 1 now carries the
 sweep that settles it.
 
+### Archived and re-derivable, 2026-08-07
+
+The sweep was rerun from scratch to archive it, and all 256 values in
+`mux_validation.csv` came back identical. Every rise, fall, asymmetry, level
+width, edge count and flop-rise count on all 32 paths, with all 32 blocked
+controls silent again. The CSV was right.
+
+Getting it into the repository took a decision. The 64 decks produce 180 MB of
+waveform, 4.08 MB each over 42020 timepoints, and that does not belong in git.
+Almost all of it is flat rail that the analysis never looks at: what
+`analyze_mux_sweep.py` does is find where each signal crosses half the supply
+and interpolate between the two samples either side, so the samples in the
+middle of a level change nothing. `reduce_raw.py` keeps those bracketing pairs
+and drops the rest, which is 2.08 percent of the rows and 4.5 MB for the whole
+folder including the decks and the console logs.
+
+Calling that lossless is a claim and not an argument, so it is checked rather
+than asserted. `reduce_raw.py --verify` runs the real analyzer over the full and
+the reduced copy of every deck and compares every field it returns, and CI
+regenerates the CSV from the archived folder and diffs it against the committed
+one. Both come back identical.
+
+Three things had to survive or every number would move, and the second is the
+one I would have missed. The bracketing samples themselves. The largest sample
+of the tap and of sel_ro, because the analyzer sets its threshold at
+`0.5 * max(max(tap), max(sel))` rather than at a fixed voltage, so losing a peak
+moves the threshold and with it every crossing in the file. And the last
+timepoint, because `match_edges` uses it to tell an edge that was lost from one
+that was still in flight when the transient ended. Kept rows are copied as their
+original bytes, so no reformatting can round anything.
+
 Derived record in `sim/spice/gono/mux_validation.csv`, one row per oscillator with
-its cell chain. Tools: `gen_mux_sweep.py --corner ff --control` and
-`analyze_mux_sweep.py`. Both were checked against synthetic waveforms before being
+its cell chain, and the run itself in `sim/spice/gono/mux/`. Tools:
+`gen_mux_sweep.py --corner ff --control`, `analyze_mux_sweep.py`,
+`reduce_raw.py --verify` and `verify_mux_archive.py`. Both were checked against synthetic waveforms before being
 pointed at real ones, because an analysis that has never failed has not been
 tested. A clean path passes, a swallowed cycle is caught at the time it happened,
 a pulse clipped to a sliver that still clocks is caught by the width rule, and a
