@@ -608,7 +608,7 @@ from 4 nets on RO7 to 72 on RO14.
 
 Tools: `gen_rc_decks.py --ro N`, `analyze_rc.py --dir ... --ro 0..15`.
 
-### The macro half, generator built 2026-08-07, run still owed
+### The macro half, done 2026-08-07
 
 `gen_macro_rc_deck.py` does for the hardened macro what `gen_rc_decks.py` does
 for Arm A, and it imports that script's parser rather than writing a second one,
@@ -634,9 +634,44 @@ counts every coupling twice and the distributed deck builds it once, so the gap
 between the totals has to be the coupling total to the last digit. A ratio test
 with a one percent tolerance would have passed the broken version.
 
-The prediction, written before the run: the lumped deck should reproduce 569.5
-MHz, and the distributed one should land near 564. Whatever it gives, it cannot
-move item 8, since all sixteen copies carry the identical internal model.
+The prediction went into `macro_rc_run_steps.md` before the run. The lumped deck
+should reproduce 569.5 MHz to within about two tenths of a percent, and the
+distributed one should sit 0.85 to 0.97 percent below it.
+
+**The result. The macro runs at 566.05 MHz distributed against 570.62 lumped, a
+shift of -0.801 percent.**
+
+The check I said mattered most passed on a number I had not thought to name. The
+lumped rebuild came out at 570.6159 MHz, which is 0.194 percent above
+`gen_macro_deck.py`'s 569.5134 and inside the tolerance I set, with the timestep
+as the cause I had written down. But 570.6159 is item 5's Arm B ideal-supply
+figure, 570.616, to seven significant figures. That deck came through the supply
+generator from item 8's macro builder and shares no code path with this one, so
+two separately written decks landing on the same digit says more about the
+rebuild than agreeing with the coarse-step original does.
+
+The shift itself came in at -0.801 percent against the -0.851 the Arm A fit
+predicted. That fit's own residual scatter across the sixteen Arm A rings is
+0.159 points, so the macro sits 0.32 sigma off the line, and inside Arm A's own
+range of -0.66 to -1.34. The hardened macro loses frequency to the real network
+the way an Arm A ring of its weight does, which is not something the fit had to
+deliver, since the macro is a compact hardened block and Arm A is placed in open
+fabric.
+
+What this changes in the comparison. Arm B distributed at 566.05 MHz now sits
+inside Arm A's distributed range of 535.76 to 567.91 rather than above it, and
+both arms are quoted from the same parasitic model for the first time. What it
+does not change is item 8. All sixteen copies carry the identical internal
+model, so this moves all sixteen together and the 0.0025 percent spread between
+them is untouched.
+
+Both decks and both logs are archived in `sim/spice/gono/macrorc/`, and
+`analyze_macro_rc.py` re-derives the whole result from those logs with no
+ngspice and no PDK. Seven selftests, eight checks. Two of the checks are worth
+naming: the frequency and the period are separate lines that ngspice wrote
+independently, so their product has to be the 20 cycles the deck measures over,
+and the shift has to be negative because both model differences load the ring
+further.
 
 ## 8. Arm B per-instance integration (done 2026-08-04)
 

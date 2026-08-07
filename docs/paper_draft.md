@@ -449,11 +449,22 @@ layout, and the analysis code flags such pairs as low-margin when it scores
 measured silicon. It does mean the reduced model and the full network now agree on
 every bit rather than on six of eight.
 
-Two limits on this check. The Arm B macro has a separate extraction and has not
-been redone this way, so its 569.5 MHz reference remains a lumped-model result.
-And the extraction itself is a reduced per-net network rather than a field
-solution, with coupling to nets outside a given oscillator still grounded, which
-ranges from four such nets on the lightest ring to seventy-two on the heaviest.
+The Arm B macro has since been redone the same way. Its distributed result is
+566.05 MHz against 570.62 lumped, a shift of -0.801 percent, so both arms are now
+quoted from the same parasitic model. That shift sits 0.32 standard deviations
+from what the Arm A load fit predicts for a ring of the macro's 11.01 fF, on the
+fit's own residual scatter, and inside Arm A's range of -0.66 to -1.34 percent. A
+compact hardened block loses frequency to the real network the way a routed ring
+of its weight does. The comparison the macro run cannot affect is the
+per-instance one, since all sixteen copies carry the identical internal model by
+construction.
+
+One limit remains on this check. The extraction is a reduced per-net network
+rather than a field solution, with coupling to nets outside a given oscillator
+still grounded, which ranges from four such nets on the lightest ring to
+seventy-two on the heaviest. Inside the macro that particular limit does not
+bite, because it is a closed block and no coupling had to be grounded for want
+of a partner.
 
 ### 5.6 The mismatch scale everything is compared against
 

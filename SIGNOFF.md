@@ -35,6 +35,7 @@ each carries inside it, and both kept the same length.
 | Boundary through the other 29 selector paths | not simulated; every one of them carries all 30 judged edges in the item 2 sweep, but none was swept at the stopping boundary | `docs/hardware_todo.md` item 1 | before final trust |
 | Arm B per-instance integration | sixteen instances carrying their own real enable and output routes spread 0.0025% peak to peak, which is 0.57 of one counter count, against 5.84% for Arm A on the same build; 37 of 37 checks re-derived by separate code | `armb_instances_out.txt`, `instance_parasitics.csv`, `verify_instance.py` | no |
 | Supply resistance confound | series resistance swept over four decades in both arms; at the layout's own 7.81 and 4.32 ohm the arms differ by 0.0348% of frequency, 168 times under Arm A's dispersion, with Ohm's law closing at every point and the implied pushing figure reproducing the independent 105.9 percent per volt | `gen_supply_decks.py`, `analyze_supply.py`, logs in `sim/spice/gono/supply/` | no |
+| Arm B macro against its distributed RC network | 566.05 MHz against 570.62 lumped, a shift of -0.801%, which is 0.32 sigma from what the Arm A load fit predicts for a ring of its weight; the lumped rebuild reproduces item 5's independent Arm B figure of 570.616 MHz to seven digits | `gen_macro_rc_deck.py`, `analyze_macro_rc.py`, logs in `sim/spice/gono/macrorc/` | no |
 | Flow warning classes | all six named per net or shown to be flow constants; 14 of 14 derived counts agree with the recorded ones, and 13 of 13 on a control build that answers differently | `triage_warnings.py`, `triage_warnings.json`, `docs/warning_triage.md` | no |
 | Silicon measurements | chips not fabricated | - | next phase |
 
@@ -127,8 +128,12 @@ cannot tell them apart even in principle. Item 5 closed the supply confound the
 same week, with the arms differing by 0.0348 percent at the resistances the
 layout actually has. The warning triage is done and none of the six classes
 turned out to be a defect, though it did cost me one wrong explanation that a
-control build caught. What is next is not a simulation either. It is the Arm B
-macro's distributed re-extraction and the decision on item 10.
+control build caught. The Arm B macro's distributed re-extraction is done too,
+which was the last owed simulation: 566.05 MHz against 570.62 lumped, so both
+arms are finally quoted from the same parasitic model.
+
+What is left is not simulation at all. It is the decision on item 10, where the
+honest default is to change nothing, and the freeze.
 
 Second, several sweep results have no raw logs in the repository. The
 distributed-RC comparison, the boundary flop sweep, the selector sweep and all

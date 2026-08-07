@@ -80,7 +80,9 @@ predicts the coherent build's 16 frequencies with 0.14% mean absolute error
 and rank correlation 0.997, so the mechanism carries across builds even
 though the pattern does not.
 
-The hardened macro simulates at 569.5 MHz. Its 16 Arm B copies are the same
+The hardened macro simulates at 566.0 MHz against the SPEF's real RC network,
+and at 570.6 MHz with the same capacitance lumped one node per net. Its 16 Arm B
+copies are the same
 GDS, so the matched arm removes internal-layout variation by construction.
 That is why the figure draws Arm B as one reference line, not sixteen points.
 It does not yet show that Arm B's total spread on real chips is lower than

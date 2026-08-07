@@ -13,9 +13,9 @@ the routed SPEF produced an 8.8% peak-to-peak frequency spread, and
 frequency tracked extracted ring capacitance with Pearson *r* = -0.997.
 Arm A of the archived dual-arm layout shows the same mechanism at 5.4%
 peak-to-peak and *r* = -0.999. Arm B's comparison point is one nominal
-simulation of the hardened macro's extracted internal parasitics, 569.5 MHz,
-drawn as a reference line because all sixteen instances share that internal
-GDS.
+simulation of the hardened macro's extracted internal parasitics, 566.0 MHz
+against the real RC network, drawn as a reference line because all sixteen
+instances share that internal GDS.
 
 ## Design under test
 
@@ -89,7 +89,16 @@ its control, with 11.01 fF of extracted ring capacitance. Applying the
 earlier Arm A capacitance fit to that load predicts 570.2 MHz, 0.12% above
 the macro simulation, and the macro lands within 0.35% of the earlier Arm A
 mean. A 5 ps versus 1 ps timestep comparison moves the result by about 0.2%,
-which bounds the numerical error well below the layout effect. The matched arm
+which bounds the numerical error well below the layout effect.
+
+The macro has since been rebuilt from the SPEF's real network rather than one
+grounded capacitor per net, the same treatment Arm A got. That gives 566.05 MHz
+against 570.62 for the lumped model at the same 1 ps timestep, a shift of
+-0.801%. The two lumped figures differ only by the timestep, and the 1 ps one
+reproduces the Arm B ideal-supply frequency of 570.616 MHz that the supply sweep
+produced through a separate generator, to seven significant figures. So 566.0 is
+the number to compare against Arm A's distributed results and 570.6 against its
+lumped ones. The matched arm
 removes the internal-layout term by construction. It does not show that Arm B
 has a smaller total spread than Arm A; that comparison needs fabricated
 chips.
