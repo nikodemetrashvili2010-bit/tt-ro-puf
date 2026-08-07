@@ -36,7 +36,12 @@ jobs:
           python3 sim/spice/gono/analyze_boundary_sweep.py --selftest
           python3 sim/spice/gono/analyze_instance.py --selftest
           python3 sim/spice/gono/analyze_supply.py --selftest
+          python3 sim/spice/gono/triage_warnings.py --selftest
+          python3 sim/spice/gono/gen_macro_rc_deck.py --selftest
+          python3 sim/spice/gono/gen_macro_rc_deck.py --report
           python3 sim/spice/gono/verify_instance.py
+          python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
+          python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi
           python3 sim/spice/gono/analyze_supply.py --dir sim/spice/gono/supply
           python3 sim/spice/gono/analyze_noise.py
           python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt

@@ -608,6 +608,36 @@ from 4 nets on RO7 to 72 on RO14.
 
 Tools: `gen_rc_decks.py --ro N`, `analyze_rc.py --dir ... --ro 0..15`.
 
+### The macro half, generator built 2026-08-07, run still owed
+
+`gen_macro_rc_deck.py` does for the hardened macro what `gen_rc_decks.py` does
+for Arm A, and it imports that script's parser rather than writing a second one,
+so the coupling rule cannot drift between them. It writes a lumped deck and a
+distributed deck that differ in nothing but the parasitic model. Thirteen offline
+checks pass with no PDK and no simulator, and the two ngspice runs are written up
+in `macro_rc_run_steps.md`, prediction first.
+
+The extraction accounts for 15.33 fF across all 35 macro nets, of which the ring
+n[0..30] carries 11.01. The distributed model builds 37 resistors, 72 grounded
+capacitors and 25 real couplings, drops 25 second listings, and grounds nothing
+at all for want of a partner, which is the one thing a closed macro gives me that
+Arm A never had.
+
+Building it cost a mistake worth recording, because the check that caught it is
+not the check I would have written first. The capacitance books came out 1.54 fF
+short, ten percent of the extraction. A SPEF writes a top-level port as a bare
+name with no instance number and no colon, so `en` and `out` were not being
+recognised as nodes, and their capacitance and their series resistance to the
+cell they reach were both being dropped. What made this findable is that the two
+models have an exact relationship rather than an approximate one: the lumped sum
+counts every coupling twice and the distributed deck builds it once, so the gap
+between the totals has to be the coupling total to the last digit. A ratio test
+with a one percent tolerance would have passed the broken version.
+
+The prediction, written before the run: the lumped deck should reproduce 569.5
+MHz, and the distributed one should land near 564. Whatever it gives, it cannot
+move item 8, since all sixteen copies carry the identical internal model.
+
 ## 8. Arm B per-instance integration (done 2026-08-04)
 
 Arm B was one macro, simulated once, and drawn in every figure as a single line.
@@ -730,8 +760,19 @@ corners deep on B15 and three paths deep at ff, and the other 29 selector paths
 have been swept for edges without being swept for the stopping boundary. I am
 treating those as covered by the filter behaviour rather than as open runs, which
 is a judgement and not a measurement. Several results still have no raw logs in
-the repository. And the flow's warning classes need per-net triage against the
-timing reports before I order anything.
+the repository.
+
+The flow's warning classes are triaged, in `docs/warning_triage.md`. None of the
+six is a defect. The nine disconnected pins are unused chip inputs, the
+max-fanout violation is the clock-tree root that CTS built and the resizer never
+touched, the two floating nets are the power and ground rails and are 2 in every
+build I have, and the max-slew violations vanish at the fast corner and are
+nowhere near the ring nets. Two smaller debts came out of it: the names of the
+140 slew-violating pins and of the 461 lint warnings, both of which need the
+timing reports and the linter log out of my local run directory. Worth recording
+that my first account of the 25 unannotated nets was wrong. I explained the gap
+with the sixteen black-boxed macros, and the arithmetic worked on two builds,
+until a third build with no macros at all showed the same offset.
 
 Then the freeze: lock the acquisition protocol, which is already written in
 `firmware/`, preregister the analysis, cut the reproducibility release, and

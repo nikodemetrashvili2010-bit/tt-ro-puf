@@ -1,0 +1,353 @@
+{
+  "all_builds": [
+    {
+      "build": "macro/romacro_final",
+      "disconnected": 0,
+      "floating_nets": 2,
+      "floating_pins": 0,
+      "instances": 226,
+      "offset": null,
+      "unannotated": 0
+    },
+    {
+      "build": "array/met4only_debug",
+      "disconnected": 0,
+      "floating_nets": 2,
+      "floating_pins": 0,
+      "instances": 3616,
+      "offset": null,
+      "unannotated": 0
+    },
+    {
+      "build": "array/pdnfix4_final",
+      "disconnected": 0,
+      "floating_nets": 2,
+      "floating_pins": 0,
+      "instances": 3616,
+      "offset": null,
+      "unannotated": 0
+    },
+    {
+      "build": "gds_build/runs/wokwi/final",
+      "disconnected": 10,
+      "floating_nets": 2,
+      "floating_pins": 0,
+      "instances": 4325,
+      "offset": 16,
+      "unannotated": 26
+    },
+    {
+      "build": "dualarm/build_current",
+      "disconnected": 9,
+      "floating_nets": 2,
+      "floating_pins": 0,
+      "instances": 6477,
+      "offset": 16,
+      "unannotated": 25
+    },
+    {
+      "build": "dualarm/build_debug",
+      "disconnected": 10,
+      "floating_nets": 2,
+      "floating_pins": 0,
+      "instances": 7319,
+      "offset": 16,
+      "unannotated": 26
+    }
+  ],
+  "build": "../../../dualarm/build_current",
+  "cells": {
+    "ro_macro_hard": 16,
+    "sky130_fd_sc_hd__a2111oi_2": 2,
+    "sky130_fd_sc_hd__a211o_2": 1,
+    "sky130_fd_sc_hd__a21o_2": 6,
+    "sky130_fd_sc_hd__a21oi_2": 3,
+    "sky130_fd_sc_hd__a221o_2": 7,
+    "sky130_fd_sc_hd__a22o_2": 44,
+    "sky130_fd_sc_hd__a2bb2o_2": 2,
+    "sky130_fd_sc_hd__a31o_2": 4,
+    "sky130_fd_sc_hd__a32o_2": 7,
+    "sky130_fd_sc_hd__and2_2": 13,
+    "sky130_fd_sc_hd__and2b_2": 6,
+    "sky130_fd_sc_hd__and3_2": 36,
+    "sky130_fd_sc_hd__and3b_2": 1,
+    "sky130_fd_sc_hd__and4_2": 4,
+    "sky130_fd_sc_hd__buf_1": 16,
+    "sky130_fd_sc_hd__buf_2": 2,
+    "sky130_fd_sc_hd__buf_4": 1,
+    "sky130_fd_sc_hd__clkbuf_16": 1,
+    "sky130_fd_sc_hd__clkbuf_4": 7,
+    "sky130_fd_sc_hd__clkbuf_8": 17,
+    "sky130_fd_sc_hd__clkdlybuf4s25_1": 47,
+    "sky130_fd_sc_hd__conb_1": 16,
+    "sky130_fd_sc_hd__decap_3": 4292,
+    "sky130_fd_sc_hd__dfrtp_2": 128,
+    "sky130_fd_sc_hd__diode_2": 2,
+    "sky130_fd_sc_hd__dlygate4sd3_1": 79,
+    "sky130_fd_sc_hd__fill_1": 417,
+    "sky130_fd_sc_hd__fill_2": 256,
+    "sky130_fd_sc_hd__inv_1": 480,
+    "sky130_fd_sc_hd__inv_2": 40,
+    "sky130_fd_sc_hd__mux2_1": 15,
+    "sky130_fd_sc_hd__mux4_2": 2,
+    "sky130_fd_sc_hd__nand2_1": 16,
+    "sky130_fd_sc_hd__nand2_2": 15,
+    "sky130_fd_sc_hd__nand2b_2": 1,
+    "sky130_fd_sc_hd__nand3_2": 2,
+    "sky130_fd_sc_hd__nor2_2": 7,
+    "sky130_fd_sc_hd__nor2_4": 1,
+    "sky130_fd_sc_hd__nor3_2": 1,
+    "sky130_fd_sc_hd__o211a_2": 1,
+    "sky130_fd_sc_hd__o21a_2": 5,
+    "sky130_fd_sc_hd__o21ai_2": 4,
+    "sky130_fd_sc_hd__o22a_2": 2,
+    "sky130_fd_sc_hd__o31a_2": 1,
+    "sky130_fd_sc_hd__o31ai_2": 1,
+    "sky130_fd_sc_hd__or2_2": 13,
+    "sky130_fd_sc_hd__or3b_2": 1,
+    "sky130_fd_sc_hd__or4_2": 6,
+    "sky130_fd_sc_hd__or4b_2": 1,
+    "sky130_fd_sc_hd__tapvpwrvgnd_1": 419,
+    "sky130_fd_sc_hd__xor2_2": 10
+  },
+  "counts": {
+    "def_nets": 1110,
+    "instances_with_pins": 1093,
+    "spef_dnets": 1101
+  },
+  "disconnected": {
+    "all_are_inputs": true,
+    "any_internal": [],
+    "critical_recorded": 0,
+    "derived": 9,
+    "nets": [
+      "ui_in[7]",
+      "uio_in[0]",
+      "uio_in[1]",
+      "uio_in[2]",
+      "uio_in[3]",
+      "uio_in[4]",
+      "uio_in[5]",
+      "uio_in[6]",
+      "uio_in[7]"
+    ],
+    "recorded": 9
+  },
+  "fanout": {
+    "at_limit": 20,
+    "derived": 1,
+    "histogram": {
+      "0": 33,
+      "1": 850,
+      "2": 79,
+      "3": 48,
+      "4": 19,
+      "5": 14,
+      "6": 13,
+      "7": 23,
+      "8": 5,
+      "9": 5,
+      "10": 20,
+      "16": 1
+    },
+    "limit": 10,
+    "recorded": 1,
+    "violators": [
+      {
+        "driver": "sky130_fd_sc_hd__clkbuf_16",
+        "fanout": 16,
+        "net": "clknet_0_clk"
+      }
+    ]
+  },
+  "floating": {
+    "instances_with_output_omitted": [
+      [
+        "sky130_fd_sc_hd__diode_2",
+        "ANTENNA_1"
+      ],
+      [
+        "sky130_fd_sc_hd__diode_2",
+        "ANTENNA_2"
+      ]
+    ],
+    "recorded_nets": 2,
+    "recorded_pins": 0,
+    "special_nets": [
+      "VGND",
+      "VPWR"
+    ],
+    "structurally_undriven": [],
+    "structurally_unloaded": []
+  },
+  "lint": {
+    "errors": 0,
+    "timing_constructs": 0,
+    "warnings": 461
+  },
+  "metrics": "../../../dualarm/build_current/metrics.json",
+  "slew": {
+    "by_corner": {
+      "max_ff_n40C_1v95": 0,
+      "max_ss_100C_1v60": 140,
+      "max_tt_025C_1v80": 44,
+      "min_ff_n40C_1v95": 0,
+      "min_ss_100C_1v60": 93,
+      "min_tt_025C_1v80": 22,
+      "nom_ff_n40C_1v95": 0,
+      "nom_ss_100C_1v60": 117,
+      "nom_tt_025C_1v80": 44
+    },
+    "ff_total": 0,
+    "heaviest": [
+      {
+        "driver": "sky130_fd_sc_hd__clkbuf_8",
+        "fF": 81.24,
+        "fanout": 10,
+        "net": "net32"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__and2b_2",
+        "fF": 75.04,
+        "fanout": 10,
+        "net": "_105_"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkdlybuf4s25_1",
+        "fF": 66.99,
+        "fanout": 10,
+        "net": "net33"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__and2b_2",
+        "fF": 66.95,
+        "fanout": 10,
+        "net": "_106_"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkdlybuf4s25_1",
+        "fF": 64.98,
+        "fanout": 10,
+        "net": "net31"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkdlybuf4s25_1",
+        "fF": 64.93,
+        "fanout": 10,
+        "net": "net27"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkdlybuf4s25_1",
+        "fF": 61.08,
+        "fanout": 10,
+        "net": "net30"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__and2_2",
+        "fF": 58.15,
+        "fanout": 10,
+        "net": "_107_"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkbuf_16",
+        "fF": 55.03,
+        "fanout": 16,
+        "net": "clknet_0_clk"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__inv_2",
+        "fF": 50.5,
+        "fanout": 10,
+        "net": "start_pulse"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkbuf_4",
+        "fF": 47.42,
+        "fanout": 4,
+        "net": "net34"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__dfrtp_2",
+        "fF": 46.8,
+        "fanout": 3,
+        "net": "u_puf.u_core.cnt_sync[13]"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__dfrtp_2",
+        "fF": 46.76,
+        "fanout": 4,
+        "net": "u_puf.u_core.cnt_sync[14]"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkdlybuf4s25_1",
+        "fF": 43.31,
+        "fanout": 6,
+        "net": "net28"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__clkdlybuf4s25_1",
+        "fF": 42.09,
+        "fanout": 6,
+        "net": "net57"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__and2_2",
+        "fF": 40.04,
+        "fanout": 5,
+        "net": "_104_"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__dfrtp_2",
+        "fF": 38.26,
+        "fanout": 7,
+        "net": "u_puf.u_core.active_sel[1]"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__and2b_2",
+        "fF": 37.94,
+        "fanout": 5,
+        "net": "_102_"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__and2b_2",
+        "fF": 37.78,
+        "fanout": 5,
+        "net": "_103_"
+      },
+      {
+        "driver": "sky130_fd_sc_hd__dfrtp_2",
+        "fF": 36.44,
+        "fanout": 3,
+        "net": "u_puf.u_core.cnt_sync[0]"
+      }
+    ],
+    "heaviest_is_ring": false,
+    "heaviest_over_ring_max": 44.2,
+    "nonring_fF_max": 81.24,
+    "recorded": 140,
+    "ring_fF_max": 1.838,
+    "ring_fF_mean": 0.453,
+    "ring_fF_min": 0.107,
+    "ring_net_count": 496,
+    "ss_total": 350
+  },
+  "unannotated": {
+    "blackbox_cell": "ro_macro_hard",
+    "blackbox_instances": 16,
+    "no_spef_dnet": 9,
+    "no_spef_dnet_nets": [
+      "ui_in[7]",
+      "uio_in[0]",
+      "uio_in[1]",
+      "uio_in[2]",
+      "uio_in[3]",
+      "uio_in[4]",
+      "uio_in[5]",
+      "uio_in[6]",
+      "uio_in[7]"
+    ],
+    "offset_over_disconnected": 16,
+    "recorded": 25,
+    "recorded_filtered": 0
+  }
+}

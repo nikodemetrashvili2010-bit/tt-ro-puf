@@ -35,6 +35,7 @@ each carries inside it, and both kept the same length.
 | Boundary through the other 29 selector paths | not simulated; every one of them carries all 30 judged edges in the item 2 sweep, but none was swept at the stopping boundary | `docs/hardware_todo.md` item 1 | before final trust |
 | Arm B per-instance integration | sixteen instances carrying their own real enable and output routes spread 0.0025% peak to peak, which is 0.57 of one counter count, against 5.84% for Arm A on the same build; 37 of 37 checks re-derived by separate code | `armb_instances_out.txt`, `instance_parasitics.csv`, `verify_instance.py` | no |
 | Supply resistance confound | series resistance swept over four decades in both arms; at the layout's own 7.81 and 4.32 ohm the arms differ by 0.0348% of frequency, 168 times under Arm A's dispersion, with Ohm's law closing at every point and the implied pushing figure reproducing the independent 105.9 percent per volt | `gen_supply_decks.py`, `analyze_supply.py`, logs in `sim/spice/gono/supply/` | no |
+| Flow warning classes | all six named per net or shown to be flow constants; 14 of 14 derived counts agree with the recorded ones, and 13 of 13 on a control build that answers differently | `triage_warnings.py`, `triage_warnings.json`, `docs/warning_triage.md` | no |
 | Silicon measurements | chips not fabricated | - | next phase |
 
 ## Notes per artifact
@@ -54,9 +55,25 @@ black-boxed macro always raise under conventional static timing analysis: 461
 lint warnings with no lint error, 140 max-slew violations across corners, one
 max-fanout violation, two floating timing nets, nine disconnected pins, none of
 them critical, and 25 unannotated timing nets per corner. Max capacitance is
-clean. None of these is a routing or connectivity failure, but each class still
-needs per-net triage against the timing reports before I order silicon. The
-transitive tool versions are not pinned; the environment is described in
+clean.
+
+Those are now triaged rather than only counted, in `docs/warning_triage.md`.
+The nine disconnected pins are `ui_in[7]` and `uio_in[7:0]`, every one an unused
+chip input and not one an internal net. The max-fanout violation is
+`clknet_0_clk` at 16 against a limit of 10, the clock-tree root, which CTS built
+and the resizer's fanout repair never looked at. The two floating nets are
+`VPWR` and `VGND`, which is why the count is 2 in all six archived builds from
+226 instances to 7319. The max-slew violations are zero at every fast corner
+view and rise as the corner slows, and none of them is on a ring net: the 496
+Arm A ring nets carry 0.107 to 1.838 fF against 81.24 fF on the heaviest net in
+the design. `sim/spice/gono/triage_warnings.py` re-derives all of it from the
+DEF, the SPEF and the netlist, fails if any derived number disagrees with
+`metrics.json`, and passes 14 of 14 here and 13 of 13 on an unrelated earlier
+build that returns different answers. Still owed are the names of the 140
+slew-violating pins and of the 461 lint warnings, both of which need files from
+the local run directory rather than the archived bundle.
+
+The transitive tool versions are not pinned; the environment is described in
 REPRODUCIBILITY.
 
 **macro/romacro_final/** is the hardened oscillator macro: GDS, LEF, DEF, both
@@ -108,9 +125,10 @@ Item 8 answered its own question. The sixteen Arm B copies carrying their real
 routes spread 0.0025 percent, which is 0.57 of one counter count, so the chip
 cannot tell them apart even in principle. Item 5 closed the supply confound the
 same week, with the arms differing by 0.0348 percent at the resistances the
-layout actually has. What is next is not a simulation. It is the Arm B macro's
-distributed re-extraction, the per-net triage of the flow's warning classes, and
-the decision on item 10.
+layout actually has. The warning triage is done and none of the six classes
+turned out to be a defect, though it did cost me one wrong explanation that a
+control build caught. What is next is not a simulation either. It is the Arm B
+macro's distributed re-extraction and the decision on item 10.
 
 Second, several sweep results have no raw logs in the repository. The
 distributed-RC comparison, the boundary flop sweep, the selector sweep and all
