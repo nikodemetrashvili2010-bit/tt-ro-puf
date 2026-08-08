@@ -375,10 +375,13 @@ its own.
 Everything above is at 27 C and 1.8 V with typical devices, which bounds nothing.
 Repeating the same deck and the same extracted capacitances at a slow corner
 (100 C, 1.60 V) and a fast one (-40 C, 1.95 V) gives absolute frequencies of 276.2
-to 291.7 MHz and 840.3 to 888.3 MHz, against 540.0 to 570.7 at nominal. All
-sixteen oscillators start at every corner, including the slow low-voltage one, and
-the no-parasitic control decks return a single identical frequency per corner
-(323.140, 633.640 and 987.948 MHz), which is what validates the corner setup.
+to 291.7 MHz and 840.3 to 888.3 MHz, against 540.0 to 570.7 at nominal. This
+section is Arm A. The deck generator builds Arm A rings and nothing else, so none
+of the numbers here describe the macro array; Section 8 says what Arm B has
+instead. All sixteen Arm A oscillators start at every corner, including the slow
+low-voltage one, and the no-parasitic control decks return a single identical
+frequency per corner (323.140, 633.640 and 987.948 MHz), which is what validates
+the corner setup.
 
 The dispersion is essentially unchanged: 5.46%, 5.53% and 5.56% peak to peak at
 slow, nominal and fast. The frequency-capacitance correlation is -0.9997 in every
@@ -813,11 +816,15 @@ multi-chip data set with a stated threat model. The corner work pairs device
 corners with nominal interconnect rather than pairing the slow corner with maximum
 extracted capacitance and the fast corner with minimum; device spread dominates
 the frequency bound, so the bound holds, but the range would tighten slightly
-under the fuller pairing. The boundary behaviour of the oscillator-clocked ripple
-counter is checked at both nominal and the fast corner, which is where the shorter
-period makes it hardest, though the selector path feeding it has not yet been
-validated as a whole chain at 888 MHz. None of this erases the modelled
-dispersion; it bounds what can be concluded from it.
+under the fuller pairing. They also cover Arm A alone. Arm B has one instance at
+all three corners and the other fifteen only at nominal, so the corner range in
+Section 5.4 is not a chip-wide range and I do not have the measurement that would
+make it one. The boundary behaviour of the oscillator-clocked ripple counter is
+checked at both nominal and the fast corner, which is where the shorter period
+makes it hardest, and the selector path feeding it has now been validated as a
+whole chain at 888 MHz, though at the stopping boundary only three of the 32
+paths were swept. None of this erases the modelled dispersion; it bounds what can
+be concluded from it.
 
 The predictability result of Section 7 carries limits of its own, and they are
 not the same ones. Its mismatch term is treated as Gaussian and independent

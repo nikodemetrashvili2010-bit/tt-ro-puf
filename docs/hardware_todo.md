@@ -526,7 +526,7 @@ Tools are `gen_supply_decks.py` and `analyze_supply.py`, the latter with
 `--selftest`, which plants nine faults including a log whose current measurement
 never happened.
 
-## 6. PVT corners (done 2026-07-25)
+## 6. PVT corners, Arm A (done 2026-07-25; the Arm B half is still open)
 
 The go/no-go was nominal TT at 1.8 V, which sets no operating bounds. I re-ran the
 whole Arm A deck at slow (ss, 100 C, 1.60 V) and fast (ff, -40 C, 1.95 V) against
@@ -538,8 +538,8 @@ corner.
     tt  27C 1.80V   540.0     554.7     570.7   5.53%        22828      2.87x
     ff -40C 1.95V   840.3     863.1     888.3   5.56%        35532      1.84x
 
-All sixteen oscillators started at every corner, so the ring self-starts at 1.6 V
-and 100 C, which was the startup worry. The control decks (no parasitics) return a
+All sixteen Arm A oscillators started at every corner, so the ring self-starts at
+1.6 V and 100 C, which was the startup worry. The control decks (no parasitics) return a
 single identical frequency per corner, 323.140, 633.640 and 987.948 MHz, which is
 what validates the corner decks themselves rather than just trusting them.
 
@@ -578,9 +578,24 @@ part that moves all sixteen rings together and the part that does not. Only the
 second kind can flip a bit. That work is written up in the results document
 under what a reading can resolve.
 
-Still owed here: these pair device corners with nominal interconnect. The fuller
-job pairs ss with the max SPEF and ff with the min SPEF. Device spread dominates
-the frequency bound, so the bound stands, but the RC pairing would tighten it.
+Two things are still owed here, and the first one I only noticed on 2026-08-08.
+
+**Everything above is Arm A.** `gen_dualarm_decks.py` says in its own sixth line
+that Arm B is not in these decks, and I still wrote the result up as though it
+covered the chip, in this file and in `SIGNOFF.md`. What Arm B actually has at
+corners is B15 on its own at ss, tt and ff, from the boundary work in item 1.
+The rest of Arm B has the sixteen per-instance runs at tt (item 8) and the
+distributed-RC macro run at tt (item 7), both nominal. Sixteen copies of one
+hardened macro should not spread the way sixteen separately routed rings do, and
+item 8 measured 0.0025% peak to peak at tt against Arm A's 5.84%, so I expect the
+corner table to be narrow for Arm B. Expecting it is not the same as running it.
+Doing it properly needs a generator that Arm B does not have yet, since the
+existing one only builds Arm A decks.
+
+**The corners pair device models with nominal interconnect.** The fuller job
+pairs ss with the max SPEF and ff with the min SPEF. Device spread dominates the
+frequency bound, so the bound stands, but the RC pairing would tighten it.
+
 Tools: `gen_dualarm_decks.py --corner {tt,ss,ff}`, `analyze_corners.py`,
 `gen_flop_sweep.py --corner ff`.
 
@@ -643,11 +658,14 @@ none of those checks caught the duplicate capacitors, since they all compare one
 model against another rather than either against the component counts. The new
 dropped-listing count in the generator output is the check that would have.
 
-Two things remain. The Arm B macro has its own SPEF and has not been redone this
-way, so the 569.5 MHz reference is still lumped-only. And "distributed" here means
-OpenROAD's own reduced per-net network, which is itself a reduction of the field
-problem; coupling to nets outside the oscillator is still grounded, and that ranges
-from 4 nets on RO7 to 72 on RO14.
+One thing remains, and it is a limit of the method rather than a missing run.
+"Distributed" here means OpenROAD's own reduced per-net network, which is itself a
+reduction of the field problem; coupling to nets outside the oscillator is still
+grounded, and that ranges from 4 nets on RO7 to 72 on RO14.
+
+The Arm B macro used to be the second item in this paragraph, since it has its own
+SPEF and had never been through the same treatment. It has now. The run is the
+next section down and the lumped-only 569.5 MHz reference is gone.
 
 Tools: `gen_rc_decks.py --ro N`, `analyze_rc.py --dir ... --ro 0..15`.
 
@@ -825,20 +843,21 @@ re-harden, or none.
 
 ## Order of work
 
-Items 1, 2, 5, 6, 7, 8 and 9 are done. Items 3 and 4 are tested and closed as not
-fixable on this die, with the reasoning and the measurements recorded above, and
-both come back only if I move to a larger tile. Item 10 is a judgement call I
+Items 1, 2, 5, 7, 8 and 9 are done. Item 6 is done for Arm A and open for Arm B.
+Items 3 and 4 are tested and closed as not fixable on this die, with the
+reasoning and the measurements recorded above, and both come back only if I move
+to a larger tile. Item 10 is a judgement call I
 have not made yet, and the honest default is to make no change at all.
 
-What is left is mostly not simulation any more. Item 7 still owes the Arm B macro
-a distributed re-extraction, which cannot move the per-instance comparison, since
-all sixteen carry the same internal model, but it does mean the absolute Arm B
-frequency is a lumped number while Arm A's is not. The boundary is now three
-corners deep on B15 and three paths deep at ff, and the other 29 selector paths
-have been swept for edges without being swept for the stopping boundary. I am
-treating those as covered by the filter behaviour rather than as open runs, which
-is a judgement and not a measurement. Several results still have no raw logs in
-the repository.
+What is left is mostly not simulation any more. Item 7's Arm B re-extraction was
+open in this paragraph until 2026-08-07 and is now run, so both arms are quoted
+from the same parasitic model. Three things are genuinely still open. Item 6's
+corner table covers Arm A and Arm B has only B15 at three corners. The boundary
+is three corners deep on B15 and three paths deep at ff, and the other 29
+selector paths have been swept for edges without being swept for the stopping
+boundary; I am treating those as covered by the filter behaviour, which is a
+judgement and not a measurement. And three sweeps still have no raw logs in the
+repository, named at the top of the README.
 
 The flow's warning classes are triaged, in `docs/warning_triage.md`. None of the
 six is a defect. The nine disconnected pins are unused chip inputs, the

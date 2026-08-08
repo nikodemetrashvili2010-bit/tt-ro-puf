@@ -9,9 +9,16 @@ files already decide, before a single chip is made. The design is a TinyTapeout
 2x2 tile in the SkyWater 130 nm process, and everything here is pre-silicon:
 routed layouts, extracted parasitics, and nominal SPICE.
 
-I am a self-taught student and built the project with open tools on a home
-PC. The raw logs, the analysis code, and scripts that recompute every headline
-number from those logs are all in the repo.
+I am a self-taught student and built the project with open tools on a home PC.
+The analysis code and the scripts that recompute the headline numbers are all
+in the repo, and so are the raw logs behind most of them: the corner sweep, the
+sixteen Arm B instances, the selector sweep, the supply sweep and the macro RC
+comparison. Three runs are the exception and only their result CSVs are here.
+The sixteen-ring distributed-RC comparison, the counter-boundary flop sweep and
+the seven boundary sweeps through the selector were analysed out of `/tmp` and
+the waveforms never came back. Those decks regenerate deterministically, so you
+can repeat those three runs, but you would be repeating them rather than
+checking mine.
 
 ## The experiment
 
@@ -105,9 +112,12 @@ auto-placed standard-cell sea on the right.
 
 The current two-arm design has a coherent DRC/LVS-clean candidate build from
 its own RTL (see [SIGNOFF.md](SIGNOFF.md)). It is a candidate for the TTSKY26c
-shuttle, not a finished tapeout: the 32-to-1 selection path from the
-oscillators to the counter has not been simulated at the fast corner yet, and
-the remaining hardware work is listed in
+shuttle, not a finished tapeout. The 32-to-1 selection path from the
+oscillators to the counter has now been simulated at the fast corner, so that
+particular gap is closed, but only three of the 32 paths were swept at the
+stopping boundary and the narrowest pulse the first flop saw there was 80 ps
+against a library minimum of 77.5 ps. The corner sweep itself covers Arm A
+only. Both of those, and the rest of the hardware work, are listed in
 [docs/hardware_todo.md](docs/hardware_todo.md). After fabrication the plan is to measure both arms across
 chips, voltage, and temperature with the scripts in `firmware/`. What I expect
 on silicon: Arm A shows more cross-chip pattern correlation than Arm B. The
@@ -133,9 +143,10 @@ paper source is [docs/paper_draft.md](docs/paper_draft.md); build it with
 
 ## Reproducing the results
 
-`make` runs the RTL testbenches (Icarus Verilog needed). Every headline
-number re-derives from the checked-in raw logs with the verify scripts, and
-the SPICE runs can be repeated against a local sky130A PDK. Exact commands,
+`make` runs the RTL testbenches (Icarus Verilog needed). Most headline numbers
+re-derive from checked-in raw logs with the verify scripts. For the three runs
+named at the top of this file there is nothing to re-derive from, so the SPICE
+has to be repeated against a local sky130A PDK rather than checked. Exact commands,
 environment variables, and what a rerun does and does not prove are in
 [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
 

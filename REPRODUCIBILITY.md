@@ -32,7 +32,17 @@ python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
 
 Each verifier exits nonzero on failure. A pass means the headline numbers
 match the checked-in raw logs and CSV files; independent replication still
-needs a fresh SPICE run against your own PDK install. The provenance check
+needs a fresh SPICE run against your own PDK install.
+
+Worth knowing which is which. The corner sweep, the sixteen Arm B instances,
+the selector sweep, the supply sweep and the macro RC comparison all have their
+raw simulator output in the repository, so those verifiers really do re-derive
+from logs. Three do not: the sixteen-ring distributed-RC comparison
+(`rc_validation.csv`), the counter-boundary flop sweep, and the seven boundary
+sweeps through the selector (`boundary_validation_*.csv`). For those three the
+CSV is the primary record and a verifier can only check that the CSV is
+self-consistent. Rerunning them is the only way to check them, and the decks
+regenerate deterministically so that is possible. The provenance check
 binds the archived source and evidence blobs to a reachable historical
 commit. The bundle check is narrower and asks one question: did the DEF,
 netlist, SPEF and metrics in an archived build folder come from the same flow
@@ -206,6 +216,32 @@ the short answer to "which one is current":
   `macro/romacro_final/` is historical or component evidence, not the tapeout
   chip. `build_debug` in particular is an older, incomplete snapshot kept only
   for contrast.
+
+## How this repository gets updated, and what went wrong with it
+
+I do not work inside this repository. I work in a folder on my own disk and
+copy it across with a script before every commit. That is worth stating,
+because the script had a real defect and an outside reviewer found the symptom
+before I found the cause.
+
+It copied and it never pruned. Files I deleted in the working folder stayed
+here for good, and the reviewer read four of them as current: a positions CSV
+full of `nan`, two experimental configuration files, and a mangled author name.
+None of the four existed on my side. He was reading things I thought I had
+deleted months ago.
+
+The script now keeps every copy rule in one table and reads the same table
+backwards, so it can ask where any file here came from. If a file has no source
+in my working folder it stops and prints the list rather than committing. It
+also runs `git diff --no-index src dualarm/src`, the comparison TinyTapeout's
+own workflow runs, and refuses if those two trees disagree. That check would
+have caught the older bug directly: the prune list deleted one experimental
+config from `src/` and left its twin under `dualarm/src/`, which is why the
+stock test workflow has been red.
+
+The script itself stays on my machine because it is written around absolute
+paths on my disk. Its checks are tested against a throwaway pair of trees
+rather than against this repository.
 
 ## Freezing the final release
 

@@ -24,7 +24,8 @@ each carries inside it, and both kept the same length.
 | Archived bundle is one flow run | 8 of 8 agree | `verify_build_bundle.py` | no |
 | Arm A rings survive place and route | 16 of 16 intact, nothing inserted in a loop | `verify_ring_topology.py` | no |
 | Counter clocking at the ring boundary | 38 enable-fall phases at tt and at ff, each settles to a rail, count moves by at most one edge | `gen_flop_sweep.py`, `analyze_flop_sweep.py`, sweep logs not archived | no |
-| Frequency across PVT corners | every ring starts at ss, tt and ff; dispersion 5.46%, 5.53%, 5.56%; worst count 35532 of 65535 | `analyze_corners.py` on the logs in `build_current/` | no |
+| Frequency across PVT corners, Arm A | all sixteen Arm A rings start at ss, tt and ff; dispersion 5.46%, 5.53%, 5.56%; worst count 35532 of 65535. `gen_dualarm_decks.py` builds Arm A decks and says so in its own header, so this row is half the chip. It read as a whole-chip result here until 2026-08-08 | `analyze_corners.py` on the logs in `build_current/` | no |
+| Frequency across PVT corners, Arm B | not simulated. What exists instead is B15 on its own at ss, tt and ff, the sixteen per-instance runs at tt, and the distributed-RC macro run at tt. All sixteen share one macro layout, so I expect a narrow spread, but expecting is not measuring | `docs/hardware_todo.md` item 6 | before final trust |
 | Lumped capacitance against distributed RC | dispersion widens from 5.55% to 5.84%, rank correlation 0.994, no pair bit reverses; re-simulated 2026-07-30 after the coupling capacitors were found to be double counted | `rc_validation.csv`, raw logs not archived | no |
 | Placement sensitivity | nine builds, median 5.75%, range 4.19% to 6.99% | `dualarm/placement_sweep/` | no |
 | Hardened Arm B macro | recorded checks clean, bundle 8 of 8 | `macro/romacro_final/` | no |
