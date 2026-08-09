@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Placement-density sweep for the multi-build dispersion study (hardware_todo item 9).
 #
 # LibreLane 3.0.3 does not expose OpenROAD's global-placement random seed, so a

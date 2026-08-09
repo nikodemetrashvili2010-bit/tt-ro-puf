@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Figure 4: nominal lumped-C predictions for the archived dual-arm layout.
 import os, re, random
 import matplotlib

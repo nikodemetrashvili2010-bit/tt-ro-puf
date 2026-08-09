@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Independent re-verification of the go/no-go result. Recomputes everything from
 # the raw ngspice logs + SPEF with fresh code (does NOT import analyze.py), and
 # cross-checks against gono_results.csv. Prints PASS/FAIL on each check.

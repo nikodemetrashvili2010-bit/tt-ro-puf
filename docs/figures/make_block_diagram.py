@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Draws the chip block diagram (Figure 0 of the paper, also used in README).
 import matplotlib
 matplotlib.use("Agg")

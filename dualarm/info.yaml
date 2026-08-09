@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Tiny Tapeout project information - DUAL-ARM (v2, Arm B hardened macros).
 # Schema matches the ttsky-verilog-template (SKY shuttle), yaml_version 6.
 project:

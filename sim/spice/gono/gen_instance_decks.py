@@ -85,7 +85,15 @@ from pdk_paths import atomic_write_text, sky130_spice_paths  # noqa: E402
 sys.path.insert(0, HERE)
 from gen_mux_sweep import CELLS  # noqa: E402
 
+# The control frequencies live in the analyzer, which checks the run against
+# them. Importing rather than copying means the window this script sizes and the
+# control the report checks can never be computed from two different tables.
+from analyze_instance import CONTROL_MHZ  # noqa: E402
+
 NRO, NINV, TAP = 16, 30, 15
+
+START_NS = 2.0        # the enable pulse edge, and so the earliest any ring starts
+LOADED_RATIO = 0.8990  # f_r / f_c in the tt run: 570.636 over 634.720
 
 CORNERS = {
     "tt": dict(section="tt", temp=27,  supply=1.80, tstop_ns=80),
@@ -318,6 +326,23 @@ def emit_net(prefix, num, net, fixed):
 
 # --------------------------------------------------------------------- the deck
 
+def last_edge_ns(corner_name, last_edge):
+    """When the measurement's last rising edge should arrive, in nanoseconds.
+
+    The frequency of a loaded Arm B ring is the corner's control frequency times
+    the ratio the tt run measured, and the ring cannot start before the enable
+    pulse. That ratio moved 0.5% across the corners on Arm A, so this is an
+    estimate, but it is nowhere near the factor of three that separates a window
+    that holds twenty-five edges from one that does not.
+
+    If the window is short, ngspice does not complain. The measurement simply
+    does not appear in the log, and the report reads a ring as dead. That failure
+    costs a whole rerun at ss, which is why it is worth predicting here first.
+    """
+    period_ns = 1000.0 / (CONTROL_MHZ[corner_name] * LOADED_RATIO)
+    return START_NS + (last_edge + 1) * period_ns
+
+
 def emit_macro(tag, en_node, out_node, mcaps, order):
     """One complete ro_macro_hard: the loop, the tap, the two delay buffers.
 
@@ -507,6 +532,11 @@ def main(argv=None):
     ap.add_argument("--step-ps", type=int, default=1,
                     help="transient timestep, ps (default 1; the route delays "
                          "being measured are single-digit ps)")
+    ap.add_argument("--tstop-ns", type=float, default=None,
+                    help="transient window, ns. The default is generous, 300 at "
+                         "ss for a last edge near 92, and run time follows the "
+                         "window, so shorten it once a smoke run has shown you "
+                         "the real frequency")
     ap.add_argument("--smoke", action="store_true",
                     help="short run that proves the deck elaborates and every ring "
                          "starts, before spending an hour on the real one")
@@ -519,6 +549,17 @@ def main(argv=None):
         corner["first_edge"], corner["last_edge"] = 2, 7
     else:
         corner["first_edge"], corner["last_edge"] = 5, 25
+    if args.tstop_ns is not None:
+        corner["tstop_ns"] = args.tstop_ns
+
+    need = last_edge_ns(args.corner, corner["last_edge"])
+    if corner["tstop_ns"] < need:
+        raise SystemExit(
+            "the window is %g ns and edge %d should not arrive until about %.1f ns "
+            "at %s. ngspice would run the whole transient and then leave the "
+            "measurements out of the log, so this refuses instead."
+            % (corner["tstop_ns"], corner["last_edge"], need, args.corner))
+    margin = corner["tstop_ns"] / need
 
     lib = args.lib if args.lib else str(sky130_spice_paths()[1])
     insts, drivers, loads = read_netlist(args.netlist)
@@ -554,6 +595,10 @@ def main(argv=None):
     print("corner %s: %g C, %g V, %d ps step, %g ns"
           % (args.corner, corner["temp"], corner["supply"], corner["step_ps"],
              corner["tstop_ns"]))
+    print("edge %d expected near %.1f ns, so the window carries %.2fx of what it "
+          "needs%s" % (corner["last_edge"], need, margin,
+                       "" if margin >= 1.2 else "   <-- thin, watch for a ring "
+                       "missing from the log"))
     print("pin order for %d cells read from %s" % (len(order), lib))
     print("macro ring capacitance, identical in all 18 rings: %.2f fF" % ring)
     print("enable route capacitance: %.2f to %.2f fF, mean %.2f"

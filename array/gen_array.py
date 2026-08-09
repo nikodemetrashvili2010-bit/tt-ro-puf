@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Generate the matched Arm B array: 16 identical ro_macro_hard copies on a
 # uniform 4x4 grid, plus the LibreLane config that places AND powers them.
 #

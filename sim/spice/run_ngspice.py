@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 """Run a checked-in deck with PDK paths resolved from the environment.
 
 The historical decks retain their original absolute include paths as provenance.

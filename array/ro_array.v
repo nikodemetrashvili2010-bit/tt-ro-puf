@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+// SPDX-License-Identifier: Apache-2.0
+
 // Arm B matched array: 16 bit-identical hardened oscillator macros.
 `default_nettype none
 module ro_array (

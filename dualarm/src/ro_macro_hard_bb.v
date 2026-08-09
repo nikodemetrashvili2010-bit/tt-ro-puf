@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+// SPDX-License-Identifier: Apache-2.0
+//
 // Blackbox declaration of the hardened oscillator macro, for synthesis and
 // lint. Ports only, NO parameters (a parameterized blackbox would be
 // uniquified by yosys and break the MACROS instance-name matching). The real

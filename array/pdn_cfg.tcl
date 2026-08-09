@@ -1,6 +1,32 @@
-# Custom PDN config for the dual-arm TT block (met4-only, macro-friendly).
-# Copied from the tt06-dffram-example recipe, updated to LibreLane 3 variable
-# names (FP_PDN_* became PDN_*).
+# Copyright 2020-2022 Efabless Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Modifications copyright 2026 Nikoloz Demetrashvili, same licence.
+#
+# Custom PDN config, met4-only and macro-friendly. Same recipe as
+# dualarm/src/pdn_cfg.tcl; the two differ only in comments, every directive is
+# the same. See that file for the full note on what I changed and why.
+#
+# Modified copy of pdn_cfg.tcl from
+# https://github.com/TinyTapeout/tt06-dffram-example, which carries the Efabless
+# header above because the recipe comes from OpenLane's own default. Checked
+# again upstream on 2026-08-09.
+#
+# Changed here: FP_PDN_* renamed to PDN_* for LibreLane 3, io.tcl sourced and
+# the voltage domain set explicitly, -spacing added to the vertical stripe,
+# -starts_with POWER dropped from the rail stripe, and the explanation below.
 #
 # Why this file exists: LibreLane's default pdn_cfg.tcl defines a default
 # macro grid (define_pdn_grid -macro -halo ...) whose only connect statement

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 """Regression tests for the measurement CSV analyzer (new run-based format)."""
 
 import contextlib

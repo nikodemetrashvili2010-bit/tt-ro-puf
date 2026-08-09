@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 """Bind the archived numerical bundle to its source snapshot in Git history.
 
 This proves only repository-level identity: the listed source and evidence

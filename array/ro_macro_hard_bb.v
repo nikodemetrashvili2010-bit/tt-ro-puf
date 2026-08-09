@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+// SPDX-License-Identifier: Apache-2.0
+
 // Blackbox declaration of the hardened oscillator macro for the array's
 // synthesis. Ports only; the real physical/gate views come from the GDS/LEF/nl
 // supplied via MACROS in config.json.

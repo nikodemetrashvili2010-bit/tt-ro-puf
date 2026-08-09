@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 """Per-net triage of the warning classes the dual-arm flow reports.
 
 SIGNOFF.md carries six warning classes from `dualarm/build_current/` and says

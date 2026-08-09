@@ -36,6 +36,8 @@ chosen after it.
   5.84%   Arm A's dispersion from the distributed-RC decks, item 7. If Arm B's
           per-instance spread reached anything like this, the two arms would no
           longer be measuring different things and the experiment would be over.
+          At ss and ff the comparison uses Arm A's lumped corner decks instead,
+          5.459% and 5.559%, because no distributed Arm A run exists there.
   0.062%  the per-ring mismatch sigma from the Monte Carlo work, which is the
           real entropy the PUF is supposed to live on. Ten times that, 0.62%, is
           the level above which integration spread would be worth reporting as a
@@ -63,7 +65,17 @@ NRO = 16
 CONTROL_MHZ = {"tt": 633.640, "ss": 323.140, "ff": 987.948}
 CONTROL_TOL = 0.01
 
-ARM_A_DISPERSION = 5.84      # item 7, distributed RC, peak to peak
+# Arm A's peak-to-peak spread on this build, per corner. The tt entry is item 7's
+# distributed-RC result, which is the model this deck uses for its own two routes.
+# There is no distributed Arm A run at ss or ff, so those two come from the lumped
+# corner decks in dualarm/build_current. At tt the lumped model gives 5.534 where
+# the distributed one gives 5.84, so the lumped figure is the smaller number and
+# comparing against it is the stricter test, not the easier one.
+ARM_A_DISPERSION = {
+    "tt": (5.84, "distributed RC"),
+    "ss": (5.459, "lumped C"),
+    "ff": (5.559, "lumped C"),
+}
 MISMATCH_SIGMA = 0.062       # Monte Carlo, per-ring, percent
 FLAG_LEVEL = 10 * MISMATCH_SIGMA
 
@@ -110,6 +122,7 @@ def analyse(vals, corner, loads=None):
     """Return (report lines, failures, flags, numbers)."""
     lines, fail, flag = [], [], []
     ps = 1e12
+    arm_a, arm_a_model = ARM_A_DISPERSION[corner]
 
     # A measurement ngspice could not make is absent from the log rather than
     # zero, so every name this report needs is checked up front. Reading on with
@@ -167,7 +180,11 @@ def analyse(vals, corner, loads=None):
                         "route while the fall lags the rise by %.1f ps. Those are "
                         "the same quantity, so one of the two is measured on the "
                         "wrong edge." % (k, widened, by_delay))
-        period = tp / 20.0
+        # One period straight from the frequency the deck itself computed, rather
+        # than tp divided by the twenty periods a full run measures over. A smoke
+        # run measures over five, and dividing by twenty there would shrink the
+        # period fourfold and fail a deck that is fine.
+        period = 1e12 / vals["f_%s" % t]
         if max(dr, df) > 0.25 * period:
             fail.append("instance %d: the route delay reaches %.1f ps against a "
                         "%.1f ps period, which is far past a routing delay and "
@@ -192,13 +209,13 @@ def analyse(vals, corner, loads=None):
     lines.append("peak to peak %.4f%%, standard deviation %.4f%%, mean sits %.4f%% "
                  "off the reference" % (ptp, sd, off))
     if ptp:
-        lines.append("Arm A on this build spreads %.2f%% peak to peak with the same "
-                     "distributed-RC treatment of its routes, so integration spread "
-                     "is %.0f times smaller"
-                     % (ARM_A_DISPERSION, ARM_A_DISPERSION / ptp))
+        lines.append("Arm A at %s spreads %.2f%% peak to peak (%s), so integration "
+                     "spread is %.0f times smaller"
+                     % (corner, arm_a, arm_a_model, arm_a / ptp))
     else:
         lines.append("the sixteen agree to every digit the measurement resolves, "
-                     "against Arm A's %.2f%% on this build" % ARM_A_DISPERSION)
+                     "against Arm A's %.2f%% at %s (%s)"
+                     % (arm_a, corner, arm_a_model))
 
     drs = [r["dr"] for r in rows]
     srs = [r["sr"] for r in rows]
@@ -219,11 +236,11 @@ def analyse(vals, corner, loads=None):
             [corr("frequency", freqs), corr("route delay", drs),
              corr("receiver edge", srs)]))
 
-    if ptp >= ARM_A_DISPERSION:
+    if ptp >= arm_a:
         fail.append("the sixteen instances spread %.3f%%, which is not below Arm A's "
-                    "%.2f%%. Integration would then be doing what the layout does "
-                    "and the two arms would no longer measure different things."
-                    % (ptp, ARM_A_DISPERSION))
+                    "%.2f%% at %s. Integration would then be doing what the layout "
+                    "does and the two arms would no longer measure different things."
+                    % (ptp, arm_a, corner))
     elif ptp > FLAG_LEVEL:
         flag.append("the sixteen instances spread %.3f%%, above the %.3f%% level "
                     "that is ten times the per-ring mismatch sigma. Not fatal, but "
@@ -235,18 +252,24 @@ def analyse(vals, corner, loads=None):
 
 # ------------------------------------------------------------------- self test
 
-def synth(**tweak):
-    """A synthetic log with the shape ngspice writes, optionally broken on purpose."""
-    period_ps = 1755.0
-    v = {"f_c": 633.640e6, "f_r": 569.500e6,
-         "tp_c": 20.0 / 633.640e6, "tp_r": 20.0 / 569.500e6,
+def synth(corner="tt", span=20, **tweak):
+    """A synthetic log with the shape ngspice writes, optionally broken on purpose.
+
+    `span` is how many periods the deck measured over, twenty on a real run and
+    five on a smoke run. It is a parameter because the report has to read both.
+    """
+    ctrl = CONTROL_MHZ[corner] * 1e6
+    base = ctrl * 0.8990                 # the loaded Arm B ratio, measured at tt
+    period_ps = 1e12 / base
+    v = {"f_c": ctrl, "f_r": base,
+         "tp_c": span / ctrl, "tp_r": span / base,
          "hi_c": period_ps / 2 * 1e-12, "hi_r": period_ps / 2 * 1e-12}
     lines = []
     for k in range(NRO):
         t = "k%02d" % k
-        f = 569.500e6 * (1 + (k - 7.5) * tweak.get("slope", 0.0))
-        tp = 20.0 / f
-        dr = 2.0 + 0.3 * k
+        f = base * (1 + (k - 7.5) * tweak.get("slope", 0.0))
+        tp = span / f
+        dr = tweak.get("dr_ps", 2.0 + 0.3 * k)
         df = dr + 1.5
         hi = period_ps / 2 * 1e-12
         hx = hi + (df - dr) * 1e-12
@@ -274,36 +297,55 @@ def synth(**tweak):
 def selftest():
     import tempfile
     cases = [
-        ("a clean run", {}, "pass"),
-        ("a ring that never started", dict(drop=["f_k09", "tp_k09"]), "fail"),
-        ("a control ring off by five percent",
+        ("a clean run", "tt", {}, "pass"),
+        ("a ring that never started", "tt", dict(drop=["f_k09", "tp_k09"]), "fail"),
+        ("a control ring off by five percent", "tt",
          dict(set={"f_c": 633.640e6 * 1.05}), "fail"),
-        ("a period that changed along a passive route",
+        ("a period that changed along a passive route", "tt",
          dict(set={"tq_k03": 20.0 / 569.5e6 + 40e-12}), "fail"),
-        ("a high level compared against a low, item 2's mistake",
+        ("a high level compared against a low, item 2's mistake", "tt",
          dict(set={"hx_k11": 900e-12}), "fail"),
-        ("a route delay the size of a quarter period, so a lost edge",
+        ("a route delay the size of a quarter period, so a lost edge", "tt",
          dict(set={"dr_k02": 500e-12, "df_k02": 501.5e-12}), "fail"),
-        ("a spread that erases the difference between the arms",
+        ("a spread that erases the difference between the arms", "tt",
          dict(slope=0.006), "fail"),
-        ("a spread in the band worth reporting", dict(slope=0.0006), "flag"),
+        ("a spread in the band worth reporting", "tt", dict(slope=0.0006), "flag"),
+        # The two corners, and the reason each is here.
+        ("a clean slow run", "ss", {}, "pass"),
+        ("a clean fast run", "ff", {}, "pass"),
+        ("a tt control frequency in a run labelled ss", "ss",
+         dict(set={"f_c": 633.640e6}), "fail"),
+        # 5.55% clears tt's 5.84 and does not clear ss's 5.459. One log, two
+        # verdicts, which is the whole point of the table being per corner.
+        ("a spread that clears tt but not ss, read as tt", "tt",
+         dict(slope=0.0037), "flag"),
+        ("a spread that clears tt but not ss, read as ss", "ss",
+         dict(slope=0.0037), "fail"),
+        # A smoke run measures over five periods, not twenty. The route delay
+        # here is a tenth of a period, which no real route reaches; it is set
+        # that high because it is the arithmetic being tested, not a circuit.
+        ("a smoke log, five periods, delay a tenth of one", "tt",
+         dict(span=5, dr_ps=175.0), "pass"),
     ]
     ok = True
-    for name, tweak, want in cases:
+    for name, corner, tweak, want in cases:
+        span = tweak.pop("span", 20)
         fh = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False)
-        fh.write(synth(**tweak))
+        fh.write(synth(corner=corner, span=span, **tweak))
         fh.close()
-        _, fail, flag, _ = analyse(read_log(fh.name), "tt")
+        _, fail, flag, _ = analyse(read_log(fh.name), corner)
         os.unlink(fh.name)
         got = "fail" if fail else ("flag" if flag else "pass")
         mark = "ok  " if got == want else "WRONG"
         if got != want:
             ok = False
-        print("  %s %-58s expected %-4s got %s" % (mark, name, want, got))
+        print("  %s %-52s %-3s expected %-4s got %s"
+              % (mark, name, corner, want, got))
         if got != want:
             for m in fail + flag:
                 print("        " + m)
-    print("selftest: %s" % ("all 8 planted cases behaved" if ok else "SOMETHING IS WRONG"))
+    print("selftest: %s" % ("all %d planted cases behaved" % len(cases) if ok
+                            else "SOMETHING IS WRONG"))
     return 0 if ok else 1
 
 

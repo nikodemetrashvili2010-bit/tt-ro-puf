@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 name: gds
 
 on:
@@ -20,6 +23,9 @@ jobs:
           python3 sim/ref_model.py
           python3 sim/montecarlo.py
           python3 sim/h3_audit.py
+          python3 sim/repo_paths.py
+          python3 sim/verify_datasheet.py
+          python3 sim/verify_macro_provenance.py
           python3 sim/spice/gono/verify.py
           python3 sim/spice/gono/verify_macro.py
           python3 sim/spice/gono/verify_dualarm.py
@@ -35,6 +41,7 @@ jobs:
           python3 sim/spice/gono/analyze_mux_sweep.py --selftest
           python3 sim/spice/gono/analyze_boundary_sweep.py --selftest
           python3 sim/spice/gono/analyze_instance.py --selftest
+          python3 sim/spice/gono/test_instance_corners.py
           python3 sim/spice/gono/analyze_supply.py --selftest
           python3 sim/spice/gono/triage_warnings.py --selftest
           python3 sim/spice/gono/gen_macro_rc_deck.py --selftest

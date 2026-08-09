@@ -1,6 +1,37 @@
+# Copyright 2020-2022 Efabless Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+# Modifications copyright 2026 Nikoloz Demetrashvili, same licence.
+#
 # Custom PDN config for the dual-arm TT block (met4-only, macro-friendly).
-# Copied from the tt06-dffram-example recipe, updated to LibreLane 3 variable
-# names (FP_PDN_* became PDN_*).
+#
+# This is a modified copy of pdn_cfg.tcl from
+# https://github.com/TinyTapeout/tt06-dffram-example, which carries the Efabless
+# header above because the recipe comes from OpenLane's own default. I took the
+# copy without recording which commit, and that is the honest state of it; the
+# upstream file was checked again on 2026-08-09 and still carries this header.
+# It was missing here until then, which was my mistake. Apache 2.0 section 4(c)
+# says to keep it.
+#
+# What I changed, which section 4(b) asks me to state:
+#   every FP_PDN_* variable renamed to PDN_*, for LibreLane 3;
+#   io.tcl sourced and the voltage domain set explicitly;
+#   -spacing added to the vertical stripe, so the VPWR/VGND pair pitch can be
+#   made to land on the macro's internal met4 straps;
+#   -starts_with POWER dropped from the rail stripe;
+#   and the explanation below, which is mine.
 #
 # Why this file exists: LibreLane's default pdn_cfg.tcl defines a default
 # macro grid (define_pdn_grid -macro -halo ...) whose only connect statement

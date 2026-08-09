@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+
 # Generate dualarm/src/config.json: the green TinyTapeout project config plus
 # the Arm B hardened-macro block (placement + power alignment).
 #
