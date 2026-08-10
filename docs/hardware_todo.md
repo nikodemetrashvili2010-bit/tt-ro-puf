@@ -592,6 +592,29 @@ corner table to be narrow for Arm B. Expecting it is not the same as running it.
 Doing it properly needs a generator that Arm B does not have yet, since the
 existing one only builds Arm A decks.
 
+**Run on 2026-08-10, and the generator claim above was wrong.** Arm B's decks
+never came from `gen_dualarm_decks.py`. They come from `gen_instance_decks.py`,
+which has taken a `--corner` argument since I wrote it for item 8 on 08-03, and
+`analyze_instance.py` already carried the control frequency for all three
+corners. I costed a day and a half against a file that does not build the thing.
+It was two ngspice runs.
+
+All sixteen instances now start at ss and ff as well as tt, each carrying its own
+real enable and output route. They spread **0.0001% at ss and 0.0009% at ff
+against 0.0025% at tt**, so 41675 and 6565 times under Arm A at the same corner,
+and every one of the three is far under the 0.01% written down before the runs.
+The whole spread is 0.02, 0.57 and 0.30 of one counter count. Logs are
+`armb_instances_ss_out.txt` and `armb_instances_ff_out.txt` beside the tt one,
+and `verify_instance_corners.py` re-derives all of it from those logs with its
+own parser, 36 checks and five planted faults, in CI.
+
+Read the ss digits as an upper bound rather than a measurement. The spread there
+is 1.3e-6 of the mean and the log's own two ways of stating a frequency disagree
+at 1.6e-7, so there is only eight times of headroom and the third significant
+figure depends on which definition you take. tt and ff have 333 and 198 times.
+What survives that reading is every claim above, all of which clear it by
+several orders.
+
 **The corners pair device models with nominal interconnect.** The fuller job
 pairs ss with the max SPEF and ff with the min SPEF. Device spread dominates the
 frequency bound, so the bound stands, but the RC pairing would tighten it.

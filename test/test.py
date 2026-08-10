@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
 
+import os
+
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, FallingEdge, ReadOnly, RisingEdge, Timer
@@ -8,6 +10,37 @@ from cocotb.triggers import ClockCycles, FallingEdge, ReadOnly, RisingEdge, Time
 
 WINDOW = 1000
 CLK_NS = 20
+
+# A gate-level run swaps Arm A's behavioural oscillator for the real standard
+# cells, and sky130's simulation models give combinational cells no delay at
+# all. sky130_fd_sc_hd__inv is a bare `not`, a power-good UDP and a `buf` in
+# the functional view and in the behavioural view alike, so -DUNIT_DELAY has
+# nothing to attach to. An enabled Arm A ring is then a zero-delay feedback
+# loop: the simulator cycles it forever at one timestamp and simulated time
+# never moves. That is why the gate-level job has been running until CI kills
+# it at six hours rather than failing.
+#
+# Arm B comes through synthesis as a preserved black box driven by
+# ro_macro_hard_sim.v, whose half period is a real 1580 ps, so it simulates at
+# ordinary speed. Gate-level runs therefore drive Arm B and the whole protocol
+# around it, including the sixteen preserved macro enable pins, and leave Arm
+# A's frequencies to SPICE and its ring structure to verify_ring_topology.py,
+# which reads the same netlist this test elaborates.
+GL = os.environ.get("GATES") == "yes"
+ARMS = (1,) if GL else (0, 1)
+PROTOCOL_ARM = 1 if GL else 0
+
+
+def budget_us(measurements):
+    """Simulated-time ceiling for a test that takes this many measurements.
+
+    One measurement cannot outlast WINDOW reference cycles plus the handshake
+    on either side, so twice that is roomy. This catches a handshake that
+    stalls. It does not catch the zero-delay loop described above, where time
+    does not advance and no simulated-time limit can ever expire; the guard
+    for that one is timeout-minutes on the gl_test job in ci/gds.yaml.
+    """
+    return round(measurements * (WINDOW + 64) * CLK_NS / 1000 * 2 + 20)
 
 async def setup(dut):
     """Start the clock, then reset the design to a known state.
@@ -202,7 +235,7 @@ async def measure(
     return await read_count(dut, arm, idx)
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=budget_us(0), timeout_unit="us")
 async def test_power_on_defaults(dut):
     """After reset the outputs are quiet and only done drives the bidir bus."""
     await setup(dut)
@@ -211,14 +244,14 @@ async def test_power_on_defaults(dut):
     assert int(dut.uo_out.value) == 0
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=budget_us(len(ARMS) * 16), timeout_unit="us")
 async def test_all_selectors_and_bytes(dut):
     """Every arm/index selection measures, and both result bytes read back."""
     await setup(dut)
     counts = {0: [], 1: []}
     en_window, _ = rtl_handles(dut)
 
-    for arm in (0, 1):
+    for arm in ARMS:
         for idx in range(16):
             count = await measure(dut, arm, idx)
             counts[arm].append(count)
@@ -226,7 +259,7 @@ async def test_all_selectors_and_bytes(dut):
             assert 0 < count < 65536
             assert int(dut.uio_oe.value) == 0x01
 
-    if en_window is not None:
+    if en_window is not None and 0 in ARMS:
         # Arm A's behavioral model deliberately slows with IDX.
         assert all(a > b for a, b in zip(counts[0], counts[0][1:])), counts[0]
         for idx, count in enumerate(counts[0]):
@@ -234,19 +267,29 @@ async def test_all_selectors_and_bytes(dut):
             expected = (WINDOW * CLK_NS * 1000) // (2 * half_period_ps)
             assert abs(count - expected) <= 2, (idx, count, expected)
 
+        # The absolute Arm B count is checked against the model only where the
+        # rest of the path is behavioural too. Gate-level adds the real counter
+        # and readout cells around the same macro model, and I have no measured
+        # basis yet for how many counts that is allowed to move.
         expected_b = (WINDOW * CLK_NS * 1000) // (2 * 1580)
-        assert max(counts[1]) - min(counts[1]) <= 1, counts[1]
         assert all(abs(count - expected_b) <= 2 for count in counts[1])
 
+    if 1 in ARMS:
+        # This half holds in both runs. Arm B is the same parameterless macro
+        # sixteen times over, so whatever the count is, all sixteen must agree.
+        # A selector that lands on the wrong instance, or a readout that mixes
+        # bytes between selections, breaks this without needing Arm A.
+        assert max(counts[1]) - min(counts[1]) <= 1, counts[1]
 
-@cocotb.test()
+
+@cocotb.test(timeout_time=budget_us(2), timeout_unit="us")
 async def test_held_start_is_one_run(dut):
     """Holding start high creates one measurement, not repeated restarts."""
     await setup(dut)
-    baseline = await measure(dut, 0, 5)
+    baseline = await measure(dut, PROTOCOL_ARM, 5)
     held = await measure(
         dut,
-        0,
+        PROTOCOL_ARM,
         5,
         hold_start_cycles=8,
         check_window=False,
@@ -255,33 +298,37 @@ async def test_held_start_is_one_run(dut):
     assert abs(held - baseline) <= 2
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=budget_us(2), timeout_unit="us")
 async def test_selector_is_latched(dut):
     """Changing arm/index mid-run must not change the captured selection."""
     await setup(dut)
-    baseline = await measure(dut, 0, 2)
-    # Arm A has distinguishable model frequencies, so a non-latched selector
-    # would produce a visibly different count here.
-    latched = await measure(dut, 0, 2, mutate_to=(1, 14))
+    baseline = await measure(dut, PROTOCOL_ARM, 2)
+    # In RTL the mutation crosses arms, and Arm A's model frequencies differ
+    # enough that a non-latched selector shows up as a different count. In a
+    # gate-level run both selections are Arm B, where every copy toggles at the
+    # same rate and the count cannot tell them apart. There the evidence is the
+    # one-hot check inside wait_for_result, which reads the sixteen preserved
+    # macro enable pins directly and sees the wrong instance turn on.
+    latched = await measure(dut, PROTOCOL_ARM, 2, mutate_to=(1, 14))
     assert abs(latched - baseline) <= 2
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=budget_us(3), timeout_unit="us")
 async def test_restart_during_measurement(dut):
     """A second start aborts the in-flight run and re-arms cleanly."""
     await setup(dut)
-    baseline = await measure(dut, 0, 15)
-    await pulse_start(dut, 0, 0)
+    baseline = await measure(dut, PROTOCOL_ARM, 15)
+    await pulse_start(dut, PROTOCOL_ARM, 0)
     await ClockCycles(dut.clk, 100)
-    await pulse_start(dut, 0, 15)
+    await pulse_start(dut, PROTOCOL_ARM, 15)
     await wait_for_result(
-        dut, 0, 15, require_rearm=True, rearm_low_already_seen=True
+        dut, PROTOCOL_ARM, 15, require_rearm=True, rearm_low_already_seen=True
     )
-    restarted = await read_count(dut, 0, 15)
+    restarted = await read_count(dut, PROTOCOL_ARM, 15)
     assert abs(restarted - baseline) <= 2
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=budget_us(2), timeout_unit="us")
 async def test_reset_during_measurement(dut):
     """Reset mid-run clears done and the snapshot; the core still works after."""
     await setup(dut)
@@ -298,7 +345,7 @@ async def test_reset_during_measurement(dut):
     assert await measure(dut, 1, 0) > 0
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=budget_us(2), timeout_unit="us")
 async def test_deselect_shutdown(dut):
     """Deselecting the project shuts the RO down asynchronously and recovers."""
     await setup(dut)
@@ -334,4 +381,4 @@ async def test_deselect_shutdown(dut):
         await Timer(1, unit="ns")
         assert int(project_rst_n.value) == 1
     await ClockCycles(dut.clk, 5)
-    assert await measure(dut, 0, 0) > 0
+    assert await measure(dut, PROTOCOL_ARM, 0) > 0

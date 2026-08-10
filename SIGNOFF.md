@@ -24,8 +24,8 @@ each carries inside it, and both kept the same length.
 | Archived bundle is one flow run | 8 of 8 agree | `verify_build_bundle.py` | no |
 | Arm A rings survive place and route | 16 of 16 intact, nothing inserted in a loop | `verify_ring_topology.py` | no |
 | Counter clocking at the ring boundary | 38 enable-fall phases at tt and at ff, each settles to a rail, count moves by at most one edge | `gen_flop_sweep.py`, `analyze_flop_sweep.py`, sweep logs not archived | no |
-| Frequency across PVT corners, Arm A | all sixteen Arm A rings start at ss, tt and ff; dispersion 5.46%, 5.53%, 5.56%; worst count 35532 of 65535. `gen_dualarm_decks.py` builds Arm A decks and says so in its own header, so this row is half the chip. It read as a whole-chip result here until 2026-08-08 | `analyze_corners.py` on the logs in `build_current/` | no |
-| Frequency across PVT corners, Arm B | not simulated. What exists instead is B15 on its own at ss, tt and ff, the sixteen per-instance runs at tt, and the distributed-RC macro run at tt. All sixteen share one macro layout, so I expect a narrow spread, but expecting is not measuring | `docs/hardware_todo.md` item 6 | before final trust |
+| Frequency across PVT corners, Arm A | all sixteen Arm A rings start at ss, tt and ff; dispersion 5.46%, 5.53%, 5.56%; worst count 35532 of 65535. `gen_dualarm_decks.py` builds Arm A decks and says so in its own header, so this row is Arm A alone. It read as a whole-chip result here until 2026-08-08, and the Arm B row below was empty until 2026-08-10 | `analyze_corners.py` on the logs in `build_current/` | no |
+| Frequency across PVT corners, Arm B | all sixteen instances now start at ss and ff as well as tt, each carrying its own real enable and output route. Spread 0.0001%, 0.0025%, 0.0009% peak to peak at ss, tt, ff, against 5.46%, 5.53%, 5.56% for Arm A at the same corners. Every corner is far under the 0.01% written down before the runs. Measured 2026-08-10; until then this row said not simulated | `armb_instances_ss_out.txt`, `armb_instances_out.txt`, `armb_instances_ff_out.txt`, `analyze_instance.py --corner`, `gen_instance_decks.py --corner` | no |
 | Lumped capacitance against distributed RC | dispersion widens from 5.55% to 5.84%, rank correlation 0.994, no pair bit reverses; re-simulated 2026-07-30 after the coupling capacitors were found to be double counted | `rc_validation.csv`, raw logs not archived | no |
 | Placement sensitivity | nine builds, median 5.75%, range 4.19% to 6.99% | `dualarm/placement_sweep/` | no |
 | Hardened Arm B macro | recorded checks clean, bundle 8 of 8 | `macro/romacro_final/` | no |
@@ -34,7 +34,7 @@ each carries inside it, and both kept the same length.
 | 32-to-1 selector path at the fast corner | all 32 paths carry every edge into the flop, 32 blocked controls silent, rise delay 157 to 375 ps, every path lengthens its high level by 102 to 182 ps and shortens its low by the same, period preserved at both nodes | `mux_validation.csv`, `gen_mux_sweep.py`, `analyze_mux_sweep.py`, raw logs not archived | no |
 | Boundary pulse measured through the selector | 252 phases over seven sweeps, three paths at ff plus B15 repeated at tt and ss, every one settles to a rail and the count steps by at most one; the narrowest clock any of them delivered is 80 ps on B00, against the 77.5 ps the library characterizes at that corner | seven `boundary_validation_*.csv`, `check_pulse_width.py`, raw logs not archived | no |
 | Boundary through the other 29 selector paths | not simulated; every one of them carries all 30 judged edges in the item 2 sweep, but none was swept at the stopping boundary | `docs/hardware_todo.md` item 1 | before final trust |
-| Arm B per-instance integration | sixteen instances carrying their own real enable and output routes spread 0.0025% peak to peak, which is 0.57 of one counter count, against 5.84% for Arm A on the same build; 37 of 37 checks re-derived by separate code | `armb_instances_out.txt`, `instance_parasitics.csv`, `verify_instance.py` | no |
+| Arm B per-instance integration | sixteen instances carrying their own real enable and output routes spread 0.0025% peak to peak at tt, which is 0.57 of one counter count, against 5.84% for Arm A on the same build; 37 of 37 checks re-derived by separate code; the slow and fast corners are the row above | `armb_instances_out.txt`, `instance_parasitics.csv`, `verify_instance.py` | no |
 | Supply resistance confound | series resistance swept over four decades in both arms; at the layout's own 7.81 and 4.32 ohm the arms differ by 0.0348% of frequency, 168 times under Arm A's dispersion, with Ohm's law closing at every point and the implied pushing figure reproducing the independent 105.9 percent per volt | `gen_supply_decks.py`, `analyze_supply.py`, logs in `sim/spice/gono/supply/` | no |
 | Arm B macro against its distributed RC network | 566.05 MHz against 570.62 lumped, a shift of -0.801%, which is 0.32 sigma from what the Arm A load fit predicts for a ring of its weight; the lumped rebuild reproduces item 5's independent Arm B figure of 570.616 MHz to seven digits | `gen_macro_rc_deck.py`, `analyze_macro_rc.py`, logs in `sim/spice/gono/macrorc/` | no |
 | Flow warning classes | all six named per net or shown to be flow constants; 14 of 14 derived counts agree with the recorded ones, and 13 of 13 on a control build that answers differently | `triage_warnings.py`, `triage_warnings.json`, `docs/warning_triage.md` | no |
@@ -125,7 +125,11 @@ one lengthens it. `docs/hardware_todo.md` has the full account.
 
 Item 8 answered its own question. The sixteen Arm B copies carrying their real
 routes spread 0.0025 percent, which is 0.57 of one counter count, so the chip
-cannot tell them apart even in principle. Item 5 closed the supply confound the
+cannot tell them apart even in principle. Running the same decks at the slow and
+fast corners on 2026-08-10 made that stronger rather than weaker: 0.0001 percent
+at ss and 0.0009 percent at ff, both tighter than tt. That is the last piece of
+new evidence the open list carried, and it is what lets the corner table cover
+both arms instead of one. Item 5 closed the supply confound the
 same week, with the arms differing by 0.0348 percent at the resistances the
 layout actually has. The warning triage is done and none of the six classes
 turned out to be a defect, though it did cost me one wrong explanation that a

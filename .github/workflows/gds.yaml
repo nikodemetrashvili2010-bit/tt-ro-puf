@@ -54,6 +54,8 @@ jobs:
           python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux --csv /tmp/mux_check.csv
           diff /tmp/mux_check.csv sim/spice/gono/mux_validation.csv
           python3 sim/spice/gono/verify_instance.py
+          python3 sim/spice/gono/verify_instance_corners.py --selftest
+          python3 sim/spice/gono/verify_instance_corners.py
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
           python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi
           python3 sim/spice/gono/analyze_supply.py --dir sim/spice/gono/supply
@@ -84,6 +86,14 @@ jobs:
   gl_test:
     needs: gds
     runs-on: ubuntu-24.04
+    # In gate-level simulation an Arm A ring is a zero-delay feedback loop.
+    # sky130 gives combinational cells no delay in either model view. test.py
+    # keeps Arm A out of these runs for that reason, so this job should finish
+    # in minutes now. The limit catches the case where something enables one
+    # anyway. Simulated time then stops advancing, so no cocotb timeout can
+    # expire, and the job would sit on a runner until GitHub's six-hour
+    # default kills it.
+    timeout-minutes: 30
     steps:
       - name: checkout repo
         uses: actions/checkout@v6

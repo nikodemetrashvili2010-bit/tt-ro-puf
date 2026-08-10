@@ -116,8 +116,12 @@ shuttle, not a finished tapeout. The 32-to-1 selection path from the
 oscillators to the counter has now been simulated at the fast corner, so that
 particular gap is closed, but only three of the 32 paths were swept at the
 stopping boundary and the narrowest pulse the first flop saw there was 80 ps
-against a library minimum of 77.5 ps. The corner sweep itself covers Arm A
-only. Both of those, and the rest of the hardware work, are listed in
+against a library minimum of 77.5 ps. The corner sweep now covers both arms:
+Arm A's sixteen rings at ss, tt and ff, and since 2026-08-10 Arm B's sixteen
+instances at the same three corners, carrying their real enable and output
+routes. Arm B spreads 0.0001, 0.0025 and 0.0009 percent peak to peak there,
+against 5.46, 5.53 and 5.56 percent for Arm A. The boundary coverage, and the
+rest of the hardware work, are listed in
 [docs/hardware_todo.md](docs/hardware_todo.md). After fabrication the plan is to measure both arms across
 chips, voltage, and temperature with the scripts in `firmware/`. What I expect
 on silicon: Arm A shows more cross-chip pattern correlation than Arm B. The
