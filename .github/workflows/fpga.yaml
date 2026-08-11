@@ -1,3 +1,12 @@
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+#
+# Unlike the other two, this one is Tiny Tapeout's template file essentially
+# untouched: the only changes are the checkout action version and the shuttle
+# tag on tt-gds-action. The template is Apache 2.0 and carries no copyright
+# line of its own. The line above is here because the licence audit asks every
+# .yaml in the tree for one, and it claims nothing beyond those two bumps.
+
 name: fpga
 
 on:

@@ -148,5 +148,82 @@ class NewStatisticsTests(unittest.TestCase):
         self.assertIsNone(ber)
 
 
+# --------------------------------------------------------------------------
+# The four faults below were all found by reading rather than by failing, and
+# every one of them loses a volunteer's data without saying anything. They are
+# survivable in my own runs, where I know what I did, and not in someone
+# else's. Fixed 2026-08-11.
+# --------------------------------------------------------------------------
+
+class VolunteerDataFaultTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+
+    def _rows(self, run_id="r1", chip="c1", cond="room"):
+        head = "run_id,chip_id,condition,round,order,arm,idx,count,t_ms"
+        body = ["%s,%s,%s,0,%d,%d,%d,%d,%d"
+                % (run_id, chip, cond, i, a, i % 16, 20000 + i, i)
+                for a in (0, 1) for i in range(16)]
+        return [head] + body
+
+    def test_broken_meta_is_an_error_not_a_shrug(self):
+        # An unescaped quote in NOTES used to produce exactly this line, and
+        # parse_meta answered it with None, identical to a file with no header.
+        p = self.root / "broken.csv"
+        bad = '# META {"run_id": "r1", "notes": "ran it at 22"C"}'
+        p.write_text("\n".join([bad] + self._rows()) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "not valid JSON"):
+            analyzer.load_files([str(p)])
+
+    def test_absent_meta_is_still_allowed(self):
+        p = self.root / "nometa.csv"
+        p.write_text("\n".join(self._rows()) + "\n", encoding="utf-8")
+        groups = analyzer.load_files([str(p)])          # must not raise
+        self.assertEqual(len(groups), 1)
+
+    def test_two_concatenated_runs_are_rejected(self):
+        # What a helpful volunteer does when asked for "your data".
+        p = self.root / "cat.csv"
+        m1 = '# META {"run_id": "r1", "clk_hz_requested": 25000000, "window": 1000}'
+        m2 = '# META {"run_id": "r2", "clk_hz_requested": 10000000, "window": 1000}'
+        p.write_text("\n".join([m1] + self._rows("r1") + [m2] + self._rows("r2")) + "\n",
+                     encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "2 META lines"):
+            analyzer.load_files([str(p)])
+
+    def test_disagreeing_measured_values_are_kept_not_overwritten(self):
+        # Two runs, one die, one nominal label, 9 degrees apart. dict.update
+        # kept whichever was read last and the disagreement left no trace.
+        def one(name, run_id, temp):
+            p = self.root / name
+            meta = ('# META {"run_id": "%s", "clk_hz_requested": 25000000, '
+                    '"window": 1000, "temp_c_measured": %s}' % (run_id, temp))
+            p.write_text("\n".join([meta] + self._rows(run_id)) + "\n", encoding="utf-8")
+            return str(p)
+        groups = analyzer.load_files([one("a.csv", "r1", 22.0), one("b.csv", "r2", 31.0)])
+        g = next(iter(groups.values()))
+        self.assertEqual(g["measured"]["temp_c_measured"], {22.0, 31.0})
+        # and the spread has to fail the compatibility check, not pass it
+        self.assertFalse(analyzer.settings_ok([("x", g), ("y", g)]))
+
+    def test_wrap_levels_match_the_documented_floor(self):
+        # 13.55 MHz is the floor quoted in measure_puf.py's own header, derived
+        # there independently. The 1.0x boundary has to land on it.
+        self.assertEqual(analyzer.wrap_risk(25_000_000, 1000)[0], "ok")
+        self.assertEqual(analyzer.wrap_risk(20_000_000, 1000)[0], "thin")
+        self.assertEqual(analyzer.wrap_risk(13_000_000, 1000)[0], "wrap")
+        self.assertEqual(analyzer.wrap_risk(10_000_000, 1000)[0], "wrap")
+        self.assertEqual(analyzer.wrap_risk(None, 1000)[0], "unknown")
+        floor_mhz = analyzer.FASTEST_SIM_MHZ * 1000 / 65536
+        self.assertAlmostEqual(floor_mhz, 13.55, places=2)
+
+    def test_a_long_window_wraps_just_as_well_as_a_slow_clock(self):
+        # count = f * window / clk, so the window is the other way in.
+        self.assertEqual(analyzer.wrap_risk(25_000_000, 1000)[0], "ok")
+        self.assertEqual(analyzer.wrap_risk(25_000_000, 2000)[0], "wrap")
+
+
 if __name__ == "__main__":
     unittest.main()

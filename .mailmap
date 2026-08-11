@@ -1,0 +1,12 @@
+# Both author names below are me. `nikodemetrashvili2010-bit` is the GitHub
+# username, which is what git picked up on the machine I set up second and on
+# anything committed through the web interface; `Nikoloz Demetrashvili` is what
+# the other machine was configured with. One email throughout, so a single
+# canonical-name line collapses all of them and `git shortlog -sne` stops
+# reporting one person as two contributors.
+#
+# The GitHub noreply committer on the web-edit commits is deliberately left
+# alone. It is accurate: those commits really were made by GitHub on my behalf,
+# and the author line on each of them is already me.
+
+Nikoloz Demetrashvili <niko.demetrashvili2010@gmail.com>

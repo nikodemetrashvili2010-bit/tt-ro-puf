@@ -1,3 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
+# SPDX-License-Identifier: Apache-2.0
+#
+# Started as the stock docs workflow from Tiny Tapeout's project template. That
+# file is Apache 2.0 and carries no copyright line of its own, so section 4(c)
+# left nothing to keep, but 4(b) asks a modified file to say it was modified.
+# Mine: the pull_request trigger, the Python setup, the paper-artifact check,
+# and gating Build docs off pull requests. The line above covers those, not the
+# template.
+
 name: docs
 
 on:

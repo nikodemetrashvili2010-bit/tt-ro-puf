@@ -129,8 +129,20 @@ they double as a check on the environment: they should come back matching the
 `lumped_MHz` column of `sim/spice/gono/rc_validation.csv`, which holds the
 frequencies from the corrected run.
 
-The fast-corner selector sweep behind item 2 of `docs/hardware_todo.md` has no
-archived logs either, and regenerates like this:
+The fast-corner selector sweep behind item 2 of `docs/hardware_todo.md` did have
+no archived logs, and this paragraph still said so four days after it stopped
+being true. The sweep was archived on 2026-08-07 and this was corrected on the
+11th. `sim/spice/gono/mux/` holds 192 files: a deck, a console log and a reduced
+waveform for each of the 32 decks and 32 blocked controls. CI regenerates
+`mux_validation.csv` from that folder and diffs it byte for byte against the
+committed copy, and `verify_mux_archive.py` checks the archive for what
+archiving gets wrong — a CSV row with no run behind it, a log filed under the
+wrong oscillator, a missing control. Line 38 above has had this right the whole
+time and this paragraph contradicted it.
+
+So the commands below are no longer the only way to get these numbers back. They
+are still the way to get them from a fresh simulator rather than from my logs,
+which is the stronger check, and they are what produced the archive:
 
 ```sh
 python3 sim/spice/gono/gen_mux_sweep.py --output-dir /tmp/muxsweep --corner ff --control

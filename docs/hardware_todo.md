@@ -875,7 +875,10 @@ have not made yet, and the honest default is to make no change at all.
 What is left is mostly not simulation any more. Item 7's Arm B re-extraction was
 open in this paragraph until 2026-08-07 and is now run, so both arms are quoted
 from the same parasitic model. Three things are genuinely still open. Item 6's
-corner table covers Arm A and Arm B has only B15 at three corners. The boundary
+corner table covers Arm A, and Arm B's corner coverage comes from item D's
+per-instance runs rather than from that table. This sentence said Arm B had only
+B15 at three corners; item D ran all sixteen at ss and ff on 2026-08-10 and the
+line was not updated until the 11th. The boundary
 is three corners deep on B15 and three paths deep at ff, and the other 29
 selector paths have been swept for edges without being swept for the stopping
 boundary; I am treating those as covered by the filter behaviour, which is a

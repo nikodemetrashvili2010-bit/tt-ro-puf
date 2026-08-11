@@ -91,6 +91,14 @@ the macro simulation, and the macro lands within 0.35% of the earlier Arm A
 mean. A 5 ps versus 1 ps timestep comparison moves the result by about 0.2%,
 which bounds the numerical error well below the layout effect.
 
+That 569.5 MHz is the lumped-capacitance model and it is not the last word on
+this macro. The same macro was rebuilt from the extraction's full RC network on
+2026-08-07 and runs at 566.05 MHz, a shift of 0.801%. The rebuilt lumped deck in
+that run returned 570.62 MHz, which reproduces the independent ideal-supply
+figure to seven significant figures and identifies the 0.2% timestep sensitivity
+above as the source of the gap rather than the model. Three numbers, three
+questions; `docs/hardware_todo.md` item 7 has the comparison.
+
 The macro has since been rebuilt from the SPEF's real network rather than one
 grounded capacitor per net, the same treatment Arm A got. That gives 566.05 MHz
 against 570.62 for the lumped model at the same 1 ps timestep, a shift of
@@ -119,8 +127,11 @@ Ring loads span 10.9 to 17.0 fF and form a smooth band; the two heaviest
 differ by 0.34 fF, so no single instance drives the range here.
 
 The top-level SPEF does not expand the sealed macro internals (the extractor
-cannot tell the sixteen copies apart), so Arm B is represented by the single
-569.5 MHz macro result as a reference line. That reference sits above the Arm A
+cannot tell the sixteen copies apart), so in this figure Arm B is represented by
+the single 569.5 MHz macro result as a reference line. Item 8 later extracted
+all sixteen instances individually, with the enable and output routes each one
+carries, and found them within 0.0025% of each other, so the reference line is
+now a shorthand backed by sixteen runs rather than a stand-in for them. That reference sits above the Arm A
 mean but not above every instance: RO7 reaches 570.7 MHz on a 10.9 fF load,
 about 0.2% past the macro, which is finer than this model resolves.
 

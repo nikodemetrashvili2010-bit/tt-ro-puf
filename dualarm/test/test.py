@@ -38,7 +38,8 @@ def budget_us(measurements):
     on either side, so twice that is roomy. This catches a handshake that
     stalls. It does not catch the zero-delay loop described above, where time
     does not advance and no simulated-time limit can ever expire; the guard
-    for that one is timeout-minutes on the gl_test job in ci/gds.yaml.
+    for that one is timeout-minutes on the gl_test job in
+    `.github/workflows/gds.yaml`, which is `ci/gds.yaml` in the working folder.
     """
     return round(measurements * (WINDOW + 64) * CLK_NS / 1000 * 2 + 20)
 

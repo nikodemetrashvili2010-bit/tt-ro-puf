@@ -56,7 +56,7 @@ ARCHIVED_CTRL = {"tt": 633.640, "ss": 323.140, "ff": 987.948}
 # comparison stricter rather than easier.
 ARM_A_PP = {"tt": 5.84, "ss": 5.459, "ff": 5.559}
 
-# Written down in armb_corner_run_steps.md before either corner was run.
+# Written down in docs/armb_corner_run_steps.md before either corner was run.
 PREDICTED_CEILING = 0.01
 
 ok = fail = 0

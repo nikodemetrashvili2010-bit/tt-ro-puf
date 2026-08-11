@@ -6,7 +6,7 @@
 `gen_macro_rc_deck.py` writes a lumped deck and a distributed deck for the
 hardened macro. This reads what ngspice returned for each, takes the shift
 between them, and checks it against the prediction that was written down in
-`macro_rc_run_steps.md` before the run.
+`docs/macro_rc_run_steps.md` before the run.
 
 The logs are archived in `sim/spice/gono/macrorc/`, so this runs from a clone
 with no ngspice, no PDK and no network. That is the pattern the supply sweep and
@@ -36,7 +36,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-# Written down in macro_rc_run_steps.md before the run, from the Arm A fit
+# Written down in docs/macro_rc_run_steps.md before the run, from the Arm A fit
 # shift = -0.4147 - 0.03961 x ring_cap_fF at the macro's 11.01 fF, and from
 # Arm A's plain mean shift. The residual scatter of that fit is 0.159 points.
 PREDICTED_FIT = -0.851

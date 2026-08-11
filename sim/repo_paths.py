@@ -4,7 +4,7 @@
 """Find a file in either the working folder or the published repository.
 
 These are not the same tree. The mirror script copies `dualarm/src` to `src` and
-`ci/gds.yaml` to `.github/workflows/gds.yaml`, so a checker that hardcodes the
+everything in `ci/` to `.github/workflows/`, so a checker that hardcodes the
 working-folder path runs here and crashes in CI, where only the published layout
 exists. That is the same working-tree against clone divergence that cost a week
 in August, arriving from the other direction.
@@ -22,9 +22,13 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 
 # Working-folder prefix, published prefix. Longest first, so dualarm/src is
 # tried before dualarm.
+# This was ci/gds.yaml alone until 2026-08-11, when docs.yaml, fpga.yaml and
+# test.yaml came under the mirror script too. A prefix covers all four and
+# whatever lands in ci/ next, which is better than four near-identical lines
+# and one more place to forget.
 ALIASES = (
     ("dualarm/src/", "src/"),
-    ("ci/gds.yaml", ".github/workflows/gds.yaml"),
+    ("ci/", ".github/workflows/"),
 )
 
 
@@ -73,6 +77,9 @@ def selftest():
         ("dualarm/src/ro_puf.v", "src/ro_puf.v"),
         ("dualarm/src/pdn_cfg.tcl", "src/pdn_cfg.tcl"),
         ("ci/gds.yaml", ".github/workflows/gds.yaml"),
+        ("ci/docs.yaml", ".github/workflows/docs.yaml"),
+        ("ci/fpga.yaml", ".github/workflows/fpga.yaml"),
+        ("ci/test.yaml", ".github/workflows/test.yaml"),
         ("dualarm/pdn_cfg.tcl", "dualarm/pdn_cfg.tcl"),
         ("info.yaml", "info.yaml"),
         ("sim/spice/gono/verify.py", "sim/spice/gono/verify.py"),

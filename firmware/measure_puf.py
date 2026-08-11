@@ -32,6 +32,7 @@
 # or supply drift with arm identity). The random seed and the per-sample
 # timestamp are recorded so the order is reproducible and any drift is visible.
 
+import json
 import time
 import random
 
@@ -113,16 +114,19 @@ def _emit_metadata(run_id, seed):
         "temp_c_measured": MEAS_TEMP_C, "seed": seed,
         "t_start_ms": time.ticks_ms(), "notes": NOTES,
     }
-    # Build JSON manually so this stays MicroPython-safe and stable.
-    items = []
-    for k, v in meta.items():
-        if isinstance(v, str):
-            items.append('"%s": "%s"' % (k, v))
-        elif v is None:
-            items.append('"%s": null' % k)
-        else:
-            items.append('"%s": %s' % (k, v))
-    print("# META " + "{" + ", ".join(items) + "}")
+    # This used to build the JSON by hand, on the grounds that it kept the
+    # script MicroPython-safe. It escaped nothing. A double quote or a backslash
+    # in CHIP_ID, CONDITION, SITE or NOTES emitted invalid JSON, and the reader
+    # answered a parse failure by returning None, so the whole header vanished
+    # without a word and the counts loaded anyway. NOTES is free text typed by
+    # whoever ran the board, which is the one field most likely to contain a
+    # quote, and a volunteer whose clock and supply silently disappeared is
+    # exactly the failure this dataset cannot afford.
+    #
+    # MicroPython ships json, so use it. If it is ever missing the import at the
+    # top fails loudly on the board, which is the right way round: a script that
+    # will not start beats a run that looks fine and carries no metadata.
+    print("# META " + json.dumps(meta))
     print("# chip_id=%s condition=%s clk_req=%d clk_meas=%d vdd_meas=%s temp=%s"
           % (CHIP_ID, CONDITION, CLK_HZ, MEAS_CLK_HZ, MEAS_VDD_V, MEAS_TEMP_C))
     if MEAS_CLK_HZ == 0:

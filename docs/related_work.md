@@ -37,10 +37,10 @@ than isolating the contribution of an open place-and-route flow.
 
 Feiten and colleagues measured 38 identical Altera FPGAs and traced
 non-device-specific systemic RO frequency biases to internal LUT routing, RO
-location, and payload activity [15]; that is the closest FPGA analogue of the
+location, and payload activity [19]; that is the closest FPGA analogue of the
 question asked here. On the ASIC side, SCALLER showed in fabricated 65 nm
 silicon that deliberate local layout effects (well proximity) deterministically
-shift standard-cell RO frequencies by design [16], which is direct physical
+shift standard-cell RO frequencies by design [17], which is direct physical
 evidence that mask-level layout detail moves RO frequency in silicon.
 
 FPGA implementations have used matched hard macros, controlled placement,
@@ -71,38 +71,49 @@ standard-cell oscillators show a nominal post-layout frequency spread that
 tracks their extracted ring capacitance: 5.53% peak-to-peak in Arm A of the
 candidate build, and a median of 5.75% across nine builds that differ only in
 placement density. Arm B reuses one hardened oscillator GDS sixteen times, and
-its single extracted simulation, 569.5 MHz, appears in the comparison figures
-as a reference line for that shared internal layout. And extraction followed by
+appears in the comparison figures as a reference line at 569.5 MHz for that
+shared internal layout. Two later runs stand behind that line: the macro
+re-extracted from its full RC network at 566.05 MHz, and all sixteen instances
+extracted individually with their own top-level routes, spreading 0.0025% peak
+to peak at nominal and less at both other corners. And extraction followed by
 nominal SPICE is a practical pre-fabrication check for deterministic layout
 sensitivity.
 
 Uniqueness, reliability, and entropy have standard definitions in the PUF
-literature [13], and cross-die repeatability, uniqueness, and any attack are
+literature [20], and cross-die repeatability, uniqueness, and any attack are
 predictions I will test on the fabricated chips rather than claims here. What I
 did not find is the exact combination this project targets. Prior mitigation
 work matches layout on FPGAs [2, 5, 6], large ASIC studies characterize RO-PUFs
 across many dies [3, 12], and temperature-aware designs tackle RO reliability
-[14]. To the best of my literature search (IEEE Xplore, arXiv, and the references
+[15]. To the best of my literature search (IEEE Xplore, arXiv, and the references
 of the papers above, through July 2026), no prior work compares a controlled
 open-source RTL-to-GDS array against a matched hardened macro, quantified from
 the flow's own extraction before fabrication and then checked on the same
-dies. Feiten et al. establish the systemic-bias phenomenon on FPGAs [15] and
+dies. Feiten et al. establish the systemic-bias phenomenon on FPGAs [19] and
 SCALLER establishes deliberate layout-driven frequency control in ASIC silicon
-[16]; neither quantifies what an automated open ASIC flow does to a PUF array
+[17]; neither quantifies what an automated open ASIC flow does to a PUF array
 by accident, pre-fabrication, with the artifacts open. That gap, together with a
 diagnostic anyone can rerun, is the contribution. The matched-layout principle
 itself is old.
 
 ## References
 
+Numbering follows `paper_draft.md`, which is the authoritative list. The
+two diverged from [13] onwards until 2026-08-11, so a reader following a
+citation out of one and into the other landed on the wrong paper. This file
+was the one renumbered: the paper's numbers are embedded in its prose all
+the way through and moving them was the riskier of the two edits. The gaps
+below at [13], [14], [16] and [18] are references the paper carries and this
+note has no need of.
+
 [1] G. E. Suh and S. Devadas, "Physical Unclonable Functions for Device
-Authentication and Secret Key Generation," *Proceedings of the 44th Design
-Automation Conference (DAC)*, pp. 9-14, 2007.
+Authentication and Secret Key Generation," *Proceedings of the 44th ACM/IEEE
+Design Automation Conference (DAC)*, pp. 9-14, 2007.
 https://doi.org/10.1145/1278480.1278484
 
-[2] A. Maiti and P. Schaumont, "Improved Ring Oscillator PUF: An FPGA-friendly
-Secure Primitive," *Journal of Cryptology*, vol. 24, no. 2, pp. 375-397,
-2011. https://doi.org/10.1007/s00145-010-9088-4
+[2] A. Maiti and P. Schaumont, "Improved Ring Oscillator PUF: An
+FPGA-Friendly Secure Primitive," *Journal of Cryptology*, vol. 24,
+pp. 375-397, 2011. https://doi.org/10.1007/s00145-010-9088-4
 
 [3] A. Maiti, J. Casarona, L. McHale, and P. Schaumont, "A Large Scale
 Characterization of RO-PUF," *IEEE International Symposium on
@@ -111,12 +122,11 @@ https://schaumont.dyn.wpi.edu/schaum/pdf/papers/2010hostm.pdf
 
 [4] F. Wilde, M. Hiller, and M. Pehl, "Statistic-Based Security Analysis of
 Ring Oscillator PUFs," *2014 International Symposium on Integrated Circuits
-(ISIC)*, pp. 148-151, 2014.
-https://doi.org/10.1109/ISICIR.2014.7029528
+(ISIC)*, pp. 148-151, 2014. https://doi.org/10.1109/ISICIR.2014.7029528
 
 [5] A. S. Chauhan, V. Sahula, and A. S. Mandal, "Novel Randomized Placement
-for FPGA Based Robust ROPUF with Improved Uniqueness," *Journal of Electronic
-Testing*, vol. 35, no. 5, pp. 581-601, 2019.
+for FPGA Based Robust ROPUF with Improved Uniqueness," *Journal of
+Electronic Testing*, vol. 35, no. 5, pp. 581-601, 2019.
 https://doi.org/10.1007/s10836-019-05829-5
 
 [6] K. A. Asha, L. E. Hsu, A. Patyal, and H.-M. Chen, "Improving the Quality
@@ -150,19 +160,20 @@ Physically Unclonable Functions (PUFs) Cast in Silicon," *Cryptographic
 Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283-301, 2012.
 https://doi.org/10.1007/978-3-642-33027-8_17
 
-[13] C. Herder, M.-D. Yu, F. Koushanfar, and S. Devadas, "Physical Unclonable
-Functions and Applications: A Tutorial," *Proceedings of the IEEE*, vol. 102,
-no. 8, pp. 1126-1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516
-
-[14] C.-E. Yin and G. Qu, "Temperature-aware cooperative ring oscillator PUF,"
+[15] C.-E. Yin and G. Qu, "Temperature-Aware Cooperative Ring Oscillator PUF,"
 *2009 IEEE International Workshop on Hardware-Oriented Security and Trust
 (HOST)*, pp. 36-42, 2009. https://doi.org/10.1109/HST.2009.5225055
 
-[15] L. Feiten, et al., "Systemic Frequency Biases in Ring Oscillator PUFs on
-FPGAs," *IEEE Transactions on Multi-Scale Computing Systems*, vol. 2, no. 3,
-pp. 174-185, 2016. https://ieeexplore.ieee.org/document/7539304
+[17] M. J. Aljafar, Z. U. Abideen, A. Peetermans, B. Gierlichs, and
+S. Pagliarini, "SCALLER: Standard Cell Assembled and Local Layout Effect-Based
+Ring Oscillators," *IEEE Embedded Systems Letters*, vol. 16, no. 4,
+pp. 493-496, 2024. https://arxiv.org/abs/2406.01258
 
-[16] M. J. Aljafar, Z. U. Abideen, A. Peetermans, B. Gierlichs, and
-S. Pagliarini, "SCALLER: Standard Cell Assembled and Local Layout
-Effect-Based Ring Oscillators," *IEEE Embedded Systems Letters*, vol. 16,
-no. 4, 2024. arXiv:2406.01258
+[19] L. Feiten, J. Oesterle, T. Martin, M. Sauer, and B. Becker, "Systemic
+Frequency Biases in Ring Oscillator PUFs on FPGAs," *IEEE Transactions on
+Multi-Scale Computing Systems*, vol. 2, no. 3, pp. 174-185, 2016.
+https://ieeexplore.ieee.org/document/7539304
+
+[20] C. Herder, M.-D. Yu, F. Koushanfar, and S. Devadas, "Physical Unclonable
+Functions and Applications: A Tutorial," *Proceedings of the IEEE*, vol. 102,
+no. 8, pp. 1126-1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516

@@ -109,6 +109,30 @@ check("the integrated build does record its own commit",
       os.path.exists(os.path.join(ROOT, "dualarm", "build_current",
                                   "commit_id.json")))
 
+# PROVENANCE.md used to say the integrated build recorded its PDK commit. It
+# does not, and nobody caught it because nothing here opened the file. So open
+# it: assert what is in it, and assert the one thing that is not. The second
+# half is the half that matters. A claim about an absent field is exactly the
+# kind that rots quietly, because the file can gain the field later and the
+# sentence would then be true by accident rather than by check.
+TOP_COMMIT = os.path.join(ROOT, "dualarm", "build_current", "commit_id.json")
+if os.path.exists(TOP_COMMIT):
+    top = json.load(open(TOP_COMMIT))
+    check("commit_id.json holds the app, the repo and the design commit",
+          all(top.get(k) for k in ("app", "repo", "commit")),
+          ", ".join("%s=%s" % (k, top.get(k)) for k in ("app", "repo", "commit")))
+    pdk_ish = [k for k, v in top.items()
+               if "pdk" in k.lower() or "pdk" in str(v).lower()
+               or "sky130" in k.lower() or "sky130" in str(v).lower()]
+    check("and records no PDK version, which is the gap this file admits",
+          not pdk_ish,
+          "fields: %s" % ", ".join(sorted(top)) if not pdk_ish
+          else "found %s -- if the build now pins the PDK, say so in "
+               "PROVENANCE.md instead of leaving this check to fail"
+               % ", ".join(pdk_ish))
+    check("PROVENANCE.md no longer claims the top level records a PDK commit",
+          "does record its PDK commit" not in doc)
+
 
 # ------------------------------------------------------------ licence headers
 

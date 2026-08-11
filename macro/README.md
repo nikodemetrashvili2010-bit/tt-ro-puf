@@ -17,8 +17,13 @@ Because every Arm B instance uses the same hardened GDS, its internal geometry
 is identical by construction. Top-level loading, local mismatch, power, and
 environment may still differ between instances. The nominal lumped-C model
 predicts 569.5 MHz, close to the auto-placed arm's modeled mean. That number is
-derived from the archived ngspice log; it is not a silicon measurement and
-omits distributed RC/coupling, mismatch, and PVT.
+derived from the archived ngspice log and it is not a silicon measurement.
+
+Two of the three things it omits have since been run. The distributed RC and
+coupling network gives 566.05 MHz, 0.801% below the lumped figure. All sixteen
+instances, each with the top-level routes it actually carries, spread 0.0025%
+peak to peak at tt and less at ss and ff. What remains omitted is device
+mismatch, which no pre-silicon run here can supply.
 
 The generated Liberty/SDF views are conventional timing-delivery artifacts for
 integration. A free-running combinational ring is not a normal synchronous

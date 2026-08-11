@@ -106,7 +106,21 @@ systematic effects [2], and later FPGA studies mapped spatial variation and
 placement-dependent behaviour [3, 5]. Other work proposes statistical bias
 reduction, configurable structures, and placement-aware designs [5-8].
 Katzenbeisser et al. evaluated several PUF constructions, including ring
-oscillators, across 96 ASICs [12].
+oscillators, across 96 ASICs [12]. Herder and colleagues give the tutorial
+treatment of the properties such a construction is meant to have [20].
+
+The closest prior work to this paper is on FPGAs. Feiten and colleagues measured
+38 identical Altera devices and traced the frequency biases they found to
+internal LUT routing, oscillator location, and payload activity rather than to
+anything device-specific [19]. That is the same phenomenon this paper reports,
+one substrate over: the implementation, not the silicon, decides a large part of
+the ordering. Two things separate the work below from it. Feiten et al. reach
+the conclusion from a population of fabricated parts, where the bias has to be
+inferred from measurements; on an open ASIC flow the same quantity is readable
+from the design database before any part exists. And an FPGA's routing is fixed
+by a vendor fabric the designer does not control, whereas here the flow produces
+a different layout on every run, which is what makes the nine-build sweep of
+Section 5.3 and the matched-macro arm possible at all.
 
 The literature does not support a simple rule that any systematic structure
 makes an RO-PUF predictable. Wilde, Hiller, and Pehl found that
@@ -584,7 +598,21 @@ they can. Section 7 turns the answer into bits.
 The RO-PUF literature already corrects systematic variation, and it does so with
 position. Die gradients are spatially correlated, so a surface in x and y is
 fitted and subtracted [2]. That is the method to beat, and it is the natural
-first move for anyone told that a layout has added a systematic term.
+first move for anyone told that a layout has added a systematic term. It is not
+the only move. Asha and colleagues remove systematic components with principal
+component analysis rather than an explicit spatial surface [6], which does not
+assume the bias is a smooth function of position, and Wang and colleagues take
+the constructive route and design a PUF meant to be agnostic to implementation
+bias in the first place [7].
+
+Neither is tested here, and the reason matters. Both are population methods:
+principal component analysis needs a set of measured devices to find components
+across, and a bias-agnostic construction is a design choice made before
+fabrication rather than a correction applied after it. This study has one
+layout and no dies. What it can test is the compensation a reader could apply
+to the published artefacts alone, which is the positional surface, and that is
+what the rest of this section does. The matched-macro arm is this paper's
+version of the second answer, arrived at from the layout side.
 
 It does not work here. Scored by leave-one-out cross validation against the
 shipped build's full RC frequencies, whose uncorrected spread is 1.739%
@@ -715,15 +743,25 @@ The matched construction hardens one oscillator as a 60 x 40 micrometre
 macro. The macro layout passes the available DRC, LVS, antenna, and
 connectivity checks, and Arm B places 16 instances of it on a regular grid.
 
-The extracted macro carries about 11.0 fF of total ring capacitance. One
-nominal post-layout simulation gives 569.5 MHz against a no-parasitic
-control of 633.15 MHz. The earlier Arm A capacitance fit predicts 570.2 MHz
-at that load, 0.12% away, a useful cross-check on the model. The macro
-result also lands within 0.35% of the earlier Arm A mean, so matching did
-not move the operating point.
+The extracted macro carries about 11.0 fF of total ring capacitance. Under the
+lumped-capacitance model it runs at 569.5 MHz against a no-parasitic control of
+633.15 MHz. The earlier Arm A capacitance fit predicts 570.2 MHz at that load,
+0.12% away, a useful cross-check on the model. The macro result also lands
+within 0.35% of the earlier Arm A mean, so matching did not move the operating
+point.
+
+Three frequencies describe this one macro and each answers a different question,
+so this section names all three rather than picking one and leaving the others
+to look like errors. 569.5 MHz is the lumped model as originally generated.
+570.62 MHz is the same lumped model rebuilt for the Section 5.5 comparison; it
+reproduces the independent ideal-supply figure to seven significant figures, and
+the 1.1 MHz between the two rebuilds is timestep rather than physics. 566.05 MHz
+is the full RC network of Section 5.5. **The distributed figure is the one to
+carry forward**, and it is what Section 5.5 quotes for both arms.
 
 The macro is faster than the typical routed ring, 569.5 MHz against an Arm A
-mean of 554.7 MHz, which is what the lighter load predicts. It is not faster
+mean of 554.7 MHz on the model both are quoted from here, which is what the
+lighter load predicts. It is not faster
 than every Arm A ring. RO7 in the candidate build reaches 570.7 MHz because the
 router happened to give it 10.9 fF, slightly less than the macro carries. The
 gap is about 0.2%, below what this lumped-capacitance model resolves, and the
@@ -733,16 +771,28 @@ the macro ahead of the average automatically routed oscillator, not ahead of
 all of them.
 
 Figures 5 and 6 draw Arm B as a single horizontal reference line at
-569.5 MHz, because the sixteen instances share one internal layout and there
-is only one extracted simulation behind it. By construction the internal
-layout contributes zero spread; fabricated Arm B instances will still differ
-through device mismatch, top-level routing, supply, and temperature. The
-simulation establishes only the internal-layout contribution under nominal
-device parameters. Total Arm B dispersion requires per-instance integration
+569.5 MHz, because the sixteen instances share one internal layout. That line
+is no longer the only evidence behind it. All sixteen instances have since been
+extracted separately, each carrying the enable and output route it actually
+has at the top level, and simulated at all three corners. They spread 0.0025%
+peak to peak at tt, 0.0001% at ss and 0.0009% at ff, which is 0.57, 0.02 and
+0.30 of a single counter count and between three and four orders of magnitude
+under Arm A at the same corner. The chip cannot resolve the difference between
+them even in principle. Read the ss digits as an upper bound rather than a
+measurement: at that corner the spread is 1.3e-6 of the mean and the log's two
+definitions of frequency disagree at 1.6e-7, so the third significant figure
+depends on which is read.
+
+By construction the internal layout contributes zero spread; fabricated Arm B
+instances will still differ through device mismatch, top-level routing, supply,
+and temperature. The simulation establishes the internal-layout contribution
+under nominal device parameters, and now also bounds the top-level integration
+contribution, which is the term that had been assumed rather than measured.
+Total Arm B dispersion requires per-instance integration
 parasitics and fabricated-device measurements, and whether Arm B ends up with
 a smaller total spread than Arm A is the measurement the chip exists to make.
 
-![Figure 5. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz.](../sim/spice/gono/armB_prediction.png)
+![Figure 5. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz, both under the lumped-capacitance model. The macro's distributed-RC figure is 566.05 MHz; see Section 5.5.](../sim/spice/gono/armB_prediction.png)
 
 ![Figure 6. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
@@ -788,8 +838,9 @@ This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. The lumped-capacitance model has
 now been checked against the extraction's full RC network, as Section 5.5 reports:
 the dispersion survives and in fact grows, but individual comparisons between
-closely matched oscillators do not, and the Arm B macro has not been re-extracted
-that way. Neither model represents dynamic supply coupling between simultaneously
+closely matched oscillators do not. The Arm B macro has since been re-extracted
+the same way and shifts 0.801% to 566.05 MHz, so both arms are now quoted from
+the same parasitic model rather than one from each. Neither model represents dynamic supply coupling between simultaneously
 active oscillators, which does not arise here because the hardware enables one at a
 time. The
 nine-build sweep is a controlled set in the sense that only one flow knob
@@ -816,10 +867,14 @@ multi-chip data set with a stated threat model. The corner work pairs device
 corners with nominal interconnect rather than pairing the slow corner with maximum
 extracted capacitance and the fast corner with minimum; device spread dominates
 the frequency bound, so the bound holds, but the range would tighten slightly
-under the fuller pairing. They also cover Arm A alone. Arm B has one instance at
-all three corners and the other fifteen only at nominal, so the corner range in
-Section 5.4 is not a chip-wide range and I do not have the measurement that would
-make it one. The boundary behaviour of the oscillator-clocked ripple counter is
+under the fuller pairing. Section 5.4 reports Arm A alone and says so, so its
+absolute frequency ranges are not chip-wide numbers. Arm B is covered at the
+same three corners by a separate run rather than left at nominal: all sixteen
+instances start at ss, tt and ff carrying the top-level routes they actually
+have, and spread 0.0001%, 0.0025% and 0.0009% peak to peak against Arm A's
+5.46%, 5.53% and 5.56% at the same corners. That is the comparison this chip
+exists to test, and at this stage it is still a comparison between two models
+and not between two measurements. The boundary behaviour of the oscillator-clocked ripple counter is
 checked at both nominal and the fast corner, which is where the shorter period
 makes it hardest, and the selector path feeding it has now been validated as a
 whole chain at 888 MHz, though at the stopping boundary only three of the 32
@@ -871,9 +926,12 @@ instrument.
 
 The same die carries the mitigation. Sixteen instances of one hardened macro
 share their internal routing, which sets every pair's routing offset to zero and
-gives all 8 bits back to mismatch. It is not free. The matched arm has
-integration asymmetries of its own, and its 569.5 MHz reference is one
-simulation rather than sixteen.
+gives all 8 bits back to mismatch. It is not free: the matched arm has
+integration asymmetries of its own. Those asymmetries have now been simulated
+rather than assumed. All sixteen instances were extracted with their real
+top-level routes and run at three corners, and they spread at most 0.0025% peak
+to peak, which is 0.57 of one counter count. The integration term is real and it
+is far below what the chip can read.
 
 None of this is measured on silicon. The offsets are model output, eight bits is
 a small response, and the mismatch estimate is the weakest link in the chain.
@@ -932,7 +990,7 @@ https://github.com/google/skywater-pdk
 [11] litneet64, "RO-based Physically Unclonable Function in sky130
 (TinyTapeout tt07)." https://github.com/litneet64/tt07-RO-based-PUF
 
-[12] S. Katzenbeisser, U. Kocabas, V. Rozic, A.-R. Sadeghi, I. Verbauwhede,
+[12] S. Katzenbeisser, U. Kocabas, V. Rožić, A.-R. Sadeghi, I. Verbauwhede,
 and C. Wachsmann, "PUFs: Myth, Fact or Busted? A Security Evaluation of
 Physically Unclonable Functions (PUFs) Cast in Silicon," *Cryptographic
 Hardware and Embedded Systems (CHES 2012)*, LNCS 7428, pp. 283-301, 2012.
@@ -958,10 +1016,19 @@ Security (ASHES)*, pp. 13-21, 2019. https://doi.org/10.1145/3338508.3359569
 Extended version: *Journal of Cryptographic Engineering*, vol. 11, pp. 201-212,
 2021. https://doi.org/10.1007/s13389-020-00240-9
 
-[17] J. Aljafar, Z. Ul Abideen, A. Peetermans, B. Gierlichs, and S. Pagliarini,
-"SCALLER: Standard Cell Assembled and Local Layout Effect-Based Ring
-Oscillators," *IEEE Embedded Systems Letters*, vol. 16, no. 4, pp. 493-496,
-2024. https://arxiv.org/abs/2406.01258
+[17] M. J. Aljafar, Z. U. Abideen, A. Peetermans, B. Gierlichs, and
+S. Pagliarini, "SCALLER: Standard Cell Assembled and Local Layout Effect-Based
+Ring Oscillators," *IEEE Embedded Systems Letters*, vol. 16, no. 4,
+pp. 493-496, 2024. https://arxiv.org/abs/2406.01258
 
 [18] R. Maes, *Physically Unclonable Functions: Constructions, Properties and
 Applications*. Springer, 2013. https://doi.org/10.1007/978-3-642-41395-7
+
+[19] L. Feiten, J. Oesterle, T. Martin, M. Sauer, and B. Becker, "Systemic
+Frequency Biases in Ring Oscillator PUFs on FPGAs," *IEEE Transactions on
+Multi-Scale Computing Systems*, vol. 2, no. 3, pp. 174-185, 2016.
+https://ieeexplore.ieee.org/document/7539304
+
+[20] C. Herder, M.-D. Yu, F. Koushanfar, and S. Devadas, "Physical Unclonable
+Functions and Applications: A Tutorial," *Proceedings of the IEEE*, vol. 102,
+no. 8, pp. 1126-1141, 2014. https://doi.org/10.1109/JPROC.2014.2320516

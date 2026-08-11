@@ -32,12 +32,24 @@ and KLayout DRC, XOR, LVS, antenna, detailed routing, and power-grid
 connectivity with zero violations, so the prediction and the candidate GDS come
 from the same flow run; the ring-oscillator STA warnings are listed separately
 in SIGNOFF.
-Arm B's sixteen instances reuse the same internal macro layout; its plotted
-pre-silicon value is one extracted-macro result repeated sixteen times, not
-sixteen separate measurements. The experiment will test whether Arm A's
-centred frequency pattern repeats more strongly across fabricated chips than
-Arm B's pattern. Cross-die repeatability, uniqueness, and security impact are
-unknown until those measurements are made.
+Arm B's sixteen instances reuse the same internal macro layout, and each one has
+now been extracted separately with the top-level routes it actually carries.
+This paragraph used to say the plotted value was one macro result repeated
+sixteen times; that stopped being true on 2026-08-04. The sixteen spread 0.0025%
+peak to peak at tt, which is 0.57 of a single counter count, so the chip cannot
+tell them apart even in principle. That is a measured pre-silicon result rather
+than an assumption, and it is what makes Arm B the control. The experiment will
+test whether Arm A's centred frequency pattern repeats more strongly across
+fabricated chips than Arm B's pattern. Cross-die repeatability, uniqueness, and
+security impact are unknown until those measurements are made.
+
+One timing margin belongs here rather than only in SIGNOFF. Where a ring sits
+right at the selector's own threshold the chain squeezes the last pulse instead
+of stretching it, and the narrowest clock the counter flop ever sees is 80 ps
+against the 77.5 ps the library characterizes for it at ff_n40C_1v95. That is a
+margin of 2.5 ps: characterized, and thin. The slow corners are nowhere near it,
+484 ps against 169.8 at tt and 810 ps against 353.8 at ss. `SIGNOFF.md` has the
+derivation and the corrected item 2 behind it.
 
 ## How to test
 

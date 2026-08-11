@@ -6,6 +6,8 @@ license: Apache-2.0
 authors:
   - family-names: Demetrashvili
     given-names: Nikoloz
+version: 1.0.0
+date-released: "2026-08-11"
 repository-code: "https://github.com/nikodemetrashvili2010-bit/tt-ro-puf"
 url: "https://github.com/nikodemetrashvili2010-bit/tt-ro-puf"
 abstract: >-

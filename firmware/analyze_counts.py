@@ -49,14 +49,39 @@ def mad(xs):
     return median([abs(x - m) for x in xs])
 
 
-def parse_meta(lines):
-    for line in lines:
-        if line.startswith("# META "):
-            try:
-                return json.loads(line[len("# META "):])
-            except ValueError:
-                return None
-    return None
+def parse_meta(lines, path="<input>"):
+    """The one META line in a run file, or None if the file carries none.
+
+    This used to answer a malformed header and a missing header with the same
+    None, so a run whose metadata failed to parse was indistinguishable from an
+    older run that never had any, and its clock, supply and temperature were
+    dropped in silence. Metadata is optional; metadata that is present and
+    broken is a fault and says so now.
+
+    It also took the first META line and ignored the rest. Concatenating two run
+    files is the obvious thing for a volunteer to do when asked for their data,
+    and it produced one file that silently reported only the first run's
+    conditions while carrying both runs' counts.
+    """
+    metas = [l for l in lines if l.startswith("# META ")]
+    if not metas:
+        return None
+    if len(metas) > 1:
+        raise ValueError(
+            "%s: %d META lines. Each run file holds one run. Two headers means "
+            "two runs were concatenated, and the counts below the second header "
+            "would be read under the first header's conditions. Submit them as "
+            "separate files." % (path, len(metas)))
+    try:
+        meta = json.loads(metas[0][len("# META "):])
+    except ValueError as exc:
+        raise ValueError(
+            "%s: the META line is present but is not valid JSON (%s). This is a "
+            "fault, not a file without metadata: the counts would load and the "
+            "run conditions would be lost." % (path, exc)) from exc
+    if not isinstance(meta, dict):
+        raise ValueError("%s: the META line is valid JSON but not an object" % path)
+    return meta
 
 
 def load_files(paths):
@@ -73,7 +98,7 @@ def load_files(paths):
                 % (seen_digests[digest], path))
         seen_digests[digest] = path
         lines = raw_bytes.splitlines(keepends=True)
-        meta = parse_meta(lines)
+        meta = parse_meta(lines, path)
         setting = None
         measured = {}
         if meta:
@@ -114,7 +139,14 @@ def load_files(paths):
             g["sources"].add(path)
             g["runs"].add(run_id)
             g["settings"].add(setting)
-            g["measured"].update(measured)
+            # This was g["measured"].update(measured), which keeps whichever
+            # file happened to be read last and leaves no trace that the others
+            # disagreed. Two runs on one die at one nominal condition can easily
+            # report different measured temperatures, and that difference is
+            # data, not noise to be resolved by argument order. Keep every value
+            # seen and let the report say when they do not agree.
+            for k, v in measured.items():
+                g["measured"].setdefault(k, set()).add(v)
             if count < 0:
                 g["timeouts"] += 1
                 continue
@@ -181,6 +213,56 @@ CLK_TOL = 0.001     # 0.1% relative on measured reference clock
 VDD_TOL = 0.02      # volts
 TEMP_TOL = 3.0      # degrees C
 
+# --- silent wrap of the 16-bit counter -----------------------------------
+#
+# count = f_osc * window / f_clk, and the counter is 16 bit with no overflow
+# flag. Past 65535 it wraps and returns a small number, which is exactly what a
+# slow oscillator returns. Nothing downstream can tell them apart, and the
+# existing near-ceiling warning cannot help: it fires on counts approaching
+# 65535, and a wrapped count has already gone past and come back.
+#
+# So the check has to happen on the acquisition settings, before the data
+# exists. Given f_clk and the window, the fastest oscillator this run could
+# report without wrapping is 65536 * f_clk / window. If that ceiling sits below
+# what the design can plausibly run at, the run is unsafe and no amount of later
+# analysis recovers it.
+#
+# 888.3 MHz is the fastest Arm A oscillator in the ff corner simulation, paper
+# section 5.4. The margin is for silicon coming back faster than the model,
+# which is the direction that causes this failure. At the 25 MHz the firmware
+# recommends the ceiling is 1.638 GHz and there is no risk; at 10 MHz it is
+# 655 MHz and every fast-corner reading wraps into a believable number.
+FASTEST_SIM_MHZ = 888.3
+WRAP_SPEED_MARGIN = 1.5
+
+
+def wrap_ceiling_mhz(clk_hz, window):
+    """Fastest oscillator this acquisition setting can report without wrapping."""
+    if not clk_hz or not window:
+        return None
+    return 65536.0 * float(clk_hz) / float(window) / 1e6
+
+
+def wrap_risk(clk_hz, window):
+    """('wrap' | 'thin' | 'ok' | 'unknown', ceiling_mhz, headroom).
+
+    Two levels, because they mean different things and a single flag would
+    either cry wolf or miss the real case. Below 1.0x the simulated fast corner
+    already wraps, which is the 13.55 MHz floor the firmware header quotes.
+    Between 1.0x and 1.5x nothing wraps in simulation but there is little room
+    for silicon coming back faster than the model, and faster is the direction
+    that breaks this.
+    """
+    ceiling = wrap_ceiling_mhz(clk_hz, window)
+    if ceiling is None:
+        return "unknown", None, None
+    headroom = ceiling / FASTEST_SIM_MHZ
+    if headroom < 1.0:
+        return "wrap", ceiling, headroom
+    if headroom < WRAP_SPEED_MARGIN:
+        return "thin", ceiling, headroom
+    return "ok", ceiling, headroom
+
 
 def settings_ok(entries):
     ss = []
@@ -195,8 +277,21 @@ def settings_ok(entries):
         return False
     # Requested settings match; now compare measured values where present.
     # A shared label like room_1v8 is not experimental control by itself.
+    #
+    # Each entry now holds a set of values per key rather than one value, so
+    # this flattens them. That is deliberately stricter than what it replaced.
+    # Before, several files for one chip and condition were collapsed with
+    # dict.update and only the last survived, so two runs of one die at 22 C and
+    # 31 C compared as though both had happened at 31 C. Disagreement inside a
+    # group is the same problem as disagreement between groups and is now
+    # counted the same way.
     def spread_bad(key, tol, relative=False):
-        vals = [m[key] for m in meas if m.get(key)]
+        vals = []
+        for m in meas:
+            v = m.get(key)
+            if not v:
+                continue
+            vals.extend(v if isinstance(v, (set, frozenset, list)) else [v])
         if len(vals) < 2:
             return False
         lo, hi = min(vals), max(vals)
@@ -366,8 +461,27 @@ def print_summaries(groups):
         if len(g["settings"]) == 1 and None not in g["settings"]:
             clk, win = next(iter(g["settings"]))
             print("  acquisition: clk=%s Hz window=%s" % (clk, win))
+            level, ceiling, headroom = wrap_risk(clk, win)
+            if level == "wrap":
+                print("  WRAP: this clock and window report at most %.0f MHz before "
+                      "the 16-bit counter wraps, and the fast corner already "
+                      "simulates at %.0f MHz. A wrapped count comes back small and "
+                      "reads as an ordinary slow oscillator, so nothing downstream "
+                      "can find this. Discard the run and repeat above %.1f MHz."
+                      % (ceiling, FASTEST_SIM_MHZ,
+                         FASTEST_SIM_MHZ * float(win) / 65536.0 * 1e6 / 1e6))
+            elif level == "thin":
+                print("  WRAP MARGIN THIN: reports up to %.0f MHz, only %.2fx the "
+                      "fastest simulated oscillator. Nothing wraps in simulation, "
+                      "but silicon faster than the model would, and that failure is "
+                      "invisible afterwards." % (ceiling, headroom))
+            elif level == "ok":
+                print("  wrap headroom: reports up to %.0f MHz, %.1fx the fastest "
+                      "simulated oscillator" % (ceiling, headroom))
         else:
             print("  acquisition metadata: missing or inconsistent across files")
+            print("  WRAP RISK: without the clock and window the 16-bit counter "
+                  "cannot be shown not to have wrapped")
         for arm, name in ((0, "Arm A (auto)"), (1, "Arm B (matched)")):
             v = osc_means(g, arm)
             if not v:

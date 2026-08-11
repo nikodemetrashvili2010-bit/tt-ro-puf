@@ -8,6 +8,17 @@ The test exercises all 32 selectors, both output bytes, the exact 1000-cycle
 measurement window, Arm-B one-hot enables, stable latched controls, held-start
 behavior, in-flight restart, reset recovery, asynchronous `ena` shutdown, and
 clock-synchronized reset release.
+
+That count is the RTL run. The gate-level run covers **Arm B only, so sixteen of
+the thirty-two**, because `GATES=yes` sets `ARMS = (1,)` in `test.py` and moves
+the protocol tests onto arm 1 with it. Arm A is a zero-delay feedback loop in a
+gate-level netlist — sky130 gives its combinational cells no delay in either
+view it ships — so enabling an Arm A ring there advances no simulated time and
+the run never finishes. The sixteen Arm A selectors are covered in RTL, and
+their frequencies are checked against SPICE rather than against a gate-level
+simulation. The comment above `GL` in `test.py` has the full account, and
+`verify_ring_topology.py` is what checks Arm A's ring structure against the same
+netlist this test elaborates.
 When the hard-macro instances remain visible after synthesis, the test reads
 their actual enable pins so selector-to-instance permutations cannot hide
 behind identical oscillator models. Assertions produce a nonzero test exit.
