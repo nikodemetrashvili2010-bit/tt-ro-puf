@@ -53,10 +53,22 @@ help here. Cross validated, a quadratic surface in x and y comes out 20.0%
 worse than doing nothing, because a per-instance routing fingerprint has no
 smooth spatial surface underneath it. Reading the design database does work:
 ring capacitance and series resistance together remove 89.5% of the dispersion
-out of sample. Arm B needs none of this. Sixteen instances of one macro share
-their internal routing, so every pair's routing offset is zero and all 8 bits
-go back to mismatch. Scripts: `sim/spice/gono/predictable_bits.py` and
-`compensation.py`.
+out of sample.
+
+Subtracting that correction as a countermeasure is worth its own paragraph,
+because it half works. Compensating each ring by its predicted layout term
+lifts across-die entropy from 0.46 bits of 8 to 2.91 and drops the effectively
+fixed bits from six to one, which is more recovery than I expected to find. It
+buys no secrecy at all: the correction is computed from files in this
+repository, so a reader subtracts the same numbers and still calls 7.19 of the
+8, against 4.00 for guessing. Making a response vary more across dies and
+making it unknown to somebody holding the design database turn out to be
+different problems, and only the first one responds to compensation.
+
+Arm B needs none of this. Sixteen instances of one macro share their internal
+routing, so every pair's routing offset is zero and all 8 bits go back to
+mismatch. Scripts: `sim/spice/gono/predictable_bits.py`, `compensation.py` and
+`compensated_bits.py`.
 
 ## Where that comes from
 

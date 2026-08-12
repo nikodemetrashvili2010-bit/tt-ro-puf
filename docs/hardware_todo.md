@@ -864,6 +864,32 @@ no raw 600 MHz RO to a pad. And I weigh every addition against destabilizing the
 clean build. At most one or two surgical features, each with a full re-verify and
 re-harden, or none.
 
+## 11. Re-run the lumped decks at 1 ps (open, raised 2026-08-12)
+
+`sim/spice/gono/numerical_audit.py` turned this up while auditing the
+arithmetic behind Sections 6 and 7 of the paper, and it is small but it should
+not sit unrecorded. `gen_dualarm_decks.py` writes `.tran 5p` and
+`gen_rc_decks.py` writes `.tran 1p`, so the lumped and full-RC frequency sets
+are not simulated at the same numerical resolution. The 0.2 percent timestep
+sensitivity found on the macro in item 7 was exactly a 5 ps against 1 ps
+comparison.
+
+The size of it is bounded from data already here. The lumped deck varies
+nothing but capacitance, so fitting capacitance against it is recovering its own
+input, and the 0.0443 percent that survives is a ceiling on per-ring numerical
+error. Against that, the compensated residual is 4.1 times clear, the raw layout
+spread 39 times, and every pair separation in both models clears the pair
+ceiling of 0.0627 percent.
+
+So nothing in the paper turns on it, and the bits are read from the 1 ps set in
+any case. The reason to do it: the closest full-RC pair sits at 0.116 percent,
+only 1.9 times the pair ceiling, and that is the pair Section 7.1 identifies as
+holding most of the surviving entropy. A 1 ps lumped rerun costs machine time
+and no thought, and it would let the sign-agreement claim between the two
+parasitic models be stated without a footnote. Do it in the idle stretch, not
+before a deadline, and do not touch the 1 ps decks that produced the reported
+numbers.
+
 ## Order of work
 
 Items 1, 2, 5, 7, 8 and 9 are done. Item 6 is done for Arm A and open for Arm B.

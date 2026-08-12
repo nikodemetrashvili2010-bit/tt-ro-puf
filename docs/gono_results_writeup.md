@@ -295,6 +295,154 @@ simulations. The offsets in that table are model output, not measurement, and a
 die that disagrees with them refutes the whole argument. That is what the
 tapeout is for. Script is `sim/spice/gono/predictable_bits.py`.
 
+## Does compensating the layout term give the bits back?
+
+The two sections above have been sitting next to each other without talking. One
+says the layout term is 89.5 percent predictable. The other says the response is
+nearly fixed. So subtract the first from the second and see what happens, which
+is the first thing anyone from the RO-PUF side would ask, since compensating
+systematic variation is standard practice there.
+
+Each ring gets its predicted layout term removed using the leave-one-out
+capacitance-and-resistance model, the eight pair separations are rebuilt from
+the residuals, and the same 0.062 percent mismatch scale is applied:
+
+    pair    uncompensated   compensated   sigma   entropy   guessed
+     0/1          -1.864%       +0.123%    1.40     0.405     91.9%   flips
+     2/3          +0.116%       -0.040%    0.46     0.909     67.5%   flips
+     4/5          +0.267%       -0.101%    1.15     0.546     87.4%   flips
+     6/7          -3.265%       -0.390%    4.45     0.000    100.0%
+     8/9          +1.156%       +0.258%    2.95     0.017     99.8%
+    10/11         -2.504%       -0.269%    3.07     0.012     99.9%
+    12/13         -0.690%       +0.063%    0.72     0.788     76.4%   flips
+    14/15         -3.668%       +0.155%    1.76     0.237     96.1%   flips
+
+                                     residual   entropy   guessed   fixed
+    uncompensated                      1.739%    0.46/8    7.91/8   6 of 8
+    compensated, leave-one-out         0.183%    2.91/8    7.19/8   1 of 8
+    compensated, full 16-ring fit      0.153%    3.25/8    7.10/8   2 of 8
+    a coin flip                             -    8.00/8    4.00/8   0 of 8
+
+![what compensation gives back, and what it does not](../sim/spice/gono/compensated_bits.png)
+
+It works better than the section above led me to expect. Entropy goes up by a
+factor of six and the fixed bits go from six to one. The compensation section
+says the corrected residual "still does not get down to where mismatch would be
+readable", which is true and which I had been reading as meaning the bits stay
+fixed. They do not. A residual of 2.9 times the mismatch scale is well above
+mismatch and still low enough for the die to start getting a vote, and those are
+not the same statement.
+
+Unlike the runs behind the sections above, this one has no `*_run_steps.md`
+beside it. I did not write the prediction down before running it, so treat the
+sentence above as an honest recollection rather than as the pre-registered
+predictions elsewhere in this file.
+
+What it does not do is hide anything. The correction comes out of the SPEF, the
+SPEF is public, so the attacker subtracts the same numbers off the same rings
+and still gets 7.19 of 8 against 4.00 for guessing. Making the response vary
+more from die to die and making it unknown to a reader are two different
+properties, and this only moves the first one. That distinction is the useful
+thing in this section, more than the number itself.
+
+Five of the eight signs flip, so the compensated response is a different
+response rather than the same one with more noise on it. Anything enrolled
+before the correction is switched on does not survive switching it on.
+
+Three caveats, in order of how much they worry me.
+
+The entropy total is not a stable statistic at eight pairs. Correcting with
+capacitance alone leaves 0.190 percent per ring, four percent more residual than
+capacitance and resistance together, and returns 1.56 bits rather than 2.91.
+Entropy reads the eight pair differences and the ring-level residual does not
+determine them, so a small change in corrector moves the headline by half. I
+would report the direction of this result and not defend 2.91 to two decimals.
+
+It leans on the mismatch estimate much harder than the uncompensated result
+does. Across the 0.051 to 0.080 percent interval the compensated total runs 2.36
+to 3.67 bits, a span of 1.31 bits, where the uncompensated one spans 0.39. That
+follows from the residual sitting at 2.9 times the mismatch scale instead of 28.
+
+And the leave-one-out row is the conservative one. Fitting on all sixteen rings
+gives 0.153 percent and 3.25 bits. The true figure for a corrector that has the
+whole design in front of it is nearer the second row than the first, and neither
+of them is measured on a die.
+
+Script is `sim/spice/gono/compensated_bits.py`. It stops if either figure it
+inherits from the compensation section has moved, and `verify_predictability.py`
+rebuilds every number above from the raw SPEF with a separate solver.
+
+## Is any of it an artefact of the arithmetic?
+
+Everything in the two sections above is a least-squares fit and a normal
+integral over sixteen numbers. That is small enough to be wrong quietly, and
+nothing in the suite was looking at the calculation itself — the existing checks
+confirm the inputs are the right inputs and the outputs match the prose, and
+both of those pass fine on a badly conditioned solve. So
+`sim/spice/gono/numerical_audit.py` goes after the calculation. Eighteen checks,
+stdlib only, seeded so two runs agree.
+
+**The solver.** `compensation.py` forms the normal equations, which squares the
+conditioning. The quadratic position surface is built from raw micrometre
+coordinates and their squares, so its column norms span about 8e4 and the normal
+equations see roughly 6e9 of that. Refitting everything with Householder QR,
+which never forms that product, agrees to ten decimal places. And
+refitting position on centred and on standardised coordinates, which takes the
+column spread down to 1.4, returns 2.08617 percent every time. Position fails on
+the data, not on the solve. That mattered enough to check: it is the one result
+in the paper that is a negative, and a negative produced by an ill-conditioned
+fit would be worthless.
+
+**Stored precision.** Frequencies are kept to two decimals of MHz, so plus or
+minus 0.005 per ring, which is 0.0013 percent on a pair difference. Redrawing
+all sixteen inside that interval four thousand times moves the entropy totals by
+under 0.07 bits and flips no bit in sixty-four thousand draws.
+
+**The simulator's own floor.** This one turned up something worth writing down.
+`gen_dualarm_decks.py` writes `.tran 5p` and `gen_rc_decks.py` writes `.tran
+1p`, so the lumped and full-RC sets do not share a numerical resolution, and the
+0.2 percent timestep sensitivity found on the macro was a 5 ps against 1 ps
+comparison. The lumped set can be bounded from data already here: the lumped
+deck is handed one capacitance per net and nothing else varies, so fitting
+capacitance against it is recovering its own input, and the 0.0443 percent that
+survives is a ceiling on per-ring numerical error plus whatever nonlinearity
+frequency has in capacitance. Against that ceiling the compensated residual is
+4.1 times clear and the raw layout spread 39 times. Every pair separation in
+both models clears the pair ceiling of 0.0627 percent. The thin one is the
+closest full-RC pair at 0.116 percent, only 1.9 times clear, and that is exactly
+the pair carrying most of the surviving entropy. Nothing in the paper depends on
+it, because the bits come from the 1 ps set. But re-running the lumped decks at
+1 ps would retire the question, and until that happens this is the honest state
+of it.
+
+**Looking more than once.** Two families. The correctors: the paper reports the
+best of six, and leave-one-out does not charge for having chosen it. A nested
+loop does — outer fold holds out a ring, inner fold picks the corrector from the
+other fifteen, winner is scored on the ring neither saw. It picked capacitance
+and resistance fifteen times out of sixteen, and the headline goes from 89.5 to
+89.2 percent, the compensated entropy from 2.91 to 2.90 bits. Then the
+correlations: eight of them, declared and Holm-corrected at 0.05. Only the two
+capacitance correlations survive, at r = -0.9954 and -0.9997. No position
+correlation is significant even uncorrected, the smallest p being 0.19. Worth
+being careful about what that licenses: the intervals are wide, radius against
+the full RC frequencies spans -0.53 to +0.46, so sixteen rings cannot say
+position has no effect. What the paper claims is narrower and survives — that
+position cannot be used to predict, which is a cross-validated statement and not
+a significance one.
+
+**The sample.** This is the finding. Eight pairs is one draw of what this flow
+produces, so resample them. Twenty thousand draws puts a 95 percent interval of
+1.12 to 4.82 bits around the compensated 2.91, and 0.00 to 1.35 around the
+uncompensated 0.46. Both are wider than the mismatch sampling interval that gets
+all the caveats, and far wider than the input precision. The attacker figure
+over the same resample runs 6.52 to 7.76 of 8 and never approaches the 4.00 a
+guess would get.
+
+So the conclusion is about presentation rather than correctness. Nothing here is
+an artefact. But the entropy totals cannot carry two decimal places and the
+attack figure can, so the attack is the number to lead with and the entropy
+belongs in an interval with the interval named.
+
 ## What a reading can resolve
 
 A residual of 0.18 percent and a mismatch scale of 0.062 percent are only

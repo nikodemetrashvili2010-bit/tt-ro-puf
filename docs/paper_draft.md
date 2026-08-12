@@ -34,6 +34,15 @@ has no smooth spatial surface under it. Reading the design database does work:
 ring capacitance and series resistance together remove 89.5% of the dispersion
 out of sample, from 1.739% down to 0.183%.
 
+Applying that correction as a countermeasure recovers part of the response and
+none of the secrecy. Compensating each ring by its predicted layout term raises
+across-die entropy from 0.46 bits of 8 to 2.91 and cuts the effectively fixed
+bits from six to one, which is a larger recovery than I expected. But the
+correction is computed from public files, so a reader applies it too and still
+calls 7.19 of the 8 bits against 4.00 for guessing. The gap between those two
+numbers is the paper's point: compensation separates variation from secrecy,
+and only the first of them responds to it.
+
 The mechanism behind the fixed term is measured rather than assumed. Across nine
 builds that differ only in target placement density, the 16 automatically placed
 oscillators of Arm A spread 4.19% to 6.99% peak to peak with a median of 5.75%,
@@ -327,7 +336,7 @@ Their nominal post-layout frequencies average 554.7 MHz and span 30.7 MHz from
 end to end, which is 5.53% of the mean, with a population SD of 9.15 MHz
 (1.65%). The slowest ring is RO14 at 540.0 MHz carrying 17.0 fF; the fastest is
 RO7 at 570.7 MHz carrying 10.9 fF. Correlation against extracted ring
-capacitance is -0.9997 and the fitted slope is -4.94 MHz/fF (Figure 6). The
+capacitance is -0.9997 and the fitted slope is -4.94 MHz/fF (Figure 7). The
 loads in this build form a fairly smooth band rather than a distribution with a
 straggler: the two heaviest rings differ by 0.34 fF, so no single instance
 dominates the range, and dropping any one oscillator leaves the spread between
@@ -667,6 +676,8 @@ checked-in tables.
 
 ## 7. How many response bits the design files decide
 
+### 7.1 Counting the bits
+
 Section 6 works in frequencies. The chip hands out bits, and the two are not
 interchangeable, so this section converts one into the other.
 
@@ -737,6 +748,76 @@ The script is `sim/spice/gono/predictable_bits.py`, and
 `make_bits_figure.py` imports it so the figure and the reported totals cannot
 drift apart.
 
+### 7.2 If the layout term is compensated away
+
+There is an obvious objection to everything above, and it comes from the
+RO-PUF literature rather than from nowhere. Systematic variation gets
+compensated; that is what compensation is for [2]. Section 6 has just shown
+that this particular systematic term is 89.5% predictable from public files.
+So subtract it and ask whether the response comes back.
+
+The arithmetic is Section 7.1's, run on different inputs. Each ring's predicted
+layout term is removed using the leave-one-out capacitance-and-resistance model
+of Section 6, the eight pair separations are rebuilt from what is left, and the
+same 0.062% mismatch scale is applied. Nothing about the shipped design does
+this. It is a post-processing step a defender could add in firmware from
+per-ring constants published alongside the netlist, and it is evaluated here as
+a candidate countermeasure rather than as something the chip performs.
+
+It helps, and by more than I expected. Across-die entropy rises from 0.46 bits
+of 8 to 2.91, and the count of bits carrying under a hundredth of a bit falls
+from six to one. Anyone who dismisses model-based compensation as useless
+against this effect is wrong, and I would rather report that than the tidier
+result.
+
+It is also not a defence. An attacker reading the same SPEF computes the same
+correction and subtracts the same numbers, so the leftover is not a secret from
+them either: they still call 7.19 of the 8 bits correctly, against 4.00 for
+guessing. Compensation moves the deterministic term without moving it out of
+the public files. Nothing that is computed from published artefacts can hide
+anything from a reader who has those artefacts, which sounds obvious written
+down and is easy to lose sight of when a correction improves an entropy total
+by a factor of six.
+
+Five of the eight signs flip in the process, so the compensated response is a
+different response rather than a noisier version of the same one. Any
+enrollment done before the correction is introduced does not survive it.
+
+Three things bound how much weight that 2.91 will take. Scored with a model
+that saw all sixteen rings instead of fifteen, the residual falls to 0.153% and
+entropy reaches 3.25 bits, so the leave-one-out figure reported here is the
+conservative end of a narrow range and not a floor. Moving the mismatch
+estimate across its sampling interval gives 2.36 to 3.67 bits, a span of 1.31
+bits against 0.39 for the uncompensated total; the compensated number leans on
+that assumption several times harder, which follows from the residual sitting
+at 2.9 times the mismatch scale where the raw layout term sat at 28. And the
+total is not a stable statistic at this sample size. Correcting with
+capacitance alone leaves 0.190% per ring, 4% more residual than capacitance and
+resistance together, and yields 1.56 bits rather than 2.91. The entropy sees
+the eight pair differences, not the ring-level residual, and with eight of them
+the two are only loosely connected. Resampling the eight pairs puts a 95%
+interval of 1.12 to 4.82 bits around that 2.91, which is wider than the
+mismatch interval above and is the reason this subsection reports a direction.
+Section 10 gives the full accounting.
+
+So the honest form of the result is a direction rather than a value.
+Compensation recovers a substantial part of the response against fabrication
+variation and recovers none of it against an adversary holding the design
+database, and that gap is the point: the two threats are usually treated as one
+problem, and here the countermeasure separates them. The strongest version of
+the argument does not depend on 2.91 being right to two decimal places.
+
+Figure 5 puts the two effects side by side: the entropy each bit gets back on
+the left, and how little the reader loses on the right.
+
+![Figure 5. What compensating the layout term does to Arm A's eight bits. On the left, the across-die entropy of each bit before and after each ring has its predicted layout term removed; the green line is a full bit. On the right, the probability that a reader holding only the public design files calls the bit correctly, against 50% for guessing. The correction is computed from the published extraction, so it is available to the reader as well as to the designer.](../sim/spice/gono/compensated_bits.png)
+
+The script is `sim/spice/gono/compensated_bits.py`. It refuses to run if either
+of the two figures it inherits from Section 6 has moved,
+`make_compensated_figure.py` imports it rather than restating its numbers, and
+`verify_predictability.py` re-derives every value in this subsection from the
+raw SPEF with its own solver.
+
 ## 8. Matched-macro arm
 
 The matched construction hardens one oscillator as a 60 x 40 micrometre
@@ -770,7 +851,7 @@ not have. So the defensible statement is that matching the internal layout put
 the macro ahead of the average automatically routed oscillator, not ahead of
 all of them.
 
-Figures 5 and 6 draw Arm B as a single horizontal reference line at
+Figures 6 and 7 draw Arm B as a single horizontal reference line at
 569.5 MHz, because the sixteen instances share one internal layout. That line
 is no longer the only evidence behind it. All sixteen instances have since been
 extracted separately, each carrying the enable and output route it actually
@@ -792,9 +873,9 @@ Total Arm B dispersion requires per-instance integration
 parasitics and fabricated-device measurements, and whether Arm B ends up with
 a smaller total spread than Arm A is the measurement the chip exists to make.
 
-![Figure 5. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz, both under the lumped-capacitance model. The macro's distributed-RC figure is 566.05 MHz; see Section 5.5.](../sim/spice/gono/armB_prediction.png)
+![Figure 6. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz, both under the lumped-capacitance model. The macro's distributed-RC figure is 566.05 MHz; see Section 5.5.](../sim/spice/gono/armB_prediction.png)
 
-![Figure 6. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
+![Figure 7. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
 ## 9. Planned silicon test
 
@@ -881,7 +962,7 @@ whole chain at 888 MHz, though at the stopping boundary only three of the 32
 paths were swept. None of this erases the modelled dispersion; it bounds what can
 be concluded from it.
 
-The predictability result of Section 7 carries limits of its own, and they are
+The predictability result of Section 7.1 carries limits of its own, and they are
 not the same ones. Its mismatch term is treated as Gaussian and independent
 between rings, which the PDK's global draw does not directly support, and the
 0.062% figure it is scaled to has a sampling interval nearly half as wide as
@@ -895,6 +976,46 @@ move them. The attacker figure of 7.91 also assumes the attacker reproduces my
 model. A weaker attacker who only orders the rings by extracted capacitance, with
 no simulation at all, gets the same sign on all eight pairs, which is the number
 to quote if the simulation is doubted.
+
+Section 7.2 inherits all of that and adds one weakness of its own. Its residual
+sits at 2.9 times the mismatch scale where the raw layout term sat at 28, so it
+depends on the mismatch estimate far more heavily than Section 7.1 does, and
+the entropy total it produces is not stable at eight pairs: two correctors whose
+per-ring residuals differ by 4% return 1.56 and 2.91 bits. I report the
+direction of that result and the interval around it, and I would not defend the
+central value to two decimal places.
+
+Those are the limits of the argument. The limits of the arithmetic behind it
+are audited separately, in `sim/spice/gono/numerical_audit.py`, because a
+result computed from sixteen numbers can be wrong quietly. Four things were
+checked and none of them moves a conclusion. Refitting every corrector with
+Householder QR instead of the normal equations agrees to ten decimal places,
+and the position surface — the worst-scaled design in the
+set, and the one reported as failing — returns the same 2.086% after rescaling
+that takes its column spread from 8e4 down to 1.4, so it fails on the data
+rather than on the solve. Redrawing every frequency inside the two decimals it
+is stored to moves the totals by under a tenth of a bit and flips no bit in
+sixty-four thousand draws. Charging the estimate for choosing the best of six
+correctors, through a nested loop that picks the corrector on fifteen rings and
+scores it on a sixteenth that neither fold saw, takes Section 6 from 89.5% to
+89.2% and Section 7.2 from 2.91 to 2.90 bits. And the simulation's own
+numerical floor, bounded by fitting capacitance against the lumped decks where
+capacitance is the only thing that varies, sits at 0.044% per ring against a
+0.183% residual.
+
+Two things that audit does change. The first is which number to lead with.
+Resampling the eight pairs gives a 95% interval of 1.12 to 4.82 bits on the
+compensated entropy and 0.00 to 1.35 on the uncompensated, both wider than the
+mismatch interval that Sections 7.1 and 7.2 already report; the attacker figure
+over the same resample runs 6.52 to 7.76 of 8 and never comes near the 4.00 a
+guess would get. The sample of eight pairs, not the mismatch estimate, is the
+dominant uncertainty on every entropy total in this paper, and the attack
+statement is the robust one. The second is an open item rather than a result:
+the lumped decks run at a 5 ps timestep and the full RC decks at 1 ps. Every
+claim that matters uses the 1 ps set and the 5 ps floor is measured and small,
+but the closest full-RC pair clears that floor by only 1.9 times, and it is the
+pair Section 7.1 identifies as holding most of the surviving entropy. Re-running
+the lumped decks at 1 ps would retire the question and has not been done.
 
 Two structural limits sit above all of that. Eight bits is a very small
 response, and an entropy total over eight pairs of one block should not be read
@@ -923,6 +1044,15 @@ capacitance at about -0.999, and a fit trained on one layout predicts another's
 individual frequencies to roughly 0.1%. The residual left after correction sits
 141 times above what a single reading can resolve, so none of it hides in the
 instrument.
+
+Subtracting that term does not fix the problem, and finding out why was the most
+useful thing this study did. Compensating each ring with the leave-one-out
+model recovers real entropy, from 0.46 bits to 2.91 of 8, with the fixed bits
+falling from six to one. It recovers no secrecy at all, because the correction
+comes out of the same files the attacker downloads: they subtract it too and
+still call 7.19 of the 8. A countermeasure computed from public artefacts can
+make a response more variable across dies without making any part of it unknown
+to a reader, and those two properties are usually reported as if they were one.
 
 The same die carries the mitigation. Sixteen instances of one hardened macro
 share their internal routing, which sets every pair's routing offset to zero and

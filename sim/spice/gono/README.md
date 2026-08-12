@@ -45,13 +45,27 @@ layout term can be predicted and taken back out, and puts a position-based
 correction up against ones built from the SPEF's capacitance and resistance.
 `predictable_bits.py` turns the same frequencies into the eight adjacent-pair
 response bits and reports how much across-die entropy each one still carries.
-`verify_predictability.py` re-derives both of those results from the SPEF and
-the two frequency tables with its own parser and its own least-squares solver,
-hardcodes the figures that appear in the paper, and ends on a scrambled control
-so that a check which cannot fail does not sit in the suite pretending to pass.
-Figures come from `make_figures.py`, `make_dualarm_figure.py` and
-`make_bits_figure.py`, and the last of those imports `predictable_bits.py`
-rather than repeating its arithmetic.
+`compensated_bits.py` runs the two together: it removes each ring's predicted
+layout term with the leave-one-out corrector and re-reads the bits from the
+residuals, which is what the RO-PUF literature's compensation would amount to
+here. The short answer is that entropy rises from 0.46 bits of 8 to 2.91 and a
+reader of the same public files still calls 7.19 of the 8, so the correction
+returns variation without returning secrecy.
+`verify_predictability.py` re-derives all three of those results from the SPEF
+and the two frequency tables with its own parser and its own least-squares
+solver, hardcodes the figures that appear in the paper, and ends on a scrambled
+control so that a check which cannot fail does not sit in the suite pretending
+to pass. `numerical_audit.py` goes after the calculation rather than the inputs:
+it refits everything with Householder QR instead of the normal equations,
+redraws the frequencies inside their stored precision, bounds the simulator's
+own numerical floor from the lumped decks, charges the estimate for having
+picked the best of six correctors, Holm-corrects the declared family of
+correlations, and resamples the eight pairs. Nothing there moves a conclusion,
+but the last of them is why the entropy totals are quoted as intervals: the
+sample of eight pairs is a wider uncertainty than the mismatch assumption.
+Figures come from `make_figures.py`, `make_dualarm_figure.py`,
+`make_bits_figure.py` and `make_compensated_figure.py`, and the last two import
+the analysis scripts rather than repeating their arithmetic.
 
 `gen_noise_decks.py` and `analyze_noise.py` answer a separate question, which is
 what a single reading can resolve at all. The decks sweep supply from 1.62 to

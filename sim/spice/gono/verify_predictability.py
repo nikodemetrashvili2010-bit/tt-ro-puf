@@ -305,6 +305,85 @@ check("the capacitance attack is thinnest on the pair that keeps the most entrop
 check("Arm B carries a full bit per pair by construction",
       all(abs(hbin(phi(0.0)) - 1.0) < 1e-12 for _ in PAIRS))
 
+# ------------------------------------------------------- compensated bits, 7.4
+# Section 6 subtracts the layout term, Section 7 counts the bits. Section 7.2
+# does both at once, so the numbers it quotes have to follow from the same two
+# solvers used above and not from a third one hiding in compensated_bits.py.
+
+
+def loo_resid(cols, yv):
+    rws = design(cols)
+    out = []
+    for h in range(NRO):
+        beta = solve([rws[i] for i in range(NRO) if i != h],
+                     [yv[i] for i in range(NRO) if i != h])
+        out.append(yv[h] - sum(b * v for b, v in zip(beta, rws[h])))
+    return out
+
+
+def bits_from(resid, sigma_ring):
+    sp = sigma_ring * math.sqrt(2.0)
+    out = []
+    for a, b in PAIRS:
+        d = resid[a] - resid[b]
+        p = phi(d / sp)
+        out.append((d, abs(d) / sp, hbin(p), max(p, 1 - p)))
+    return out
+
+
+print("\n== compensated bits, paper Section 7.2 ==")
+comp = loo_resid([cap, res], y)
+crow = bits_from(comp, SIGMA_RING)
+cent = sum(r[2] for r in crow)
+cacc = sum(r[3] for r in crow)
+cdead = sum(1 for r in crow if r[2] < 0.01)
+check("the corrected residual is still Section 6's 0.183%",
+      abs(math.sqrt(sum(r * r for r in comp) / NRO) - 0.183) < 0.0015,
+      "%.4f%%" % math.sqrt(sum(r * r for r in comp) / NRO))
+check("compensation raises entropy from 0.46 to 2.91 bits of 8",
+      round(cent, 2) == 2.91, "%.4f" % cent)
+check("the attacker applying the same correction still calls 7.19 of 8",
+      round(cacc, 2) == 7.19, "%.4f" % cacc)
+check("effectively fixed bits fall from 6 to 1", cdead == 1, "%d fixed" % cdead)
+check("compensation helps: more entropy and a worse attacker than uncorrected",
+      cent > ent and cacc < acc)
+check("and does not rescue it: still far from a coin flip",
+      cent < 4.0 and cacc > 6.0)
+flip = sum(1 for u, c in zip(rows, crow) if (u[0] > 0) != (c[0] > 0))
+check("5 of the 8 predicted signs flip under compensation", flip == 5,
+      "%d flipped" % flip)
+
+fullb = solve(design([cap, res]), y)
+fullr = [y[i] - sum(b * v for b, v in zip(fullb, design([cap, res])[i]))
+         for i in range(NRO)]
+check("the full 16-ring fit is the optimistic case, not the reported one",
+      sum(r[2] for r in bits_from(fullr, SIGMA_RING)) > cent,
+      "%.3f against %.3f bits" % (sum(r[2] for r in bits_from(fullr, SIGMA_RING)),
+                                  cent))
+
+cnar = sum(r[2] for r in bits_from(comp, SIGMA_LO))
+cwid = sum(r[2] for r in bits_from(comp, SIGMA_HI))
+check("the sampling interval gives 2.36 to 3.67 compensated bits",
+      (round(cnar, 2), round(cwid, 2)) == (2.36, 3.67),
+      "%.3f to %.3f" % (cnar, cwid))
+check("the compensated total is the more mismatch-sensitive of the two",
+      (cwid - cnar) > (sum(r[2] for r in bits_for(SIGMA_HI))
+                       - sum(r[2] for r in bits_for(SIGMA_LO))),
+      "spans %.2f bits against %.2f"
+      % (cwid - cnar, sum(r[2] for r in bits_for(SIGMA_HI))
+         - sum(r[2] for r in bits_for(SIGMA_LO))))
+
+capr = loo_resid([cap], y)
+capent = sum(r[2] for r in bits_from(capr, SIGMA_RING))
+check("capacitance alone leaves 0.190% and only 1.56 bits",
+      abs(math.sqrt(sum(r * r for r in capr) / NRO) - 0.190) < 0.0015
+      and round(capent, 2) == 1.56,
+      "%.4f%%, %.3f bits" % (math.sqrt(sum(r * r for r in capr) / NRO), capent))
+check("a 4% change in residual moves the entropy total by more than half",
+      abs(cent - capent) / cent > 0.4,
+      "0.190%% -> %.2f bits against 0.183%% -> %.2f bits" % (capent, cent))
+
+
 # ----------------------------------------------------------------- control
 # A check that cannot fail is not a check. Break the link between each ring's
 # frequency and its own parasitics by rotating the feature vectors, and the

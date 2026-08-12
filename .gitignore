@@ -9,6 +9,8 @@ src/user_config.json
 src/config_merged.json
 test/sim_build
 **/__pycache__/
+# libreoffice leaves these behind when docs/build_paper.sh converts the docx
+.~lock.*#
 test/results.xml
 test/gate_level_netlist.v
 /tt
