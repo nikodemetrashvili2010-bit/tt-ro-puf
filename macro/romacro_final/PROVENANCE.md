@@ -60,9 +60,9 @@ with a stated PDK version and show their result matches.
 The integrated top-level build has a `commit_id.json` and this macro does not,
 so the top level is better documented. Until 2026-08-11 this paragraph said it
 recorded its PDK commit and that the chip as submitted was therefore
-reproducible. Neither half was true. The file holds four fields — the Tiny
+reproducible. Neither half was true. The file holds four fields, the Tiny
 Tapeout app commit, this repository, the design commit, and a workflow URL that
-is null because the build ran locally — and no PDK version appears in any of
+is null because the build ran locally, and no PDK version appears in any of
 them. The difference between the two levels is a build I can identify against
 one I cannot. It is not a reproducible build against an irreproducible one, and
 `sim/verify_macro_provenance.py` now reads the file and asserts both halves of

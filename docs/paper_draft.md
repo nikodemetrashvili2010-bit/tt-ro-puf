@@ -990,8 +990,8 @@ are audited separately, in `sim/spice/gono/numerical_audit.py`, because a
 result computed from sixteen numbers can be wrong quietly. Four things were
 checked and none of them moves a conclusion. Refitting every corrector with
 Householder QR instead of the normal equations agrees to ten decimal places,
-and the position surface — the worst-scaled design in the
-set, and the one reported as failing — returns the same 2.086% after rescaling
+and the position surface, which is the worst-scaled design in
+the set and the one reported as failing, returns the same 2.086% after rescaling
 that takes its column spread from 8e4 down to 1.4, so it fails on the data
 rather than on the solve. Redrawing every frequency inside the two decimals it
 is stored to moves the totals by under a tenth of a bit and flips no bit in

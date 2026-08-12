@@ -54,5 +54,5 @@ harness live on my disk and are not mirrored here; `LICENSING.md` says why and
 ## Two notes that stayed local
 
 `release_steps.md` and `rc_rerun_steps.md` are not here. Neither is cited as
-evidence for anything, and both are housekeeping — how to cut a release, how to
-rerun a job I had already run — rather than a record of a prediction.
+evidence for anything, and both are housekeeping, how to cut a release and how
+to rerun a job I had already run, rather than a record of a prediction.

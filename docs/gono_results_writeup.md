@@ -376,7 +376,7 @@ rebuilds every number above from the raw SPEF with a separate solver.
 
 Everything in the two sections above is a least-squares fit and a normal
 integral over sixteen numbers. That is small enough to be wrong quietly, and
-nothing in the suite was looking at the calculation itself — the existing checks
+nothing in the suite was looking at the calculation itself. The existing checks
 confirm the inputs are the right inputs and the outputs match the prose, and
 both of those pass fine on a badly conditioned solve. So
 `sim/spice/gono/numerical_audit.py` goes after the calculation. Eighteen checks,
@@ -417,7 +417,7 @@ of it.
 
 **Looking more than once.** Two families. The correctors: the paper reports the
 best of six, and leave-one-out does not charge for having chosen it. A nested
-loop does — outer fold holds out a ring, inner fold picks the corrector from the
+loop does. Outer fold holds out a ring, inner fold picks the corrector from the
 other fifteen, winner is scored on the ring neither saw. It picked capacitance
 and resistance fifteen times out of sixteen, and the headline goes from 89.5 to
 89.2 percent, the compensated entropy from 2.91 to 2.90 bits. Then the
@@ -426,7 +426,7 @@ capacitance correlations survive, at r = -0.9954 and -0.9997. No position
 correlation is significant even uncorrected, the smallest p being 0.19. Worth
 being careful about what that licenses: the intervals are wide, radius against
 the full RC frequencies spans -0.53 to +0.46, so sixteen rings cannot say
-position has no effect. What the paper claims is narrower and survives — that
+position has no effect. What the paper claims is narrower and survives: that
 position cannot be used to predict, which is a cross-validated statement and not
 a significance one.
 

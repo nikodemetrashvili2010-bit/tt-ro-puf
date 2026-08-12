@@ -136,7 +136,7 @@ being true. The sweep was archived on 2026-08-07 and this was corrected on the
 waveform for each of the 32 decks and 32 blocked controls. CI regenerates
 `mux_validation.csv` from that folder and diffs it byte for byte against the
 committed copy, and `verify_mux_archive.py` checks the archive for what
-archiving gets wrong — a CSV row with no run behind it, a log filed under the
+archiving gets wrong: a CSV row with no run behind it, a log filed under the
 wrong oscillator, a missing control. Line 38 above has had this right the whole
 time and this paragraph contradicted it.
 
