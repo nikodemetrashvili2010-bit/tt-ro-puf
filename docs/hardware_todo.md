@@ -890,6 +890,19 @@ parasitic models be stated without a footnote. Do it in the idle stretch, not
 before a deadline, and do not touch the 1 ps decks that produced the reported
 numbers.
 
+Updated 2026-08-14. The 0.0443 percent ceiling is looser than it looked.
+`matched_arm.py` reads the item 8 per-instance decks, which run at 1 ps, and
+those sixteen rings carry a netlist whose external loads sit outside the
+oscillation loop, so nothing physical should separate them at all. They spread
+0.0025 percent peak to peak and 0.00076 percent standard deviation at tt, which
+is a direct measurement of the transient solver's own per-ring reproducibility
+and eighteen times under the indirect ceiling. Two reasons that does not close
+this item. It is the hardened macro's netlist and not an Arm A ring, and the
+Arm A rings are stiffer; and it says nothing about the 5 ps decks, which is what
+the item is actually about. What it does change is the expected size of the
+answer: if the 1 ps lumped rerun lands anywhere near this floor, the closest
+full-RC pair clears it by two orders of magnitude rather than by 1.9 times.
+
 ## Order of work
 
 Items 1, 2, 5, 7, 8 and 9 are done. Item 6 is done for Arm A and open for Arm B.

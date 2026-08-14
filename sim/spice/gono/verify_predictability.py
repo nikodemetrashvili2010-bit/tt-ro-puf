@@ -52,7 +52,7 @@ def check(name, cond, detail=""):
 
 
 # ----------------------------------------------------------------- raw inputs
-def read_spef(path):
+def read_spef(path, nro=None):
     """Per ring, total loop capacitance in fF and total loop resistance in ohms.
 
     Written from the SPEF grammar rather than reused, so that a parser bug
@@ -87,7 +87,7 @@ def read_spef(path):
                     except ValueError:
                         pass
     out = []
-    for ro in range(NRO):
+    for ro in range(NRO if nro is None else nro):
         nets = ["u_puf.u_core.g_ro_bank[%d].u_ro.n[%d]" % (ro, k)
                 for k in range(NLOOP)]
         out.append((sum(cap[n] for n in nets),
@@ -153,17 +153,18 @@ def centred(f):
     return [(v - m) / m * 100.0 for v in f]
 
 
-def design(cols):
-    return [[1.0] + [c[i] for c in cols] for i in range(NRO)]
+def design(cols, n=None):
+    return [[1.0] + [c[i] for c in cols] for i in range(NRO if n is None else n)]
 
 
 def loo(cols, y):
-    rows, res_ = design(cols), []
-    for h in range(NRO):
-        beta = solve([rows[i] for i in range(NRO) if i != h],
-                     [y[i] for i in range(NRO) if i != h])
+    n = len(y)
+    rows, res_ = design(cols, n), []
+    for h in range(n):
+        beta = solve([rows[i] for i in range(n) if i != h],
+                     [y[i] for i in range(n) if i != h])
         res_.append(y[h] - sum(b * v for b, v in zip(beta, rows[h])))
-    return math.sqrt(sum(r * r for r in res_) / NRO)
+    return math.sqrt(sum(r * r for r in res_) / n)
 
 
 def pearson(a, b):
@@ -302,7 +303,7 @@ check("the capacitance attack is thinnest on the pair that keeps the most entrop
       "thinnest %d, most entropy %d"
       % (min(range(len(PAIRS)), key=lambda i: abs(cap_bits[i])),
          max(range(len(PAIRS)), key=lambda i: rows[i][2])))
-check("Arm B carries a full bit per pair by construction",
+check("a pair with no separation at all carries exactly one bit",
       all(abs(hbin(phi(0.0)) - 1.0) < 1e-12 for _ in PAIRS))
 
 # ------------------------------------------------------- compensated bits, 7.4
@@ -382,6 +383,173 @@ check("capacitance alone leaves 0.190% and only 1.56 bits",
 check("a 4% change in residual moves the entropy total by more than half",
       abs(cent - capent) / cent > 0.4,
       "0.190%% -> %.2f bits against 0.183%% -> %.2f bits" % (capent, cent))
+
+
+# ------------------------------------------------- matched-macro arm, 8.2
+# Section 8.2 replaces an assumption with a measurement: the sixteen hardened
+# instances were said to carry zero routing offset because they share one
+# internal layout, and they do not quite, because each one carries its own
+# enable and output route at the top level. These checks rebuild the spread,
+# the direction test and the bits from the three archived per-instance logs.
+print("\n== matched-macro arm, paper Section 8.2 ==")
+
+ARMB = {"tt": os.path.join(HERE, "armb_instances_out.txt"),
+        "ss": os.path.join(HERE, "armb_instances_ss_out.txt"),
+        "ff": os.path.join(HERE, "armb_instances_ff_out.txt")}
+WANT_ARMB_PTP = {"tt": 0.00251, "ss": 0.00014, "ff": 0.00085}
+
+
+def read_instances(path):
+    """The sixteen instance frequencies and the no-route reference, in MHz."""
+    txt = open(path, errors="ignore").read()
+    got = {n: float(v) for n, v in
+           re.findall(r"^(f_\w+)\s*=\s*(-?[0-9.]+(?:[eE][+-]?\d+)?)", txt, re.M)}
+    return ([got["f_k%02d" % k] / 1e6 for k in range(NRO)], got["f_r"] / 1e6)
+
+
+armb, armb_ref = {}, {}
+for corner, path in ARMB.items():
+    armb[corner], armb_ref[corner] = read_instances(path)
+check("all three per-instance logs hold sixteen frequencies and a reference",
+      all(len(v) == NRO for v in armb.values()) and len(armb_ref) == 3)
+
+for corner in ("tt", "ss", "ff"):
+    f = armb[corner]
+    ptp = 100.0 * (max(f) - min(f)) / st.fmean(f)
+    check("Arm B spreads %.5f%% peak to peak at %s" % (WANT_ARMB_PTP[corner], corner),
+          abs(ptp - WANT_ARMB_PTP[corner]) < 5e-5, "%.5f%%" % ptp)
+
+# A passive route adds capacitance and cannot remove any, so loading can only
+# slow a ring down. Instances above the no-route reference are the proof that
+# the residual is not the routes.
+for corner in ("tt", "ff"):
+    up = sum(1 for v in armb[corner] if v > armb_ref[corner])
+    check("at %s some instances read faster than the no-route reference, which "
+          "loading cannot cause" % corner, up >= 6, "%d of 16 above" % up)
+
+armb_c = centred(armb["tt"])
+armb_sd = st.pstdev(armb_c)
+check("Arm B's tt spread is under a fiftieth of the mismatch scale",
+      armb_sd / SIGMA_RING < 0.02, "%.4f sigma" % (armb_sd / SIGMA_RING))
+check("Arm A's layout term is more than two thousand times Arm B's, on "
+      "standard deviations",
+      base / armb_sd > 2000, "%.0f times" % (base / armb_sd))
+
+armb_d = [armb_c[a] - armb_c[b] for a, b in PAIRS]
+armb_ent = sum(hbin(phi(d / (SIGMA_RING * math.sqrt(2)))) for d in armb_d)
+armb_acc = sum(max(phi(d / (SIGMA_RING * math.sqrt(2))),
+                   1 - phi(d / (SIGMA_RING * math.sqrt(2)))) for d in armb_d)
+check("Arm B keeps 8.00 of 8 bits where Arm A keeps 0.46",
+      round(armb_ent, 2) == 8.00 and armb_ent < 8.0, "%.4f bits" % armb_ent)
+check("the design files guess 4.02 of Arm B's 8 bits against 7.91 of Arm A's",
+      round(armb_acc, 2) == 4.02, "%.4f of 8" % armb_acc)
+check("no Arm B bit is effectively fixed",
+      all(hbin(phi(d / (SIGMA_RING * math.sqrt(2)))) > 0.99 for d in armb_d))
+
+# Nothing in the design database predicts the leftover. Position is included
+# because Arm B sits on a regular grid, which is where a fitted surface has its
+# best chance.
+inst = {int(r["instance"]): r for r in
+        csv.DictReader(open(os.path.join(HERE, "instance_parasitics.csv")))}
+en_c = [float(inst[k]["en_cap_fF"]) for k in range(NRO)]
+ou_c = [float(inst[k]["out_cap_fF"]) for k in range(NRO)]
+tot_c = [a + b for a, b in zip(en_c, ou_c)]
+en_r = [float(inst[k]["en_res"]) for k in range(NRO)]
+ou_r = [float(inst[k]["out_res"]) for k in range(NRO)]
+best_armb = min(loo(cols, armb_c) for cols in
+                ([tot_c], [ou_c], [en_c], [en_r, ou_r], [tot_c, en_r, ou_r]))
+check("every route-parasitic corrector is worse than leaving Arm B alone",
+      best_armb > armb_sd,
+      "best leaves %.5f%% against %.5f%%" % (best_armb, armb_sd))
+check("Arm A's own corrector removes 89.5% where Arm B's removes nothing",
+      (1 - loo([cap, res], y) / base) > 0.89 > (1 - best_armb / armb_sd))
+
+
+# ------------------------------------------------- cross-build transfer, 6.2
+# Section 6.2 asks whether the model has to be fitted on the victim. These
+# checks refit it on the first build, which is a different RTL revision on an
+# independent placement, and apply it to the shipped build without refitting.
+print("\n== cross-build transfer, paper Section 6.2 ==")
+
+FIRST_SPEF = os.path.join(HERE, "first_build",
+                          "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
+FIRST_CSV = os.path.join(HERE, "gono_results.csv")
+NRO_A = 32
+
+rows_a = {int(r["ro"]): r for r in csv.DictReader(open(FIRST_CSV))}
+f_a = [float(rows_a[i]["freq_MHz"]) for i in range(NRO_A)]
+cap_a_csv = [float(rows_a[i]["ring_cap_fF"]) for i in range(NRO_A)]
+feat_a = read_spef(FIRST_SPEF, NRO_A)
+cap_a = [v[0] for v in feat_a]
+check("first-build ring capacitance re-parsed from its SPEF matches its table",
+      max(abs(a - b) for a, b in zip(cap_a, cap_a_csv)) < 0.011,
+      "worst %.4f fF" % max(abs(a - b) for a, b in zip(cap_a, cap_a_csv)))
+
+slope_a = solve(design([cap_a], NRO_A), f_a)[1]
+slope_b = solve(design([cap], NRO), f_lumped)[1]
+check("the two lumped builds fit -4.93 and -4.94 MHz/fF",
+      abs(slope_a + 4.93) < 0.01 and abs(slope_b + 4.94) < 0.01,
+      "%.4f and %.4f" % (slope_a, slope_b))
+check("the two slopes agree to a tenth of a percent",
+      abs(slope_a - slope_b) / abs(slope_a) < 0.001,
+      "%.3f%% apart" % (abs(slope_a - slope_b) / abs(slope_a) * 100))
+
+
+def transfer(train_cols, train_y, apply_cols, n):
+    """Fit on one build, predict another, recentre, return the residual sd.
+
+    Recentring is what lets the attacker skip the victim's mean frequency, and
+    it is also why a constant offset in the features cannot change the answer.
+    """
+    beta = solve(design(train_cols, len(train_y)), train_y)
+    p = [beta[0] + sum(b * c[i] for b, c in zip(beta[1:], apply_cols))
+         for i in range(n)]
+    m = st.fmean(p)
+    return [v - m for v in p]
+
+
+pred_ac = transfer([cap_a], centred(f_a), [cap], NRO)
+r_ac = st.pstdev([t - p for t, p in zip(y, pred_ac)])
+own = loo([cap, res], y)
+check("a model fitted on the first build removes 88.2% of the shipped build's "
+      "spread with no refitting",
+      abs((1 - r_ac / base) * 100 - 88.2) < 0.3, "%.4f%%" % r_ac)
+check("that costs 1.3 points against the corrector fitted on the victim itself",
+      abs(((1 - own / base) - (1 - r_ac / base)) * 100 - 1.3) < 0.3,
+      "%.1f points" % (((1 - own / base) - (1 - r_ac / base)) * 100))
+
+pred_ca = transfer([cap], y, [cap_a], NRO_A)
+ya = centred(f_a)
+r_ca = st.pstdev([t - p for t, p in zip(ya, pred_ca)])
+check("the transfer works in the other direction too, 89.4% onto 32 rings",
+      abs((1 - r_ca / st.pstdev(ya)) * 100 - 89.4) < 0.3, "%.4f%%" % r_ca)
+
+d_true = [y[a] - y[b] for a, b in PAIRS]
+d_tr = [pred_ac[a] - pred_ac[b] for a, b in PAIRS]
+agree_tr = sum(1 for u, v in zip(d_true, d_tr) if (u > 0) == (v > 0))
+acc_tr = sum(phi((1 if v > 0 else -1) * u / (SIGMA_RING * math.sqrt(2)))
+             for u, v in zip(d_true, d_tr))
+check("the transferred model calls all 8 bits the way the full simulation does",
+      agree_tr == 8, "%d of 8" % agree_tr)
+check("so it guesses the same 7.91 of 8 as exact extraction",
+      round(acc_tr, 2) == 7.91, "%.4f of 8" % acc_tr)
+
+# Two rings of somebody else's build are enough, which is the cost statement.
+pred_2 = transfer([cap_a[:2]], centred(f_a)[:2], [cap], NRO)
+d_2 = [pred_2[a] - pred_2[b] for a, b in PAIRS]
+check("a slope fitted on two rings of the other build still calls all 8",
+      sum(1 for u, v in zip(d_true, d_2) if (u > 0) == (v > 0)) == 8)
+
+# The control. Keep every capacitance, shuffle which ring owns it.
+rot_c = cap[7:] + cap[:7]
+pred_sh = transfer([cap_a], centred(f_a), [rot_c], NRO)
+r_sh = st.pstdev([t - p for t, p in zip(y, pred_sh)])
+d_sh = [pred_sh[a] - pred_sh[b] for a, b in PAIRS]
+check("rotating which ring owns which capacitance is worse than no correction",
+      r_sh > base, "%.4f%% against %.4f%% uncorrected" % (r_sh, base))
+check("and it stops calling the bits",
+      sum(1 for u, v in zip(d_true, d_sh) if (u > 0) == (v > 0)) <= 5,
+      "%d of 8" % sum(1 for u, v in zip(d_true, d_sh) if (u > 0) == (v > 0)))
 
 
 # ----------------------------------------------------------------- control

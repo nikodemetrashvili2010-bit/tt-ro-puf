@@ -63,6 +63,22 @@ picked the best of six correctors, Holm-corrects the declared family of
 correlations, and resamples the eight pairs. Nothing there moves a conclusion,
 but the last of them is why the entropy totals are quoted as intervals: the
 sample of eight pairs is a wider uncertainty than the mismatch assumption.
+Two later scripts take the same data and ask what it costs an attacker.
+`build_transfer.py` moves the fit off the victim: leave-one-ring-out still hands
+a reader fifteen of the sixteen target frequencies, which he would have to
+simulate himself, so the model is refitted on the earlier 32-oscillator build
+instead and applied to the shipped one with no refitting. It removes 88.2%
+against 89.5% for the corrector fitted on the victim, calls all eight bits the
+same way, and works in the reverse direction too. Two rings of the other build
+are enough to fit the slope. Shuffling which ring owns which capacitance is
+worse than applying no correction at all, which is what says the target's own
+extraction is the part that cannot be skipped. `matched_arm.py` asks the same
+questions of Arm B that Section 6 asked of Arm A, using the sixteen per-instance
+runs of item 8: the leftover is not a loading effect, because most instances
+read faster than a reference ring with no top-level route and capacitance cannot
+do that; no corrector out of the design database helps at more than one corner;
+and the eight bits keep 7.9997 of 8 with a reader calling 4.02. Both files carry
+`--selftest` and run their planted cases without any input at all.
 Figures come from `make_figures.py`, `make_dualarm_figure.py`,
 `make_bits_figure.py` and `make_compensated_figure.py`, and the last two import
 the analysis scripts rather than repeating their arithmetic.

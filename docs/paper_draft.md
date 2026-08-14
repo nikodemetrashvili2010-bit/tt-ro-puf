@@ -47,10 +47,16 @@ The mechanism behind the fixed term is measured rather than assumed. Across nine
 builds that differ only in target placement density, the 16 automatically placed
 oscillators of Arm A spread 4.19% to 6.99% peak to peak with a median of 5.75%,
 and every build gives a frequency-capacitance correlation near -0.999 with a
-fitted slope near -4.94 MHz/fF that transfers between independent layouts. The
-comparison arm places 16 copies of one hardened macro, which sets the routing
-offset of every pair to zero by construction and hands all 8 bits back to
-mismatch.
+fitted slope near -4.94 MHz/fF that transfers between independent layouts. It
+transfers far enough to matter: a slope fitted on an earlier build and never
+refitted removes 88.2% of the shipped build's spread against 89.5% for a
+corrector fitted on the shipped build itself, and calls all eight bits the same
+way, so the reader needs the target's extraction and not a simulation of it.
+The comparison arm places 16 copies of one hardened macro. Its sixteen instances
+still differ at the top level, through the enable and output route each one
+carries, and that residual was assumed to be zero rather than measured. Measured
+at three corners it leaves 7.9997 of the 8 bits intact and hands a reader 4.02
+of 8 against 4.00 for guessing.
 
 Whether any of this is resolvable is checked separately. Estimated thermal
 jitter and the counter's own granularity put the resolution floor of a single
@@ -96,8 +102,9 @@ worked out entirely from its public extraction and frozen before any chip
 exists. Alongside it I show that the position-based correction the literature
 uses for systematic variation actually makes things worse here under cross
 validation, while the design database removes almost nine tenths of the term. The
-same die carries a matched-macro arm that drives the predictable component to
-zero by construction, so the mitigation is tested rather than proposed. I also
+same die carries a matched-macro arm that drives the predictable component down
+to something the design files cannot predict at all, which is measured here
+rather than assumed, so the mitigation is tested rather than proposed. I also
 measure what a single reading can resolve, since a residual that sits under the
 instrument's floor would not be worth arguing about. All the scripts run on the
 flow's own outputs, so the same check works on any design before it is
@@ -604,6 +611,8 @@ Deterministic and predictable are not the same thing. The dispersion in Section
 work out which oscillator received which share of it. This section asks whether
 they can. Section 7 turns the answer into bits.
 
+### 6.1 Fitting on the victim
+
 The RO-PUF literature already corrects systematic variation, and it does so with
 position. Die gradients are spatially correlated, so a surface in x and y is
 fitted and subtracted [2]. That is the method to beat, and it is the natural
@@ -661,7 +670,9 @@ capacitance per net and vary nothing else, so a capacitance fit is measuring the
 deck's only input. Where the lumped runs do carry information is across builds,
 since the fit trained on the 32-oscillator layout reproduces the shipped build's
 per-oscillator pattern with no refitting at all, which is the cross-build check
-already reported in Section 5.2.
+already reported in Section 5.2. Section 6.2 takes that further and scores the
+same transferred model against the full RC frequencies instead, where the
+circularity does not apply.
 
 The size of the remaining third is not surprising. Each loop carries 33 series
 resistors spread over its 31 nets, plus dozens of capacitors both to ground and
@@ -673,6 +684,63 @@ those decks run from the same public files.
 The script is `sim/spice/gono/compensation.py`. It recomputes ring capacitance
 from both extractions and refuses to run if the result disagrees with the
 checked-in tables.
+
+### 6.2 Fitting on somebody else's build
+
+Every figure above is scored leave-one-ring-out: the model that corrects ring
+*i* never saw ring *i*. That is the right way to score a corrector and the wrong
+way to describe an attacker, because it still hands him fifteen of the victim's
+sixteen frequencies. He would have to produce those himself, which means the
+PDK, a deck per ring and the time to run them. Whether the model has to be
+calibrated on the victim at all is therefore a question about what the attack
+costs, and it is a question this project can answer, because there are two
+builds on disk: the earlier 32-oscillator layout of Section 5.1, a different RTL
+revision placed and routed independently, and the shipped build.
+
+So I moved the fit off the victim. A capacitance model fitted once on the
+earlier build, never refitted, applied to the shipped build's full RC
+frequencies:
+
+| model | fitted on | residual | removed |
+|---|---|---:|---:|
+| capacitance | earlier build | 0.2046% | 88.2% |
+| capacitance and resistance | earlier build | 0.2356% | 86.4% |
+| capacitance | shipped build, lumped decks | 0.1853% | 89.3% |
+| capacitance and resistance | shipped build, leave-one-out | 0.1828% | 89.5% |
+
+Transfer costs 1.3 points out of 89.5. The same test in the other direction, a
+model fitted on the shipped build and applied to the earlier one's 32 rings,
+removes 89.4% against 91.1% for that build's own cross-validated fit, so the
+result is not an artefact of which build happened to be the target.
+
+Two details are worth keeping. The first is that the transferring quantity is
+capacitance and not resistance. The resistance coefficient comes out at -0.0051
+on the earlier build and +0.0035 on the shipped one, opposite in sign, so the
+extra accuracy it buys inside a single build is that build's own leftovers
+rather than a property of the circuit; capacitance alone transfers better than
+capacitance with resistance in both directions. The second is that the fit is
+almost free. Refitting the slope on the first two rings of the earlier build,
+and nothing else, still calls every bit of the shipped build the way the full
+simulation does.
+
+The control says what is actually being used. Keep every extracted capacitance
+and shuffle which ring owns it, and the same model leaves 2.343%, which is 34.8%
+*worse* than applying no correction at all, and calls three of the eight bits.
+The assignment of load to ring is the information. The slope is a constant that
+can be picked up anywhere.
+
+That is the sentence I would want a reader to take from this section. The
+attacker needs the target's own extraction, and there is no way around that. He
+does not need to simulate it. Section 7.1's 7.91 of 8 is unchanged when the
+model is transferred rather than fitted, because a bit needs only the sign of a
+difference and the sign is the part that survives.
+
+The limit on this is the pair of builds available. Both carry the same 32-cell
+ring in the same PDK, so what is shown is transfer across placement, routing and
+an RTL revision, not across designs. A foreign design with a different ring
+length has its own slope, and an attacker would have to fit one, which he can do
+by building that RTL himself. The script is
+`sim/spice/gono/build_transfer.py`.
 
 ## 7. How many response bits the design files decide
 
@@ -723,11 +791,15 @@ extracted capacitance alone. An attacker does not need a careful model, and I
 cannot claim two ambiguous bits on the strength of models disagreeing, because
 after the coupling fix they do not disagree.
 
-Arm B needs no arithmetic. Sixteen instances of one macro share their internal
-routing, so every pair's routing offset is zero, every bit is decided by
-mismatch alone, and the design files predict none of them. That is 8.00 bits
-against Arm A's 0.46, from the same source through the same flow on the same
-die.
+Arm B was, until recently, waved through here: sixteen instances of one macro
+share their internal routing, so every pair's routing offset is zero and every
+bit is a coin flip. The first half of that is true and the second half was an
+assumption, because the instances are not identical at the top level. Each
+carries its own enable and output route. Section 8.2 measures what those leave,
+at three corners, and the answer is 7.9997 bits of 8 with a reader calling 4.02
+of them, against Arm A's 0.46 and 7.91 from the same source through the same
+flow on the same die. The conclusion the assumption reached is the right one.
+The number under it is now a measurement.
 
 For an open shuttle this is the part that concerns me most. Against a
 proprietary chip an attacker has to obtain the design database first, and that
@@ -742,7 +814,7 @@ directly, which is the cleanest reason I have for building the chip.
 Figure 4 puts the eight pairs side by side, in units of the mismatch standard
 deviation on the left and in bits on the right.
 
-![Figure 4. Arm A's eight adjacent-pair bits. On the left, each pair's routing-induced separation in standard deviations of the estimated mismatch term; the shaded strip is where mismatch can still decide the sign. On the right, the across-die entropy left in each bit, against Arm B's full bit per pair.](../sim/spice/gono/predictable_bits.png)
+![Figure 4. Arm A's eight adjacent-pair bits. On the left, each pair's routing-induced separation in standard deviations of the estimated mismatch term; the shaded strip is where mismatch can still decide the sign. On the right, the across-die entropy left in each bit, against the full bit per pair Arm B keeps; Section 8.2 measures that at 7.9997 of 8.](../sim/spice/gono/predictable_bits.png)
 
 The script is `sim/spice/gono/predictable_bits.py`, and
 `make_bits_figure.py` imports it so the figure and the reported totals cannot
@@ -820,6 +892,8 @@ raw SPEF with its own solver.
 
 ## 8. Matched-macro arm
 
+### 8.1 One macro, sixteen instances
+
 The matched construction hardens one oscillator as a 60 x 40 micrometre
 macro. The macro layout passes the available DRC, LVS, antenna, and
 connectivity checks, and Arm B places 16 instances of it on a regular grid.
@@ -877,6 +951,64 @@ a smaller total spread than Arm A is the measurement the chip exists to make.
 
 ![Figure 7. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
+### 8.2 Is anything left, and could anyone use it?
+
+Section 8.1 says the residual is small. Small is not the same as safe. Sections
+6 and 7 are built on the observation that a deterministic term is only a
+security problem when somebody can compute which oscillator got which share of
+it, and a term four orders of magnitude smaller could in principle still be a
+perfectly computable fingerprint. So the same three questions get asked of Arm B
+that were asked of Arm A.
+
+The first one settles most of it. A top-level route is passive. It can add
+capacitance to a node and it cannot remove any, so loading can only make a ring
+slower, and every instance should sit at or below the reference ring in the same
+deck, which carries no top-level route at all. Eleven of the sixteen sit above
+it at tt and twelve of sixteen at ff. Whatever separates the instances, it is
+not the routes they carry.
+
+The second confirms it from the other side. Scoring every corrector Section 6
+used, leave-one-out, against all three corners gives 21 numbers, of which four
+are positive at all, the best +15.5%, and every one of those four falls at the
+same corner. Nothing helps at more than one corner. Against that, the
+capacitance-and-resistance model removes 89.5% of Arm A's spread. Position is
+worth singling out, because Arm B sits on a regular four-by-four grid, which is
+exactly the geometry a fitted spatial surface is meant for: it is the worst
+corrector in the table, -25.8% at tt.
+
+The third asks whether the residual is even stable. Arm A's eight pairs keep
+their sign across two different parasitic models, which is a wider gap than two
+corners of one model. Arm B's keep their sign 8 of 8 between tt and ss and 5 of
+8 between tt and ff. The per-instance residuals correlate +0.56, +0.23 and +0.21
+across the three corner pairs; Holm-corrected over the three comparisons that
+were run, none of them is significant, the smallest adjusted p being 0.071. I
+would not claim from this that the residual is pure noise. I would claim that
+nothing in the design database predicts it and that it does not reliably survive
+a change of corner.
+
+Then the bits, computed exactly as in Section 7.1 with the measured pair
+separations in place of the zero that was assumed there:
+
+| corner | entropy of 8 | bits a reader guesses | bits effectively fixed |
+|---|---:|---:|---:|
+| tt | 7.9997 | 4.0219 | 0 |
+| ss | 8.0000 | 4.0019 | 0 |
+| ff | 7.9999 | 4.0114 | 0 |
+| Arm A, full RC | 0.46 | 7.91 | 6 |
+
+Four of eight is what a coin gets, and across the mismatch sampling interval the
+tt figure runs 4.02 to 4.03. Taking the residual at face value as though it were
+deterministic, which is the most generous reading available to an attacker, buys
+0.02 of a bit.
+
+Two limits. Every number here is nominal-device simulation of one layout, so it
+bounds what top-level integration contributes and says nothing about fabricated
+mismatch on a die; that is still the measurement the chip exists to make. And
+the residual is small enough that the floor underneath it is the transient
+solver rather than the circuit, which is why the direction test above carries
+the argument and the correlations do not. The script is
+`sim/spice/gono/matched_arm.py`.
+
 ## 9. Planned silicon test
 
 Sections 6 and 7 make a prediction that a measurement can refute, and that is
@@ -932,7 +1064,9 @@ measured one particular way. Builds from earlier revisions are not part of that
 set and their spreads are not pooled with it. Instances within a single layout
 are also related observations, so instance-level confidence intervals would
 overstate the evidence. The Arm B reference is
-one simulation of one macro and cannot quantify fabricated Arm B variation.
+one simulation of one macro layout. The sixteen per-instance runs of Section 8.2
+bound what top-level integration adds on top of it, at three corners, and none
+of that quantifies fabricated Arm B variation.
 The 40-run global Monte Carlo cannot reproduce independent local device
 mismatch. Voltage, temperature, supply noise, ageing, package, and
 measurement-system effects are partly characterized. The corner simulations in
@@ -1015,7 +1149,13 @@ the lumped decks run at a 5 ps timestep and the full RC decks at 1 ps. Every
 claim that matters uses the 1 ps set and the 5 ps floor is measured and small,
 but the closest full-RC pair clears that floor by only 1.9 times, and it is the
 pair Section 7.1 identifies as holding most of the surviving entropy. Re-running
-the lumped decks at 1 ps would retire the question and has not been done.
+the lumped decks at 1 ps would retire the question and has not been done. What
+Section 8.2 adds is a direct look at the same floor from a different deck: the
+per-instance runs are at 1 ps, and sixteen copies of one netlist whose external
+loads cannot reach the oscillation loop spread 0.0025% peak to peak. That is
+eighteen times under the indirect ceiling quoted above, which suggests the
+ceiling is loose, and it is measured on the macro rather than on an Arm A ring,
+so it bounds the solver and not that particular comparison.
 
 Two structural limits sit above all of that. Eight bits is a very small
 response, and an entropy total over eight pairs of one block should not be read
@@ -1045,6 +1185,15 @@ individual frequencies to roughly 0.1%. The residual left after correction sits
 141 times above what a single reading can resolve, so none of it hides in the
 instrument.
 
+That last point turned out to matter more than I thought when I wrote it down.
+The model does not have to be fitted on the victim at all. A capacitance slope
+taken from the earlier build and never refitted removes 88.2% of the shipped
+build's spread against 89.5% for a corrector cross-validated on the shipped
+build itself, and it calls all eight bits the same way, so the 7.91 does not
+change. Shuffling which ring owns which capacitance destroys it, which is what
+says the target's own extraction is the part that cannot be skipped. What can be
+skipped is the simulation, and that is most of what the attack would have cost.
+
 Subtracting that term does not fix the problem, and finding out why was the most
 useful thing this study did. Compensating each ring with the leave-one-out
 model recovers real entropy, from 0.46 bits to 2.91 of 8, with the fixed bits
@@ -1054,14 +1203,17 @@ still call 7.19 of the 8. A countermeasure computed from public artefacts can
 make a response more variable across dies without making any part of it unknown
 to a reader, and those two properties are usually reported as if they were one.
 
-The same die carries the mitigation. Sixteen instances of one hardened macro
-share their internal routing, which sets every pair's routing offset to zero and
-gives all 8 bits back to mismatch. It is not free: the matched arm has
-integration asymmetries of its own. Those asymmetries have now been simulated
-rather than assumed. All sixteen instances were extracted with their real
-top-level routes and run at three corners, and they spread at most 0.0025% peak
-to peak, which is 0.57 of one counter count. The integration term is real and it
-is far below what the chip can read.
+The same die carries the mitigation, and it holds up under the same questions.
+Sixteen instances of one hardened macro share their internal routing, but not
+their top-level enable and output routes, so the claim that every pair's offset
+is zero was an assumption until those sixteen were extracted with the routes
+they really have and run at three corners. They spread at most 0.0025% peak to
+peak, which is 0.57 of one counter count. More to the point, the leftover is not
+usable: most instances read faster than a reference ring carrying no route at
+all, which capacitive loading cannot cause; no corrector out of the design
+database helps at more than one corner, where Arm A's removes 89.5%; and the
+eight bits keep 7.9997 of 8, with a reader calling 4.02 against 4.00 for
+guessing.
 
 None of this is measured on silicon. The offsets are model output, eight bits is
 a small response, and the mismatch estimate is the weakest link in the chain.

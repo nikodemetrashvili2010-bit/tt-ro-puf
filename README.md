@@ -55,6 +55,15 @@ smooth spatial surface underneath it. Reading the design database does work:
 ring capacitance and series resistance together remove 89.5% of the dispersion
 out of sample.
 
+That model does not even have to be fitted on this build. A capacitance slope
+taken from the earlier 32-oscillator layout, a different RTL revision on an
+independent placement, and never refitted, removes 88.2% and calls all eight
+bits the same way the full simulation does, so the 7.91 is unchanged. Two rings
+of that other build are enough to fit it. Shuffle which ring owns which
+capacitance and the whole thing collapses to worse than no correction at all.
+A reader needs this repository's extraction; a reader does not need to simulate
+it, and that was most of what the work would have cost.
+
 Subtracting that correction as a countermeasure is worth its own paragraph,
 because it half works. Compensating each ring by its predicted layout term
 lifts across-die entropy from 0.46 bits of 8 to 2.91 and drops the effectively
@@ -65,10 +74,17 @@ repository, so a reader subtracts the same numbers and still calls 7.19 of the
 making it unknown to somebody holding the design database turn out to be
 different problems, and only the first one responds to compensation.
 
-Arm B needs none of this. Sixteen instances of one macro share their internal
-routing, so every pair's routing offset is zero and all 8 bits go back to
-mismatch. Scripts: `sim/spice/gono/predictable_bits.py`, `compensation.py` and
-`compensated_bits.py`.
+Arm B comes out the other way, and that is now measured rather than assumed.
+Sixteen instances of one macro share their internal routing, but not the enable
+and output route each one carries at the top level, so "the offset is zero" was
+a claim about the inside of the macro doing duty for a claim about the whole
+thing. The sixteen per-instance runs settle it: the leftover is not a loading
+effect, since eleven of sixteen read faster than a reference ring with no
+top-level route and capacitance cannot do that; nothing in the design database
+predicts it at more than one corner; and the eight bits keep 7.9997 of 8 with a
+reader calling 4.02 against 4.00 for guessing. Scripts:
+`sim/spice/gono/predictable_bits.py`, `compensation.py`, `compensated_bits.py`,
+`build_transfer.py` and `matched_arm.py`.
 
 ## Where that comes from
 
@@ -103,7 +119,9 @@ The hardened macro simulates at 566.0 MHz against the SPEF's real RC network,
 and at 570.6 MHz with the same capacitance lumped one node per net. Its 16 Arm B
 copies are the same
 GDS, so the matched arm removes internal-layout variation by construction.
-That is why the figure draws Arm B as one reference line, not sixteen points.
+That is why the figure draws Arm B as one reference line; the sixteen have since
+been run individually and sit inside 0.0025% of each other, so the line is now
+shorthand for sixteen results rather than a stand-in for them.
 It does not yet show that Arm B's total spread on real chips is lower than
 Arm A's: top-level routing, supply, temperature, and device mismatch still act
 on each copy, and only silicon can settle that:
