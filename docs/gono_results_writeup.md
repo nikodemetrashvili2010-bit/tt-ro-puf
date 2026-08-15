@@ -430,6 +430,74 @@ Script is `sim/spice/gono/compensated_bits.py`. It stops if either figure it
 inherits from the compensation section has moved, and `verify_predictability.py`
 rebuilds every number above from the raw SPEF with a separate solver.
 
+## Would pairing the oscillators differently give them back?
+
+Compensation is the countermeasure the literature suggests. This is the one the
+design suggests, and it is cheaper. Rings 0 and 1 are compared because they came
+out of the generate loop in that order; sixteen rings split into eight pairs
+2,027,025 ways, and the whole of the section above is quoted at one arbitrary
+setting of a free parameter that a permutation in the RTL would change for
+nothing.
+
+Pairing rings that route to nearly equal delay does shrink the separation and
+hand the bit back to mismatch. It also makes the comparison a near-tie, and a
+near-tie is what drifts. So the pairing has to be scored twice, on bits a reader
+calls and on bits that change sign somewhere in the -40 to 125 C and 1.62 to
+1.98 V box, and the second number needs a per-pair drift figure rather than a
+global one. The ten corner logs give it directly: over the 120 candidate pairs
+the box moves a pair's separation by 0.004 to 0.282 percent, and over the eight
+the design built, 0.017 to 0.165. Signed, not absolute, because two rings that
+only ever pull apart are in no danger however far they pull.
+
+All 2,027,025 were enumerated, so the table below is the true frontier.
+
+| pairing | called of 8 | entropy | expected unstable |
+|---|---:|---:|---:|
+| as built | 7.91 | 0.46 | 0.06 |
+| sort, pair neighbours | 7.40 | 2.19 | 0.30 |
+| sort, slowest against fastest | 7.67 | 0.92 | 0.14 |
+| sort, slow half against fast half | 8.00 | 0.00 | 0.00 |
+| best of all 2,027,025 | 7.28 | 2.69 | 0.32 |
+
+The free parameter is worth 0.62 bits, which is 16 percent of the 3.91 the
+reader holds above guessing, and it costs about half a bit of reliability per
+bit taken back. The built pairing is beaten on both counts by 89,460 of the
+2,027,025, so the generate loop was luckier than average and no better.
+
+The ceiling is visible before the search. Hiding a bit needs a separation under
+one sigma of pair mismatch, 0.088 percent; keeping it needs a separation over
+that pair's own envelope, median 0.098. Three of the 120 pairs are in both
+windows, they are rings 6 against 9, 6 against 13 and 9 against 13, and being
+three pairs of three rings no two are disjoint. A pairing gets one. Seven of the
+eight bits are settled before anything is chosen.
+
+Two things worth carrying forward. The rules in the table need no search and can
+be applied at place-and-route time, because the build-transfer model turns
+extracted capacitance into a ring order that misranks 1 of the 120 pairs and
+picks pairings scoring within 0.002 bits of the same rules run on simulated
+frequencies. And the same neighbour rule is worth 2.67 bits on the 32-oscillator
+build against 0.51 here, a third of what the reader holds instead of an eighth,
+because the two builds have nearly the same spread but twice the rings halves
+the median gap between neighbours in the sorted order, 0.218 to 0.130 percent.
+More oscillators, more to gain. That half is unpriced: the earlier build has no
+corner logs and its reliability cost cannot be scored.
+
+One correction falls out of the per-pair envelope, and it goes the safe way. The
+resolution section divides the closest pair separation by the worst single-ring
+departure anywhere in the box and reports a factor of 1.8. Against each pair's
+own envelope the tightest of the eight sits 13.8 times clear. The 1.8 compares a
+pair against a departure it does not see. The inconvenient half: that closest
+pair is 0.270 percent apart in the lumped decks the corner sweep ran on, and
+0.116 in the full RC network, which is under the 0.150 global bound outright and
+only its own 0.0175 envelope puts it back at 6.7 times clear.
+
+Script is `sim/spice/gono/pairing_policy.py`, stdlib only, with planted-fault
+cases including one that refuses the assumption I started with: minimum total
+separation is not minimum leakage, because reader accuracy saturates.
+`verify_predictability.py` rebuilds all of it from the raw corner logs with its
+own parser and finds the same optimum a second time by dynamic programming over
+subsets of rings, which never enumerates a pairing at all.
+
 ## Is any of it an artefact of the arithmetic?
 
 Everything in the two sections above is a least-squares fit and a normal
@@ -717,9 +785,10 @@ collected in the paper's limitations section rather than repeated here.
   `analyze_noise.py`, `verify_noise.py`: supply, temperature and the
   resolution floor.
 - `compensation.py`, `predictable_bits.py`, `compensated_bits.py`,
-  `build_transfer.py`, `numerical_audit.py`, `verify_predictability.py`:
-  predicting the layout term, reading it as bits, moving the fit off the
-  victim, and auditing the arithmetic behind all of it.
+  `build_transfer.py`, `pairing_policy.py`, `numerical_audit.py`,
+  `verify_predictability.py`: predicting the layout term, reading it as bits,
+  moving the fit off the victim, turning the pairing over, and auditing the
+  arithmetic behind all of it.
 - `gen_instance_decks.py`, `armb_instances*_out.txt`,
   `instance_parasitics.csv`, `analyze_instance.py`, `verify_instance*.py`,
   `matched_arm.py`: the sixteen Arm B instances with their real top-level

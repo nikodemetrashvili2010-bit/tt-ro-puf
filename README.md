@@ -82,9 +82,18 @@ thing. The sixteen per-instance runs settle it: the leftover is not a loading
 effect, since eleven of sixteen read faster than a reference ring with no
 top-level route and capacitance cannot do that; nothing in the design database
 predicts it at more than one corner; and the eight bits keep 7.9997 of 8 with a
-reader calling 4.02 against 4.00 for guessing. Scripts:
+reader calling 4.02 against 4.00 for guessing.
+
+The pairing is the one free parameter left, and turning it does not help much
+either. Which rings get compared is the order the generate loop emitted;
+sixteen rings split into eight pairs 2,027,025 ways, and enumerating all of them
+the best takes 0.62 bits off a reader, 16% of what he holds above guessing, and
+charges about half a bit of reliability for each one, because a comparison small
+enough to hide from a reader is a comparison that drifts. Three of the 120
+candidate pairs sit in both windows and they are three pairs of the same three
+oscillators, so a design can use one. Scripts:
 `sim/spice/gono/predictable_bits.py`, `compensation.py`, `compensated_bits.py`,
-`build_transfer.py` and `matched_arm.py`.
+`build_transfer.py`, `matched_arm.py` and `pairing_policy.py`.
 
 ## Where that comes from
 

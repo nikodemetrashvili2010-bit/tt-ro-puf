@@ -51,9 +51,11 @@ residuals, which is what the RO-PUF literature's compensation would amount to
 here. The short answer is that entropy rises from 0.46 bits of 8 to 2.91 and a
 reader of the same public files still calls 7.19 of the 8, so the correction
 returns variation without returning secrecy.
-`verify_predictability.py` re-derives all three of those results from the SPEF
-and the two frequency tables with its own parser and its own least-squares
-solver, hardcodes the figures that appear in the paper, and ends on a scrambled
+`verify_predictability.py` re-derives those results, and the pairing frontier
+below, from the SPEF, the corner logs and the two frequency tables with its own
+parser, its own least-squares solver and a dynamic program over subsets of rings
+that reaches the enumerated optimum without enumerating anything. It
+hardcodes the figures that appear in the paper, and ends on a scrambled
 control so that a check which cannot fail does not sit in the suite pretending
 to pass. `numerical_audit.py` goes after the calculation rather than the inputs:
 it refits everything with Householder QR instead of the normal equations,
@@ -77,8 +79,24 @@ questions of Arm B that Section 6 asked of Arm A, using the sixteen per-instance
 runs of item 8: the leftover is not a loading effect, because most instances
 read faster than a reference ring with no top-level route and capacitance cannot
 do that; no corrector out of the design database helps at more than one corner;
-and the eight bits keep 7.9997 of 8 with a reader calling 4.02. Both files carry
-`--selftest` and run their planted cases without any input at all.
+and the eight bits keep 7.9997 of 8 with a reader calling 4.02.
+`pairing_policy.py` turns the one free parameter the design has left. Which
+rings get compared is the order the generate loop produced, and sixteen rings
+split into eight pairs 2,027,025 ways, so all of them are enumerated and each
+scored twice: bits a reader calls, and bits that change sign somewhere in the
+supply and temperature box on a random die. The second needs a drift figure per
+pair rather than the worst-ring bound, which the ten corner logs give directly,
+kept signed because two rings that only ever pull apart are in no danger. The
+best pairing available takes 0.62 bits off the reader, 16% of what he holds
+above guessing, and charges about half a bit of reliability for each one. Only
+3 of the 120 candidate pairs are close enough to hide a bit and clear enough of
+their own drift to keep it, and being three pairs of the same three rings a
+design can use one. The same rule is worth four times as much on the
+32-oscillator build, which is a sizing argument for a larger array rather than a
+result about this one. All three files carry `--selftest` and run their planted
+cases without any input at all; one of `pairing_policy.py`'s refuses the
+assumption the script started from, that minimum total separation is minimum
+leakage.
 Figures come from `make_figures.py`, `make_dualarm_figure.py`,
 `make_bits_figure.py` and `make_compensated_figure.py`, and the last two import
 the analysis scripts rather than repeating their arithmetic.

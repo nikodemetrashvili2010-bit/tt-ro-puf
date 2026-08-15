@@ -27,6 +27,7 @@ python3 sim/spice/gono/predictable_bits.py
 python3 sim/spice/gono/compensated_bits.py
 python3 sim/spice/gono/build_transfer.py
 python3 sim/spice/gono/matched_arm.py
+python3 sim/spice/gono/pairing_policy.py
 python3 sim/spice/gono/numerical_audit.py
 python3 sim/spice/gono/verify_predictability.py
 python3 sim/spice/gono/analyze_noise.py --selftest

@@ -25,6 +25,7 @@ import math
 import os
 import re
 import statistics as st
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJ = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -550,6 +551,283 @@ check("rotating which ring owns which capacitance is worse than no correction",
 check("and it stops calling the bits",
       sum(1 for u, v in zip(d_true, d_sh) if (u > 0) == (v > 0)) <= 5,
       "%d of 8" % sum(1 for u, v in zip(d_true, d_sh) if (u > 0) == (v > 0)))
+
+
+# ----------------------------------------------- pairing policy, Section 7.3
+# pairing_policy.py enumerates every pairing recursively. Nothing here does:
+# the optimum comes from a bitmask dynamic program, which is a different
+# algorithm reaching the same answer, and the counts come from an iterative
+# walk with its own stack. The corner logs are re-read here too, so a mistake
+# in that script's parser or its recursion cannot pass this.
+print("\n== pairing policy, paper Section 7.3 ==")
+
+CORNERS = ["noise_vdd_1620_out.txt", "noise_vdd_1980_out.txt",
+           "noise_temp_m40_out.txt", "noise_temp_000_out.txt",
+           "noise_temp_085_out.txt", "noise_temp_125_out.txt",
+           "noise_vt_1620_m40_out.txt", "noise_vt_1620_125_out.txt",
+           "noise_vt_1980_m40_out.txt", "noise_vt_1980_125_out.txt"]
+
+dep = []
+for _name in CORNERS:
+    _f = read_par(os.path.join(HERE, _name))
+    _r = [a / b for a, b in zip(_f, f_lumped)]
+    _mu = sum(_r) / NRO
+    dep.append([100.0 * (v - _mu) for v in _r])
+
+check("ten corner logs read, all sixteen rings present in each",
+      len(dep) == 10 and all(len(d) == NRO for d in dep))
+
+SP = SIGMA_RING * math.sqrt(2.0)
+LO, HI, ENV = {}, {}, {}
+for a in range(NRO):
+    for b in range(a + 1, NRO):
+        s = [d[a] - d[b] for d in dep]
+        LO[(a, b)] = min(0.0, min(s))
+        HI[(a, b)] = max(0.0, max(s))
+        ENV[(a, b)] = max(abs(v) for v in s)
+
+worst_single = max(abs(v) for d in dep for v in d)
+check("largest single-ring departure across the box is 0.150%",
+      abs(worst_single - 0.150) < 0.001, "%.4f%%" % worst_single)
+check("the drift envelope over the 120 candidate pairs runs 0.004% to 0.282%",
+      abs(min(ENV.values()) - 0.004) < 0.001
+      and abs(max(ENV.values()) - 0.282) < 0.001,
+      "%.4f%% to %.4f%%" % (min(ENV.values()), max(ENV.values())))
+
+PAIRS_T = [(i, i + 1) for i in range(0, NRO, 2)]
+env_des = [ENV[p] for p in PAIRS_T]
+check("the eight pairs the design built see 0.017% to 0.165%",
+      abs(min(env_des) - 0.017) < 0.001 and abs(max(env_des) - 0.165) < 0.001,
+      "%.4f%% to %.4f%%" % (min(env_des), max(env_des)))
+
+# The margin Section 5.7 quotes, against the right denominator. Section 7.3
+# corrects it, so both the old figure and the new one are checked here.
+y_lu = centred(f_lumped)
+close_lu = min((abs(y_lu[a] - y_lu[b]), a, b) for a, b in PAIRS_T)
+close_rc = min((abs(y[a] - y[b]), a, b) for a, b in PAIRS_T)
+check("the closest of the eight pairs is 0.270% apart in the lumped decks",
+      abs(close_lu[0] - 0.270) < 0.001 and (close_lu[1], close_lu[2]) == (2, 3),
+      "%.4f%% at pair %d/%d" % close_lu)
+check("against the worst-ring bound that is the 1.8x Section 5.7 quotes",
+      abs(close_lu[0] / worst_single - 1.8) < 0.05,
+      "%.2fx" % (close_lu[0] / worst_single))
+check("its own envelope is 0.0175%, so it is really 15.4x clear",
+      abs(ENV[(2, 3)] - 0.0175) < 0.0005
+      and abs(close_lu[0] / ENV[(2, 3)] - 15.4) < 0.1,
+      "%.4f%%, %.1fx" % (ENV[(2, 3)], close_lu[0] / ENV[(2, 3)]))
+check("and the tightest of the eight by its own envelope is 13.8x",
+      abs(min(abs(y_lu[a] - y_lu[b]) / ENV[(a, b)] for a, b in PAIRS_T) - 13.8)
+      < 0.1,
+      "%.1fx" % min(abs(y_lu[a] - y_lu[b]) / ENV[(a, b)] for a, b in PAIRS_T))
+check("under full RC the same pair is 0.116%, under the worst-ring bound",
+      abs(close_rc[0] - 0.116) < 0.001 and (close_rc[1], close_rc[2]) == (2, 3)
+      and close_rc[0] < worst_single,
+      "%.4f%% against a %.4f%% bound" % (close_rc[0], worst_single))
+check("its own envelope puts it back at 6.7x, the tightest of the eight",
+      abs(close_rc[0] / ENV[(2, 3)] - 6.7) < 0.1
+      and abs(min(abs(y[a] - y[b]) / ENV[(a, b)] for a, b in PAIRS_T)
+              - close_rc[0] / ENV[(2, 3)]) < 1e-9,
+      "%.1fx" % (close_rc[0] / ENV[(2, 3)]))
+
+
+def pair_score(a, b, sigma=SIGMA_RING):
+    """Attacker accuracy, across-die entropy, and P(the box flips it).
+
+    Both rings are put in index order first. Accuracy and entropy do not care
+    which way round a pair is written, but the drift interval does: LO and HI
+    are the extremes of dep[i] - dep[j] and pairing them with a separation
+    computed the other way round negates one and not the other. A rule that
+    sorts rings by frequency hands pairs over in whatever order the sort left
+    them, so this is not hypothetical.
+    """
+    i, j = (a, b) if a < b else (b, a)
+    sp = sigma * math.sqrt(2.0)
+    d = y[i] - y[j]
+    p = phi(d / sp)
+    return (max(p, 1 - p), hbin(p),
+            phi((-LO[(i, j)] - d) / sp) - phi((-HI[(i, j)] - d) / sp))
+
+
+def total(m, sigma=SIGMA_RING):
+    t = [0.0, 0.0, 0.0]
+    for a, b in m:
+        for i, v in enumerate(pair_score(a, b, sigma)):
+            t[i] += v
+    return t
+
+
+acc_d, ent_d, uns_d = total(PAIRS_T)
+check("the pairing that was built calls 7.91 of 8", round(acc_d, 2) == 7.91,
+      "%.4f" % acc_d)
+check("and carries 0.46 bits of entropy, matching Section 7",
+      abs(ent_d - ent) < 1e-9 and round(ent_d, 2) == 0.46, "%.4f" % ent_d)
+check("and 0.06 expected unstable bits", round(uns_d, 2) == 0.06, "%.4f" % uns_d)
+
+# The bound argued before the search: which pairs could hide a bit at all.
+band = [k for k in ENV if abs(y[k[0]] - y[k[1]]) < SP]
+usable = [k for k in band if abs(y[k[0]] - y[k[1]]) > ENV[k]]
+check("only 3 of the 120 candidate pairs sit under one sigma",
+      len(band) == 3, "%d" % len(band))
+check("all 3 are still clear of their own drift envelope",
+      len(usable) == 3, "%d" % len(usable))
+check("and they are three pairs of the same three rings, 6, 9 and 13",
+      sorted({r for k in usable for r in k}) == [6, 9, 13],
+      "rings " + ",".join(map(str, sorted({r for k in usable for r in k}))))
+check("so no two of them are disjoint and a pairing can use one",
+      all(set(u) & set(v) for u in usable for v in usable))
+
+
+def dp_min_leakage(sigma=SIGMA_RING):
+    """Least-leaky pairing by dynamic programming over subsets of rings.
+
+    The lowest ring still free has to be paired with something, so trying each
+    partner and solving the remaining subset covers every pairing while only
+    ever touching 2**16 subsets. It never enumerates a pairing, which is the
+    point of it being here: pairing_policy.py finds this number by walking all
+    two million, and if the two agree the walk is not skipping any.
+    """
+    memo = {0: (0.0, ())}
+
+    def solve_mask(mask):
+        if mask in memo:
+            return memo[mask]
+        i = (mask & -mask).bit_length() - 1
+        rest = mask & ~(1 << i)
+        out = None
+        for j in range(NRO):
+            if (rest >> j) & 1:
+                sub = solve_mask(rest & ~(1 << j))
+                cand = (sub[0] + pair_score(i, j, sigma)[0], sub[1] + ((i, j),))
+                if out is None or cand[0] < out[0]:
+                    out = cand
+        memo[mask] = out
+        return out
+
+    sys.setrecursionlimit(10000)
+    return solve_mask((1 << NRO) - 1)
+
+
+best_acc, best_m = dp_min_leakage()
+be, bent, buns = total(best_m)
+check("the least-leaky pairing of all 2027025 calls 7.28 of 8",
+      round(best_acc, 2) == 7.28 and abs(be - best_acc) < 1e-9,
+      "%.4f" % best_acc)
+check("it carries 2.69 bits and costs 0.32 expected unstable bits",
+      round(bent, 2) == 2.69 and round(buns, 2) == 0.32,
+      "%.4f bits, %.4f unstable" % (bent, buns))
+check("so the whole free parameter is worth 0.62 bits to the attacker",
+      abs((acc_d - best_acc) - 0.62) < 0.005, "%.4f" % (acc_d - best_acc))
+check("which is 16% of the 3.91 bits he holds above guessing",
+      abs(100 * (acc_d - best_acc) / (acc_d - 4.0) - 16) < 1.0,
+      "%.1f%%" % (100 * (acc_d - best_acc) / (acc_d - 4.0)))
+
+
+def walk(n):
+    """Every pairing, iteratively, as a running (accuracy, instability).
+
+    An explicit stack rather than a recursion, so a fault in pairing_policy.py's
+    generator cannot be reproduced here by accident.
+    """
+    start = (1 << n) - 1
+    stack = [(start, 0.0, 0.0)]
+    while stack:
+        mask, acc, uns = stack.pop()
+        if not mask:
+            yield acc, uns
+            continue
+        i = (mask & -mask).bit_length() - 1
+        rest = mask & ~(1 << i)
+        j = 0
+        while j < n:
+            if (rest >> j) & 1:
+                s = pair_score(i, j)
+                stack.append((rest & ~(1 << j), acc + s[0], uns + s[2]))
+            j += 1
+
+
+n_all = n_dom = 0
+seen_min = 1e9
+for _a, _u in walk(NRO):
+    n_all += 1
+    if _a < seen_min:
+        seen_min = _a
+    if _a < acc_d - 1e-12 and _u < uns_d - 1e-12:
+        n_dom += 1
+check("the iterative walk counts 15!! = 2027025 pairings", n_all == 2027025,
+      "%d" % n_all)
+check("and finds the same minimum the dynamic program did",
+      abs(seen_min - best_acc) < 1e-9, "%.6f against %.6f" % (seen_min, best_acc))
+check("89460 pairings beat the built one on leakage and stability at once",
+      n_dom == 89460, "%d, %.3f%%" % (n_dom, 100.0 * n_dom / n_all))
+
+
+def by_rank(rank, rule):
+    s = sorted(range(len(rank)), key=lambda i: rank[i])
+    h = len(s) // 2
+    if rule == "neighbour":
+        return [(s[i], s[i + 1]) for i in range(0, len(s), 2)]
+    if rule == "split":
+        return [(s[i], s[i + h]) for i in range(h)]
+    return [(s[i], s[len(s) - 1 - i]) for i in range(h)]
+
+
+for rule, want_a, want_e, want_u in (("neighbour", 7.40, 2.19, 0.30),
+                                     ("split", 8.00, 0.00, 0.00),
+                                     ("extremal", 7.67, 0.92, 0.14)):
+    ta, te, tu = total(by_rank(y, rule))
+    check("the %s rule calls %.2f, carries %.2f bits, costs %.2f unstable"
+          % (rule, want_a, want_e, want_u),
+          round(ta, 2) == want_a and round(te, 2) == want_e
+          and round(tu, 2) == want_u,
+          "%.4f / %.4f / %.4f" % (ta, te, tu))
+
+check("no closed-form rule reaches the enumerated optimum",
+      min(total(by_rank(y, r))[0] for r in ("neighbour", "split", "extremal"))
+      > best_acc + 1e-9,
+      "best rule %.4f against %.4f"
+      % (min(total(by_rank(y, r))[0] for r in ("neighbour", "split", "extremal")),
+         best_acc))
+
+# Choosing the pairing from the extraction instead of from a simulation.
+_b = solve(design([cap_a], NRO_A), f_a)
+pred_f = [_b[0] + _b[1] * c for c in cap]
+swaps = sum(1 for i in range(NRO) for j in range(i + 1, NRO)
+            if (pred_f[i] > pred_f[j]) != (y[i] > y[j]))
+check("the transferred model puts 1 of the 120 ring pairs the wrong way round",
+      swaps == 1, "%d" % swaps)
+for rule in ("neighbour", "split", "extremal"):
+    a_p = total(by_rank(pred_f, rule))[0]
+    a_t = total(by_rank(y, rule))[0]
+    check("choosing the %s pairing from the extraction alone costs nothing"
+          % rule, abs(a_p - a_t) < 0.005, "%.4f against %.4f" % (a_p, a_t))
+
+# The other build, where the same rule is worth four times as much.
+ya_c = centred(f_a)
+
+
+def total_a(m):
+    sp = SIGMA_RING * math.sqrt(2.0)
+    t = [0.0, 0.0]
+    for a, b in m:
+        p = phi((ya_c[a] - ya_c[b]) / sp)
+        t[0] += max(p, 1 - p)
+        t[1] += hbin(p)
+    return t
+
+
+idx_a = [(i, i + 1) for i in range(0, NRO_A, 2)]
+nb_a = by_rank(ya_c, "neighbour")
+check("on the 32-ring build the built order calls 16.00 of 16",
+      round(total_a(idx_a)[0], 2) == 16.00, "%.4f" % total_a(idx_a)[0])
+check("and the neighbour rule takes it to 13.32",
+      round(total_a(nb_a)[0], 2) == 13.32, "%.4f" % total_a(nb_a)[0])
+_ga = sorted(ya_c)
+_gb = sorted(y)
+_ma = st.median([_ga[i + 1] - _ga[i] for i in range(NRO_A - 1)])
+_mb = st.median([_gb[i + 1] - _gb[i] for i in range(NRO - 1)])
+check("twice the rings halves the median gap, 0.218% to 0.130%",
+      abs(_mb - 0.218) < 0.001 and abs(_ma - 0.130) < 0.001,
+      "%.4f%% and %.4f%%" % (_mb, _ma))
 
 
 # ----------------------------------------------------------------- control

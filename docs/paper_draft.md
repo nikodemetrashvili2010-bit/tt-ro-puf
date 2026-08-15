@@ -43,6 +43,17 @@ calls 7.19 of the 8 bits against 4.00 for guessing. The gap between those two
 numbers is the paper's point: compensation separates variation from secrecy,
 and only the first of them responds to it.
 
+The cheapest countermeasure available fails differently, and the way it fails is
+the more useful result. Which oscillators get compared is a free parameter:
+sixteen rings split into eight pairs 2,027,025 ways and the shipped design uses
+the order its generate loop produced. Enumerating all of them, the best pairing
+takes 0.62 of the 3.91 bits a reader holds above guessing, 16%, and it is paid
+for in reliability, because hiding a bit means making its comparison a near-tie
+and a near-tie is what drifts across voltage and temperature. Only 3 of the 120
+candidate pairs are close enough together to hide a bit and far enough apart to
+keep it, and all three are drawn from the same three oscillators, so at most one
+of them can be used at once.
+
 The mechanism behind the fixed term is measured rather than assumed. Across nine
 builds that differ only in target placement density, the 16 automatically placed
 oscillators of Arm A spread 4.19% to 6.99% peak to peak with a median of 5.75%,
@@ -578,9 +589,12 @@ Across all eleven operating points, which include both supply extremes, both
 temperature extremes and the four combinations of them, the eight Arm A
 adjacent-pair bits keep their sign. The margin is real but not large. The
 closest pair is separated by 0.270 percent of the arm mean and the largest
-ring-to-ring departure in the box is 0.150 percent, a factor of 1.8. This is a
-statement about one simulated layout at nominal process and not a reliability
-result.
+ring-to-ring departure in the box is 0.150 percent, a factor of 1.8. That
+comparison is conservative to the point of being misleading, because it weighs a
+pair against a departure the pair does not see; Section 7.3 recomputes the same
+box shift per pair from these logs and puts the tightest of the eight at 13.8
+times clear. This is a statement about one simulated layout at nominal process
+and not a reliability result.
 
 Thermal noise is estimated rather than simulated. A separate deck measures dV/dt
 at the switching threshold on all 31 nodes of three rings, chosen as the
@@ -890,6 +904,127 @@ of the two figures it inherits from Section 6 has moved,
 `verify_predictability.py` re-derives every value in this subsection from the
 raw SPEF with its own solver.
 
+### 7.3 If the oscillators are paired differently
+
+There is a second objection, and it is cheaper than compensation. The design
+compares ring 0 against ring 1, ring 2 against ring 3, and so on. That order is
+an accident of the generate loop; nothing about the physics chose it. Sixteen
+rings split into eight pairs 2,027,025 different ways, so Section 7.1's result
+is quoted at one arbitrary setting of a free parameter that costs nothing to
+change. A permutation in the RTL uses no area, no power and no silicon, and if
+some other pairing restores the missing entropy it belongs ahead of any
+countermeasure that needs a hard macro.
+
+The mechanism is real and it is not obscurity. A bit is decided in advance when
+the routing separation between its two rings is large against per-die mismatch,
+so pairing rings that route to nearly equal delay shrinks the separation and
+hands the decision back to mismatch. An attacker reads the new pairing out of
+the public RTL and learns nothing useful from it: what would defeat him is the
+physical rebalancing, not his ignorance of the permutation.
+
+That is also where it fails, and a leakage-only analysis does not see it. A
+near-equal pair is a near-tie, and a response bit has to repeat on the same die
+at every voltage and temperature the part is sold at. Shrinking a separation to
+hide the bit from a reader is the same act as making it unstable for the owner.
+So the pairing has to be scored on two axes at once: the bits a reader of the
+design files calls, and the bits expected to change sign somewhere in the
+operating box on a random die.
+
+The second needs a per-pair number rather than a global one. Section 5.7 reports
+the largest departure of any single ring from the common-mode shift across the
+-40 to 125 C and 1.62 to 1.98 V box as 0.150%, but what a pair is exposed to is
+how its own two rings move relative to each other, and the same ten corner logs
+give that directly. Over the 120 candidate pairs it runs from 0.004% to 0.282%,
+and over the eight pairs the design actually built, 0.017% to 0.165%. Drift also
+has a direction, so the signed extremes are kept rather than collapsed into a
+symmetric envelope: two rings that only ever pull further apart are in no danger
+however far they pull. A pairing therefore chooses its own exposure to drift at
+the same time as it chooses its leakage, from the same numbers.
+
+That per-pair envelope also revises a margin quoted earlier, and in the safe
+direction. Section 5.7 divides the closest pair separation, 0.270%, by the
+worst-ring bound of 0.150% and reports a factor of 1.8. Scored against each
+pair's own envelope instead, the tightest of the eight sits 13.8 times clear and
+none is under that, which is a better account of why no bit changes sign at any
+of the eleven operating points than a factor of 1.8 would predict. The 1.8 was
+never wrong, but it compares a pair against a departure that pair does not see,
+and using it to choose a pairing would reject alternatives that are perfectly
+stable. One inconvenience comes with the correction. The corner sweep runs on
+the lumped-capacitance decks, where the closest pair is 0.270% apart; under the
+full RC network the same pair is 0.116% apart, below the 0.150% worst-ring bound
+outright, and only its own 0.0175% envelope puts it back at 6.7 times clear. The
+sign-stability result of Section 5.7 is therefore a lumped-model result, and the
+RC margin is inferred by carrying that envelope across parasitic models rather
+than measured.
+
+All 2,027,025 pairings were enumerated, so what follows is the true frontier and
+not the output of a search that might have stopped early.
+
+| pairing | bits called of 8 | entropy | expected unstable |
+|---|---:|---:|---:|
+| as built, index order | 7.91 | 0.46 | 0.06 |
+| sort by frequency, pair neighbours | 7.40 | 2.19 | 0.30 |
+| sort, slowest against fastest | 7.67 | 0.92 | 0.14 |
+| sort, slow half against fast half | 8.00 | 0.00 | 0.00 |
+| the best of all 2,027,025 | 7.28 | 2.69 | 0.32 |
+
+The whole free parameter is worth 0.62 bits. The attacker holds 3.91 bits above
+guessing and the best pairing this build allows takes 16% of them off him, at a
+cost of 0.32 expected unstable bits against 0.06 as built. Crossing the frontier
+end to end buys 0.72 bits and costs 0.32, so a bit taken back from him costs
+about half a bit of reliability. The built pairing is not on the frontier, and
+89,460 of the 2,027,025 alternatives, 4.4%, beat it on both axes at once, which
+says the generate loop's order was luckier than average rather than good.
+
+Why the gain is small was visible before any of that ran. Hiding a bit
+needs a separation under about one standard deviation of pair mismatch, 0.088%.
+Keeping it needs a separation above that pair's own drift envelope, median
+0.098%. The two windows overlap, and on this build only three of the 120
+candidate pairs fall inside both: rings 6 against 9, 6 against 13, and 9 against
+13. They are three pairs drawn from three rings, so no two of them are disjoint
+and a pairing can use exactly one. Seven of the eight bits are called or
+unreliable before any pairing is chosen.
+
+None of the four rules in the table needs a search, and each is computable at
+place-and-route time, which matters, because a permutation found by enumerating
+two million cases is not a design rule. They also do not reach the enumerated
+optimum: the best of them calls 7.40 against 7.28, because accuracy saturates
+once a pair is a few sigma apart, so concentrating separation into fewer pairs
+costs less than spreading it evenly, and the rule that minimises total
+separation is not the rule that minimises leakage. Sorting needs frequencies,
+which are not known when the pairing is chosen, but the Section 6.2 model fitted
+on the earlier build turns extracted capacitance into a predicted order that
+misranks 1 of the 120 ring pairs and selects pairings scoring within 0.002 bits
+of the same rules applied to the simulated frequencies. Applying the
+countermeasure needs no simulation of the block, which is a statement about its
+cost and not a defence of it.
+
+One scaling result is worth carrying into the silicon design. On the earlier
+32-oscillator build the neighbour rule takes a reader from 16.00 of 16 down to
+13.32, a third of what he holds above guessing, against an eighth on the shipped
+build. The two builds have nearly the same spread, 1.90% and 1.74%, so what
+differs is density: twice as many rings across the same range halves the median
+gap between neighbours in the sorted order, 0.218% to 0.130%, and it is the gap
+that has to fall under the mismatch scale. Re-pairing is worth more the more
+oscillators there are. That half of the trade is unpriced, because the earlier
+build has no corner logs and its reliability cost cannot be scored, and the
+shipped build says reliability is exactly where the cost lands.
+
+Doubling the mismatch scale is the case where re-pairing should look best, since
+mismatch is what has to win the comparison, and there the free parameter is
+worth 1.28 bits rather than 0.62. It is a modest gain in the most favourable
+assumption available, not a countermeasure.
+
+Scope: everything Section 7.2 already caveats, plus one limit of its own. The
+corner logs are the lumped-capacitance decks and the separations are the
+full-RC ones, so the drift envelope is carried across parasitic models, and the
+direction of that error is not known.
+
+The script is `sim/spice/gono/pairing_policy.py`. `verify_predictability.py`
+re-derives every number above from the raw corner logs with its own parser, and
+finds the enumerated optimum a second time by dynamic programming over subsets
+of rings, which never enumerates a pairing at all.
+
 ## 8. Matched-macro arm
 
 ### 8.1 One macro, sixteen instances
@@ -1119,6 +1254,21 @@ per-ring residuals differ by 4% return 1.56 and 2.91 bits. I report the
 direction of that result and the interval around it, and I would not defend the
 central value to two decimal places.
 
+Section 7.3 has a limit that belongs to it alone, and it is the weaker half of
+that section's evidence. The drift envelope it scores every pairing against
+comes from the corner logs, which are lumped-capacitance decks, while the pair
+separations come from the full RC network. Carrying the envelope between the two
+parasitic models is an assumption, and unlike Section 5.5's cross-model check
+there is no second extraction to compare it against, so the direction of the
+error is unknown. The leakage half of that section does not depend on it: the
+0.62 bits the free parameter is worth, the 3 candidate pairs of 120 that could
+hide a bit and the 16% ceiling are all computed from separations alone. What
+depends on it is the price, and the price is the part of the argument that says
+re-pairing is not free. The 32-oscillator comparison has the same weakness in a
+worse form: that build has no corner logs at all, so its 33% figure is a
+leakage number with no reliability cost attached to it, and it should be read as
+a reason to expect more from a larger array rather than as a measured trade.
+
 Those are the limits of the argument. The limits of the arithmetic behind it
 are audited separately, in `sim/spice/gono/numerical_audit.py`, because a
 result computed from sixteen numbers can be wrong quietly. Four things were
@@ -1202,6 +1352,19 @@ comes out of the same files the attacker downloads: they subtract it too and
 still call 7.19 of the 8. A countermeasure computed from public artefacts can
 make a response more variable across dies without making any part of it unknown
 to a reader, and those two properties are usually reported as if they were one.
+
+The cheaper countermeasure fails for a different reason, and it is the one worth
+carrying to the next design. Which oscillators get compared costs nothing to
+change, so I enumerated all 2,027,025 ways of pairing the sixteen and scored
+every one of them twice: what a reader calls, and what drifts. The best takes
+0.62 bits off him, 16% of what he holds above guessing, and charges half a bit
+of reliability for each one, because a comparison small enough to hide from a
+reader is a comparison the operating box can flip. Three of the 120 candidate
+pairs sit in both windows at once, and they are three pairs of the same three
+oscillators, so a design can use one. The trade improves with array size for a
+reason that is a sizing argument rather than a result about this block: twice
+the oscillators across the same spread halves the gap between neighbours in the
+sorted order, and it is that gap that has to fall under the mismatch scale.
 
 The same die carries the mitigation, and it holds up under the same questions.
 Sixteen instances of one hardened macro share their internal routing, but not
