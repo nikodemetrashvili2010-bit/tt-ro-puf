@@ -1,0 +1,55 @@
+{
+  "schema": "phaseA-ring-census/1",
+  "netlists": [
+    {
+      "combinational_cells": 6038,
+      "sequential_cells": 482,
+      "rings": 256,
+      "shapes": [
+        {
+          "count": 256,
+          "cells": 9,
+          "composition": [
+            "sky130_fd_sc_hd__and2_1",
+            "sky130_fd_sc_hd__clkbuf_1",
+            "sky130_fd_sc_hd__inv_2",
+            "sky130_fd_sc_hd__inv_2",
+            "sky130_fd_sc_hd__inv_2",
+            "sky130_fd_sc_hd__inv_2",
+            "sky130_fd_sc_hd__inv_2",
+            "sky130_fd_sc_hd__inv_2",
+            "sky130_fd_sc_hd__inv_2"
+          ]
+        }
+      ],
+      "netlist": "tt_um_litneet64_ro_puf.v",
+      "netlist_sha256": "758f53a63a093444a5f9cdc8f36ed839b91aa9f40d5e99dcf5ffb1852bbb68ae"
+    },
+    {
+      "combinational_cells": 1264,
+      "sequential_cells": 16,
+      "rings": 64,
+      "shapes": [
+        {
+          "count": 62,
+          "cells": 2,
+          "composition": [
+            "sky130_fd_sc_hd__and2b_1",
+            "sky130_fd_sc_hd__clkbuf_1"
+          ]
+        },
+        {
+          "count": 2,
+          "cells": 3,
+          "composition": [
+            "sky130_fd_sc_hd__and2_1",
+            "sky130_fd_sc_hd__clkbuf_1",
+            "sky130_fd_sc_hd__inv_2"
+          ]
+        }
+      ],
+      "netlist": "tt_um_PUF.v",
+      "netlist_sha256": "389015e0870d49157e290267d46e18fbed0248e437af3c0990e5bc93248c9784"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ jobs:
 
       - name: Check Python and archived numerical evidence
         run: |
-          python3 -m compileall -q sim
+          python3 -m compileall -q sim extraction
           python3 sim/ref_model.py
           python3 sim/montecarlo.py
           python3 sim/h3_audit.py
@@ -69,6 +69,10 @@ jobs:
           python3 sim/spice/gono/analyze_supply.py --dir sim/spice/gono/supply
           python3 sim/spice/gono/analyze_noise.py
           python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
+          python3 extraction/fetch_inputs.py --selftest
+          python3 extraction/verify_inputs.py --selftest
+          python3 extraction/ring_census.py --selftest
+          python3 extraction/verify_inputs.py
 
   gds:
     needs: archived-evidence

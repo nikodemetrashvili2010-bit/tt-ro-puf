@@ -1,0 +1,274 @@
+{
+  "schema": "phaseA-manifest/1",
+  "written_utc": "2026-08-16T13:36:52Z",
+  "sources_sha256": "1ad0fae35bce7d7d35ce30d449d2fd14cc511dee11c2bf2a2379d671aba48702",
+  "targets": [
+    {
+      "id": "tt_um_litneet64_ro_puf",
+      "shuttle": "tt07",
+      "chip_position": 142,
+      "title": "RO-based Physically Unclonable Function (PUF)",
+      "author": "Pablo Aravena",
+      "tiles": "1x2",
+      "page": "https://tinytapeout.com/chips/tt07/tt_um_litneet64_ro_puf",
+      "role": "A.6 primary blind target",
+      "why_chosen": "Ring-oscillator PUF on the same PDK and the same automated flow as ours, with a public call for board owners to submit their full CRP set. The comparison it makes is the one our attack predicts. Chosen 2026-08-16, before any prediction was produced."
+    },
+    {
+      "id": "tt_um_PUF",
+      "shuttle": "tt07",
+      "chip_position": 899,
+      "title": "Reversible logic based Ring-Oscillator Physically Unclonable Function (RO-PUF)",
+      "author": "Syed Farah Naz, Shivam Bhardwaj, Ambika Prasad Shah",
+      "tiles": "1x1",
+      "page": "https://tinytapeout.com/chips/tt07/tt_um_PUF",
+      "role": "A.7 generalization target, conditional",
+      "why_chosen": "Second ring-oscillator PUF on the same shuttle and the same flow, built from a different RTL style. It tests whether the adapter generalizes or was fitted to one author's coding habits. Chosen 2026-08-16, before any prediction was produced."
+    }
+  ],
+  "repos": {
+    "tt07_shuttle": {
+      "url": "https://github.com/TinyTapeout/tinytapeout-07",
+      "commit": "3c541b4b416e60c8aca1efc2eeb3c05875f8c526",
+      "what": "The shuttle repository. Holds the hardened per-project artifacts that were manufactured."
+    },
+    "litneet64_src": {
+      "url": "https://github.com/litneet64/tt07-RO-based-PUF",
+      "commit": "4b29b12bf850ac229c7b1a681cafa59b181d0609",
+      "what": "Author's RTL at the commit the shuttle actually hardened, taken from commit_id.json rather than from HEAD."
+    },
+    "shivam7086_src": {
+      "url": "https://github.com/shivam7086/tt07-verilog-RO_PUF",
+      "commit": "49341c4770f169512c37b6a54f9bd77c67b71903",
+      "what": "Author's RTL at the commit the shuttle actually hardened."
+    }
+  },
+  "inputs": [
+    {
+      "local": "litneet64_src/src/arbiter.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "rtl",
+      "bytes": 667,
+      "sha256": "7c1bc55ebf8aeb448fd6f43a325b6c555a19aa88c2532b2fa9b650580aace4f6",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/arbiter.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "litneet64_src/src/config.tcl",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "flow_config",
+      "bytes": 2805,
+      "sha256": "1606ae60bd4dbb65b441e5e76a1e64a407c226f6e24a517f5935eb7bde0f7668",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/config.tcl",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "litneet64_src/src/counter.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "rtl",
+      "bytes": 462,
+      "sha256": "88d731c7e983cef287a11568bda21497dc606c0cd13da3c8fb2f35f5e75648f1",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/counter.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "litneet64_src/src/mux_16.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "rtl",
+      "bytes": 736,
+      "sha256": "6c2272034716959f5c71116e0fd015a41a312b77d2f451c287f40e33837b7a38",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/mux_16.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "litneet64_src/src/puf_bit.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "rtl",
+      "bytes": 694,
+      "sha256": "24533e91efbace3b74e8199b010af5be01d3fab50f7e50a196e3ba26294140a6",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/puf_bit.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "litneet64_src/src/ring_osc.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "rtl",
+      "bytes": 395,
+      "sha256": "c77b23c33cc41ad83f7176b301457700326b10f159e71776493d9d5078259284",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/ring_osc.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "litneet64_src/src/tt_um_ro_puf.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "rtl",
+      "bytes": 1072,
+      "sha256": "c40165e812fd3b0527231ade6077f5735aa204600007df16c5abc462053f76ad",
+      "url": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/4b29b12bf850ac229c7b1a681cafa59b181d0609/src/tt_um_ro_puf.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "shivam7086_src/src/config.tcl",
+      "target": "tt_um_PUF",
+      "class": "flow_config",
+      "bytes": 2804,
+      "sha256": "6f4fb5f83ca644e2cbeba337cb337bdda04954c2aedaa3ebd521628e2df65ee4",
+      "url": "https://raw.githubusercontent.com/shivam7086/tt07-verilog-RO_PUF/49341c4770f169512c37b6a54f9bd77c67b71903/src/config.tcl",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "shivam7086_src/src/project.v",
+      "target": "tt_um_PUF",
+      "class": "rtl",
+      "bytes": 4023,
+      "sha256": "72dbee6309377a5e4919688ab557684564215b9fc96ade498b7219340d4cb44e",
+      "url": "https://raw.githubusercontent.com/shivam7086/tt07-verilog-RO_PUF/49341c4770f169512c37b6a54f9bd77c67b71903/src/project.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/commit_id.json",
+      "target": "tt_um_PUF",
+      "class": "provenance",
+      "bytes": 429,
+      "sha256": "e61e4706be76a7b2d55392dfc474f4b20b8bb6e311f1aef6863ebd79169c30ac",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/commit_id.json",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/docs/info.md",
+      "target": "tt_um_PUF",
+      "class": "metadata",
+      "bytes": 2039,
+      "sha256": "d8c561a2f95c73b4c1e533a03f783a1ce5b103d6b7e0024320afb1c11a1e5780",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/docs/info.md",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/info.yaml",
+      "target": "tt_um_PUF",
+      "class": "metadata",
+      "bytes": 1753,
+      "sha256": "6f473467f7de444053ef42d022b4f4716aa33208f57f2e98039ba226821c6325",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/info.yaml",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/stats/metrics.csv",
+      "target": "tt_um_PUF",
+      "class": "metadata",
+      "bytes": 1848,
+      "sha256": "f2756c173a12035ce79f265438340ca7367d32387631bb66bf4a18ed4f0d6ed9",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/stats/metrics.csv",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/tt_um_PUF.gds",
+      "target": "tt_um_PUF",
+      "class": "layout",
+      "bytes": 1075580,
+      "sha256": "5892bfc1cd146f943aead2c56fa717dd17a7786d1f5c2d85fa062c7b248d3c59",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/tt_um_PUF.gds",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/tt_um_PUF.lef",
+      "target": "tt_um_PUF",
+      "class": "abstract",
+      "bytes": 11700,
+      "sha256": "f1e4f4e0a9b19ccf5cb95941ec48aa987d59ed0d3d906bc55781ace3f67d0f47",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/tt_um_PUF.lef",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/tt_um_PUF.spef",
+      "target": "tt_um_PUF",
+      "class": "parasitics",
+      "bytes": 282028,
+      "sha256": "d90e4bd0807ed1fd0d0573222d609ac746efeabb2c3e4b02a4c59eb3a4e235ce",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/tt_um_PUF.spef",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_PUF/tt_um_PUF.v",
+      "target": "tt_um_PUF",
+      "class": "netlist",
+      "bytes": 231769,
+      "sha256": "389015e0870d49157e290267d46e18fbed0248e437af3c0990e5bc93248c9784",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_PUF/tt_um_PUF.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/commit_id.json",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "provenance",
+      "bytes": 423,
+      "sha256": "5c15d132bb4aed42d41e81489aab69617d6105ad04da1c4df80e9d7c3b2b9418",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/commit_id.json",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/docs/info.md",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "metadata",
+      "bytes": 3628,
+      "sha256": "a52974fb0e9e773a2b2f53becc5baf79ca3a46d1e286260c02e4dc8ca7fa0d34",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/docs/info.md",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/info.yaml",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "metadata",
+      "bytes": 1962,
+      "sha256": "a8702fafcf4df161d7f5b94811caad2a078593ddbdf8833c023a7c960e2010c5",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/info.yaml",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/stats/metrics.csv",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "metadata",
+      "bytes": 1876,
+      "sha256": "decb11059137250819edadefb834aa23aa7f846dd519aea7f621e75257face7b",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/stats/metrics.csv",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.gds",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "layout",
+      "bytes": 7365590,
+      "sha256": "e1d1801ed57f2ff3a30669bdada4c0a205ab66e9f0686b3d135aa1399f91d458",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.gds",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.lef",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "abstract",
+      "bytes": 10974,
+      "sha256": "c41591f7e4af51a1959f1fcf7c94be5607bac466d671ca1d3494001d0f2b78c6",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.lef",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.spef",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "parasitics",
+      "bytes": 3079464,
+      "sha256": "0a38eee1d4b49676e699286f3113cb3b94c44f6615f25887ddf889199f25e9cb",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.spef",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    },
+    {
+      "local": "tt07_shuttle/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.v",
+      "target": "tt_um_litneet64_ro_puf",
+      "class": "netlist",
+      "bytes": 1315899,
+      "sha256": "758f53a63a093444a5f9cdc8f36ed839b91aa9f40d5e99dcf5ffb1852bbb68ae",
+      "url": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/3c541b4b416e60c8aca1efc2eeb3c05875f8c526/projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.v",
+      "retrieved_utc": "2026-08-16T13:36:52Z"
+    }
+  ],
+  "manifest_digest": "916d87e6ba6836dcb895d45238e84e3ba616ac0db9004171f374cbf8b5f4c4e6"
+}

@@ -1,0 +1,78 @@
+{
+  "schema": "phaseA-sources/1",
+  "declared_utc": "2026-08-16",
+  "purpose": "Every external input Phase A is allowed to read. Declared before any response prediction is made, per the target-selection rule in PLAN_TO_DECEMBER.md.",
+  "repos": {
+    "tt07_shuttle": {
+      "url": "https://github.com/TinyTapeout/tinytapeout-07",
+      "commit": "3c541b4b416e60c8aca1efc2eeb3c05875f8c526",
+      "what": "The shuttle repository. Holds the hardened per-project artifacts that were manufactured.",
+      "raw": "https://raw.githubusercontent.com/TinyTapeout/tinytapeout-07/{commit}/{path}"
+    },
+    "litneet64_src": {
+      "url": "https://github.com/litneet64/tt07-RO-based-PUF",
+      "commit": "4b29b12bf850ac229c7b1a681cafa59b181d0609",
+      "what": "Author's RTL at the commit the shuttle actually hardened, taken from commit_id.json rather than from HEAD.",
+      "raw": "https://raw.githubusercontent.com/litneet64/tt07-RO-based-PUF/{commit}/{path}"
+    },
+    "shivam7086_src": {
+      "url": "https://github.com/shivam7086/tt07-verilog-RO_PUF",
+      "commit": "49341c4770f169512c37b6a54f9bd77c67b71903",
+      "what": "Author's RTL at the commit the shuttle actually hardened.",
+      "raw": "https://raw.githubusercontent.com/shivam7086/tt07-verilog-RO_PUF/{commit}/{path}"
+    }
+  },
+  "targets": [
+    {
+      "id": "tt_um_litneet64_ro_puf",
+      "shuttle": "tt07",
+      "chip_position": 142,
+      "title": "RO-based Physically Unclonable Function (PUF)",
+      "author": "Pablo Aravena",
+      "tiles": "1x2",
+      "page": "https://tinytapeout.com/chips/tt07/tt_um_litneet64_ro_puf",
+      "role": "A.6 primary blind target",
+      "why_chosen": "Ring-oscillator PUF on the same PDK and the same automated flow as ours, with a public call for board owners to submit their full CRP set. The comparison it makes is the one our attack predicts. Chosen 2026-08-16, before any prediction was produced.",
+      "files": [
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.gds", "class": "layout"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.lef", "class": "abstract"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.v", "class": "netlist"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/tt_um_litneet64_ro_puf.spef", "class": "parasitics"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/commit_id.json", "class": "provenance"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/info.yaml", "class": "metadata"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/stats/metrics.csv", "class": "metadata"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_litneet64_ro_puf/docs/info.md", "class": "metadata"},
+        {"repo": "litneet64_src", "path": "src/tt_um_ro_puf.v", "class": "rtl"},
+        {"repo": "litneet64_src", "path": "src/puf_bit.v", "class": "rtl"},
+        {"repo": "litneet64_src", "path": "src/ring_osc.v", "class": "rtl"},
+        {"repo": "litneet64_src", "path": "src/mux_16.v", "class": "rtl"},
+        {"repo": "litneet64_src", "path": "src/counter.v", "class": "rtl"},
+        {"repo": "litneet64_src", "path": "src/arbiter.v", "class": "rtl"},
+        {"repo": "litneet64_src", "path": "src/config.tcl", "class": "flow_config"}
+      ]
+    },
+    {
+      "id": "tt_um_PUF",
+      "shuttle": "tt07",
+      "chip_position": 899,
+      "title": "Reversible logic based Ring-Oscillator Physically Unclonable Function (RO-PUF)",
+      "author": "Syed Farah Naz, Shivam Bhardwaj, Ambika Prasad Shah",
+      "tiles": "1x1",
+      "page": "https://tinytapeout.com/chips/tt07/tt_um_PUF",
+      "role": "A.7 generalization target, conditional",
+      "why_chosen": "Second ring-oscillator PUF on the same shuttle and the same flow, built from a different RTL style. It tests whether the adapter generalizes or was fitted to one author's coding habits. Chosen 2026-08-16, before any prediction was produced.",
+      "files": [
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/tt_um_PUF.gds", "class": "layout"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/tt_um_PUF.lef", "class": "abstract"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/tt_um_PUF.v", "class": "netlist"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/tt_um_PUF.spef", "class": "parasitics"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/commit_id.json", "class": "provenance"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/info.yaml", "class": "metadata"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/stats/metrics.csv", "class": "metadata"},
+        {"repo": "tt07_shuttle", "path": "projects/tt_um_PUF/docs/info.md", "class": "metadata"},
+        {"repo": "shivam7086_src", "path": "src/project.v", "class": "rtl"},
+        {"repo": "shivam7086_src", "path": "src/config.tcl", "class": "flow_config"}
+      ]
+    }
+  ]
+}
