@@ -72,6 +72,7 @@ jobs:
           python3 extraction/fetch_inputs.py --selftest
           python3 extraction/verify_inputs.py --selftest
           python3 extraction/ring_census.py --selftest
+          python3 extraction/gds_census.py --selftest
           python3 extraction/verify_inputs.py
 
   gds:

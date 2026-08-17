@@ -1,0 +1,449 @@
+{
+  "schema": "phaseA-gds-census/1",
+  "projects": [
+    {
+      "design": "tt_um_litneet64_ro_puf",
+      "gds_sha256": "e1d1801ed57f2ff3a30669bdada4c0a205ab66e9f0686b3d135aa1399f91d458",
+      "netlist_sha256": "758f53a63a093444a5f9cdc8f36ed839b91aa9f40d5e99dcf5ffb1852bbb68ae",
+      "library": "tt_um_litneet64_ro_puf",
+      "structures": 61,
+      "aref_elements": 0,
+      "db_unit_m": 1e-09,
+      "die_um": [
+        161.0,
+        225.76
+      ],
+      "lef_um": [
+        161.0,
+        225.76
+      ],
+      "die_area_mm2": 0.03634736,
+      "instances": 6549,
+      "masters": 60,
+      "cells": {
+        "decap": 700,
+        "logic": 4226,
+        "fill": 1167,
+        "tap": 456
+      },
+      "outline_checked": 4926,
+      "no_outline_masters": [
+        "sky130_fd_sc_hd__fill_1",
+        "sky130_fd_sc_hd__fill_2",
+        "sky130_fd_sc_hd__tapvpwrvgnd_1"
+      ],
+      "transforms": [
+        {
+          "mirror": false,
+          "angle": 0.0,
+          "mag": 1.0,
+          "count": 2328
+        },
+        {
+          "mirror": false,
+          "angle": 180.0,
+          "mag": 1.0,
+          "count": 1053
+        },
+        {
+          "mirror": true,
+          "angle": 0.0,
+          "mag": 1.0,
+          "count": 2194
+        },
+        {
+          "mirror": true,
+          "angle": 180.0,
+          "mag": 1.0,
+          "count": 974
+        }
+      ],
+      "hierarchical_names": 1792,
+      "hierarchical_example": "genblk1[0].puf_buffer.ro_array_1[0].genblk1[0].inv",
+      "netlist_instances": 6549,
+      "ring_census_cells": 6520,
+      "fd_cells_placed": 6520,
+      "checks": [
+        {
+          "check": "database unit is 1 nm",
+          "pass": true,
+          "detail": "1e-09 m"
+        },
+        {
+          "check": "user unit is 1 um",
+          "pass": true,
+          "detail": "0.001 db units"
+        },
+        {
+          "check": "exactly one top structure",
+          "pass": true,
+          "detail": "tt_um_litneet64_ro_puf"
+        },
+        {
+          "check": "the top structure is the design",
+          "pass": true,
+          "detail": "tt_um_litneet64_ro_puf"
+        },
+        {
+          "check": "top carries one die outline on layer 235",
+          "pass": true,
+          "detail": "1 shapes"
+        },
+        {
+          "check": "the die outline starts at the origin",
+          "pass": true,
+          "detail": "0, 0"
+        },
+        {
+          "check": "die outline matches the LEF macro size",
+          "pass": true,
+          "detail": "GDS 161.000 x 225.760, LEF 161.000 x 225.760"
+        },
+        {
+          "check": "die area matches the flow's own metrics",
+          "pass": true,
+          "detail": "0.03634736 vs 0.03634736 mm^2"
+        },
+        {
+          "check": "nothing is placed below the top cell",
+          "pass": true,
+          "detail": "0 placements in other structures"
+        },
+        {
+          "check": "every placed master is defined in the file",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "placed instances match TotalCells",
+          "pass": true,
+          "detail": "6549 vs 6549"
+        },
+        {
+          "check": "logic cells match NonPhysCells",
+          "pass": true,
+          "detail": "4226 vs 4226"
+        },
+        {
+          "check": "fill cells match FillCells",
+          "pass": true,
+          "detail": "1167 vs 1167"
+        },
+        {
+          "check": "decap cells match DecapCells",
+          "pass": true,
+          "detail": "700 vs 700"
+        },
+        {
+          "check": "tap cells match WelltapCells",
+          "pass": true,
+          "detail": "456 vs 456"
+        },
+        {
+          "check": "diode cells match DiodeCells",
+          "pass": true,
+          "detail": "0 vs 0"
+        },
+        {
+          "check": "every instance origin is on the die",
+          "pass": true,
+          "detail": "0 outside"
+        },
+        {
+          "check": "instances with a cell outline stay inside the die",
+          "pass": true,
+          "detail": "0 of 4926 checked overhang"
+        },
+        {
+          "check": "the uncovered masters are physical fillers only",
+          "pass": true,
+          "detail": "sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__tapvpwrvgnd_1"
+        },
+        {
+          "check": "placements are row orientations, unscaled",
+          "pass": true,
+          "detail": "4 distinct"
+        },
+        {
+          "check": "every placement carries an instance name",
+          "pass": true,
+          "detail": "6549 of 6549"
+        },
+        {
+          "check": "GDS instance names stay distinct once unescaped",
+          "pass": true,
+          "detail": "0 collisions"
+        },
+        {
+          "check": "netlist instance names are unique",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "netlist instance names stay distinct once unescaped",
+          "pass": true,
+          "detail": "0 collisions"
+        },
+        {
+          "check": "no instance is placed that the netlist does not have",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "no instance is in the netlist that is not placed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "every shared instance has the same master",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "per-master counts agree with the netlist",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "the ring census covers this netlist",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "the ring census read this exact netlist",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "ring census cell count matches the fd cells placed",
+          "pass": true,
+          "detail": "6520 vs 6520"
+        }
+      ],
+      "checks_run": 31,
+      "checks_failed": 0
+    },
+    {
+      "design": "tt_um_PUF",
+      "gds_sha256": "5892bfc1cd146f943aead2c56fa717dd17a7786d1f5c2d85fa062c7b248d3c59",
+      "netlist_sha256": "389015e0870d49157e290267d46e18fbed0248e437af3c0990e5bc93248c9784",
+      "library": "tt_um_PUF",
+      "structures": 38,
+      "aref_elements": 0,
+      "db_unit_m": 1e-09,
+      "die_um": [
+        161.0,
+        111.52
+      ],
+      "lef_um": [
+        161.0,
+        111.52
+      ],
+      "die_area_mm2": 0.01795472,
+      "instances": 2000,
+      "masters": 37,
+      "cells": {
+        "decap": 1118,
+        "fill": 306,
+        "tap": 225,
+        "logic": 351
+      },
+      "outline_checked": 1469,
+      "no_outline_masters": [
+        "sky130_fd_sc_hd__fill_1",
+        "sky130_fd_sc_hd__fill_2",
+        "sky130_fd_sc_hd__tapvpwrvgnd_1"
+      ],
+      "transforms": [
+        {
+          "mirror": false,
+          "angle": 0.0,
+          "mag": 1.0,
+          "count": 955
+        },
+        {
+          "mirror": false,
+          "angle": 180.0,
+          "mag": 1.0,
+          "count": 74
+        },
+        {
+          "mirror": true,
+          "angle": 0.0,
+          "mag": 1.0,
+          "count": 864
+        },
+        {
+          "mirror": true,
+          "angle": 180.0,
+          "mag": 1.0,
+          "count": 107
+        }
+      ],
+      "hierarchical_names": 0,
+      "hierarchical_example": null,
+      "netlist_instances": 2000,
+      "ring_census_cells": 1280,
+      "fd_cells_placed": 1280,
+      "checks": [
+        {
+          "check": "database unit is 1 nm",
+          "pass": true,
+          "detail": "1e-09 m"
+        },
+        {
+          "check": "user unit is 1 um",
+          "pass": true,
+          "detail": "0.001 db units"
+        },
+        {
+          "check": "exactly one top structure",
+          "pass": true,
+          "detail": "tt_um_PUF"
+        },
+        {
+          "check": "the top structure is the design",
+          "pass": true,
+          "detail": "tt_um_PUF"
+        },
+        {
+          "check": "top carries one die outline on layer 235",
+          "pass": true,
+          "detail": "1 shapes"
+        },
+        {
+          "check": "the die outline starts at the origin",
+          "pass": true,
+          "detail": "0, 0"
+        },
+        {
+          "check": "die outline matches the LEF macro size",
+          "pass": true,
+          "detail": "GDS 161.000 x 111.520, LEF 161.000 x 111.520"
+        },
+        {
+          "check": "die area matches the flow's own metrics",
+          "pass": true,
+          "detail": "0.01795472 vs 0.01795472 mm^2"
+        },
+        {
+          "check": "nothing is placed below the top cell",
+          "pass": true,
+          "detail": "0 placements in other structures"
+        },
+        {
+          "check": "every placed master is defined in the file",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "placed instances match TotalCells",
+          "pass": true,
+          "detail": "2000 vs 2000"
+        },
+        {
+          "check": "logic cells match NonPhysCells",
+          "pass": true,
+          "detail": "351 vs 351"
+        },
+        {
+          "check": "fill cells match FillCells",
+          "pass": true,
+          "detail": "306 vs 306"
+        },
+        {
+          "check": "decap cells match DecapCells",
+          "pass": true,
+          "detail": "1118 vs 1118"
+        },
+        {
+          "check": "tap cells match WelltapCells",
+          "pass": true,
+          "detail": "225 vs 225"
+        },
+        {
+          "check": "diode cells match DiodeCells",
+          "pass": true,
+          "detail": "0 vs 0"
+        },
+        {
+          "check": "every instance origin is on the die",
+          "pass": true,
+          "detail": "0 outside"
+        },
+        {
+          "check": "instances with a cell outline stay inside the die",
+          "pass": true,
+          "detail": "0 of 1469 checked overhang"
+        },
+        {
+          "check": "the uncovered masters are physical fillers only",
+          "pass": true,
+          "detail": "sky130_fd_sc_hd__fill_1, sky130_fd_sc_hd__fill_2, sky130_fd_sc_hd__tapvpwrvgnd_1"
+        },
+        {
+          "check": "placements are row orientations, unscaled",
+          "pass": true,
+          "detail": "4 distinct"
+        },
+        {
+          "check": "every placement carries an instance name",
+          "pass": true,
+          "detail": "2000 of 2000"
+        },
+        {
+          "check": "GDS instance names stay distinct once unescaped",
+          "pass": true,
+          "detail": "0 collisions"
+        },
+        {
+          "check": "netlist instance names are unique",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "netlist instance names stay distinct once unescaped",
+          "pass": true,
+          "detail": "0 collisions"
+        },
+        {
+          "check": "no instance is placed that the netlist does not have",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "no instance is in the netlist that is not placed",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "every shared instance has the same master",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "per-master counts agree with the netlist",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "the ring census covers this netlist",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "the ring census read this exact netlist",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "check": "ring census cell count matches the fd cells placed",
+          "pass": true,
+          "detail": "1280 vs 1280"
+        }
+      ],
+      "checks_run": 31,
+      "checks_failed": 0
+    }
+  ]
+}

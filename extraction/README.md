@@ -17,6 +17,8 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
 | `verify_inputs.py` | Checks the manifest against the source list and the bytes |
 | `ring_census.py` | Counts the ring oscillators actually present in a netlist |
 | `RING_CENSUS.json` | That count, tied to the netlist hash it was taken from |
+| `gds_census.py` | Reads the published GDS and reconciles it with the LEF, the netlist and the flow metrics |
+| `GDS_CENSUS.json` | That reconciliation, tied to the GDS and netlist hashes |
 | `inputs/` | The downloaded bytes. Not committed — the manifest reproduces them |
 
 ## Running it
@@ -25,13 +27,19 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
     python3 verify_inputs.py --inputs inputs                   # full check
     python3 verify_inputs.py                                   # manifest only
     python3 ring_census.py --json RING_CENSUS.json inputs/*/projects/*/*.v
+    python3 gds_census.py --json GDS_CENSUS.json inputs/*/projects/tt_um_*
 
     python3 fetch_inputs.py  --selftest
     python3 verify_inputs.py --selftest
     python3 ring_census.py   --selftest
+    python3 gds_census.py    --selftest
 
-The three selftests plant the faults each script exists to catch and need
+The four selftests plant the faults each script exists to catch and need
 neither network nor inputs, which is why they are the versions CI runs.
+
+`gds_census.py` takes project directories, not files — it needs the GDS, the
+LEF, the netlist and `stats/metrics.csv` together, because the whole point is
+that they have to agree.
 
 ## Why the inputs are not committed
 
@@ -70,5 +78,11 @@ RTL those authors have pushed since is not what was manufactured.
 A.1 is the manifest and nothing else. `ring_census.py` is here because target
 selection has to be justified before any response is predicted, and "does this
 design contain ring oscillators at all" is a selection question. It reports
-structure only. Nothing in this directory compares one ring against another;
-that starts at A.5 and only after the tolerances are frozen.
+structure only.
+
+A.2 is `gds_census.py`, and it is bookkeeping of the same kind: it establishes
+that the four published files describe one die, so that later phases can quote
+any of them without saying which. It reads placements, not parasitics.
+
+Nothing in this directory compares one ring against another; that starts at A.5
+and only after the tolerances are frozen.
