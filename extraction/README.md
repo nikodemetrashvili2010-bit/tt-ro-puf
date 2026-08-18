@@ -19,6 +19,8 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
 | `RING_CENSUS.json` | That count, tied to the netlist hash it was taken from |
 | `gds_census.py` | Reads the published GDS and reconciles it with the LEF, the netlist and the flow metrics |
 | `GDS_CENSUS.json` | That reconciliation, tied to the GDS and netlist hashes |
+| `TOLERANCES.json` | The A.5 acceptance thresholds, frozen 2026-08-18 before the pipeline existed |
+| `check_tolerances.py` | The only thing that reads them. Refuses to pass if the file's hash moved |
 | `inputs/` | The downloaded bytes. Not committed — the manifest reproduces them |
 
 ## Running it
@@ -29,12 +31,17 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
     python3 ring_census.py --json RING_CENSUS.json inputs/*/projects/*/*.v
     python3 gds_census.py --json GDS_CENSUS.json inputs/*/projects/tt_um_*
 
-    python3 fetch_inputs.py  --selftest
-    python3 verify_inputs.py --selftest
-    python3 ring_census.py   --selftest
-    python3 gds_census.py    --selftest
+    python3 check_tolerances.py                                # print the frozen numbers
+    python3 check_tolerances.py --freeze-check
+    python3 check_tolerances.py --reference spef.csv --candidate pipeline.csv
 
-The four selftests plant the faults each script exists to catch and need
+    python3 fetch_inputs.py      --selftest
+    python3 verify_inputs.py     --selftest
+    python3 ring_census.py       --selftest
+    python3 gds_census.py        --selftest
+    python3 check_tolerances.py  --selftest
+
+The five selftests plant the faults each script exists to catch and need
 neither network nor inputs, which is why they are the versions CI runs.
 
 `gds_census.py` takes project directories, not files — it needs the GDS, the
@@ -84,5 +91,12 @@ A.2 is `gds_census.py`, and it is bookkeeping of the same kind: it establishes
 that the four published files describe one die, so that later phases can quote
 any of them without saying which. It reads placements, not parasitics.
 
-Nothing in this directory compares one ring against another; that starts at A.5
-and only after the tolerances are frozen.
+A.5's tolerances are `TOLERANCES.json`, written on 2026-08-18. They are frozen
+in the sense that matters: the file's SHA-256 is recorded in
+`docs/phaseA_tolerances.md`, in `PLAN_TO_DECEMBER.md` and inside
+`check_tolerances.py`, and the `archived-evidence` job checks all of it, so a
+threshold cannot be widened after a failing run without the change being
+obvious. They were written before the pipeline of A.3 and A.4 existed.
+
+Nothing in this directory compares one ring against another yet. That starts
+when the pipeline does, and it is scored against the file above.

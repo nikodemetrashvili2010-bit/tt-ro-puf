@@ -1,0 +1,151 @@
+{
+  "schema": "silicon/extraction/tolerances/1",
+  "task": "A.5",
+  "gate": "G1",
+  "frozen_utc": "2026-08-18T08:57:21Z",
+  "purpose": "Acceptance tolerances for the Phase A extraction pipeline, validated on this project's own GDS against its own SPEF. Frozen before the pipeline exists and before anything has been predicted about either foreign target.",
+  "state_at_freeze": {
+    "extraction_pipeline_exists": false,
+    "self_validation_has_been_run": false,
+    "predictions_made_about_tt_um_litneet64_ro_puf": 0,
+    "predictions_made_about_tt_um_PUF": 0,
+    "note": "A.3 and A.4 had not started when this file was written. No number here was chosen after seeing a pipeline output."
+  },
+  "reference": {
+    "design": "tt_um_nikodemetrashvili20_ro_puf",
+    "spef": "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nom.spef",
+    "gds": "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.gds",
+    "netlist": "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nl.v",
+    "rings": 16,
+    "arm": "A",
+    "per_ring_capacitance_table": "sim/spice/gono/rc_validation.csv"
+  },
+  "constants": {
+    "sigma_ring_pct_f": 0.062,
+    "sigma_ring_pct_f_interval": [
+      0.051,
+      0.08
+    ],
+    "sigma_ring_source": "sim/spice/mc, quoted in paper section 5.6",
+    "cap_to_freq_pct_per_fF": 0.9331,
+    "cap_to_freq_source": "least squares of rc_MHz on ring_cap_fF over the 16 Arm A rings of rc_validation.csv, R2 0.9909, residual rms 0.915 MHz",
+    "mean_ring_cap_fF": 14.033,
+    "sigma_ring_fF": 0.0664,
+    "sigma_pair_mismatch_fF": 0.094,
+    "sigma_pair_with_extraction_fF": 0.1324,
+    "pair_count_upper_bound": 168,
+    "pair_count_note": "8 pairs here, at most 128 for tt_um_litneet64_ro_puf at 256 rings, at most 32 for tt_um_PUF at 64 rings."
+  },
+  "checks": [
+    {
+      "id": "T1",
+      "name": "extraction total",
+      "quantity": "sum of extracted ring capacitance over all rings, pipeline against SPEF",
+      "statistic": "abs(sum_pipeline - sum_spef) / sum_spef",
+      "threshold": 0.05,
+      "direction": "at_most",
+      "rationale": "Gross-error catcher, not a precision claim. Wrong database units, a missing metal layer or double-counted coupling all show up here and nowhere else, because an error common to every ring cancels in T2. 5 percent is loose on purpose; T4b, not T1, is what stops a global scale error moving a pair across the margin line."
+    },
+    {
+      "id": "T2a",
+      "name": "per-ring capacitance, worst ring, absolute",
+      "quantity": "per-ring capacitance error after the median error over rings is subtracted",
+      "statistic": "max over rings of abs(e_i), e_i = (C_pipe_i - C_spef_i) - median_j(C_pipe_j - C_spef_j)",
+      "threshold_fF": 0.066,
+      "direction": "at_most",
+      "rationale": "Set equal to one ring's fabricated mismatch. 0.062 percent of frequency is 0.0664 fF at the measured slope, so an extraction error at this limit is the size of the die-to-die variation the bit already survives. Setting it there has a consequence rather than a second derivation behind it: with T2a equal to sigma_ring the pair sigma becomes 2*sigma_ring, the k=5 line becomes very nearly 10*sigma_ring, and the worst case of two rings at the limit with opposite signs spends 0.132 fF, a fifth of the 0.662 fF line. Root-sum-square rather than worst case spends 0.094 fF, a seventh. The median rather than the mean removes the common mode, so one badly extracted ring cannot drag the reference under itself. Only an additive common mode is removed. A multiplicative scale error is not, because the factor would have to be fitted against the SPEF this check is supposed to be testing, and fitting a free parameter to the answer is the thing the rest of this project refuses to do. T7 reports the factor so that a failure here can be read as a calibration problem when it is one."
+    },
+    {
+      "id": "T2b",
+      "name": "per-ring capacitance, population",
+      "quantity": "same e_i as T2a",
+      "statistic": "rms over rings of e_i",
+      "threshold_fF": 0.033,
+      "direction": "at_most",
+      "rationale": "Half of T2a. One ring may sit at the limit; the population may not. Without this a pipeline that is uniformly sloppy passes T2a as long as no single ring is worst."
+    },
+    {
+      "id": "T2c",
+      "name": "per-ring capacitance, relative",
+      "quantity": "same e_i as T2a, as a fraction of that ring's SPEF capacitance",
+      "statistic": "max over rings of abs(e_i) / C_spef_i",
+      "threshold": 0.01,
+      "direction": "at_most",
+      "rationale": "T2a binds on this build, where 0.066 fF on a 14 fF ring is 0.47 percent. T2c is what transfers: tt_um_PUF's rings carry one inverting stage against this design's thirty-one, so their capacitance scale is different and an absolute threshold set here would be lenient there. Both must hold."
+    },
+    {
+      "id": "T3",
+      "name": "rank",
+      "quantity": "per-ring capacitance ordering, pipeline against SPEF",
+      "statistic": "Spearman rank correlation over the 16 rings",
+      "threshold": 0.98,
+      "direction": "at_least",
+      "rationale": "Derived from T2a rather than chosen. At an error of 0.066 fF per ring only rings whose capacitances differ by under 0.132 fF can reorder, which on this build is three blocks of near-ties, and the worst reachable permutation gives a sum of squared rank displacements of 12 and a correlation of 0.9824. So T3 is implied by T2 here and is kept for two reasons: it is the statistic that still means something on a target where the absolute threshold does not, and analyze_rc.py already established that demanding an identical ordering is the wrong test because near-tied rings reorder without anything being wrong."
+    },
+    {
+      "id": "T4a",
+      "name": "high-margin sign",
+      "quantity": "sign of the pair frequency separation for every pair classified high-margin",
+      "statistic": "count of high-margin pairs whose sign differs between pipeline and SPEF",
+      "threshold": 0,
+      "direction": "at_most",
+      "rationale": "This is the claim the paper makes and the one silicon can refute, so it gets no allowance."
+    },
+    {
+      "id": "T4b",
+      "name": "margin classification",
+      "quantity": "the set of pairs classified high-margin",
+      "statistic": "size of the symmetric difference between the pipeline's high-margin set and the SPEF's",
+      "threshold": 0,
+      "direction": "at_most",
+      "rationale": "A pipeline that agrees on every sign it calls but calls a different set of pairs has not reproduced the result. This is also what catches a global capacitance scale error, which T1 is too loose to stop: a scale error moves every separation together and can push a pair across the line without changing any sign."
+    },
+    {
+      "id": "T5",
+      "name": "topology",
+      "quantity": "recovered ring membership",
+      "statistic": "count of rings whose recovered cell set or cell order differs from the netlist",
+      "threshold": 0,
+      "direction": "at_most",
+      "rationale": "A ring is either right or wrong; there is no tolerance to give. A.2 already established instance by instance that the GDS and the netlist agree, so a disagreement here is the pipeline's, and it gets classified rather than tolerated."
+    },
+    {
+      "id": "T6",
+      "name": "abstention accounting",
+      "quantity": "pairs not classified high-margin",
+      "statistic": "reported, not thresholded",
+      "threshold": null,
+      "direction": "report",
+      "rationale": "Every pair below the margin threshold is an abstention and has to be named as one before the SPEF signs are read. A low-margin sign that happens to come out right is not a result, and one that comes out wrong is not a failure."
+    },
+    {
+      "id": "T7",
+      "name": "systematic scale",
+      "quantity": "best-fit multiplicative factor from SPEF capacitance to pipeline capacitance, through the origin",
+      "statistic": "sum(C_pipe_i * C_spef_i) / sum(C_spef_i^2)",
+      "threshold": null,
+      "direction": "report",
+      "rationale": "Diagnostic, not a gate. A pipeline whose layer capacitances are a few percent off fails T2 with a scale near 1.03 and a small residual; a pipeline that has the wrong nets fails T2 with a scale near 1 and a large one. The number separates the two failures without giving anyone a parameter to fit."
+    }
+  ],
+  "margin_rule": {
+    "k": 5,
+    "derivation": "k is the smallest integer for which the expected number of wrongly-signed high-margin bits across every design in Phase A is under 1e-3. At most 168 pairs across the three designs, and 168 * Phi(-k) is 2.3e-1 at k=3, 5.3e-3 at k=4 and 4.8e-5 at k=5.",
+    "sigma_pair_fF": 0.1324,
+    "sigma_pair_derivation": "sqrt(2) * sqrt(sigma_ring_fF^2 + T2a^2). The extraction is charged its own tolerance as if it were a second, independent source of ring-to-ring error, so a pipeline sitting at the limit does not get to keep the margin it has spent.",
+    "high_margin_threshold_fF": 0.6622,
+    "high_margin_threshold_pct_f": 0.6179,
+    "scaling_rule": "On a target with a different ring capacitance scale, recompute sigma_ring_fF from that target's own capacitance-to-frequency slope and the same 0.062 percent mismatch figure, then recompute T2a and the margin threshold from it by the formulas above. The rule is frozen; the numbers it produces are allowed to differ per target. Nothing else may be recomputed.",
+    "classification_quantity": "freq_MHz when both tables carry it, since the bit is the sign of a frequency difference. Otherwise the capacitance difference converted at cap_to_freq_pct_per_fF. That conversion has a residual of 0.166 percent of frequency rms, which is common to both tables and cancels in the agreement checks, but which can put a pair on the other side of the line from where frequency would put it. Prefer frequency.",
+    "threshold_basis": "high_margin_threshold_pct_f is a percentage of the mean frequency of the reference table, not of a stored constant, so it follows the design it is applied to.",
+    "sign_convention": "sign of f_a - f_b. In capacitance mode the sign of cap_a - cap_b is negated, since capacitance and frequency move opposite ways."
+  },
+  "known_headroom_at_freeze": {
+    "note": "Computed from the SPEF before the pipeline exists, so that it is on the record which check is expected to be tightest.",
+    "tightest_pair": "12/13",
+    "tightest_pair_separation_pct_f": 0.69,
+    "tightest_pair_headroom_over_threshold": 0.117,
+    "comment": "Pair 12/13 clears the high-margin line by 12 percent. It is the pair most likely to trip T4b. If it does, the answer is to fix the extraction or to reclassify 12/13 as an abstention and report it. The line does not move."
+  },
+  "stop_rule": "Any check failing means G1 fails. Fix the extraction; do not run target analysis. A tolerance may not be loosened after a run. If one has to change, it becomes a new file with a new date and a stated reason, and this one stays in the repository."
+}
