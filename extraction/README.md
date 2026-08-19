@@ -21,6 +21,8 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
 | `GDS_CENSUS.json` | That reconciliation, tied to the GDS and netlist hashes |
 | `TOLERANCES.json` | The A.5 acceptance thresholds, frozen 2026-08-18 before the pipeline existed |
 | `check_tolerances.py` | The only thing that reads them. Refuses to pass if the file's hash moved |
+| `spef_census.py` | Counts how much of the author's own module hierarchy survives in the published SPEF |
+| `SPEF_CENSUS.json` | That count, tied to the SPEF and netlist hashes |
 | `inputs/` | The downloaded bytes. Not committed — the manifest reproduces them |
 
 ## Running it
@@ -30,23 +32,31 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
     python3 verify_inputs.py                                   # manifest only
     python3 ring_census.py --json RING_CENSUS.json inputs/*/projects/*/*.v
     python3 gds_census.py --json GDS_CENSUS.json inputs/*/projects/tt_um_*
+    python3 spef_census.py --json SPEF_CENSUS.json inputs/*/projects/tt_um_*
 
     python3 check_tolerances.py                                # print the frozen numbers
     python3 check_tolerances.py --freeze-check
     python3 check_tolerances.py --reference spef.csv --candidate pipeline.csv
+
+    python3 spef_census.py --verify-archive        # the JSONs against each other
 
     python3 fetch_inputs.py      --selftest
     python3 verify_inputs.py     --selftest
     python3 ring_census.py       --selftest
     python3 gds_census.py        --selftest
     python3 check_tolerances.py  --selftest
+    python3 spef_census.py       --selftest
 
-The five selftests plant the faults each script exists to catch and need
+The six selftests plant the faults each script exists to catch and need
 neither network nor inputs, which is why they are the versions CI runs.
+`spef_census.py --verify-archive` runs there too, and it is the only Phase A
+command that checks a real recorded number without the inputs present: it
+re-reads the four JSONs and re-derives every claim that lives between them.
 
 `gds_census.py` takes project directories, not files — it needs the GDS, the
 LEF, the netlist and `stats/metrics.csv` together, because the whole point is
-that they have to agree.
+that they have to agree. `spef_census.py` takes the same directories and reads
+two of them.
 
 ## Why the inputs are not committed
 
@@ -90,6 +100,12 @@ structure only.
 A.2 is `gds_census.py`, and it is bookkeeping of the same kind: it establishes
 that the four published files describe one die, so that later phases can quote
 any of them without saying which. It reads placements, not parasitics.
+
+A.3 begins with `spef_census.py`, which answers the question A.2 left open:
+whether `tt_um_PUF`'s SPEF carries RTL paths its GDS does not. It does — 82 of
+358 nets, 64 of them one per ring. The script counts names and only names; the
+control in its selftest scales every capacitance in the fixture by a thousand
+and requires the census to come out identical. See `docs/phaseA_spef.md`.
 
 A.5's tolerances are `TOLERANCES.json`, written on 2026-08-18. They are frozen
 in the sense that matters: the file's SHA-256 is recorded in

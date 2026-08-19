@@ -1,0 +1,280 @@
+{
+  "schema": "phaseA-spef-census/1",
+  "projects": [
+    {
+      "design": "tt_um_litneet64_ro_puf",
+      "spef_sha256": "0a38eee1d4b49676e699286f3113cb3b94c44f6615f25887ddf889199f25e9cb",
+      "netlist_sha256": "758f53a63a093444a5f9cdc8f36ed839b91aa9f40d5e99dcf5ffb1852bbb68ae",
+      "nets": 4237,
+      "instances": 4226,
+      "name_map": 10794,
+      "path_nets": 2352,
+      "path_instances": 1792,
+      "path_net_fraction": 0.5551,
+      "path_instance_fraction": 0.424,
+      "net_depths": {
+        "4": 2352
+      },
+      "instance_depths": {
+        "5": 1792
+      },
+      "net_owners": 256,
+      "net_children_each": 8,
+      "instance_owners": 1792,
+      "path_net_example": [
+        "genblk1[0].puf_buffer.cnt_1.ctr[0]"
+      ],
+      "path_instance_example": [
+        "genblk1[0].puf_buffer.ro_array_1[0].genblk1[0].inv"
+      ],
+      "nets_omitted": 26,
+      "rings": 256,
+      "classification": "instance and net names both carry the RTL path",
+      "checks": [
+        {
+          "check": "the SPEF names this design",
+          "pass": true,
+          "detail": "tt_um_litneet64_ro_puf"
+        },
+        {
+          "check": "the hierarchy divider is the one the parser assumes",
+          "pass": true,
+          "detail": "'/'"
+        },
+        {
+          "check": "the pin delimiter is the one the parser assumes",
+          "pass": true,
+          "detail": "':'"
+        },
+        {
+          "check": "the bus delimiter is the one the parser assumes",
+          "pass": true,
+          "detail": "'[]'"
+        },
+        {
+          "check": "capacitance is in the declared unit",
+          "pass": true,
+          "detail": "1 PF"
+        },
+        {
+          "check": "every line was recognised",
+          "pass": true,
+          "detail": "0 unrecognised"
+        },
+        {
+          "check": "name map indices are unique",
+          "pass": true,
+          "detail": "0 repeated"
+        },
+        {
+          "check": "every name reference resolves",
+          "pass": true,
+          "detail": "0 dangling"
+        },
+        {
+          "check": "no index is used as both a net and an instance",
+          "pass": true,
+          "detail": "0 shared"
+        },
+        {
+          "check": "each net total equals the sum of its own cap entries",
+          "pass": true,
+          "detail": "0 disagree, worst residual 5.47e-06"
+        },
+        {
+          "check": "every net declares at least one connection",
+          "pass": true,
+          "detail": "0 bare"
+        },
+        {
+          "check": "every SPEF net is a net the netlist declares",
+          "pass": true,
+          "detail": "0 unknown"
+        },
+        {
+          "check": "every SPEF instance is one the netlist instantiates",
+          "pass": true,
+          "detail": "0 unknown"
+        },
+        {
+          "check": "netlist nets the SPEF omits are ports and supplies only",
+          "pass": true,
+          "detail": "26 omitted, 0 unclassified"
+        },
+        {
+          "check": "no name carries the declared divider",
+          "pass": true,
+          "detail": "0 of 10794 names"
+        },
+        {
+          "check": "distinct names stay distinct once unescaped",
+          "pass": true,
+          "detail": "0 collisions"
+        },
+        {
+          "check": "instance paths and net paths name the same owners",
+          "pass": true,
+          "detail": "256 instance owners, 256 of them also net owners"
+        },
+        {
+          "check": "instance paths agree with the GDS census",
+          "pass": true,
+          "detail": "SPEF 1792, GDS 1792"
+        },
+        {
+          "check": "the SPEF instance count is the GDS logic cell count",
+          "pass": true,
+          "detail": "SPEF 4226, GDS 4226"
+        },
+        {
+          "check": "the widest family of owners is one per ring",
+          "pass": true,
+          "detail": "256 owners with 8 nets each, 256 rings"
+        },
+        {
+          "check": "the ring census read this netlist",
+          "pass": true,
+          "detail": "758f53a63a093444"
+        }
+      ],
+      "checks_run": 21,
+      "checks_failed": 0
+    },
+    {
+      "design": "tt_um_PUF",
+      "spef_sha256": "d90e4bd0807ed1fd0d0573222d609ac746efeabb2c3e4b02a4c59eb3a4e235ce",
+      "netlist_sha256": "389015e0870d49157e290267d46e18fbed0248e437af3c0990e5bc93248c9784",
+      "nets": 358,
+      "instances": 351,
+      "name_map": 2370,
+      "path_nets": 82,
+      "path_instances": 0,
+      "path_net_fraction": 0.2291,
+      "path_instance_fraction": 0.0,
+      "net_depths": {
+        "3": 18,
+        "4": 64
+      },
+      "instance_depths": {},
+      "net_owners": 64,
+      "net_children_each": 1,
+      "instance_owners": 0,
+      "path_net_example": [
+        "uut1.c.count[0]"
+      ],
+      "path_instance_example": [],
+      "nets_omitted": 30,
+      "rings": 64,
+      "classification": "net names carry the RTL path, instance names do not",
+      "checks": [
+        {
+          "check": "the SPEF names this design",
+          "pass": true,
+          "detail": "tt_um_PUF"
+        },
+        {
+          "check": "the hierarchy divider is the one the parser assumes",
+          "pass": true,
+          "detail": "'/'"
+        },
+        {
+          "check": "the pin delimiter is the one the parser assumes",
+          "pass": true,
+          "detail": "':'"
+        },
+        {
+          "check": "the bus delimiter is the one the parser assumes",
+          "pass": true,
+          "detail": "'[]'"
+        },
+        {
+          "check": "capacitance is in the declared unit",
+          "pass": true,
+          "detail": "1 PF"
+        },
+        {
+          "check": "every line was recognised",
+          "pass": true,
+          "detail": "0 unrecognised"
+        },
+        {
+          "check": "name map indices are unique",
+          "pass": true,
+          "detail": "0 repeated"
+        },
+        {
+          "check": "every name reference resolves",
+          "pass": true,
+          "detail": "0 dangling"
+        },
+        {
+          "check": "no index is used as both a net and an instance",
+          "pass": true,
+          "detail": "0 shared"
+        },
+        {
+          "check": "each net total equals the sum of its own cap entries",
+          "pass": true,
+          "detail": "0 disagree, worst residual 6.09e-06"
+        },
+        {
+          "check": "every net declares at least one connection",
+          "pass": true,
+          "detail": "0 bare"
+        },
+        {
+          "check": "every SPEF net is a net the netlist declares",
+          "pass": true,
+          "detail": "0 unknown"
+        },
+        {
+          "check": "every SPEF instance is one the netlist instantiates",
+          "pass": true,
+          "detail": "0 unknown"
+        },
+        {
+          "check": "netlist nets the SPEF omits are ports and supplies only",
+          "pass": true,
+          "detail": "30 omitted, 0 unclassified"
+        },
+        {
+          "check": "no name carries the declared divider",
+          "pass": true,
+          "detail": "0 of 2370 names"
+        },
+        {
+          "check": "distinct names stay distinct once unescaped",
+          "pass": true,
+          "detail": "0 collisions"
+        },
+        {
+          "check": "instance paths and net paths name the same owners",
+          "pass": true,
+          "detail": "skipped: no instance carries a path"
+        },
+        {
+          "check": "instance paths agree with the GDS census",
+          "pass": true,
+          "detail": "SPEF 0, GDS 0"
+        },
+        {
+          "check": "the SPEF instance count is the GDS logic cell count",
+          "pass": true,
+          "detail": "SPEF 351, GDS 351"
+        },
+        {
+          "check": "the widest family of owners is one per ring",
+          "pass": true,
+          "detail": "64 owners with 1 nets each, 64 rings"
+        },
+        {
+          "check": "the ring census read this netlist",
+          "pass": true,
+          "detail": "389015e0870d4915"
+        }
+      ],
+      "checks_run": 21,
+      "checks_failed": 0
+    }
+  ]
+}
