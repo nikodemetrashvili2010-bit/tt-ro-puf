@@ -1,0 +1,437 @@
+{
+ "library": {
+  "a1_markers_without_state": [
+   "sky130_fd_sc_hd__dlygate4sd3"
+  ],
+  "cells": 43,
+  "checks": [
+   {
+    "check": "every declared cell view is the declared bytes",
+    "detail": "43 files, 0 mismatched",
+    "pass": true
+   },
+   {
+    "check": "every cell view URL is pinned to a commit",
+    "detail": "43 files, 0 unpinned",
+    "pass": true
+   },
+   {
+    "check": "the supply pin names come from the library",
+    "detail": "VGND, VNB, VPB, VPWR",
+    "pass": true
+   },
+   {
+    "check": "sequential outputs carry no combinational arc",
+    "detail": "2 sequential cells: dfrtp, dfxtp",
+    "pass": true
+   },
+   {
+    "check": "every input of every cell has an arc class",
+    "detail": "bin 4, neg 34, pos 82",
+    "pass": true
+   },
+   {
+    "check": "the A.1 output-pin table covers the derived directions",
+    "detail": "derived HI, LO, Q, X, Y",
+    "pass": true
+   },
+   {
+    "check": "no cell the A.1 markers miss holds state",
+    "detail": "2 hold state, 3 markers match",
+    "pass": true
+   }
+  ],
+  "checks_failed": 0,
+  "checks_run": 7,
+  "files": {
+   "sky130_fd_sc_hd__a2111o.functional.v": "7331dd005c535cece01dfac999a57c09eda4bc0a42f1be5377dfc4bab843cd31",
+   "sky130_fd_sc_hd__a211o.functional.v": "0edf23718e8566a767a9986887b132bd533ee987905ee2981899bf65ce2b2d65",
+   "sky130_fd_sc_hd__a211oi.functional.v": "a0e3b5ccbd644957b373a0c1d0426a3ca77c60b3d21cb1f09379bd616e4e39bb",
+   "sky130_fd_sc_hd__a21o.functional.v": "ef3651349ea2e50f38284e2b04ac547a219631ee19907ad1b2ec4d43aa4b56a5",
+   "sky130_fd_sc_hd__a21oi.functional.v": "254ba316e323806ee5bf9dc3296692986647d8aeec56cab1979e4c741423327a",
+   "sky130_fd_sc_hd__a221o.functional.v": "244d4fbceb811b429474ae6cbece9e678dec0153246c87a35c76b384a2749df7",
+   "sky130_fd_sc_hd__a22o.functional.v": "b14394ee95af7af686492f1e052b085ecc7dbde6716cac7da929de93093ff328",
+   "sky130_fd_sc_hd__a311o.functional.v": "d1914320aeefb118ca61a8ec66c967e588de714f21bc3f3963569ad99c640bbe",
+   "sky130_fd_sc_hd__a31o.functional.v": "d53ac57d54cf4b31011b3bf5d603c36d5e1d74599e53bc8675028a09b971c19b",
+   "sky130_fd_sc_hd__a41o.functional.v": "252c7506debef6301a1f1da869ca30242452b2a1ea59fbbd142b43630e7aeda9",
+   "sky130_fd_sc_hd__and2.functional.v": "54e2f7fc00114938461c7f52edfcac8fc9d55d6d7f68e4439f6e62af59820d0c",
+   "sky130_fd_sc_hd__and2b.functional.v": "4b61ad2354b2e924d79e339190f2ec70e4579d816aa228fd1167fb7918e63f39",
+   "sky130_fd_sc_hd__and3.functional.v": "a4ffc4b6c41a87b711d37898faa2b254ba5c73a9517e316a5b6737ab4e698137",
+   "sky130_fd_sc_hd__and3b.functional.v": "b3787103d299fe79afe82e446fd40b3f0c33519a1a4ec0ec8fef31bb2b2899a5",
+   "sky130_fd_sc_hd__and4.functional.v": "db2a3895b3c2a6ffa1d1a107b8f7608fb49d0583a3bcaf3ac1e1e52f3c16e218",
+   "sky130_fd_sc_hd__and4b.functional.v": "b94e9cbb47c806a40a6ece4cdbcd7e3c6169a090cff97f46cf7684ba86406ed6",
+   "sky130_fd_sc_hd__and4bb.functional.v": "fdb46a1cce76ca13ed8e3059ef1218230bb54f01d1739bd601b8bce2df4239e6",
+   "sky130_fd_sc_hd__buf.functional.v": "1989d9092574362e4fceba8680833808b8fd1168b4d224bc39f9ae42241862aa",
+   "sky130_fd_sc_hd__clkbuf.functional.v": "3ad7f61a61526bddb546dc760c817c2420c281d6f789bf0e16d3632455604bbc",
+   "sky130_fd_sc_hd__conb.functional.v": "aebebd05d3c34d647b57d2798b279c61637b8ea61c76a8929e8e64459ae5484e",
+   "sky130_fd_sc_hd__decap.functional.v": "4ac30daabdc25836972c0430de8c1e06aa960226a039a273a9ea8b193a3e18e9",
+   "sky130_fd_sc_hd__dfrtp.functional.v": "511c8d4ac435d10674238dfe3ad764b2d0c4da56d0716b4cbba6d7a04cd251e0",
+   "sky130_fd_sc_hd__dfxtp.functional.v": "8cbb7aeb11582f32358c647694ebe9241fce7c4e2189a896dc6ede37e544859e",
+   "sky130_fd_sc_hd__dlygate4sd3.functional.v": "2b4b04d5d2f8a40c614c9115cb58c0289c55e4039dbe4115be1a952b578544c5",
+   "sky130_fd_sc_hd__fill.functional.v": "92493e55bf73bfb84ca9fe279590f04f420b9662dd6a48857b84d33021e9c7d8",
+   "sky130_fd_sc_hd__inv.functional.v": "064e13ca9b949888d2f1ef7e53759e0f59b881b912c24b1f3b3e156ab4ddbdda",
+   "sky130_fd_sc_hd__nand2.functional.v": "572fc4b727d36e5f736edf400d99d81f12fa5308859effd8055ded34959585ae",
+   "sky130_fd_sc_hd__nand3.functional.v": "8a9f541b662521210352292b965554c0ca034889ff453a21a783092d6a03f9ff",
+   "sky130_fd_sc_hd__nand4.functional.v": "9c5a06ac9c1b84ecb31c0141c307da2aa7ba963e863d86eba21562a9c88b2861",
+   "sky130_fd_sc_hd__nor2.functional.v": "3c31e1cb7cebf1bfe158ab3c51857e653c3e2bc1acd50035475a2b2d28fe39c3",
+   "sky130_fd_sc_hd__nor4.functional.v": "496dad94255594719c89b1ff3831ed22ef1fd595164bd4a72fc6b7cd51a610c6",
+   "sky130_fd_sc_hd__nor4b.functional.v": "70a324a84c3c4e142d7049b5fa5d6ea3d4e0649fa8747ca8476e7fd25998aab4",
+   "sky130_fd_sc_hd__o211a.functional.v": "31d8e73ac63883d7e78c4c429ef029842b5e58babb68084a1623067097bb8165",
+   "sky130_fd_sc_hd__o21ba.functional.v": "ecc5b69a64a973a35f7f3cf94ff91080266d338d40f83ea1394e368c64af46ae",
+   "sky130_fd_sc_hd__o21bai.functional.v": "a558216d18ab2e122b2a645988c1a4cc1e1e1b16c32e8b3329a8a4acd010ae48",
+   "sky130_fd_sc_hd__o221a.functional.v": "b6e1695bbba26efa5d2f584cd1501ab93f639702bfff43a99e1ef6d32020229f",
+   "sky130_fd_sc_hd__o32a.functional.v": "065dd1662ffb2f6d94d9dcbd0d87b30cb2d8bda879406dd827a05d7321f3efa1",
+   "sky130_fd_sc_hd__or2.functional.v": "27a5a3da939d21a65b3b5f3da1cf6d6a2bce34e253acf50af4eb597fb27e1362",
+   "sky130_fd_sc_hd__or3.functional.v": "5b0fbd8dce80204fabad52d3cb5524bb41e4f554a2f9af81648ce4cb141aded0",
+   "sky130_fd_sc_hd__or4.functional.v": "3d2b2f52654a9649b01299b821ee85a2db364ea4dd59207eff742758be00b9f7",
+   "sky130_fd_sc_hd__tapvpwrvgnd.functional.v": "8273cc96e572c54371cc13cfabe4f2167de5d40fe220fbf0d4eaae3ceba7efb0",
+   "sky130_fd_sc_hd__xnor2.functional.v": "b0b55e4521f4c910818737aba61702db09828dec846dc8dbf7fdd5cf7245fe3f",
+   "sky130_fd_sc_hd__xor2.functional.v": "336f12a30ab2b362a2bc323317ca030a1722ebd6a5fb1d50d7cbe731edc39804"
+  }
+ },
+ "projects": [
+  {
+   "author_families": 280,
+   "author_named_nets": 2352,
+   "checks": [
+    {
+     "check": "the netlist names this design",
+     "detail": "tt_um_litneet64_ro_puf",
+     "pass": true
+    },
+    {
+     "check": "the netlist is the file the input manifest pinned",
+     "detail": "758f53a63a093444",
+     "pass": true
+    },
+    {
+     "check": "every instance pin is a port of its master or a supply",
+     "detail": "0 unrecognised",
+     "pass": true
+    },
+    {
+     "check": "every unmodelled master is physical only",
+     "detail": "0 with signal pins",
+     "pass": true
+    },
+    {
+     "check": "every signal net has exactly one driver",
+     "detail": "4242 nets driven, 0 driven twice",
+     "pass": true
+    },
+    {
+     "check": "the instance total matches the GDS census",
+     "detail": "6549 instances",
+     "pass": true
+    },
+    {
+     "check": "the modelled-cell count matches the GDS census",
+     "detail": "6520 with a functional view",
+     "pass": true
+    },
+    {
+     "check": "the logic-cell count matches the GDS census",
+     "detail": "4226 cells with a signal pin",
+     "pass": true
+    },
+    {
+     "check": "the logic-cell count matches the SPEF census",
+     "detail": "4226",
+     "pass": true
+    },
+    {
+     "check": "every feedback region is one simple loop",
+     "detail": "256 loops, 0 regions that are not",
+     "pass": true
+    },
+    {
+     "check": "every loop has an odd number of inversions",
+     "detail": "parities {'1': 256}",
+     "pass": true
+    },
+    {
+     "check": "no loop runs through a non-monotone input",
+     "detail": "0 binate arcs in the design",
+     "pass": true
+    },
+    {
+     "check": "no loop runs through a cell that holds state",
+     "detail": "0 cells on loops hold state",
+     "pass": true
+    },
+    {
+     "check": "the loop count matches the A.1 ring census",
+     "detail": "256 loops here, 256 there",
+     "pass": true
+    },
+    {
+     "check": "every loop shape matches the A.1 ring census",
+     "detail": "1 shapes",
+     "pass": true
+    },
+    {
+     "check": "every loop is reached by exactly one net from outside",
+     "detail": "{1: 256}",
+     "pass": true
+    },
+    {
+     "check": "every loop drives at least one net outside itself",
+     "detail": "{1: 256}",
+     "pass": true
+    },
+    {
+     "check": "the author's path families and the recovered loops correspond one to one",
+     "detail": "280 families over 256 loops: {'one loop': 256, 'no loop': 24}",
+     "pass": true
+    },
+    {
+     "check": "the same number of nets is named on every loop",
+     "detail": "{8: 256}",
+     "pass": true
+    },
+    {
+     "check": "the author-path net count matches the SPEF census",
+     "detail": "2352 in the netlist, 2352 in the SPEF",
+     "pass": true
+    },
+    {
+     "check": "the widest family matches the SPEF census",
+     "detail": "256 owners of 8",
+     "pass": true
+    },
+    {
+     "check": "renaming every net and instance changes nothing",
+     "detail": "1956efada16cbfb4",
+     "pass": true
+    }
+   ],
+   "checks_failed": 0,
+   "checks_run": 22,
+   "design": "tt_um_litneet64_ro_puf",
+   "exits_per_loop": {
+    "1": 256
+   },
+   "external_inputs_per_loop": {
+    "1": 256
+   },
+   "family_placement": {
+    "no loop": 24,
+    "one loop": 256
+   },
+   "feedback_regions": 0,
+   "instances": 6549,
+   "logic_instances": 4226,
+   "loop_compositions": [
+    {
+     "cells": [
+      {
+       "master": "sky130_fd_sc_hd__and2_1",
+       "n": 1
+      },
+      {
+       "master": "sky130_fd_sc_hd__clkbuf_1",
+       "n": 1
+      },
+      {
+       "master": "sky130_fd_sc_hd__inv_2",
+       "n": 7
+      }
+     ],
+     "count": 256
+    }
+   ],
+   "loop_lengths": {
+    "9": 256
+   },
+   "loop_parities": {
+    "1": 256
+   },
+   "loops": 256,
+   "modelled_instances": 6520,
+   "named_nets_per_loop": {
+    "8": 256
+   },
+   "netlist_sha256": "758f53a63a093444a5f9cdc8f36ed839b91aa9f40d5e99dcf5ffb1852bbb68ae",
+   "topology_digest": "1956efada16cbfb4ce1875ce25a6ed9054169c7dd98d18926babd1d5cc5c94a4"
+  },
+  {
+   "author_families": 66,
+   "author_named_nets": 82,
+   "checks": [
+    {
+     "check": "the netlist names this design",
+     "detail": "tt_um_PUF",
+     "pass": true
+    },
+    {
+     "check": "the netlist is the file the input manifest pinned",
+     "detail": "389015e0870d4915",
+     "pass": true
+    },
+    {
+     "check": "every instance pin is a port of its master or a supply",
+     "detail": "0 unrecognised",
+     "pass": true
+    },
+    {
+     "check": "every unmodelled master is physical only",
+     "detail": "0 with signal pins",
+     "pass": true
+    },
+    {
+     "check": "every signal net has exactly one driver",
+     "detail": "367 nets driven, 0 driven twice",
+     "pass": true
+    },
+    {
+     "check": "the instance total matches the GDS census",
+     "detail": "2000 instances",
+     "pass": true
+    },
+    {
+     "check": "the modelled-cell count matches the GDS census",
+     "detail": "1280 with a functional view",
+     "pass": true
+    },
+    {
+     "check": "the logic-cell count matches the GDS census",
+     "detail": "351 cells with a signal pin",
+     "pass": true
+    },
+    {
+     "check": "the logic-cell count matches the SPEF census",
+     "detail": "351",
+     "pass": true
+    },
+    {
+     "check": "every feedback region is one simple loop",
+     "detail": "64 loops, 0 regions that are not",
+     "pass": true
+    },
+    {
+     "check": "every loop has an odd number of inversions",
+     "detail": "parities {'1': 64}",
+     "pass": true
+    },
+    {
+     "check": "no loop runs through a non-monotone input",
+     "detail": "12 binate arcs in the design",
+     "pass": true
+    },
+    {
+     "check": "no loop runs through a cell that holds state",
+     "detail": "0 cells on loops hold state",
+     "pass": true
+    },
+    {
+     "check": "the loop count matches the A.1 ring census",
+     "detail": "64 loops here, 64 there",
+     "pass": true
+    },
+    {
+     "check": "every loop shape matches the A.1 ring census",
+     "detail": "2 shapes",
+     "pass": true
+    },
+    {
+     "check": "every loop is reached by exactly one net from outside",
+     "detail": "{1: 64}",
+     "pass": true
+    },
+    {
+     "check": "every loop drives at least one net outside itself",
+     "detail": "{1: 64}",
+     "pass": true
+    },
+    {
+     "check": "the author's path families and the recovered loops correspond one to one",
+     "detail": "66 families over 64 loops: {'one loop': 64, 'no loop': 2}",
+     "pass": true
+    },
+    {
+     "check": "the same number of nets is named on every loop",
+     "detail": "{1: 64}",
+     "pass": true
+    },
+    {
+     "check": "the author-path net count matches the SPEF census",
+     "detail": "82 in the netlist, 82 in the SPEF",
+     "pass": true
+    },
+    {
+     "check": "the widest family matches the SPEF census",
+     "detail": "64 owners of 1",
+     "pass": true
+    },
+    {
+     "check": "renaming every net and instance changes nothing",
+     "detail": "44af795d4f297d0d",
+     "pass": true
+    }
+   ],
+   "checks_failed": 0,
+   "checks_run": 22,
+   "design": "tt_um_PUF",
+   "exits_per_loop": {
+    "1": 64
+   },
+   "external_inputs_per_loop": {
+    "1": 64
+   },
+   "family_placement": {
+    "no loop": 2,
+    "one loop": 64
+   },
+   "feedback_regions": 0,
+   "instances": 2000,
+   "logic_instances": 351,
+   "loop_compositions": [
+    {
+     "cells": [
+      {
+       "master": "sky130_fd_sc_hd__and2b_1",
+       "n": 1
+      },
+      {
+       "master": "sky130_fd_sc_hd__clkbuf_1",
+       "n": 1
+      }
+     ],
+     "count": 62
+    },
+    {
+     "cells": [
+      {
+       "master": "sky130_fd_sc_hd__and2_1",
+       "n": 1
+      },
+      {
+       "master": "sky130_fd_sc_hd__clkbuf_1",
+       "n": 1
+      },
+      {
+       "master": "sky130_fd_sc_hd__inv_2",
+       "n": 1
+      }
+     ],
+     "count": 2
+    }
+   ],
+   "loop_lengths": {
+    "2": 62,
+    "3": 2
+   },
+   "loop_parities": {
+    "1": 64
+   },
+   "loops": 64,
+   "modelled_instances": 1280,
+   "named_nets_per_loop": {
+    "1": 64
+   },
+   "netlist_sha256": "389015e0870d49157e290267d46e18fbed0248e437af3c0990e5bc93248c9784",
+   "topology_digest": "44af795d4f297d0dd6214f9f6d3076068682715085b5b3981f355f4a00a00b19"
+  }
+ ],
+ "schema": "phaseA-ring-topology/1"
+}

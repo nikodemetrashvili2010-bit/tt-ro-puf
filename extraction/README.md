@@ -23,6 +23,9 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
 | `check_tolerances.py` | The only thing that reads them. Refuses to pass if the file's hash moved |
 | `spef_census.py` | Counts how much of the author's own module hierarchy survives in the published SPEF |
 | `SPEF_CENSUS.json` | That count, tied to the SPEF and netlist hashes |
+| `library_sources.json` | The 43 sky130_fd_sc_hd functional views A.4 reads, pinned by URL and SHA-256 |
+| `ring_topology.py` | Recovers the rings from a netlist using the cell library and no names |
+| `RING_TOPOLOGY.json` | What it recovered, with every library hash it read |
 | `inputs/` | The downloaded bytes. Not committed — the manifest reproduces them |
 
 ## Running it
@@ -33,12 +36,15 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
     python3 ring_census.py --json RING_CENSUS.json inputs/*/projects/*/*.v
     python3 gds_census.py --json GDS_CENSUS.json inputs/*/projects/tt_um_*
     python3 spef_census.py --json SPEF_CENSUS.json inputs/*/projects/tt_um_*
+    python3 ring_topology.py --fetch-library                   # needs network
+    python3 ring_topology.py --json RING_TOPOLOGY.json inputs/*/projects/tt_um_*
 
     python3 check_tolerances.py                                # print the frozen numbers
     python3 check_tolerances.py --freeze-check
     python3 check_tolerances.py --reference spef.csv --candidate pipeline.csv
 
     python3 spef_census.py --verify-archive        # the JSONs against each other
+    python3 ring_topology.py --verify-archive      # the same, for the topology
 
     python3 fetch_inputs.py      --selftest
     python3 verify_inputs.py     --selftest
@@ -46,12 +52,13 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
     python3 gds_census.py        --selftest
     python3 check_tolerances.py  --selftest
     python3 spef_census.py       --selftest
+    python3 ring_topology.py     --selftest
 
-The six selftests plant the faults each script exists to catch and need
-neither network nor inputs, which is why they are the versions CI runs.
-`spef_census.py --verify-archive` runs there too, and it is the only Phase A
-command that checks a real recorded number without the inputs present: it
-re-reads the four JSONs and re-derives every claim that lives between them.
+The seven selftests plant the faults each script exists to catch and need
+neither network nor inputs, which is why they are the versions CI runs. The two
+`--verify-archive` modes run there too, and they are the only Phase A commands
+that check a real recorded number without the inputs present: they re-read the
+archived JSONs and re-derive every claim that lives between them.
 
 `gds_census.py` takes project directories, not files — it needs the GDS, the
 LEF, the netlist and `stats/metrics.csv` together, because the whole point is
@@ -106,6 +113,21 @@ whether `tt_um_PUF`'s SPEF carries RTL paths its GDS does not. It does — 82 of
 358 nets, 64 of them one per ring. The script counts names and only names; the
 control in its selftest scales every capacitance in the fixture by a thousand
 and requires the census to come out identical. See `docs/phaseA_spef.md`.
+
+A.4 begins with `ring_topology.py`, which recovers the rings from the netlist
+without reading a net or instance name: the cell library gives pin directions
+and, from each cell's own truth table, which inputs arrive inverted, and a ring
+is a feedback loop with an odd number of inversions. Names are read afterwards
+in a labelled step, and the author's path families come out one to one with the
+recovered loops on both targets. The control re-runs the whole recovery on the
+same netlist with every name replaced by a hash and requires the same answer.
+See `docs/phaseA_topology.md`.
+
+The 43 cell views live in `inputs/sky130_fd_sc_hd/` and are pinned in their own
+`library_sources.json` rather than in `INPUT_MANIFEST.json`, which records
+target selection on 16 August and is not reopened. All three attacker tiers
+grant the public PDK and cell library, so these are inputs and not recovered
+knowledge.
 
 A.5's tolerances are `TOLERANCES.json`, written on 2026-08-18. They are frozen
 in the sense that matters: the file's SHA-256 is recorded in

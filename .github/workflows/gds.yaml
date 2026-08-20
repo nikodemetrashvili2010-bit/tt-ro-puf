@@ -77,6 +77,8 @@ jobs:
           python3 extraction/check_tolerances.py --freeze-check
           python3 extraction/spef_census.py --selftest
           python3 extraction/spef_census.py --verify-archive
+          python3 extraction/ring_topology.py --selftest
+          python3 extraction/ring_topology.py --verify-archive
           python3 extraction/verify_inputs.py
 
   gds:

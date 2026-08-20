@@ -1,0 +1,314 @@
+{
+ "declared_utc": "2026-08-20",
+ "files": [
+  {
+   "bytes": 1489,
+   "cell": "sky130_fd_sc_hd__a2111o",
+   "local": "sky130_fd_sc_hd__a2111o.functional.v",
+   "sha256": "7331dd005c535cece01dfac999a57c09eda4bc0a42f1be5377dfc4bab843cd31",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a2111o/sky130_fd_sc_hd__a2111o.functional.v"
+  },
+  {
+   "bytes": 1443,
+   "cell": "sky130_fd_sc_hd__a211o",
+   "local": "sky130_fd_sc_hd__a211o.functional.v",
+   "sha256": "0edf23718e8566a767a9986887b132bd533ee987905ee2981899bf65ce2b2d65",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a211o/sky130_fd_sc_hd__a211o.functional.v"
+  },
+  {
+   "bytes": 1457,
+   "cell": "sky130_fd_sc_hd__a211oi",
+   "local": "sky130_fd_sc_hd__a211oi.functional.v",
+   "sha256": "a0e3b5ccbd644957b373a0c1d0426a3ca77c60b3d21cb1f09379bd616e4e39bb",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a211oi/sky130_fd_sc_hd__a211oi.functional.v"
+  },
+  {
+   "bytes": 1406,
+   "cell": "sky130_fd_sc_hd__a21o",
+   "local": "sky130_fd_sc_hd__a21o.functional.v",
+   "sha256": "ef3651349ea2e50f38284e2b04ac547a219631ee19907ad1b2ec4d43aa4b56a5",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a21o/sky130_fd_sc_hd__a21o.functional.v"
+  },
+  {
+   "bytes": 1420,
+   "cell": "sky130_fd_sc_hd__a21oi",
+   "local": "sky130_fd_sc_hd__a21oi.functional.v",
+   "sha256": "254ba316e323806ee5bf9dc3296692986647d8aeec56cab1979e4c741423327a",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a21oi/sky130_fd_sc_hd__a21oi.functional.v"
+  },
+  {
+   "bytes": 1566,
+   "cell": "sky130_fd_sc_hd__a221o",
+   "local": "sky130_fd_sc_hd__a221o.functional.v",
+   "sha256": "244d4fbceb811b429474ae6cbece9e678dec0153246c87a35c76b384a2749df7",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a221o/sky130_fd_sc_hd__a221o.functional.v"
+  },
+  {
+   "bytes": 1511,
+   "cell": "sky130_fd_sc_hd__a22o",
+   "local": "sky130_fd_sc_hd__a22o.functional.v",
+   "sha256": "b14394ee95af7af686492f1e052b085ecc7dbde6716cac7da929de93093ff328",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a22o/sky130_fd_sc_hd__a22o.functional.v"
+  },
+  {
+   "bytes": 1471,
+   "cell": "sky130_fd_sc_hd__a311o",
+   "local": "sky130_fd_sc_hd__a311o.functional.v",
+   "sha256": "d1914320aeefb118ca61a8ec66c967e588de714f21bc3f3963569ad99c640bbe",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a311o/sky130_fd_sc_hd__a311o.functional.v"
+  },
+  {
+   "bytes": 1434,
+   "cell": "sky130_fd_sc_hd__a31o",
+   "local": "sky130_fd_sc_hd__a31o.functional.v",
+   "sha256": "d53ac57d54cf4b31011b3bf5d603c36d5e1d74599e53bc8675028a09b971c19b",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a31o/sky130_fd_sc_hd__a31o.functional.v"
+  },
+  {
+   "bytes": 1462,
+   "cell": "sky130_fd_sc_hd__a41o",
+   "local": "sky130_fd_sc_hd__a41o.functional.v",
+   "sha256": "252c7506debef6301a1f1da869ca30242452b2a1ea59fbbd142b43630e7aeda9",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/a41o/sky130_fd_sc_hd__a41o.functional.v"
+  },
+  {
+   "bytes": 1254,
+   "cell": "sky130_fd_sc_hd__and2",
+   "local": "sky130_fd_sc_hd__and2.functional.v",
+   "sha256": "54e2f7fc00114938461c7f52edfcac8fc9d55d6d7f68e4439f6e62af59820d0c",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and2/sky130_fd_sc_hd__and2.functional.v"
+  },
+  {
+   "bytes": 1356,
+   "cell": "sky130_fd_sc_hd__and2b",
+   "local": "sky130_fd_sc_hd__and2b.functional.v",
+   "sha256": "4b61ad2354b2e924d79e339190f2ec70e4579d816aa228fd1167fb7918e63f39",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and2b/sky130_fd_sc_hd__and2b.functional.v"
+  },
+  {
+   "bytes": 1275,
+   "cell": "sky130_fd_sc_hd__and3",
+   "local": "sky130_fd_sc_hd__and3.functional.v",
+   "sha256": "a4ffc4b6c41a87b711d37898faa2b254ba5c73a9517e316a5b6737ab4e698137",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and3/sky130_fd_sc_hd__and3.functional.v"
+  },
+  {
+   "bytes": 1381,
+   "cell": "sky130_fd_sc_hd__and3b",
+   "local": "sky130_fd_sc_hd__and3b.functional.v",
+   "sha256": "b3787103d299fe79afe82e446fd40b3f0c33519a1a4ec0ec8fef31bb2b2899a5",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and3b/sky130_fd_sc_hd__and3b.functional.v"
+  },
+  {
+   "bytes": 1296,
+   "cell": "sky130_fd_sc_hd__and4",
+   "local": "sky130_fd_sc_hd__and4.functional.v",
+   "sha256": "db2a3895b3c2a6ffa1d1a107b8f7608fb49d0583a3bcaf3ac1e1e52f3c16e218",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and4/sky130_fd_sc_hd__and4.functional.v"
+  },
+  {
+   "bytes": 1412,
+   "cell": "sky130_fd_sc_hd__and4b",
+   "local": "sky130_fd_sc_hd__and4b.functional.v",
+   "sha256": "b94e9cbb47c806a40a6ece4cdbcd7e3c6169a090cff97f46cf7684ba86406ed6",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and4b/sky130_fd_sc_hd__and4b.functional.v"
+  },
+  {
+   "bytes": 1416,
+   "cell": "sky130_fd_sc_hd__and4bb",
+   "local": "sky130_fd_sc_hd__and4bb.functional.v",
+   "sha256": "fdb46a1cce76ca13ed8e3059ef1218230bb54f01d1739bd601b8bce2df4239e6",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/and4bb/sky130_fd_sc_hd__and4bb.functional.v"
+  },
+  {
+   "bytes": 1223,
+   "cell": "sky130_fd_sc_hd__buf",
+   "local": "sky130_fd_sc_hd__buf.functional.v",
+   "sha256": "1989d9092574362e4fceba8680833808b8fd1168b4d224bc39f9ae42241862aa",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/buf/sky130_fd_sc_hd__buf.functional.v"
+  },
+  {
+   "bytes": 1249,
+   "cell": "sky130_fd_sc_hd__clkbuf",
+   "local": "sky130_fd_sc_hd__clkbuf.functional.v",
+   "sha256": "3ad7f61a61526bddb546dc760c817c2420c281d6f789bf0e16d3632455604bbc",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/clkbuf/sky130_fd_sc_hd__clkbuf.functional.v"
+  },
+  {
+   "bytes": 1183,
+   "cell": "sky130_fd_sc_hd__conb",
+   "local": "sky130_fd_sc_hd__conb.functional.v",
+   "sha256": "aebebd05d3c34d647b57d2798b279c61637b8ea61c76a8929e8e64459ae5484e",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/conb/sky130_fd_sc_hd__conb.functional.v"
+  },
+  {
+   "bytes": 1039,
+   "cell": "sky130_fd_sc_hd__decap",
+   "local": "sky130_fd_sc_hd__decap.functional.v",
+   "sha256": "4ac30daabdc25836972c0430de8c1e06aa960226a039a273a9ea8b193a3e18e9",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/decap/sky130_fd_sc_hd__decap.functional.v"
+  },
+  {
+   "bytes": 1642,
+   "cell": "sky130_fd_sc_hd__dfrtp",
+   "local": "sky130_fd_sc_hd__dfrtp.functional.v",
+   "sha256": "511c8d4ac435d10674238dfe3ad764b2d0c4da56d0716b4cbba6d7a04cd251e0",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfrtp/sky130_fd_sc_hd__dfrtp.functional.v"
+  },
+  {
+   "bytes": 1470,
+   "cell": "sky130_fd_sc_hd__dfxtp",
+   "local": "sky130_fd_sc_hd__dfxtp.functional.v",
+   "sha256": "8cbb7aeb11582f32358c647694ebe9241fce7c4e2189a896dc6ede37e544859e",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dfxtp/sky130_fd_sc_hd__dfxtp.functional.v"
+  },
+  {
+   "bytes": 1309,
+   "cell": "sky130_fd_sc_hd__dlygate4sd3",
+   "local": "sky130_fd_sc_hd__dlygate4sd3.functional.v",
+   "sha256": "2b4b04d5d2f8a40c614c9115cb58c0289c55e4039dbe4115be1a952b578544c5",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/dlygate4sd3/sky130_fd_sc_hd__dlygate4sd3.functional.v"
+  },
+  {
+   "bytes": 1110,
+   "cell": "sky130_fd_sc_hd__fill",
+   "local": "sky130_fd_sc_hd__fill.functional.v",
+   "sha256": "92493e55bf73bfb84ca9fe279590f04f420b9662dd6a48857b84d33021e9c7d8",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/fill/sky130_fd_sc_hd__fill.functional.v"
+  },
+  {
+   "bytes": 1225,
+   "cell": "sky130_fd_sc_hd__inv",
+   "local": "sky130_fd_sc_hd__inv.functional.v",
+   "sha256": "064e13ca9b949888d2f1ef7e53759e0f59b881b912c24b1f3b3e156ab4ddbdda",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/inv/sky130_fd_sc_hd__inv.functional.v"
+  },
+  {
+   "bytes": 1270,
+   "cell": "sky130_fd_sc_hd__nand2",
+   "local": "sky130_fd_sc_hd__nand2.functional.v",
+   "sha256": "572fc4b727d36e5f736edf400d99d81f12fa5308859effd8055ded34959585ae",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand2/sky130_fd_sc_hd__nand2.functional.v"
+  },
+  {
+   "bytes": 1291,
+   "cell": "sky130_fd_sc_hd__nand3",
+   "local": "sky130_fd_sc_hd__nand3.functional.v",
+   "sha256": "8a9f541b662521210352292b965554c0ca034889ff453a21a783092d6a03f9ff",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand3/sky130_fd_sc_hd__nand3.functional.v"
+  },
+  {
+   "bytes": 1312,
+   "cell": "sky130_fd_sc_hd__nand4",
+   "local": "sky130_fd_sc_hd__nand4.functional.v",
+   "sha256": "9c5a06ac9c1b84ecb31c0141c307da2aa7ba963e863d86eba21562a9c88b2861",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nand4/sky130_fd_sc_hd__nand4.functional.v"
+  },
+  {
+   "bytes": 1254,
+   "cell": "sky130_fd_sc_hd__nor2",
+   "local": "sky130_fd_sc_hd__nor2.functional.v",
+   "sha256": "3c31e1cb7cebf1bfe158ab3c51857e653c3e2bc1acd50035475a2b2d28fe39c3",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nor2/sky130_fd_sc_hd__nor2.functional.v"
+  },
+  {
+   "bytes": 1329,
+   "cell": "sky130_fd_sc_hd__nor4",
+   "local": "sky130_fd_sc_hd__nor4.functional.v",
+   "sha256": "496dad94255594719c89b1ff3831ed22ef1fd595164bd4a72fc6b7cd51a610c6",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nor4/sky130_fd_sc_hd__nor4.functional.v"
+  },
+  {
+   "bytes": 1414,
+   "cell": "sky130_fd_sc_hd__nor4b",
+   "local": "sky130_fd_sc_hd__nor4b.functional.v",
+   "sha256": "70a324a84c3c4e142d7049b5fa5d6ea3d4e0649fa8747ca8476e7fd25998aab4",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/nor4b/sky130_fd_sc_hd__nor4b.functional.v"
+  },
+  {
+   "bytes": 1446,
+   "cell": "sky130_fd_sc_hd__o211a",
+   "local": "sky130_fd_sc_hd__o211a.functional.v",
+   "sha256": "31d8e73ac63883d7e78c4c429ef029842b5e58babb68084a1623067097bb8165",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/o211a/sky130_fd_sc_hd__o211a.functional.v"
+  },
+  {
+   "bytes": 1467,
+   "cell": "sky130_fd_sc_hd__o21ba",
+   "local": "sky130_fd_sc_hd__o21ba.functional.v",
+   "sha256": "ecc5b69a64a973a35f7f3cf94ff91080266d338d40f83ea1394e368c64af46ae",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/o21ba/sky130_fd_sc_hd__o21ba.functional.v"
+  },
+  {
+   "bytes": 1558,
+   "cell": "sky130_fd_sc_hd__o21bai",
+   "local": "sky130_fd_sc_hd__o21bai.functional.v",
+   "sha256": "a558216d18ab2e122b2a645988c1a4cc1e1e1b16c32e8b3329a8a4acd010ae48",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/o21bai/sky130_fd_sc_hd__o21bai.functional.v"
+  },
+  {
+   "bytes": 1566,
+   "cell": "sky130_fd_sc_hd__o221a",
+   "local": "sky130_fd_sc_hd__o221a.functional.v",
+   "sha256": "b6e1695bbba26efa5d2f584cd1501ab93f639702bfff43a99e1ef6d32020229f",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/o221a/sky130_fd_sc_hd__o221a.functional.v"
+  },
+  {
+   "bytes": 1539,
+   "cell": "sky130_fd_sc_hd__o32a",
+   "local": "sky130_fd_sc_hd__o32a.functional.v",
+   "sha256": "065dd1662ffb2f6d94d9dcbd0d87b30cb2d8bda879406dd827a05d7321f3efa1",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/o32a/sky130_fd_sc_hd__o32a.functional.v"
+  },
+  {
+   "bytes": 1244,
+   "cell": "sky130_fd_sc_hd__or2",
+   "local": "sky130_fd_sc_hd__or2.functional.v",
+   "sha256": "27a5a3da939d21a65b3b5f3da1cf6d6a2bce34e253acf50af4eb597fb27e1362",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/or2/sky130_fd_sc_hd__or2.functional.v"
+  },
+  {
+   "bytes": 1265,
+   "cell": "sky130_fd_sc_hd__or3",
+   "local": "sky130_fd_sc_hd__or3.functional.v",
+   "sha256": "5b0fbd8dce80204fabad52d3cb5524bb41e4f554a2f9af81648ce4cb141aded0",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/or3/sky130_fd_sc_hd__or3.functional.v"
+  },
+  {
+   "bytes": 1286,
+   "cell": "sky130_fd_sc_hd__or4",
+   "local": "sky130_fd_sc_hd__or4.functional.v",
+   "sha256": "3d2b2f52654a9649b01299b821ee85a2db364ea4dd59207eff742758be00b9f7",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/or4/sky130_fd_sc_hd__or4.functional.v"
+  },
+  {
+   "bytes": 1067,
+   "cell": "sky130_fd_sc_hd__tapvpwrvgnd",
+   "local": "sky130_fd_sc_hd__tapvpwrvgnd.functional.v",
+   "sha256": "8273cc96e572c54371cc13cfabe4f2167de5d40fe220fbf0d4eaae3ceba7efb0",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/tapvpwrvgnd/sky130_fd_sc_hd__tapvpwrvgnd.functional.v"
+  },
+  {
+   "bytes": 1305,
+   "cell": "sky130_fd_sc_hd__xnor2",
+   "local": "sky130_fd_sc_hd__xnor2.functional.v",
+   "sha256": "b0b55e4521f4c910818737aba61702db09828dec846dc8dbf7fdd5cf7245fe3f",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/xnor2/sky130_fd_sc_hd__xnor2.functional.v"
+  },
+  {
+   "bytes": 1285,
+   "cell": "sky130_fd_sc_hd__xor2",
+   "local": "sky130_fd_sc_hd__xor2.functional.v",
+   "sha256": "336f12a30ab2b362a2bc323317ca030a1722ebd6a5fb1d50d7cbe731edc39804",
+   "url": "https://raw.githubusercontent.com/google/skywater-pdk-libs-sky130_fd_sc_hd/ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1/cells/xor2/sky130_fd_sc_hd__xor2.functional.v"
+  }
+ ],
+ "purpose": "The standard cell views A.4 is allowed to read. All three attacker tiers in PLAN_TO_DECEMBER.md grant the public PDK and cell library, so these are inputs and not recovered knowledge. Kept apart from INPUT_MANIFEST.json, which records target selection on 2026-08-16 and is not reopened.",
+ "repo": {
+  "commit": "ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1",
+  "licence": "Apache-2.0",
+  "url": "https://github.com/google/skywater-pdk-libs-sky130_fd_sc_hd",
+  "what": "Functional views of the sky130_fd_sc_hd cells. One per base cell: drive strength changes the transistors, not the pins or the function."
+ },
+ "schema": "phaseA-library-sources/1"
+}
