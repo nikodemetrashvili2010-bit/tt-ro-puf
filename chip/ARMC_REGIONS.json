@@ -1,0 +1,237 @@
+{
+  "arm_a_centroid_um": [
+    273.189,
+    114.341
+  ],
+  "arm_a_pinned_cells": 512,
+  "checks": [
+    {
+      "detail": "16 placed",
+      "id": "A01",
+      "name": "sixteen regions were placed",
+      "pass": true
+    },
+    {
+      "detail": "0 overlapping pairs",
+      "id": "A02",
+      "name": "no two regions overlap",
+      "pass": true
+    },
+    {
+      "detail": "0 rows short of free sites, 0 off any row",
+      "id": "A03",
+      "name": "every region covers row sites free of pinned Arm A cells",
+      "pass": true
+    },
+    {
+      "detail": "0 off the grid",
+      "id": "A04",
+      "name": "every region starts on the site grid",
+      "pass": true
+    },
+    {
+      "detail": "0 overlaps",
+      "id": "A05",
+      "name": "no region overlaps a macro",
+      "pass": true
+    },
+    {
+      "detail": "0.42857 against 0.42760",
+      "id": "A06",
+      "name": "the region density matches Arm A's mean to within a point",
+      "pass": true
+    },
+    {
+      "detail": "44160 dbu of cells in 103040 dbu of row",
+      "id": "A07",
+      "name": "a ring's cells fit inside a region's row length",
+      "pass": true
+    },
+    {
+      "detail": "strip 8, band_low 4, band_high 4",
+      "id": "A08",
+      "name": "the regions are split across the die as declared",
+      "pass": true
+    },
+    {
+      "detail": "4484.3 um2, 25.96% of 17272.8",
+      "id": "A09",
+      "name": "the regions fit the free area with the G.2 reserve intact",
+      "pass": true
+    },
+    {
+      "detail": "48 oscillators, 6 bits",
+      "id": "A10",
+      "name": "three arms of sixteen need one more select bit than two",
+      "pass": true
+    },
+    {
+      "detail": "512 cells",
+      "id": "A11",
+      "name": "all 512 Arm A cells are pinned, none left out",
+      "pass": true
+    }
+  ],
+  "free_area_um2": 17272.816,
+  "quota": {
+    "band_high": 4,
+    "band_low": 4,
+    "strip": 8
+  },
+  "region": {
+    "area_um2": 280.2688,
+    "arm_a_mean_density": 0.4276,
+    "density": 0.42857,
+    "height_um": 10.88,
+    "rows": 4,
+    "sites": 56,
+    "width_um": 25.76
+  },
+  "regions": [
+    {
+      "index": 0,
+      "where": "strip",
+      "x0_um": 293.48,
+      "x1_um": 319.24,
+      "y0_um": 76.16,
+      "y1_um": 87.04
+    },
+    {
+      "index": 1,
+      "where": "strip",
+      "x0_um": 297.16,
+      "x1_um": 322.92,
+      "y0_um": 87.04,
+      "y1_um": 97.92
+    },
+    {
+      "index": 2,
+      "where": "strip",
+      "x0_um": 300.38,
+      "x1_um": 326.14,
+      "y0_um": 97.92,
+      "y1_um": 108.8
+    },
+    {
+      "index": 3,
+      "where": "strip",
+      "x0_um": 296.24,
+      "x1_um": 322.0,
+      "y0_um": 108.8,
+      "y1_um": 119.68
+    },
+    {
+      "index": 4,
+      "where": "strip",
+      "x0_um": 300.38,
+      "x1_um": 326.14,
+      "y0_um": 119.68,
+      "y1_um": 130.56
+    },
+    {
+      "index": 5,
+      "where": "strip",
+      "x0_um": 301.76,
+      "x1_um": 327.52,
+      "y0_um": 130.56,
+      "y1_um": 141.44
+    },
+    {
+      "index": 6,
+      "where": "strip",
+      "x0_um": 271.4,
+      "x1_um": 297.16,
+      "y0_um": 152.32,
+      "y1_um": 163.2
+    },
+    {
+      "index": 7,
+      "where": "strip",
+      "x0_um": 298.08,
+      "x1_um": 323.84,
+      "y0_um": 152.32,
+      "y1_um": 163.2
+    },
+    {
+      "index": 8,
+      "where": "band_low",
+      "x0_um": 2.76,
+      "x1_um": 28.52,
+      "y0_um": 2.72,
+      "y1_um": 13.6
+    },
+    {
+      "index": 9,
+      "where": "band_low",
+      "x0_um": 109.48,
+      "x1_um": 135.24,
+      "y0_um": 2.72,
+      "y1_um": 13.6
+    },
+    {
+      "index": 10,
+      "where": "band_low",
+      "x0_um": 189.52,
+      "x1_um": 215.28,
+      "y0_um": 2.72,
+      "y1_um": 13.6
+    },
+    {
+      "index": 11,
+      "where": "band_low",
+      "x0_um": 296.24,
+      "x1_um": 322.0,
+      "y0_um": 2.72,
+      "y1_um": 13.6
+    },
+    {
+      "index": 12,
+      "where": "band_high",
+      "x0_um": 2.76,
+      "x1_um": 28.52,
+      "y0_um": 206.72,
+      "y1_um": 217.6
+    },
+    {
+      "index": 13,
+      "where": "band_high",
+      "x0_um": 109.48,
+      "x1_um": 135.24,
+      "y0_um": 206.72,
+      "y1_um": 217.6
+    },
+    {
+      "index": 14,
+      "where": "band_high",
+      "x0_um": 189.52,
+      "x1_um": 215.28,
+      "y0_um": 206.72,
+      "y1_um": 217.6
+    },
+    {
+      "index": 15,
+      "where": "band_high",
+      "x0_um": 296.24,
+      "x1_um": 322.0,
+      "y0_um": 206.72,
+      "y1_um": 217.6
+    }
+  ],
+  "rings": 16,
+  "select": {
+    "arm_bits": 2,
+    "idx_bits": 4,
+    "oscillators": 48,
+    "select_bits": 6
+  },
+  "slots_available": {
+    "band_high": 12,
+    "band_low": 12,
+    "strip": 33
+  },
+  "source": {
+    "cost": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+    "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7"
+  },
+  "total_region_area_um2": 4484.301
+}

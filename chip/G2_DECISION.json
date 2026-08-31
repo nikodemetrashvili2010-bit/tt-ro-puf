@@ -1,0 +1,319 @@
+{
+  "checks": [
+    {
+      "detail": "sha256 c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
+      "id": "G01",
+      "name": "the criteria file is the one that was frozen",
+      "pass": true
+    },
+    {
+      "detail": "missing: none",
+      "id": "G02",
+      "name": "every option carries every field the rule names",
+      "pass": true
+    },
+    {
+      "detail": "unknown: none",
+      "id": "G03",
+      "name": "the rule uses only operators this script implements",
+      "pass": true
+    },
+    {
+      "detail": "budget e3b7f99f5d6e, cost e3b7f99f5d6e",
+      "id": "G04",
+      "name": "both input files describe the same placed DEF",
+      "pass": true
+    },
+    {
+      "detail": "17272.816 in cost, 17272.816 in budget",
+      "id": "G05",
+      "name": "the cost file was priced against this free area",
+      "pass": true
+    },
+    {
+      "detail": "0 rows off: ",
+      "id": "G06",
+      "name": "each option's share of the free area is its own arithmetic",
+      "pass": true
+    },
+    {
+      "detail": "2.09 x 2.26 tiles, committed 4",
+      "id": "G07",
+      "name": "the die is about two standard tiles on each side",
+      "pass": true
+    },
+    {
+      "detail": "12 of 15 survive",
+      "id": "G08",
+      "name": "at least one option clears every hard constraint",
+      "pass": true
+    },
+    {
+      "detail": "2 recommendations",
+      "id": "G09",
+      "name": "every recommended option is one that survived",
+      "pass": true
+    },
+    {
+      "detail": "rejected by H1,H2,H3,H4,H5,H6, expected H1,H2,H3,H4,H5,H6",
+      "id": "G10",
+      "name": "every constraint rejects a deliberately hopeless probe",
+      "pass": true
+    }
+  ],
+  "criteria_sha256": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
+  "frozen": "2026-08-27",
+  "gate": "G.2",
+  "largest_surviving": {
+    "armc": "Arm C, 16 rings, loose density",
+    "ladder": "load ladder, 16 rungs"
+  },
+  "options": [
+    {
+      "area_um2": 1893.264,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 8 rings, tight density",
+      "new_oscillators": 8,
+      "option": "armc",
+      "pct_of_free": 10.96,
+      "routed_um": 814.5,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 2388.919,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 8 rings, mean density",
+      "new_oscillators": 8,
+      "option": "armc",
+      "pct_of_free": 13.83,
+      "routed_um": 814.5,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 3204.861,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 8 rings, loose density",
+      "new_oscillators": 8,
+      "option": "armc",
+      "pct_of_free": 18.55,
+      "routed_um": 814.5,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 2809.096,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 12 rings, tight density",
+      "new_oscillators": 12,
+      "option": "armc",
+      "pct_of_free": 16.26,
+      "routed_um": 1221.7,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 3552.579,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 12 rings, mean density",
+      "new_oscillators": 12,
+      "option": "armc",
+      "pct_of_free": 20.57,
+      "routed_um": 1221.7,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 4776.493,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 12 rings, loose density",
+      "new_oscillators": 12,
+      "option": "armc",
+      "pct_of_free": 27.65,
+      "routed_um": 1221.7,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 3724.928,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 16 rings, tight density",
+      "new_oscillators": 16,
+      "option": "armc",
+      "pct_of_free": 21.57,
+      "routed_um": 1629.0,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 4716.239,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 16 rings, mean density",
+      "new_oscillators": 16,
+      "option": "armc",
+      "pct_of_free": 27.3,
+      "routed_um": 1629.0,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 6348.124,
+      "build_days": 4,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "Arm C, 16 rings, loose density",
+      "new_oscillators": 16,
+      "option": "armc",
+      "pct_of_free": 36.75,
+      "routed_um": 1629.0,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 1207.697,
+      "build_days": 2,
+      "delivery_risk": "low",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "load ladder, 8 rungs",
+      "new_oscillators": 8,
+      "option": "ladder",
+      "pct_of_free": 6.99,
+      "routed_um": 814.5,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 1870.833,
+      "build_days": 2,
+      "delivery_risk": "low",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "load ladder, 12 rungs",
+      "new_oscillators": 12,
+      "option": "ladder",
+      "pct_of_free": 10.83,
+      "routed_um": 1221.7,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 2594.026,
+      "build_days": 2,
+      "delivery_risk": "low",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [],
+      "label": "load ladder, 16 rungs",
+      "new_oscillators": 16,
+      "option": "ladder",
+      "pct_of_free": 15.02,
+      "routed_um": 1629.0,
+      "survives": true,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 6318.954,
+      "build_days": 6,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [
+        "H6 (6 <= 5 is false)"
+      ],
+      "label": "both, 16 rings tight + 16 rungs",
+      "new_oscillators": 32,
+      "option": "both",
+      "pct_of_free": 36.58,
+      "routed_um": 3258.0,
+      "survives": false,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 7310.264999999999,
+      "build_days": 6,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [
+        "H6 (6 <= 5 is false)"
+      ],
+      "label": "both, 16 rings mean + 16 rungs",
+      "new_oscillators": 32,
+      "option": "both",
+      "pct_of_free": 42.32,
+      "routed_um": 3258.0,
+      "survives": false,
+      "tiles_required": 4
+    },
+    {
+      "area_um2": 8942.15,
+      "build_days": 6,
+      "delivery_risk": "high",
+      "existing_oscillators": 32,
+      "extra_input_pins": 1,
+      "failed": [
+        "H6 (6 <= 5 is false)"
+      ],
+      "label": "both, 16 rings loose + 16 rungs",
+      "new_oscillators": 32,
+      "option": "both",
+      "pct_of_free": 51.77,
+      "routed_um": 3258.0,
+      "survives": false,
+      "tiles_required": 4
+    }
+  ],
+  "survivors": [
+    "Arm C, 8 rings, tight density",
+    "Arm C, 8 rings, mean density",
+    "Arm C, 8 rings, loose density",
+    "Arm C, 12 rings, tight density",
+    "Arm C, 12 rings, mean density",
+    "Arm C, 12 rings, loose density",
+    "Arm C, 16 rings, tight density",
+    "Arm C, 16 rings, mean density",
+    "Arm C, 16 rings, loose density",
+    "load ladder, 8 rungs",
+    "load ladder, 12 rungs",
+    "load ladder, 16 rungs"
+  ],
+  "tiles_required": 4
+}

@@ -1,0 +1,98 @@
+{
+  "_comment": [
+    "The G.2 decision rule, frozen 2026-08-27, before either option was",
+    "scored against it. Same discipline as extraction/TOLERANCES.json: a",
+    "rule written after seeing which option wins is a description, not a",
+    "rule. Its SHA-256 is recorded in chip/g2_decision.py, in",
+    "docs/phaseE_g2_decision.md and in PLAN_TO_DECEMBER.md, and",
+    "--freeze-check in CI requires all four to agree.",
+    "",
+    "The hard constraints are evaluated against numbers measured in E.1a",
+    "and E.1b. The declared inputs below are estimates, and they are in",
+    "this file rather than in the script so that they are frozen with the",
+    "rule instead of chosen alongside the answer."
+  ],
+  "frozen": "2026-08-27",
+  "gate": "G.2",
+  "committed": {
+    "tiles_string": "2x2",
+    "tiles": 4,
+    "source": "info.yaml",
+    "standard_tile_um": [160.0, 100.0],
+    "_comment": "The standard tile figure is from the info.yaml comment and is used only to express the die as a ratio. The authority on how many tiles are bought is the tiles string itself."
+  },
+  "hard": [
+    {
+      "id": "H1",
+      "name": "fits the free row area with a quarter of it still in reserve",
+      "field": "pct_of_free",
+      "op": "<=",
+      "value": 75.0,
+      "why": "E.1a's free figure counts all decap as reclaimable and the power question behind that is open. A reserve absorbs being wrong about it."
+    },
+    {
+      "id": "H2",
+      "name": "needs no tile beyond the 2x2 already committed",
+      "field": "tiles_required",
+      "op": "<=",
+      "value": 4,
+      "why": "A fifth tile is roughly 70 euro and, more to the point, changes the floorplan and forces a full re-harden."
+    },
+    {
+      "id": "H3",
+      "name": "leaves both existing arms at sixteen oscillators each",
+      "field": "existing_oscillators",
+      "op": "==",
+      "value": 32,
+      "why": "E.1's own checklist: preserve the two-arm result rather than sacrificing it for a small third sample."
+    },
+    {
+      "id": "H4",
+      "name": "gives the new arm at least eight independent oscillators",
+      "field": "new_oscillators",
+      "op": ">=",
+      "value": 8,
+      "why": "E.1's stated floor for a comparison worth making."
+    },
+    {
+      "id": "H5",
+      "name": "costs at most one new input pin",
+      "field": "extra_input_pins",
+      "op": "<=",
+      "value": 1,
+      "why": "ui[7] is the only free input. Everything past it has to come out of uio[1:7], which E.2 is spending."
+    },
+    {
+      "id": "H6",
+      "name": "builds in at most five working days",
+      "field": "build_days",
+      "op": "<=",
+      "value": 5,
+      "why": "The chip path is 17 to 23 working days against a shuttle that opens in September. A build longer than a week eats the margin that exists so G.3 can re-run the whole evidence suite."
+    }
+  ],
+  "preference_order": [
+    "answers the countermeasure question: can an open automated flow suppress layout leakage with constraints, or does it need a hard macro",
+    "gives a causal calibration curve for extraction-to-frequency prediction",
+    "lower risk that the flow cannot deliver the treatment at all",
+    "fewer working days to build",
+    "less area"
+  ],
+  "declared_inputs": {
+    "_comment": "Estimates, frozen with the rule. Each says what it rests on.",
+    "armc": {
+      "build_days": 4,
+      "build_days_basis": "Placement and routing equalization constraints in OpenLane, then one build per candidate constraint set until the ring bounding boxes match. Two days of constraint writing, two of iteration.",
+      "delivery_risk": "high",
+      "delivery_risk_basis": "The open flow has no supported way to force sixteen identical placements. It is the point of the experiment and it is also the thing that might not work."
+    },
+    "ladder": {
+      "build_days": 2,
+      "build_days_basis": "Generated RTL, no placement constraint, one build. The generator is a variation on dualarm/gen_dualarm.py, which already emits sixteen instances.",
+      "delivery_risk": "low",
+      "delivery_risk_basis": "Nothing about it depends on the flow doing something unusual."
+    }
+  },
+  "sizes_considered": [8, 12, 16],
+  "existing_oscillators": 32
+}

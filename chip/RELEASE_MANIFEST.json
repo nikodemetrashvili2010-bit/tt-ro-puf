@@ -1,0 +1,248 @@
+{
+  "actions": [
+    {
+      "action": "actions/checkout",
+      "pinned_to_commit": false,
+      "ref": "v6"
+    },
+    {
+      "action": "actions/checkout",
+      "pinned_to_commit": false,
+      "ref": "v6"
+    },
+    {
+      "action": "TinyTapeout/tt-gds-action",
+      "pinned_to_commit": false,
+      "ref": "ttsky26c"
+    },
+    {
+      "action": "TinyTapeout/tt-gds-action/precheck",
+      "pinned_to_commit": false,
+      "ref": "ttsky26c"
+    },
+    {
+      "action": "actions/checkout",
+      "pinned_to_commit": false,
+      "ref": "v6"
+    },
+    {
+      "action": "TinyTapeout/tt-gds-action/gl_test",
+      "pinned_to_commit": false,
+      "ref": "ttsky26c"
+    },
+    {
+      "action": "TinyTapeout/tt-gds-action/viewer",
+      "pinned_to_commit": false,
+      "ref": "ttsky26c"
+    }
+  ],
+  "checks": [
+    {
+      "detail": "none",
+      "id": "S01",
+      "name": "every artefact with a producer is on disk",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "S02",
+      "name": "every frozen file is on disk",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "S03",
+      "name": "no artefact has more than one producer",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "S04",
+      "name": "every file in chip/ is a script, a producer's output, authored or frozen",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "S05",
+      "name": "every script in chip/ runs in the evidence gate",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "S06",
+      "name": "every regenerated artefact is diffed against the archive",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "S07",
+      "name": "every recorded input hash still matches the file",
+      "pass": true
+    },
+    {
+      "detail": "cost, def, macro_lef, metrics, netlist, positions, spef",
+      "id": "S08",
+      "name": "at least one artefact records where the build came from",
+      "pass": true
+    },
+    {
+      "detail": "3 freeze checks for 2 frozen files plus the A.5 one",
+      "id": "S09",
+      "name": "every frozen file has a freeze check in the gate",
+      "pass": true
+    },
+    {
+      "detail": "0 of 7 actions pinned to a commit: TinyTapeout/tt-gds-action, TinyTapeout/tt-gds-action/gl_test, TinyTapeout/tt-gds-action/precheck, TinyTapeout/tt-gds-action/viewer, actions/checkout",
+      "id": "S10",
+      "name": "the release says whether the CI actions are pinned",
+      "pass": true
+    },
+    {
+      "detail": "1 authored",
+      "id": "S12",
+      "name": "every authored file names a checker that is in chip/",
+      "pass": true
+    },
+    {
+      "detail": "10 of 8 found",
+      "id": "S11",
+      "name": "every raw build file Phase E reads was found and hashed",
+      "pass": true
+    }
+  ],
+  "chip_files": {
+    "ARMC_COST.json": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+    "ARMC_REGIONS.json": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
+    "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
+    "G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
+    "G3_RUNBOOK.json": "b7010bface0ce8adf9d3b92d7447dc08c4d4be79eb52992aba88cf85edf42921",
+    "G3_RUNBOOK_CHECK.json": "20a060c966678ea178cd872d4fe17f5e5ce428c115deab0e6132f55699f1af6f",
+    "OBSERVABILITY.json": "7de147297376198b5119de5567c16e237d91b3a0c6c61cd66d58cfdbb0617f0f",
+    "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
+    "RELEASE_MANIFEST.json": null,
+    "TILE_BUDGET.json": "a9c227441cb32f3c4770e7a73c7620b59c1201ea3c066d17a22718cdf88638cf",
+    "armc_cost.py": "492278681363c426c4caf1a47789470bbcc75a559313a6cba658d5235785865f",
+    "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
+    "e2_acceptance.csv": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
+    "e2_ro_puf.v": "02261c9137d8a0800ff318f0c9c3e5701d3e66a409f88a386a89c1db98796da4",
+    "e2_ro_puf_core.v": "082046a54636e9f7fd5c1ef85e5fe45a91b2bbdfe2e448c526e9c627de0859b3",
+    "e2_tb_plan.csv": "333fd466864e01bd9f25ca2f37f742d55cdef99dcbf2efa974b85c6a86a83208",
+    "e2_tt_um_ro_puf.v": "2c3068bb8514b475a9c34467a2d07dc562a5de770a6c2cb6d9a566b632672305",
+    "g2_decision.py": "abc63d12e2ed1f7478001b619cf2fe5b58b2ca648d330cd5d87dc1953f864b87",
+    "g3_runbook.py": "c6cdda15a1ee1dbdafb511779f27e8101a9adcea965a4ce65820be4631cc72dd",
+    "gen_armc.py": "ab77eaf1450708ed2b92c730529e2ce196a5b21342de895066aebbd2d959309c",
+    "gen_e2_rtl.py": "b9eb3062a8d53eccb59061fa351225dd9fa1291937a6fb5b26427aa63ef73633",
+    "observability_spec.py": "770e1b7a16f73f41c5725a15f5554abca6930cde0f6dcd05a5ee370f861080ba",
+    "preregister.py": "bf1e1c7c78863bbbfd96020b70f90c11def143234e3ddf6ebf7dfe02ec4182d7",
+    "release_manifest.py": "96d26750c556bea7e01dd4ecd494bd8875f1283a1df0bd16cb087764cdd0e7e1",
+    "ro_armc.v": "91142cb50babf876b03fea3d5c6448b33e2217974cfd73471740c0983b089041",
+    "tile_budget.py": "760097af36e3a468dd2759901222dbb84beeee029302c512df5752d3f5892afc",
+    "verify_phaseE.py": "c723f1ec0164f04509ae528995d14fdb60f1f6cbc590b33ef18aef1954e5d9b2"
+  },
+  "frozen": {
+    "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
+    "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
+  },
+  "gate": "G.5",
+  "gate_commands": 97,
+  "phase": "E",
+  "produced": {
+    "ARMC_COST.json": {
+      "producer": "armc_cost.py",
+      "sha256": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+      "sources": {
+        "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+        "metrics": "1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22",
+        "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
+        "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e",
+        "spef": "1015bcff163d9f3610b882aed3001f9128dd01919e1892b00436553be6795795"
+      }
+    },
+    "ARMC_REGIONS.json": {
+      "producer": "gen_armc.py",
+      "sha256": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
+      "sources": {
+        "cost": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+        "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7"
+      }
+    },
+    "G2_DECISION.json": {
+      "producer": "g2_decision.py",
+      "sha256": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
+      "sources": {}
+    },
+    "G3_RUNBOOK_CHECK.json": {
+      "producer": "g3_runbook.py",
+      "sha256": "20a060c966678ea178cd872d4fe17f5e5ce428c115deab0e6132f55699f1af6f",
+      "sources": {}
+    },
+    "OBSERVABILITY.json": {
+      "producer": "observability_spec.py",
+      "sha256": "7de147297376198b5119de5567c16e237d91b3a0c6c61cd66d58cfdbb0617f0f",
+      "sources": {}
+    },
+    "RELEASE_MANIFEST.json": {
+      "producer": "release_manifest.py",
+      "sha256": null,
+      "sources": {}
+    },
+    "TILE_BUDGET.json": {
+      "producer": "tile_budget.py",
+      "sha256": "a9c227441cb32f3c4770e7a73c7620b59c1201ea3c066d17a22718cdf88638cf",
+      "sources": {
+        "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+        "macro_lef": "8cf8660c57c44e90ff30f0a52bd94a7e24c2cee62a58121b7f9e1d2c91b6fb96",
+        "metrics": "1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22",
+        "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
+        "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e"
+      }
+    },
+    "armc_place.tcl": {
+      "producer": "gen_armc.py",
+      "sha256": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
+      "sources": {}
+    },
+    "e2_acceptance.csv": {
+      "producer": "observability_spec.py",
+      "sha256": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
+      "sources": {}
+    },
+    "e2_ro_puf.v": {
+      "producer": "gen_e2_rtl.py",
+      "sha256": "02261c9137d8a0800ff318f0c9c3e5701d3e66a409f88a386a89c1db98796da4",
+      "sources": {}
+    },
+    "e2_ro_puf_core.v": {
+      "producer": "gen_e2_rtl.py",
+      "sha256": "082046a54636e9f7fd5c1ef85e5fe45a91b2bbdfe2e448c526e9c627de0859b3",
+      "sources": {}
+    },
+    "e2_tb_plan.csv": {
+      "producer": "gen_e2_rtl.py",
+      "sha256": "333fd466864e01bd9f25ca2f37f742d55cdef99dcbf2efa974b85c6a86a83208",
+      "sources": {}
+    },
+    "e2_tt_um_ro_puf.v": {
+      "producer": "gen_e2_rtl.py",
+      "sha256": "2c3068bb8514b475a9c34467a2d07dc562a5de770a6c2cb6d9a566b632672305",
+      "sources": {}
+    },
+    "ro_armc.v": {
+      "producer": "gen_armc.py",
+      "sha256": "91142cb50babf876b03fea3d5c6448b33e2217974cfd73471740c0983b089041",
+      "sources": {}
+    }
+  },
+  "raw_inputs": {
+    "cost": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+    "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+    "dualarm_par_ff_out.txt": "1c501b725bec18bfa4cbfd07b170811da6dec9d862182e05cc88a07a461f0961",
+    "dualarm_par_out.txt": "ef41e9e66d03b6ed7774d15944ee46ddcc7c16ba39e480363bd9900cd5cf1753",
+    "dualarm_par_ss_out.txt": "3f4326e28bd0cf300d536797ea9883a66152082548fc41269475076230274e6f",
+    "macro_lef": "8cf8660c57c44e90ff30f0a52bd94a7e24c2cee62a58121b7f9e1d2c91b6fb96",
+    "metrics": "1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22",
+    "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
+    "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e",
+    "spef": "1015bcff163d9f3610b882aed3001f9128dd01919e1892b00436553be6795795"
+  }
+}

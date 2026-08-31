@@ -1,0 +1,238 @@
+{
+  "arm_a": {
+    "area_per_ring_um2": 120.1152,
+    "area_um2": 1921.843,
+    "bbox_um": [
+      247.48,
+      70.72,
+      307.74,
+      171.36
+    ],
+    "cells_per_ring": 32,
+    "clear_of_macros": true,
+    "composition": {
+      "buf_1": 1,
+      "inv_1": 30,
+      "nand2_1": 1
+    },
+    "rings": 16
+  },
+  "checks": [
+    {
+      "detail": "6477 parsed, 6477 declared, 6477 in metrics",
+      "id": "T01",
+      "name": "component count agrees with the DEF header and metrics",
+      "pass": true
+    },
+    {
+      "detail": "unexpected: none",
+      "id": "T02",
+      "name": "every master is the declared macro or a sky130 hd cell",
+      "pass": true
+    },
+    {
+      "detail": "16 in DEF, 16 in netlist",
+      "id": "T03",
+      "name": "the DEF and the netlist hold the same number of macros",
+      "pass": true
+    },
+    {
+      "detail": "0 off-row: ",
+      "id": "T04",
+      "name": "every standard cell sits on a declared row",
+      "pass": true
+    },
+    {
+      "detail": "0 off the grid",
+      "id": "T05",
+      "name": "every standard cell is aligned to its row's site grid",
+      "pass": true
+    },
+    {
+      "detail": "0 fault(s): none",
+      "id": "T06",
+      "name": "rows pack flush: one width a master, no gap, area agrees",
+      "pass": true
+    },
+    {
+      "detail": "LEF says (60.0, 40.0)",
+      "id": "T07",
+      "name": "the macro LEF declares the 60 x 40 um cell info.yaml sizes",
+      "pass": true
+    },
+    {
+      "detail": "0 overlapping pairs",
+      "id": "T08",
+      "name": "no two macros overlap",
+      "pass": true
+    },
+    {
+      "detail": "0 macro/row overlaps",
+      "id": "T09",
+      "name": "no macro sits on a row span",
+      "pass": true
+    },
+    {
+      "detail": "0 outside: ",
+      "id": "T10",
+      "name": "everything placed is inside DIEAREA",
+      "pass": true
+    },
+    {
+      "detail": "334.88 x 225.76 um",
+      "id": "T11",
+      "name": "die size is the 2x2 figure info.yaml claims",
+      "pass": true
+    },
+    {
+      "detail": "65380.9 here, 65380.9 in metrics",
+      "id": "T12",
+      "name": "placed area equals design__instance__area in metrics",
+      "pass": true
+    },
+    {
+      "detail": "6477 of 6477 in arma_ring,armb_macro,decap,diode,fill,logic,tap",
+      "id": "T13",
+      "name": "the classes partition every component exactly once",
+      "pass": true
+    },
+    {
+      "detail": "16 rings, 1 shape(s), netlist agrees",
+      "id": "T14",
+      "name": "the DEF and the netlist agree on every Arm A ring",
+      "pass": true
+    },
+    {
+      "detail": "16 rows, ncells 32",
+      "id": "T15",
+      "name": "the positions CSV agrees with the DEF about the rings",
+      "pass": true
+    },
+    {
+      "detail": "4 x by 4 y, pitch [60.0] / [48.0]",
+      "id": "T16",
+      "name": "the Arm B macros are a 4x4 grid at one pitch",
+      "pass": true
+    }
+  ],
+  "design": "tt_um_nikodemetrashvili20_ro_puf",
+  "die": {
+    "area_um2": 75602.509,
+    "height_um": 225.76,
+    "standard_tiles_tall": 2.258,
+    "standard_tiles_wide": 2.093,
+    "width_um": 334.88
+  },
+  "free": {
+    "area_um2": 17272.816,
+    "by_region": {
+      "band": {
+        "by_class_um2": {
+          "decap": 6114.614,
+          "diode": 2.502,
+          "fill": 319.056,
+          "logic": 4048.883,
+          "tap": 265.254
+        },
+        "free_um2": 6433.67,
+        "held_um2": 4316.64,
+        "row_area_um2": 10750.31,
+        "rows": 12
+      },
+      "strip": {
+        "by_class_um2": {
+          "arma_ring": 1921.843,
+          "decap": 9995.837,
+          "diode": 2.502,
+          "fill": 843.309,
+          "logic": 3208.077,
+          "tap": 258.998
+        },
+        "free_um2": 10839.146,
+        "held_um2": 5391.421,
+        "row_area_um2": 16230.566,
+        "rows": 69
+      }
+    },
+    "fraction_of_die": 0.22847,
+    "fraction_of_row_area": 0.64019,
+    "held_area_um2": 9708.061,
+    "reclaimable_classes": [
+      "decap",
+      "fill"
+    ]
+  },
+  "macros": {
+    "area_um2": 38400.0,
+    "block_bbox_um": [
+      3.22,
+      20.0,
+      243.22,
+      204.0
+    ],
+    "block_channel_um2": 5107.2,
+    "count": 16,
+    "fraction_of_die": 0.50792,
+    "height_um": 40.0,
+    "right_edge_um": 243.22,
+    "width_um": 60.0
+  },
+  "placed": {
+    "area_um2": 65380.877,
+    "by_class": {
+      "arma_ring": {
+        "area_um2": 1921.843,
+        "count": 512
+      },
+      "armb_macro": {
+        "area_um2": 38400.0,
+        "count": 16
+      },
+      "decap": {
+        "area_um2": 16110.451,
+        "count": 4292
+      },
+      "diode": {
+        "area_um2": 5.005,
+        "count": 2
+      },
+      "fill": {
+        "area_um2": 1162.365,
+        "count": 673
+      },
+      "logic": {
+        "area_um2": 7256.96,
+        "count": 563
+      },
+      "tap": {
+        "area_um2": 524.253,
+        "count": 419
+      }
+    },
+    "instances": 6477
+  },
+  "rows": {
+    "area_um2": 26980.877,
+    "count": 81,
+    "fraction_of_die": 0.35688,
+    "height_um": 2.72,
+    "site_width_um": 0.46,
+    "sites": 21564
+  },
+  "source": {
+    "build": "dualarm/build_current",
+    "sha256": {
+      "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+      "macro_lef": "8cf8660c57c44e90ff30f0a52bd94a7e24c2cee62a58121b7f9e1d2c91b6fb96",
+      "metrics": "1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22",
+      "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
+      "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e"
+    }
+  },
+  "unplaceable": {
+    "die_margin_um2": 5114.432,
+    "fraction_of_die": 0.1352,
+    "macro_block_channels_um2": 5107.2,
+    "row_area_inside_macro_block_um2": 652.8
+  }
+}

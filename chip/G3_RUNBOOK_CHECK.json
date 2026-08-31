@@ -1,0 +1,291 @@
+{
+  "budget_days": [
+    3,
+    5
+  ],
+  "checks": [
+    {
+      "detail": "none",
+      "id": "B01",
+      "name": "every file a step reads is pre-existing or written by some step",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "B02",
+      "name": "no file is written by two steps",
+      "pass": true
+    },
+    {
+      "detail": "4 installed, 3 fed to a step",
+      "id": "B03",
+      "name": "the runbook installs exactly the RTL the generators emit, and reads the rest of what they emit",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "B04",
+      "name": "no step reads a file a later step is the first to write",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "B05",
+      "name": "every step has a stop condition and no two share one",
+      "pass": true
+    },
+    {
+      "detail": "archive at step 1",
+      "id": "B06",
+      "name": "every irreversible step comes after the archive",
+      "pass": true
+    },
+    {
+      "detail": "10 of 10 scripts",
+      "id": "B07",
+      "name": "the re-run step covers every script the gate runs",
+      "pass": true
+    },
+    {
+      "detail": "step 21, table 21, plan 21",
+      "id": "B08",
+      "name": "the acceptance table, the stimulus plan and the sim step agree on how many tests there are",
+      "pass": true
+    },
+    {
+      "detail": "4.50 days against 3 to 5",
+      "id": "B09",
+      "name": "the steps sum to something inside the plan's budget",
+      "pass": true
+    },
+    {
+      "detail": "1 steps write it, invariants tiles, top_module",
+      "id": "B10",
+      "name": "info.yaml is edited by one step and that step holds the tile count and top module fixed",
+      "pass": true
+    },
+    {
+      "detail": "14 artefacts",
+      "id": "B11",
+      "name": "every artefact the manifest attributes to a producer is regenerated after the build",
+      "pass": true
+    },
+    {
+      "detail": "4 archived",
+      "id": "B12",
+      "name": "no irreversible step overwrites a file the archive step did not take a copy of",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "B13",
+      "name": "no step writes a file that is frozen by hash",
+      "pass": true
+    },
+    {
+      "detail": "1 declared",
+      "id": "B15",
+      "name": "every failure the run is expected to produce names a later step that writes the file it is about",
+      "pass": true
+    },
+    {
+      "detail": "8 remade, 2 carried",
+      "id": "B14",
+      "name": "every raw input the manifest hashes is either remade by the build or carried forward with a reason",
+      "pass": true
+    }
+  ],
+  "gate": "G.3",
+  "steps": [
+    {
+      "days": 0.25,
+      "id": "archive-baseline",
+      "irreversible": false,
+      "reads": [
+        "chip/RELEASE_MANIFEST.json",
+        "dualarm/build_current/dualarm_positions.csv",
+        "dualarm/build_current/metrics.json",
+        "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def",
+        "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nl.v",
+        "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nom.spef"
+      ],
+      "stop": "any raw input hashes differently from what chip/RELEASE_MANIFEST.json recorded, which means the build on disk is not the build the numbers came from",
+      "title": "freeze the two-arm build before anything touches it",
+      "writes": [
+        "dualarm/build_2arm_frozen/MANIFEST.txt"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "install-rtl",
+      "irreversible": true,
+      "reads": [
+        "chip/e2_ro_puf.v",
+        "chip/e2_ro_puf_core.v",
+        "chip/e2_tt_um_ro_puf.v",
+        "chip/ro_armc.v"
+      ],
+      "stop": "a destination in src/ differs from the archived copy in any way the generators do not account for, which means somebody edited src/ by hand since 7 August",
+      "title": "put the generated modules into src/ under their real names",
+      "writes": [
+        "src/ro_armc.v",
+        "src/ro_puf.v",
+        "src/ro_puf_core.v",
+        "src/tt_um_ro_puf.v"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "update-infoyaml",
+      "irreversible": true,
+      "reads": [
+        "chip/e2_tt_um_ro_puf.v",
+        "info.yaml"
+      ],
+      "stop": "the tile count or the top module name would have to change, which is a different shuttle submission and not this build",
+      "title": "source_files and pinout, by hand and reviewed",
+      "writes": [
+        "info.yaml"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "lint",
+      "irreversible": false,
+      "reads": [
+        "info.yaml",
+        "src/ro_armc.v",
+        "src/ro_puf.v",
+        "src/ro_puf_core.v",
+        "src/tt_um_ro_puf.v"
+      ],
+      "stop": "any lint error, and any width warning on the arm decode, which is the expression the RTL notes as the one a synthesiser can widen unexpectedly",
+      "title": "lint the installed RTL before spending machine time on it",
+      "writes": [
+        "dualarm/build_armc/lint.log"
+      ]
+    },
+    {
+      "days": 0.5,
+      "id": "sim-two-arm-regression",
+      "irreversible": false,
+      "reads": [
+        "src/ro_puf.v",
+        "src/ro_puf_core.v",
+        "src/tt_um_ro_puf.v"
+      ],
+      "stop": "any test that passed on the two-arm build fails here, because that is a regression in arms A and B and they are the published result",
+      "title": "the existing gate-level tests still pass",
+      "writes": [
+        "dualarm/build_armc/sim_regression.log"
+      ]
+    },
+    {
+      "days": 0.5,
+      "id": "sim-e2-acceptance",
+      "irreversible": false,
+      "reads": [
+        "chip/e2_acceptance.csv",
+        "chip/e2_tb_plan.csv"
+      ],
+      "stop": "any acceptance test fails, including the window that is only there to prove the sticky overflow flag sets",
+      "title": "work the acceptance table row by row",
+      "writes": [
+        "dualarm/build_armc/sim_e2.log"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "place-regions",
+      "irreversible": false,
+      "reads": [
+        "chip/ARMC_REGIONS.json",
+        "chip/armc_place.tcl"
+      ],
+      "stop": "any place_cell is rejected, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
+      "title": "pin Arm A and bind the sixteen Arm C regions",
+      "writes": [
+        "dualarm/build_armc/place.log"
+      ]
+    },
+    {
+      "days": 1.0,
+      "id": "harden",
+      "irreversible": false,
+      "reads": [
+        "info.yaml",
+        "src/config.json"
+      ],
+      "stop": "DRC, LVS, antenna or timing is not clean, or the run needs a fifth tile, which G.2 already decided against and which would make the whole area argument moot",
+      "title": "the OpenLane run to GDS",
+      "writes": [
+        "dualarm/build_armc/dualarm_par_ff_out.txt",
+        "dualarm/build_armc/dualarm_par_out.txt",
+        "dualarm/build_armc/dualarm_par_ss_out.txt",
+        "dualarm/build_armc/metrics.json",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "xor-baseline",
+      "irreversible": false,
+      "reads": [
+        "dualarm/build_2arm_frozen/MANIFEST.txt",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds"
+      ],
+      "stop": "any geometry difference inside the area arms A and B occupy, because the two-arm result is quoted off that geometry and a moved wire there changes it",
+      "title": "XOR the new GDS against the frozen one",
+      "writes": [
+        "dualarm/build_armc/xor.log"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "extract",
+      "irreversible": false,
+      "reads": [
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def"
+      ],
+      "stop": "extraction exits non-zero, or the SPEF is missing nets the netlist has, which is the failure that makes every parasitic number quietly optimistic",
+      "title": "pull the DEF, netlist, SPEF and positions back out",
+      "writes": [
+        "dualarm/build_armc/dualarm_positions.csv",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nl.v",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef"
+      ]
+    },
+    {
+      "days": 0.5,
+      "id": "rerun-evidence",
+      "irreversible": false,
+      "reads": [
+        "chip/G2_CRITERIA.json",
+        "chip/PREREGISTRATION.json",
+        "chip/RELEASE_MANIFEST.json"
+      ],
+      "stop": "any check fails that passed on the two-arm build and the reason is not written down in the same sitting, because a check that starts failing and gets explained a week later is a check nobody trusts",
+      "title": "the whole evidence gate, against the three-arm build",
+      "writes": [
+        "dualarm/build_armc/evidence.log"
+      ]
+    },
+    {
+      "days": 0.25,
+      "id": "recut-release",
+      "irreversible": false,
+      "reads": [
+        "dualarm/build_armc/metrics.json",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef"
+      ],
+      "stop": "an artefact hash moved and nothing in the run explains why, which means something is being regenerated from an input nobody is tracking",
+      "title": "re-cut the manifest against the build that now exists",
+      "writes": [
+        "chip/RELEASE_MANIFEST.json"
+      ]
+    }
+  ],
+  "total_days": 4.5,
+  "written": "2026-08-31"
+}

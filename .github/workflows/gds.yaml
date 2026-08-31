@@ -19,7 +19,7 @@ jobs:
 
       - name: Check Python and archived numerical evidence
         run: |
-          python3 -m compileall -q sim extraction
+          python3 -m compileall -q sim extraction chip
           python3 sim/ref_model.py
           python3 sim/montecarlo.py
           python3 sim/h3_audit.py
@@ -80,6 +80,42 @@ jobs:
           python3 extraction/ring_topology.py --selftest
           python3 extraction/ring_topology.py --verify-archive
           python3 extraction/verify_inputs.py
+          python3 chip/tile_budget.py --selftest
+          python3 chip/tile_budget.py --json /tmp/tile_budget.json
+          diff /tmp/tile_budget.json chip/TILE_BUDGET.json
+          python3 chip/armc_cost.py --selftest
+          python3 chip/armc_cost.py --json /tmp/armc_cost.json
+          diff /tmp/armc_cost.json chip/ARMC_COST.json
+          python3 chip/g2_decision.py --selftest
+          python3 chip/g2_decision.py --freeze-check
+          python3 chip/g2_decision.py --json /tmp/g2_decision.json
+          diff /tmp/g2_decision.json chip/G2_DECISION.json
+          python3 chip/observability_spec.py --selftest
+          python3 chip/observability_spec.py --json /tmp/obs.json --csv /tmp/e2.csv
+          diff /tmp/obs.json chip/OBSERVABILITY.json
+          diff /tmp/e2.csv chip/e2_acceptance.csv
+          python3 chip/gen_armc.py --selftest
+          python3 chip/gen_armc.py --json /tmp/armc_regions.json --emit /tmp/armc
+          diff /tmp/armc_regions.json chip/ARMC_REGIONS.json
+          diff /tmp/armc/armc_place.tcl chip/armc_place.tcl
+          diff /tmp/armc/ro_armc.v chip/ro_armc.v
+          python3 chip/gen_e2_rtl.py --selftest
+          python3 chip/gen_e2_rtl.py --emit /tmp/e2 --csv /tmp/e2/plan.csv
+          diff /tmp/e2/e2_ro_puf_core.v chip/e2_ro_puf_core.v
+          diff /tmp/e2/e2_ro_puf.v chip/e2_ro_puf.v
+          diff /tmp/e2/e2_tt_um_ro_puf.v chip/e2_tt_um_ro_puf.v
+          diff /tmp/e2/plan.csv chip/e2_tb_plan.csv
+          python3 chip/preregister.py --selftest
+          python3 chip/preregister.py --freeze-check
+          python3 chip/preregister.py
+          python3 chip/verify_phaseE.py --selftest
+          python3 chip/verify_phaseE.py
+          python3 chip/g3_runbook.py --selftest
+          python3 chip/g3_runbook.py --json /tmp/g3.json
+          diff /tmp/g3.json chip/G3_RUNBOOK_CHECK.json
+          python3 chip/release_manifest.py --selftest
+          python3 chip/release_manifest.py --json /tmp/release.json
+          diff /tmp/release.json chip/RELEASE_MANIFEST.json
 
   gds:
     needs: archived-evidence

@@ -1,0 +1,117 @@
+{
+  "_comment": [
+    "G.4. The acquisition protocol and the 2027 analysis, frozen 2026-08-31,",
+    "before any silicon exists and before any measurement has been taken.",
+    "",
+    "This file is the commitment. Its SHA-256 is recorded in",
+    "chip/preregister.py, in docs/phaseE_preregistration.md and in",
+    "PLAN_TO_DECEMBER.md, and --freeze-check in CI requires all four to",
+    "agree. Same discipline as extraction/TOLERANCES.json and",
+    "chip/G2_CRITERIA.json, and the same reason: an analysis plan written",
+    "after seeing the data is a description of the data.",
+    "",
+    "Nothing here restates a number that already lives somewhere else. The",
+    "abstention rule is TOLERANCES.json's and is referenced by hash. The",
+    "window lengths are OBSERVABILITY.json's. If either changes, the",
+    "reference breaks and CI says so."
+  ],
+  "frozen": "2026-08-31",
+  "gate": "G.4",
+  "silicon_expected": "2027-06",
+
+  "depends_on": {
+    "tolerances": {
+      "path": "extraction/TOLERANCES.json",
+      "sha256": "7f61955a03f2c43331ff4a36c6bca1235af598eec96c3740de246919960408c2",
+      "used_for": "the abstention rule and the high-margin threshold. k, sigma_pair_fF and high_margin_threshold_pct_f are read from that file at analysis time and are deliberately not copied here."
+    },
+    "observability": {
+      "path": "chip/OBSERVABILITY.json",
+      "used_for": "the four window lengths, the protocol version and the pin map the collector drives."
+    }
+  },
+
+  "pairing": {
+    "rule": "adjacent, within an arm: ring 2j is compared with ring 2j+1, for j from 0 to 7.",
+    "why": "It is the order the generate loop already builds and the order Section 7's result is quoted at. Any other splitting of sixteen rings into eight pairs is one of 2027025 and would be a different experiment; sim/spice/gono/pairing_policy.py is where alternative pairings are scored, and this preregistration is not that study.",
+    "pairs_per_arm": 8,
+    "arms": ["A", "B", "C"],
+    "pairs_total": 24,
+    "bit_convention": "sign of f_a minus f_b, where a is the lower ring index. Identical to TOLERANCES.json's sign_convention so the two cannot drift apart."
+  },
+
+  "conditions": {
+    "voltage_v": [1.62, 1.80, 1.98],
+    "temperature_c": [-40, 25, 125],
+    "window_selects": [0, 1, 2],
+    "overflow_window_select": 3,
+    "repeats_per_cell": 20,
+    "order": "ABBA within every cell: arm A, then B, then B, then A, then C twice in the same mirrored order. Sequential comparison drifts; a mirrored order cancels a linear drift over the cell.",
+    "reference_clock_hz": 50000000,
+    "cell_count_note": "3 voltages by 3 temperatures by 3 safe windows is 27 cells, each read 20 times on every one of 48 oscillators.",
+    "must_record": [
+      "protocol version byte and build id byte, read before every cell",
+      "the sticky overflow flag, read after every cell",
+      "measured supply voltage and the temperature proxy, not the setpoint",
+      "the reference clock actually applied",
+      "wall-clock timestamp of every reading",
+      "die identifier and board identifier"
+    ]
+  },
+
+  "exclusions": {
+    "before_any_analysis": [
+      "any reading whose sticky overflow flag is set is dropped, and the whole cell it came from is dropped with it",
+      "any reading whose protocol byte the collector does not recognise is dropped",
+      "any cell whose 20 repeats do not all carry the same build id is dropped",
+      "any oscillator whose count is zero in every repeat of a cell is recorded as dead and excluded from every arm-level statistic, with its index published"
+    ],
+    "abstention": "A pair whose frequency separation is below the high-margin threshold in TOLERANCES.json is an abstention. Abstentions are counted and published; their sign is never scored either way. The threshold is not re-derived here and must not be loosened after any data arrives.",
+    "no_other_exclusion": "No reading is dropped for being an outlier. If a die behaves strangely, that is a result and it gets a paragraph, not a filter."
+  },
+
+  "primary_metrics": [
+    {
+      "id": "M1",
+      "name": "predictable bits per arm",
+      "definition": "of the 8 pairs in an arm, the number whose measured sign matches the sign predicted from the public design database before silicon, counting only non-abstaining pairs.",
+      "direction": "the hypothesis says Arm A is high, Arm B is near chance, and Arm C is between them and closer to Arm B if constraints work.",
+      "chance_level": 4.0
+    },
+    {
+      "id": "M2",
+      "name": "across-die repeatability of the frequency pattern",
+      "definition": "Spearman correlation of the 16 per-ring mean frequencies between every pair of dies, within an arm, at the nominal cell.",
+      "direction": "the hypothesis says Arm A repeats across dies and Arm B does not.",
+      "chance_level": 0.0
+    },
+    {
+      "id": "M3",
+      "name": "bit stability across the condition box",
+      "definition": "of the 8 pairs in an arm, the number whose sign is the same in all 27 cells on the same die.",
+      "direction": "reported, not predicted. It is the cost side of any pairing or layout change."
+    },
+    {
+      "id": "M4",
+      "name": "Arm C region uniformity, measured",
+      "definition": "the standard deviation of the 16 Arm C mean frequencies at the nominal cell, divided by the same figure for Arm A on the same die.",
+      "direction": "if placement equalization works this is below 1. It is the number the countermeasure claim rests on."
+    }
+  ],
+
+  "falsification": {
+    "M1": "If Arm A's predictable-bit count is not above chance with the Holm-corrected family below 0.05 across the declared comparisons, the leakage claim fails and the paper says so.",
+    "M4": "If Arm C's spread ratio is not below 1 with its confidence interval clear of 1, placement equalization did not suppress the layout term and the paper reports a null."
+  },
+
+  "multiplicity": {
+    "family": "M1 across three arms, M2 across three arms, M4 once. Seven tests.",
+    "correction": "Holm, applied across the whole family and declared here rather than chosen later.",
+    "no_subgroup_hunting": "No metric is computed on a subset of dies, oscillators or conditions unless that subset is named in this file."
+  },
+
+  "analysis_freeze": {
+    "predictions_archived_before_measurement": true,
+    "note": "The per-pair sign predictions from the public design database are archived and hashed before any die is read. Nothing about a prediction goes public before it is archived, on any channel."
+  }
+}

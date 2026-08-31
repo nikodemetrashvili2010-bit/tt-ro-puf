@@ -1,0 +1,389 @@
+{
+  "cell_area_um2": {
+    "and3_2": 7.5072,
+    "and4_2": 10.0096,
+    "inv_1": 3.7536
+  },
+  "checks": [
+    {
+      "detail": "0 with more than one: ",
+      "id": "C01",
+      "name": "every net has exactly one driver under the pin table",
+      "pass": true
+    },
+    {
+      "detail": "10 undriven, 10 of them ports: none left over",
+      "id": "C02",
+      "name": "the only undriven nets are top-level input ports",
+      "pass": true
+    },
+    {
+      "detail": "6477 in DEF, 6477 in netlist, 0 differ",
+      "id": "C03",
+      "name": "the DEF and the netlist hold the same instances",
+      "pass": true
+    },
+    {
+      "detail": "16 rings, cells [32], nets [33]",
+      "id": "C04",
+      "name": "every Arm A ring has the same cell count and net count",
+      "pass": true
+    },
+    {
+      "detail": "worst disagreement 0.0045 fF",
+      "id": "C05",
+      "name": "the SPEF's ring nodes reproduce dualarm_positions.csv",
+      "pass": true
+    },
+    {
+      "detail": "routing bbox (25990, 19380, 332350, 225420), die (0, 0, 334880, 225760)",
+      "id": "C06",
+      "name": "every routed wire lies inside DIEAREA",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "C07",
+      "name": "each routed layer runs one way and has tracks for it",
+      "pass": true
+    },
+    {
+      "detail": "none",
+      "id": "C08",
+      "name": "no layer's routed length exceeds its track capacity",
+      "pass": true
+    },
+    {
+      "detail": "0 enables undriven, 52 cells, stopped at u_puf.u_core.active_sel[0], u_puf.u_core.active_sel[1], u_puf.u_core.active_sel[2], u_puf.u_core.active_sel[3]",
+      "id": "C09",
+      "name": "the decode cone covers all 32 enables and stops at select",
+      "pass": true
+    },
+    {
+      "detail": "def hash matches, free+held=row holds",
+      "id": "C12",
+      "name": "TILE_BUDGET.json describes this DEF and its sums hold",
+      "pass": true
+    },
+    {
+      "detail": "monotone",
+      "id": "C10",
+      "name": "both options cost more as they get bigger",
+      "pass": true
+    },
+    {
+      "detail": "0 rows disagree",
+      "id": "C11",
+      "name": "the fits flag agrees with the free area it is measured on",
+      "pass": true
+    }
+  ],
+  "free_area_um2": 17272.816,
+  "measured": {
+    "arm_a": {
+      "area_per_ring_um2": 120.1152,
+      "bbox_um2": {
+        "max": 382.87,
+        "mean": 286.99,
+        "min": 218.96
+      },
+      "cells_per_ring": 32,
+      "density": {
+        "loose": 0.3137,
+        "mean": 0.4276,
+        "tight": 0.5486
+      },
+      "nets_per_ring": 33,
+      "rings": 16,
+      "routed_per_ring_range_um": [
+        77.91,
+        128.505
+      ],
+      "routed_per_ring_um": 101.811,
+      "rows_spanned": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "wire_cap_per_ring_fF": 14.033
+    },
+    "arm_b": {
+      "die_area_per_macro_um2": 2400.0,
+      "macros": 16,
+      "nets_per_macro": 2,
+      "routed_per_macro_um": 150.349,
+      "wire_cap_per_macro_fF": 20.6179
+    },
+    "decode": {
+      "area_um2": 420.4032,
+      "cells": 52,
+      "masters": {
+        "sky130_fd_sc_hd__and2_2": 4,
+        "sky130_fd_sc_hd__and2b_2": 4,
+        "sky130_fd_sc_hd__and3_2": 32,
+        "sky130_fd_sc_hd__clkbuf_8": 1,
+        "sky130_fd_sc_hd__clkdlybuf4s25_1": 8,
+        "sky130_fd_sc_hd__inv_2": 1,
+        "sky130_fd_sc_hd__nor2_2": 1,
+        "sky130_fd_sc_hd__nor2_4": 1
+      },
+      "per_oscillator_gates": 32,
+      "shared_cells": 20,
+      "stops_at": [
+        "u_puf.u_core.active_sel[0]",
+        "u_puf.u_core.active_sel[1]",
+        "u_puf.u_core.active_sel[2]",
+        "u_puf.u_core.active_sel[3]",
+        "u_puf.u_core.active_sel[4]",
+        "u_puf.u_core.en_window"
+      ]
+    },
+    "layers": {
+      "met1": {
+        "capacity_um": 222360.3,
+        "horizontal_um": 12343.135,
+        "preferred": "h",
+        "routed_um": 12736.58,
+        "track_pitch_um": 0.34,
+        "tracks": 664,
+        "utilisation_pct": 5.728,
+        "vertical_um": 393.445
+      },
+      "met2": {
+        "capacity_um": 164353.3,
+        "horizontal_um": 97.68,
+        "preferred": "v",
+        "routed_um": 7750.74,
+        "track_pitch_um": 0.46,
+        "tracks": 728,
+        "utilisation_pct": 4.716,
+        "vertical_um": 7653.06
+      },
+      "met3": {
+        "capacity_um": 111180.2,
+        "horizontal_um": 4448.34,
+        "preferred": "h",
+        "routed_um": 4460.41,
+        "track_pitch_um": 0.68,
+        "tracks": 332,
+        "utilisation_pct": 4.012,
+        "vertical_um": 12.07
+      },
+      "met4": {
+        "capacity_um": 82176.6,
+        "horizontal_um": 2.76,
+        "preferred": "v",
+        "routed_um": 394.44,
+        "track_pitch_um": 0.92,
+        "tracks": 364,
+        "utilisation_pct": 0.48,
+        "vertical_um": 391.68
+      }
+    },
+    "power": {
+      "internal_W": 0.0003908034705091268,
+      "leakage_per_um2_pW": 0.406814,
+      "leakage_total_W": 2.659783859826348e-08,
+      "switching_W": 0.0001676084939390421,
+      "total_W": 0.0005584385362453759
+    },
+    "routed_total_um": 25342.17,
+    "signal_nets": 1110
+  },
+  "priced": {
+    "armc": [
+      {
+        "added_decode_um2": 141.675,
+        "cells_um2": 960.922,
+        "density": 0.5486,
+        "density_label": "tight",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 10.96,
+        "region_per_ring_um2": 218.949,
+        "region_um2": 1751.589,
+        "rings": 8,
+        "routed_um": 814.5,
+        "select_bits": 6,
+        "total_um2": 1893.264
+      },
+      {
+        "added_decode_um2": 141.675,
+        "cells_um2": 960.922,
+        "density": 0.4276,
+        "density_label": "mean",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 13.83,
+        "region_per_ring_um2": 280.906,
+        "region_um2": 2247.244,
+        "rings": 8,
+        "routed_um": 814.5,
+        "select_bits": 6,
+        "total_um2": 2388.919
+      },
+      {
+        "added_decode_um2": 141.675,
+        "cells_um2": 960.922,
+        "density": 0.3137,
+        "density_label": "loose",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 18.55,
+        "region_per_ring_um2": 382.898,
+        "region_um2": 3063.186,
+        "rings": 8,
+        "routed_um": 814.5,
+        "select_bits": 6,
+        "total_um2": 3204.861
+      },
+      {
+        "added_decode_um2": 181.713,
+        "cells_um2": 1441.382,
+        "density": 0.5486,
+        "density_label": "tight",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 16.26,
+        "region_per_ring_um2": 218.949,
+        "region_um2": 2627.383,
+        "rings": 12,
+        "routed_um": 1221.7,
+        "select_bits": 6,
+        "total_um2": 2809.096
+      },
+      {
+        "added_decode_um2": 181.713,
+        "cells_um2": 1441.382,
+        "density": 0.4276,
+        "density_label": "mean",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 20.57,
+        "region_per_ring_um2": 280.906,
+        "region_um2": 3370.866,
+        "rings": 12,
+        "routed_um": 1221.7,
+        "select_bits": 6,
+        "total_um2": 3552.579
+      },
+      {
+        "added_decode_um2": 181.713,
+        "cells_um2": 1441.382,
+        "density": 0.3137,
+        "density_label": "loose",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 27.65,
+        "region_per_ring_um2": 382.898,
+        "region_um2": 4594.78,
+        "rings": 12,
+        "routed_um": 1221.7,
+        "select_bits": 6,
+        "total_um2": 4776.493
+      },
+      {
+        "added_decode_um2": 221.751,
+        "cells_um2": 1921.843,
+        "density": 0.5486,
+        "density_label": "tight",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 21.57,
+        "region_per_ring_um2": 218.949,
+        "region_um2": 3503.178,
+        "rings": 16,
+        "routed_um": 1629.0,
+        "select_bits": 6,
+        "total_um2": 3724.928
+      },
+      {
+        "added_decode_um2": 221.751,
+        "cells_um2": 1921.843,
+        "density": 0.4276,
+        "density_label": "mean",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 27.3,
+        "region_per_ring_um2": 280.906,
+        "region_um2": 4494.488,
+        "rings": 16,
+        "routed_um": 1629.0,
+        "select_bits": 6,
+        "total_um2": 4716.239
+      },
+      {
+        "added_decode_um2": 221.751,
+        "cells_um2": 1921.843,
+        "density": 0.3137,
+        "density_label": "loose",
+        "extra_select_bits": 1,
+        "fits": true,
+        "pct_of_free": 36.75,
+        "region_per_ring_um2": 382.898,
+        "region_um2": 6126.373,
+        "rings": 16,
+        "routed_um": 1629.0,
+        "select_bits": 6,
+        "total_um2": 6348.124
+      }
+    ],
+    "ladder": [
+      {
+        "added_decode_um2": 141.675,
+        "cells_um2": 960.922,
+        "extra_select_bits": 1,
+        "fits": true,
+        "load_cells": 28,
+        "load_share_pct": 8.7,
+        "load_um2": 105.101,
+        "pct_of_free": 6.99,
+        "routed_um": 814.5,
+        "rungs": 8,
+        "select_bits": 6,
+        "total_um2": 1207.697
+      },
+      {
+        "added_decode_um2": 181.713,
+        "cells_um2": 1441.382,
+        "extra_select_bits": 1,
+        "fits": true,
+        "load_cells": 66,
+        "load_share_pct": 13.24,
+        "load_um2": 247.738,
+        "pct_of_free": 10.83,
+        "routed_um": 1221.7,
+        "rungs": 12,
+        "select_bits": 6,
+        "total_um2": 1870.833
+      },
+      {
+        "added_decode_um2": 221.751,
+        "cells_um2": 1921.843,
+        "extra_select_bits": 1,
+        "fits": true,
+        "load_cells": 120,
+        "load_share_pct": 17.36,
+        "load_um2": 450.432,
+        "pct_of_free": 15.02,
+        "routed_um": 1629.0,
+        "rungs": 16,
+        "select_bits": 6,
+        "total_um2": 2594.026
+      }
+    ]
+  },
+  "source": {
+    "build": "dualarm/build_current",
+    "sha256": {
+      "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+      "metrics": "1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22",
+      "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
+      "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e",
+      "spef": "1015bcff163d9f3610b882aed3001f9128dd01919e1892b00436553be6795795"
+    }
+  },
+  "spef_has_pin_cap": false
+}

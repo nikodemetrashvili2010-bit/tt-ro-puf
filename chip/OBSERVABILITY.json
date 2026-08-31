@@ -1,0 +1,412 @@
+{
+  "build_id": 26,
+  "checks": [
+    {
+      "detail": "duplicated: none",
+      "id": "O01",
+      "name": "no pin is assigned twice",
+      "pass": true
+    },
+    {
+      "detail": "ui 8, uio 8",
+      "id": "O02",
+      "name": "the map covers all eight ui and all eight uio bits",
+      "pass": true
+    },
+    {
+      "detail": "in use already: none",
+      "id": "O03",
+      "name": "every pin the spec claims carries no signal today",
+      "pass": true
+    },
+    {
+      "detail": "carries nothing: none",
+      "id": "O04",
+      "name": "every pin the spec calls occupied really carries one",
+      "pass": true
+    },
+    {
+      "detail": "yaml free 8, spec claims 8, differ none",
+      "id": "O05",
+      "name": "info.yaml and the spec agree on which pins were free",
+      "pass": true
+    },
+    {
+      "detail": "0x31",
+      "id": "O06",
+      "name": "uio_oe follows from the directions the map declares",
+      "pass": true
+    },
+    {
+      "detail": "[256, 512, 2048] and 16384",
+      "id": "O07",
+      "name": "four windows, powers of two, the safe three increasing",
+      "pass": true
+    },
+    {
+      "detail": "would wrap: none",
+      "id": "O08",
+      "name": "no safe window can wrap, even at the fastest corner",
+      "pass": true
+    },
+    {
+      "detail": "90501 counts at 276.2 MHz",
+      "id": "O09",
+      "name": "the overflow window wraps even at the slowest corner",
+      "pass": true
+    },
+    {
+      "detail": "ratios [2.0, 8.0]",
+      "id": "O10",
+      "name": "the safe windows are exact power-of-two multiples",
+      "pass": true
+    },
+    {
+      "detail": "protocol 2, build 0x1A",
+      "id": "O11",
+      "name": "the version bytes round-trip through the readout",
+      "pass": true
+    },
+    {
+      "detail": "kinds linearity,mode,overflow,readout,reset,state,version, windows [256, 512, 2048, 16384]",
+      "id": "O12",
+      "name": "the acceptance table covers every kind and every mode",
+      "pass": true
+    }
+  ],
+  "clock_hz": 50000000,
+  "corner_span_hz": {
+    "max": 888311700.0,
+    "min": 276185900.0
+  },
+  "counter_bits": 16,
+  "pin_map": [
+    {
+      "bit": 0,
+      "direction": "in",
+      "name": "start",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 1,
+      "direction": "in",
+      "name": "arm select bit 0",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 2,
+      "direction": "in",
+      "name": "ro_idx[0]",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 3,
+      "direction": "in",
+      "name": "ro_idx[1]",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 4,
+      "direction": "in",
+      "name": "ro_idx[2]",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 5,
+      "direction": "in",
+      "name": "ro_idx[3]",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 6,
+      "direction": "in",
+      "name": "readout byte select",
+      "owner": "existing",
+      "port": "ui"
+    },
+    {
+      "bit": 7,
+      "direction": "in",
+      "name": "arm select bit 1",
+      "owner": "armc",
+      "port": "ui"
+    },
+    {
+      "bit": 0,
+      "direction": "out",
+      "name": "done",
+      "owner": "existing",
+      "port": "uio"
+    },
+    {
+      "bit": 1,
+      "direction": "in",
+      "name": "window select bit 0",
+      "owner": "e2",
+      "port": "uio"
+    },
+    {
+      "bit": 2,
+      "direction": "in",
+      "name": "window select bit 1",
+      "owner": "e2",
+      "port": "uio"
+    },
+    {
+      "bit": 3,
+      "direction": "in",
+      "name": "read version instead of count",
+      "owner": "e2",
+      "port": "uio"
+    },
+    {
+      "bit": 4,
+      "direction": "out",
+      "name": "counter overflowed, sticky",
+      "owner": "e2",
+      "port": "uio"
+    },
+    {
+      "bit": 5,
+      "direction": "out",
+      "name": "measurement active",
+      "owner": "e2",
+      "port": "uio"
+    },
+    {
+      "bit": 6,
+      "direction": "in",
+      "name": "reserved",
+      "owner": "spare",
+      "port": "uio"
+    },
+    {
+      "bit": 7,
+      "direction": "in",
+      "name": "reserved",
+      "owner": "spare",
+      "port": "uio"
+    }
+  ],
+  "protocol_version": 2,
+  "source": {
+    "corner_ff": "dualarm/build_current/dualarm_par_ff_out.txt",
+    "corner_ss": "dualarm/build_current/dualarm_par_ss_out.txt",
+    "corner_tt": "dualarm/build_current/dualarm_par_out.txt",
+    "info": "dualarm/info.yaml",
+    "netlist": "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nl.v"
+  },
+  "tests": [
+    {
+      "expect": "done=0, active=0, overflow=0, count reads 0",
+      "id": "E2-01",
+      "kind": "reset",
+      "name": "reset clears everything",
+      "setup": "hold rst_n low for 3 clocks, release",
+      "window": null
+    },
+    {
+      "expect": "overflow=0 after reset",
+      "id": "E2-02",
+      "kind": "reset",
+      "name": "reset clears a sticky overflow",
+      "setup": "run the overflow window to completion, then reset",
+      "window": 16384
+    },
+    {
+      "expect": "done rises within 264 clocks; count is nonzero",
+      "id": "E2-03",
+      "kind": "mode",
+      "name": "window select 0 selects 256 cycles",
+      "setup": "uio[2:1]=0, arm A, ro_idx=0, pulse start",
+      "window": 256
+    },
+    {
+      "expect": "done rises within 520 clocks; count is nonzero",
+      "id": "E2-04",
+      "kind": "mode",
+      "name": "window select 1 selects 512 cycles",
+      "setup": "uio[2:1]=1, arm A, ro_idx=0, pulse start",
+      "window": 512
+    },
+    {
+      "expect": "done rises within 2056 clocks; count is nonzero",
+      "id": "E2-05",
+      "kind": "mode",
+      "name": "window select 2 selects 2048 cycles",
+      "setup": "uio[2:1]=2, arm A, ro_idx=0, pulse start",
+      "window": 2048
+    },
+    {
+      "expect": "done rises within 16392 clocks; count is nonzero",
+      "id": "E2-06",
+      "kind": "mode",
+      "name": "window select 3 selects 16384 cycles",
+      "setup": "uio[2:1]=3, arm A, ro_idx=0, pulse start",
+      "window": 16384
+    },
+    {
+      "expect": "active high for 256 clocks then low; done rises as active falls",
+      "id": "E2-07",
+      "kind": "state",
+      "name": "active is high only while the window is open",
+      "setup": "uio[2:1]=0, pulse start, sample uio[5] every clock",
+      "window": 256
+    },
+    {
+      "expect": "done=0 and active=0, which no completed run can show",
+      "id": "E2-08",
+      "kind": "state",
+      "name": "done and active tell a fresh result from a stale one",
+      "setup": "after reset, before any start",
+      "window": null
+    },
+    {
+      "expect": "ratio in [1.98, 2.02]",
+      "id": "E2-09",
+      "kind": "linearity",
+      "name": "double the window, double the count",
+      "setup": "same ring, window 256 then window 512",
+      "window": 512
+    },
+    {
+      "expect": "ratio in [7.92, 8.08]",
+      "id": "E2-10",
+      "kind": "linearity",
+      "name": "eight times the window, eight times the count",
+      "setup": "same ring, window 256 then window 2048",
+      "window": 2048
+    },
+    {
+      "expect": "overflow=1 on every die and every corner",
+      "id": "E2-11",
+      "kind": "overflow",
+      "name": "the overflow window sets the sticky flag",
+      "setup": "uio[2:1]=3, any ring, pulse start",
+      "window": 16384
+    },
+    {
+      "expect": "overflow stays 1",
+      "id": "E2-12",
+      "kind": "overflow",
+      "name": "the sticky flag survives the next measurement",
+      "setup": "run the overflow window, then a safe window, without reset",
+      "window": 16384
+    },
+    {
+      "expect": "overflow stays 0",
+      "id": "E2-13",
+      "kind": "overflow",
+      "name": "a safe window never sets it",
+      "setup": "reset, then every safe window on every oscillator",
+      "window": null
+    },
+    {
+      "expect": "high<<8 | low equals the count, and repeats stably",
+      "id": "E2-14",
+      "kind": "readout",
+      "name": "both bytes reassemble the count",
+      "setup": "after done, read ui[6]=0 then ui[6]=1",
+      "window": null
+    },
+    {
+      "expect": "identical",
+      "id": "E2-15",
+      "kind": "readout",
+      "name": "the count does not move between the two byte reads",
+      "setup": "read low, wait 100 clocks, read low again",
+      "window": null
+    },
+    {
+      "expect": "uo_out = 2",
+      "id": "E2-16",
+      "kind": "version",
+      "name": "the protocol byte reads back",
+      "setup": "uio[3]=1, ui[6]=0",
+      "window": null
+    },
+    {
+      "expect": "uo_out = 0x1A",
+      "id": "E2-17",
+      "kind": "version",
+      "name": "the build byte reads back",
+      "setup": "uio[3]=1, ui[6]=1",
+      "window": null
+    },
+    {
+      "expect": "count unchanged",
+      "id": "E2-18",
+      "kind": "version",
+      "name": "the version select does not disturb a stored count",
+      "setup": "after done, set uio[3]=1, read, clear uio[3], read the count",
+      "window": null
+    },
+    {
+      "expect": "16 distinct done pulses, every count in range",
+      "id": "E2-19",
+      "kind": "mode",
+      "name": "every oscillator in arm A, automated answers",
+      "setup": "arm=0, ro_idx 0..15, window 512",
+      "window": 512
+    },
+    {
+      "expect": "16 distinct done pulses, every count in range",
+      "id": "E2-20",
+      "kind": "mode",
+      "name": "every oscillator in arm B, hardened answers",
+      "setup": "arm=1, ro_idx 0..15, window 512",
+      "window": 512
+    },
+    {
+      "expect": "16 distinct done pulses, every count in range",
+      "id": "E2-21",
+      "kind": "mode",
+      "name": "every oscillator in arm C, constrained answers",
+      "setup": "arm=2, ro_idx 0..15, window 512",
+      "window": 512
+    }
+  ],
+  "uio_oe": 49,
+  "window_counts": {
+    "16384": {
+      "fast": 291082.0,
+      "slow": 90500.6,
+      "wraps_at_fast": true,
+      "wraps_at_slow": true
+    },
+    "2048": {
+      "fast": 36385.2,
+      "slow": 11312.6,
+      "wraps_at_fast": false,
+      "wraps_at_slow": false
+    },
+    "256": {
+      "fast": 4548.2,
+      "slow": 1414.1,
+      "wraps_at_fast": false,
+      "wraps_at_slow": false
+    },
+    "512": {
+      "fast": 9096.3,
+      "slow": 2828.1,
+      "wraps_at_fast": false,
+      "wraps_at_slow": false
+    }
+  },
+  "windows": {
+    "overflow": 16384,
+    "overflow_min_cycles": 11865,
+    "safe": [
+      256,
+      512,
+      2048
+    ],
+    "safe_max_cycles": 3688
+  }
+}

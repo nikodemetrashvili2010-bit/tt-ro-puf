@@ -1,0 +1,22 @@
+id,kind,name,setup,expect,window
+E2-01,reset,"reset clears everything","hold rst_n low for 3 clocks, release","done=0, active=0, overflow=0, count reads 0",
+E2-02,reset,"reset clears a sticky overflow","run the overflow window to completion, then reset","overflow=0 after reset",16384
+E2-03,mode,"window select 0 selects 256 cycles","uio[2:1]=0, arm A, ro_idx=0, pulse start","done rises within 264 clocks; count is nonzero",256
+E2-04,mode,"window select 1 selects 512 cycles","uio[2:1]=1, arm A, ro_idx=0, pulse start","done rises within 520 clocks; count is nonzero",512
+E2-05,mode,"window select 2 selects 2048 cycles","uio[2:1]=2, arm A, ro_idx=0, pulse start","done rises within 2056 clocks; count is nonzero",2048
+E2-06,mode,"window select 3 selects 16384 cycles","uio[2:1]=3, arm A, ro_idx=0, pulse start","done rises within 16392 clocks; count is nonzero",16384
+E2-07,state,"active is high only while the window is open","uio[2:1]=0, pulse start, sample uio[5] every clock","active high for 256 clocks then low; done rises as active falls",256
+E2-08,state,"done and active tell a fresh result from a stale one","after reset, before any start","done=0 and active=0, which no completed run can show",
+E2-09,linearity,"double the window, double the count","same ring, window 256 then window 512","ratio in [1.98, 2.02]",512
+E2-10,linearity,"eight times the window, eight times the count","same ring, window 256 then window 2048","ratio in [7.92, 8.08]",2048
+E2-11,overflow,"the overflow window sets the sticky flag","uio[2:1]=3, any ring, pulse start","overflow=1 on every die and every corner",16384
+E2-12,overflow,"the sticky flag survives the next measurement","run the overflow window, then a safe window, without reset","overflow stays 1",16384
+E2-13,overflow,"a safe window never sets it","reset, then every safe window on every oscillator","overflow stays 0",
+E2-14,readout,"both bytes reassemble the count","after done, read ui[6]=0 then ui[6]=1","high<<8 | low equals the count, and repeats stably",
+E2-15,readout,"the count does not move between the two byte reads","read low, wait 100 clocks, read low again","identical",
+E2-16,version,"the protocol byte reads back","uio[3]=1, ui[6]=0","uo_out = 2",
+E2-17,version,"the build byte reads back","uio[3]=1, ui[6]=1","uo_out = 0x1A",
+E2-18,version,"the version select does not disturb a stored count","after done, set uio[3]=1, read, clear uio[3], read the count","count unchanged",
+E2-19,mode,"every oscillator in arm A, automated answers","arm=0, ro_idx 0..15, window 512","16 distinct done pulses, every count in range",512
+E2-20,mode,"every oscillator in arm B, hardened answers","arm=1, ro_idx 0..15, window 512","16 distinct done pulses, every count in range",512
+E2-21,mode,"every oscillator in arm C, constrained answers","arm=2, ro_idx 0..15, window 512","16 distinct done pulses, every count in range",512

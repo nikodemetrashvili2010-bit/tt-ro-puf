@@ -1,0 +1,257 @@
+{
+  "_comment": [
+    "G.3. The order the Arm C plus E.2 build happens in, written on",
+    "2026-08-31, before any of it has been attempted.",
+    "",
+    "This is not frozen by hash the way G2_CRITERIA.json and",
+    "PREREGISTRATION.json are, and the difference is deliberate. Those two",
+    "are commitments: changing them after the fact would change what the",
+    "result means. A runbook is a plan, and a plan that cannot be revised",
+    "when a step turns out to be wrong is just a way of being wrong on",
+    "schedule. What is checked here is that the plan is complete and",
+    "consistent with the artefacts that already exist, not that it never",
+    "moves.",
+    "",
+    "Every step names what it reads, what it writes, what makes you stop,",
+    "and whether it can be undone. chip/g3_runbook.py checks the lot."
+  ],
+  "written": "2026-08-31",
+  "gate": "G.3",
+  "budget_days": [3, 5],
+  "budget_source": "PLAN_TO_DECEMBER.md, G.3 row: 3-5 d plus machine time",
+
+  "archive_step": "archive-baseline",
+
+  "raw_carried_forward": {
+    "macro_lef": "Arm B's hardened macro. The point of Arm B is that its geometry is fixed, so this file is an input to the build and not an output of it. If it ever changes, Arm B is a different arm and the two-arm result does not carry over.",
+    "cost": "chip/ARMC_COST.json, which armc_cost.py produces and gen_armc.py reads. It is an artefact of this phase rather than a build output, and it is already in the list the re-run regenerates."
+  },
+
+  "pre_existing": [
+    "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def",
+    "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nl.v",
+    "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nom.spef",
+    "dualarm/build_current/metrics.json",
+    "dualarm/build_current/dualarm_positions.csv",
+    "chip/RELEASE_MANIFEST.json",
+    "chip/G2_CRITERIA.json",
+    "chip/PREREGISTRATION.json",
+    "chip/ro_armc.v",
+    "chip/e2_ro_puf_core.v",
+    "chip/e2_ro_puf.v",
+    "chip/e2_tt_um_ro_puf.v",
+    "chip/armc_place.tcl",
+    "chip/ARMC_REGIONS.json",
+    "chip/e2_tb_plan.csv",
+    "chip/e2_acceptance.csv",
+    "src/ro_puf_core.v",
+    "src/ro_puf.v",
+    "src/tt_um_ro_puf.v",
+    "src/config.json",
+    "info.yaml"
+  ],
+
+  "steps": [
+    {
+      "id": "archive-baseline",
+      "title": "freeze the two-arm build before anything touches it",
+      "reads": [
+        "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def",
+        "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nl.v",
+        "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nom.spef",
+        "dualarm/build_current/metrics.json",
+        "dualarm/build_current/dualarm_positions.csv",
+        "chip/RELEASE_MANIFEST.json"
+      ],
+      "writes": [
+        "dualarm/build_2arm_frozen/MANIFEST.txt"
+      ],
+      "archives": [
+        "src/ro_puf.v",
+        "src/ro_puf_core.v",
+        "src/tt_um_ro_puf.v",
+        "info.yaml"
+      ],
+      "stop": "any raw input hashes differently from what chip/RELEASE_MANIFEST.json recorded, which means the build on disk is not the build the numbers came from",
+      "irreversible": false,
+      "days": 0.25
+    },
+    {
+      "id": "install-rtl",
+      "title": "put the generated modules into src/ under their real names",
+      "reads": [],
+      "writes": [],
+      "installs": [
+        {"from": "chip/ro_armc.v", "to": "src/ro_armc.v"},
+        {"from": "chip/e2_ro_puf_core.v", "to": "src/ro_puf_core.v"},
+        {"from": "chip/e2_ro_puf.v", "to": "src/ro_puf.v"},
+        {"from": "chip/e2_tt_um_ro_puf.v", "to": "src/tt_um_ro_puf.v"}
+      ],
+      "stop": "a destination in src/ differs from the archived copy in any way the generators do not account for, which means somebody edited src/ by hand since 7 August",
+      "irreversible": true,
+      "days": 0.25
+    },
+    {
+      "id": "update-infoyaml",
+      "title": "source_files and pinout, by hand and reviewed",
+      "reads": ["info.yaml", "chip/e2_tt_um_ro_puf.v"],
+      "writes": ["info.yaml"],
+      "invariants": ["tiles", "top_module"],
+      "stop": "the tile count or the top module name would have to change, which is a different shuttle submission and not this build",
+      "irreversible": true,
+      "days": 0.25
+    },
+    {
+      "id": "lint",
+      "title": "lint the installed RTL before spending machine time on it",
+      "reads": [
+        "src/ro_armc.v",
+        "src/ro_puf_core.v",
+        "src/ro_puf.v",
+        "src/tt_um_ro_puf.v",
+        "info.yaml"
+      ],
+      "writes": ["dualarm/build_armc/lint.log"],
+      "stop": "any lint error, and any width warning on the arm decode, which is the expression the RTL notes as the one a synthesiser can widen unexpectedly",
+      "irreversible": false,
+      "days": 0.25
+    },
+    {
+      "id": "sim-two-arm-regression",
+      "title": "the existing gate-level tests still pass",
+      "reads": [
+        "src/ro_puf_core.v",
+        "src/ro_puf.v",
+        "src/tt_um_ro_puf.v"
+      ],
+      "writes": ["dualarm/build_armc/sim_regression.log"],
+      "stop": "any test that passed on the two-arm build fails here, because that is a regression in arms A and B and they are the published result",
+      "irreversible": false,
+      "days": 0.5
+    },
+    {
+      "id": "sim-e2-acceptance",
+      "title": "work the acceptance table row by row",
+      "reads": ["chip/e2_tb_plan.csv", "chip/e2_acceptance.csv"],
+      "writes": ["dualarm/build_armc/sim_e2.log"],
+      "test_count": 21,
+      "stop": "any acceptance test fails, including the window that is only there to prove the sticky overflow flag sets",
+      "irreversible": false,
+      "days": 0.5
+    },
+    {
+      "id": "place-regions",
+      "title": "pin Arm A and bind the sixteen Arm C regions",
+      "reads": ["chip/armc_place.tcl", "chip/ARMC_REGIONS.json"],
+      "writes": ["dualarm/build_armc/place.log"],
+      "stop": "any place_cell is rejected, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
+      "irreversible": false,
+      "days": 0.25
+    },
+    {
+      "id": "harden",
+      "title": "the OpenLane run to GDS",
+      "reads": ["src/config.json", "info.yaml"],
+      "writes": [
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds",
+        "dualarm/build_armc/metrics.json",
+        "dualarm/build_armc/dualarm_par_out.txt",
+        "dualarm/build_armc/dualarm_par_ss_out.txt",
+        "dualarm/build_armc/dualarm_par_ff_out.txt"
+      ],
+      "produces_raw": ["metrics", "dualarm_par_out.txt",
+                       "dualarm_par_ss_out.txt", "dualarm_par_ff_out.txt"],
+      "stop": "DRC, LVS, antenna or timing is not clean, or the run needs a fifth tile, which G.2 already decided against and which would make the whole area argument moot",
+      "irreversible": false,
+      "days": 1.0
+    },
+    {
+      "id": "xor-baseline",
+      "title": "XOR the new GDS against the frozen one",
+      "reads": [
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds",
+        "dualarm/build_2arm_frozen/MANIFEST.txt"
+      ],
+      "writes": ["dualarm/build_armc/xor.log"],
+      "stop": "any geometry difference inside the area arms A and B occupy, because the two-arm result is quoted off that geometry and a moved wire there changes it",
+      "irreversible": false,
+      "days": 0.25
+    },
+    {
+      "id": "extract",
+      "title": "pull the DEF, netlist, SPEF and positions back out",
+      "reads": ["dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def"],
+      "writes": [
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nl.v",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef",
+        "dualarm/build_armc/dualarm_positions.csv"
+      ],
+      "produces_raw": ["def", "netlist", "spef", "positions"],
+      "stop": "extraction exits non-zero, or the SPEF is missing nets the netlist has, which is the failure that makes every parasitic number quietly optimistic",
+      "irreversible": false,
+      "days": 0.25
+    },
+    {
+      "id": "rerun-evidence",
+      "title": "the whole evidence gate, against the three-arm build",
+      "reads": [
+        "chip/G2_CRITERIA.json",
+        "chip/PREREGISTRATION.json",
+        "chip/RELEASE_MANIFEST.json"
+      ],
+      "writes": ["dualarm/build_armc/evidence.log"],
+      "covers": [
+        "tile_budget.py",
+        "armc_cost.py",
+        "g2_decision.py",
+        "observability_spec.py",
+        "gen_armc.py",
+        "gen_e2_rtl.py",
+        "verify_phaseE.py",
+        "preregister.py",
+        "release_manifest.py",
+        "g3_runbook.py"
+      ],
+      "regenerates": [
+        "TILE_BUDGET.json",
+        "G3_RUNBOOK_CHECK.json",
+        "RELEASE_MANIFEST.json",
+        "ARMC_COST.json",
+        "G2_DECISION.json",
+        "OBSERVABILITY.json",
+        "e2_acceptance.csv",
+        "ARMC_REGIONS.json",
+        "armc_place.tcl",
+        "ro_armc.v",
+        "e2_ro_puf_core.v",
+        "e2_ro_puf.v",
+        "e2_tt_um_ro_puf.v",
+        "e2_tb_plan.csv"
+      ],
+      "expected_failures": [
+        {
+          "what": "diff /tmp/release.json chip/RELEASE_MANIFEST.json",
+          "file": "chip/RELEASE_MANIFEST.json",
+          "why": "the raw inputs are a different build now, so the recorded hashes are supposed to have moved. This is the one failure in the run that means the build worked.",
+          "resolved_by": "recut-release"
+        }
+      ],
+      "stop": "any check fails that passed on the two-arm build and the reason is not written down in the same sitting, because a check that starts failing and gets explained a week later is a check nobody trusts",
+      "irreversible": false,
+      "days": 0.5
+    },
+    {
+      "id": "recut-release",
+      "title": "re-cut the manifest against the build that now exists",
+      "reads": [
+        "dualarm/build_armc/metrics.json",
+        "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef"
+      ],
+      "writes": ["chip/RELEASE_MANIFEST.json"],
+      "stop": "an artefact hash moved and nothing in the run explains why, which means something is being regenerated from an input nobody is tracking",
+      "irreversible": false,
+      "days": 0.25
+    }
+  ]
+}
