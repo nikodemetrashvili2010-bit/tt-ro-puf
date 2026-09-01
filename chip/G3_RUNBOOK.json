@@ -44,11 +44,11 @@
     "chip/ARMC_REGIONS.json",
     "chip/e2_tb_plan.csv",
     "chip/e2_acceptance.csv",
-    "src/ro_puf_core.v",
-    "src/ro_puf.v",
-    "src/tt_um_ro_puf.v",
-    "src/config.json",
-    "info.yaml"
+    "dualarm/src/ro_puf_core.v",
+    "dualarm/src/ro_puf.v",
+    "dualarm/src/tt_um_ro_puf.v",
+    "dualarm/src/config.json",
+    "dualarm/info.yaml"
   ],
 
   "steps": [
@@ -67,9 +67,17 @@
         "dualarm/build_2arm_frozen/MANIFEST.txt"
       ],
       "archives": [
+        "dualarm/src/ro_puf.v",
+        "dualarm/src/ro_puf_core.v",
+        "dualarm/src/tt_um_ro_puf.v",
+        "dualarm/src/ro_macro.v",
+        "dualarm/src/config.json",
+        "dualarm/info.yaml",
         "src/ro_puf.v",
         "src/ro_puf_core.v",
         "src/tt_um_ro_puf.v",
+        "src/ro_macro.v",
+        "src/config.json",
         "info.yaml"
       ],
       "stop": "any raw input hashes differently from what chip/RELEASE_MANIFEST.json recorded, which means the build on disk is not the build the numbers came from",
@@ -78,24 +86,28 @@
     },
     {
       "id": "install-rtl",
-      "title": "put the generated modules into src/ under their real names",
+      "title": "put the generated modules into dualarm/src/ under their real names, then resync the top-level copy",
       "reads": [],
       "writes": [],
       "installs": [
-        {"from": "chip/ro_armc.v", "to": "src/ro_armc.v"},
-        {"from": "chip/e2_ro_puf_core.v", "to": "src/ro_puf_core.v"},
-        {"from": "chip/e2_ro_puf.v", "to": "src/ro_puf.v"},
-        {"from": "chip/e2_tt_um_ro_puf.v", "to": "src/tt_um_ro_puf.v"}
+        {"from": "chip/ro_armc.v", "to": "dualarm/src/ro_armc.v"},
+        {"from": "chip/e2_ro_puf_core.v", "to": "dualarm/src/ro_puf_core.v"},
+        {"from": "chip/e2_ro_puf.v", "to": "dualarm/src/ro_puf.v"},
+        {"from": "chip/e2_tt_um_ro_puf.v", "to": "dualarm/src/tt_um_ro_puf.v"}
       ],
-      "stop": "a destination in src/ differs from the archived copy in any way the generators do not account for, which means somebody edited src/ by hand since 7 August",
+      "resync": [
+        {"from": "dualarm/src", "to": "src"},
+        {"from": "dualarm/info.yaml", "to": "info.yaml"}
+      ],
+      "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August",
       "irreversible": true,
       "days": 0.25
     },
     {
       "id": "update-infoyaml",
       "title": "source_files and pinout, by hand and reviewed",
-      "reads": ["info.yaml", "chip/e2_tt_um_ro_puf.v"],
-      "writes": ["info.yaml"],
+      "reads": ["dualarm/info.yaml", "chip/e2_tt_um_ro_puf.v"],
+      "writes": ["dualarm/info.yaml"],
       "invariants": ["tiles", "top_module"],
       "stop": "the tile count or the top module name would have to change, which is a different shuttle submission and not this build",
       "irreversible": true,
@@ -105,11 +117,11 @@
       "id": "lint",
       "title": "lint the installed RTL before spending machine time on it",
       "reads": [
-        "src/ro_armc.v",
-        "src/ro_puf_core.v",
-        "src/ro_puf.v",
-        "src/tt_um_ro_puf.v",
-        "info.yaml"
+        "dualarm/src/ro_armc.v",
+        "dualarm/src/ro_puf_core.v",
+        "dualarm/src/ro_puf.v",
+        "dualarm/src/tt_um_ro_puf.v",
+        "dualarm/info.yaml"
       ],
       "writes": ["dualarm/build_armc/lint.log"],
       "stop": "any lint error, and any width warning on the arm decode, which is the expression the RTL notes as the one a synthesiser can widen unexpectedly",
@@ -120,9 +132,9 @@
       "id": "sim-two-arm-regression",
       "title": "the existing gate-level tests still pass",
       "reads": [
-        "src/ro_puf_core.v",
-        "src/ro_puf.v",
-        "src/tt_um_ro_puf.v"
+        "dualarm/src/ro_puf_core.v",
+        "dualarm/src/ro_puf.v",
+        "dualarm/src/tt_um_ro_puf.v"
       ],
       "writes": ["dualarm/build_armc/sim_regression.log"],
       "stop": "any test that passed on the two-arm build fails here, because that is a regression in arms A and B and they are the published result",
@@ -151,7 +163,7 @@
     {
       "id": "harden",
       "title": "the OpenLane run to GDS",
-      "reads": ["src/config.json", "info.yaml"],
+      "reads": ["dualarm/src/config.json", "dualarm/info.yaml"],
       "writes": [
         "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def",
         "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds",
@@ -211,7 +223,8 @@
         "verify_phaseE.py",
         "preregister.py",
         "release_manifest.py",
-        "g3_runbook.py"
+        "g3_runbook.py",
+        "lint_rtl.py"
       ],
       "regenerates": [
         "TILE_BUDGET.json",
@@ -227,7 +240,8 @@
         "e2_ro_puf_core.v",
         "e2_ro_puf.v",
         "e2_tt_um_ro_puf.v",
-        "e2_tb_plan.csv"
+        "e2_tb_plan.csv",
+        "RTL_LINT.json"
       ],
       "expected_failures": [
         {

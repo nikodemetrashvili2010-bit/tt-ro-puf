@@ -17,6 +17,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: install iverilog
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends iverilog
+          iverilog -V | head -1
+
       - name: Check Python and archived numerical evidence
         run: |
           python3 -m compileall -q sim extraction chip
@@ -113,6 +119,9 @@ jobs:
           python3 chip/g3_runbook.py --selftest
           python3 chip/g3_runbook.py --json /tmp/g3.json
           diff /tmp/g3.json chip/G3_RUNBOOK_CHECK.json
+          python3 chip/lint_rtl.py --selftest
+          python3 chip/lint_rtl.py --json /tmp/rtl_lint.json
+          diff /tmp/rtl_lint.json chip/RTL_LINT.json
           python3 chip/release_manifest.py --selftest
           python3 chip/release_manifest.py --json /tmp/release.json
           diff /tmp/release.json chip/RELEASE_MANIFEST.json

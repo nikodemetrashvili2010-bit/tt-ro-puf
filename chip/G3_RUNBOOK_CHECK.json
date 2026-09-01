@@ -41,7 +41,7 @@
       "pass": true
     },
     {
-      "detail": "10 of 10 scripts",
+      "detail": "11 of 11 scripts",
       "id": "B07",
       "name": "the re-run step covers every script the gate runs",
       "pass": true
@@ -65,13 +65,13 @@
       "pass": true
     },
     {
-      "detail": "14 artefacts",
+      "detail": "15 artefacts",
       "id": "B11",
       "name": "every artefact the manifest attributes to a producer is regenerated after the build",
       "pass": true
     },
     {
-      "detail": "4 archived",
+      "detail": "12 archived",
       "id": "B12",
       "name": "no irreversible step overwrites a file the archive step did not take a copy of",
       "pass": true
@@ -125,13 +125,13 @@
         "chip/e2_tt_um_ro_puf.v",
         "chip/ro_armc.v"
       ],
-      "stop": "a destination in src/ differs from the archived copy in any way the generators do not account for, which means somebody edited src/ by hand since 7 August",
-      "title": "put the generated modules into src/ under their real names",
+      "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August",
+      "title": "put the generated modules into dualarm/src/ under their real names, then resync the top-level copy",
       "writes": [
-        "src/ro_armc.v",
-        "src/ro_puf.v",
-        "src/ro_puf_core.v",
-        "src/tt_um_ro_puf.v"
+        "dualarm/src/ro_armc.v",
+        "dualarm/src/ro_puf.v",
+        "dualarm/src/ro_puf_core.v",
+        "dualarm/src/tt_um_ro_puf.v"
       ]
     },
     {
@@ -140,12 +140,12 @@
       "irreversible": true,
       "reads": [
         "chip/e2_tt_um_ro_puf.v",
-        "info.yaml"
+        "dualarm/info.yaml"
       ],
       "stop": "the tile count or the top module name would have to change, which is a different shuttle submission and not this build",
       "title": "source_files and pinout, by hand and reviewed",
       "writes": [
-        "info.yaml"
+        "dualarm/info.yaml"
       ]
     },
     {
@@ -153,11 +153,11 @@
       "id": "lint",
       "irreversible": false,
       "reads": [
-        "info.yaml",
-        "src/ro_armc.v",
-        "src/ro_puf.v",
-        "src/ro_puf_core.v",
-        "src/tt_um_ro_puf.v"
+        "dualarm/info.yaml",
+        "dualarm/src/ro_armc.v",
+        "dualarm/src/ro_puf.v",
+        "dualarm/src/ro_puf_core.v",
+        "dualarm/src/tt_um_ro_puf.v"
       ],
       "stop": "any lint error, and any width warning on the arm decode, which is the expression the RTL notes as the one a synthesiser can widen unexpectedly",
       "title": "lint the installed RTL before spending machine time on it",
@@ -170,9 +170,9 @@
       "id": "sim-two-arm-regression",
       "irreversible": false,
       "reads": [
-        "src/ro_puf.v",
-        "src/ro_puf_core.v",
-        "src/tt_um_ro_puf.v"
+        "dualarm/src/ro_puf.v",
+        "dualarm/src/ro_puf_core.v",
+        "dualarm/src/tt_um_ro_puf.v"
       ],
       "stop": "any test that passed on the two-arm build fails here, because that is a regression in arms A and B and they are the published result",
       "title": "the existing gate-level tests still pass",
@@ -213,8 +213,8 @@
       "id": "harden",
       "irreversible": false,
       "reads": [
-        "info.yaml",
-        "src/config.json"
+        "dualarm/info.yaml",
+        "dualarm/src/config.json"
       ],
       "stop": "DRC, LVS, antenna or timing is not clean, or the run needs a fifth tile, which G.2 already decided against and which would make the whole area argument moot",
       "title": "the OpenLane run to GDS",

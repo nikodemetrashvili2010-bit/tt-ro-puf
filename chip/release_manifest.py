@@ -84,6 +84,7 @@ PRODUCERS = {
     "e2_tt_um_ro_puf.v": "gen_e2_rtl.py",
     "e2_tb_plan.csv": "gen_e2_rtl.py",
     "G3_RUNBOOK_CHECK.json": "g3_runbook.py",
+    "RTL_LINT.json": "lint_rtl.py",
     "RELEASE_MANIFEST.json": "release_manifest.py",
 }
 

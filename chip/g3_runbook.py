@@ -271,7 +271,12 @@ def run_checks(book, emitted, gate_scripts, produced, raw_keys,
     res.add("B09", "the steps sum to something inside the plan's budget",
             lo <= total <= hi, "%.2f days against %s to %s" % (total, lo, hi))
 
-    yaml_steps = [s for s in steps if "info.yaml" in step_writes(s)]
+    # The path moved to dualarm/info.yaml on 2026-09-01, and the root
+    # copy is a resync of it rather than a second thing to edit, so
+    # match on the basename and not on the whole path.
+    yaml_steps = [s for s in steps
+                  if any(os.path.basename(w) == "info.yaml"
+                         for w in step_writes(s))]
     inv = set(yaml_steps[0].get("invariants", [])) if yaml_steps else set()
     res.add("B10", "info.yaml is edited by one step and that step holds the "
                    "tile count and top module fixed",
@@ -385,7 +390,7 @@ def find_step(book, sid):
 
 
 def f_b01(c):
-    find_step(c["book"], "lint")["reads"].append("src/ro_armd.v")
+    find_step(c["book"], "lint")["reads"].append("dualarm/src/ro_armd.v")
 
 
 def f_b02(c):
@@ -394,9 +399,10 @@ def f_b02(c):
 
 
 def f_b03(c):
-    # Drop the core install, not the Arm C one. src/ro_puf_core.v already
-    # exists, so removing its install leaves no dangling read; removing
-    # src/ro_armc.v would, and B01 would fire on that instead.
+    # Drop the core install, not the Arm C one. dualarm/src/ro_puf_core.v
+    # already exists, so removing its install leaves no dangling read;
+    # removing dualarm/src/ro_armc.v would, and B01 would fire on that
+    # instead.
     s = find_step(c["book"], "install-rtl")
     s["installs"] = [p for p in s["installs"]
                      if p["from"] != "chip/e2_ro_puf_core.v"]
@@ -445,7 +451,8 @@ def f_b11(c):
 
 def f_b12(c):
     s = find_step(c["book"], "archive-baseline")
-    s["archives"] = [x for x in s["archives"] if x != "src/ro_puf.v"]
+    s["archives"] = [x for x in s["archives"]
+                     if x != "dualarm/src/ro_puf.v"]
 
 
 def f_b13(c):

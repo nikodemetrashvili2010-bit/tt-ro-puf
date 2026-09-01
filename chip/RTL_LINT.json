@@ -1,0 +1,163 @@
+{
+  "checks": [
+    {
+      "applies": true,
+      "detail": "none found",
+      "id": "R01",
+      "name": "no part-select applied to a parenthesised expression",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "tff_clk[0] resolves to 'ro_out[active_sel]'",
+      "id": "R02",
+      "name": "the ripple counter's first stage is clocked by an ungated ring output",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "count_out = count_latched, a reg",
+      "id": "R03",
+      "name": "count_out is published from a register",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "settle state yes, stable-sample rule yes, 2 async_reg sampler stages",
+      "id": "R04",
+      "name": "the stopped-ring settle handshake is present",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "3 async_reg stages, ui_in is sampled into one",
+      "id": "R05",
+      "name": "the top synchronizes ui_in through two async_reg stages",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "16 of 16 present",
+      "id": "R06",
+      "name": "every macro instance named in config.json is instantiated in the top",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "ena is in a reset expression and not tied off",
+      "id": "R07",
+      "name": "ena takes part in the project reset",
+      "pass": true,
+      "target": "live"
+    },
+    {
+      "applies": false,
+      "detail": "this set has no ro_armc",
+      "id": "R08",
+      "name": "the Arm C ring matches the Arm A ring node for node",
+      "pass": null,
+      "target": "live"
+    },
+    {
+      "applies": true,
+      "detail": "e2_ro_puf_core.v:72, e2_ro_puf_core.v:76",
+      "id": "R01",
+      "name": "no part-select applied to a parenthesised expression",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "tff_clk[0] resolves to 'sel_ro & en_window'",
+      "id": "R02",
+      "name": "the ripple counter's first stage is clocked by an ungated ring output",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "count_out = cnt, not a reg",
+      "id": "R03",
+      "name": "count_out is published from a register",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "settle state NO, stable-sample rule NO, 0 async_reg sampler stages",
+      "id": "R04",
+      "name": "the stopped-ring settle handshake is present",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "0 async_reg stages, ui_in is sampled into one",
+      "id": "R05",
+      "name": "the top synchronizes ui_in through two async_reg stages",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "0 of 16 present, missing u_rob0, u_rob1, u_rob10, u_rob11",
+      "id": "R06",
+      "name": "every macro instance named in config.json is instantiated in the top",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "ena is NOT in a reset expression and tied off",
+      "id": "R07",
+      "name": "ena takes part in the project reset",
+      "pass": false,
+      "target": "draft"
+    },
+    {
+      "applies": true,
+      "detail": "sky130_fd_sc_hd__buf_1 pin A is n[15] in Arm A and n[30] in Arm C",
+      "id": "R08",
+      "name": "the Arm C ring matches the Arm A ring node for node",
+      "pass": false,
+      "target": "draft"
+    }
+  ],
+  "compiler_checks": "E01 and E02 run but are not recorded here, because whether a compiler was present is not a property of the RTL. They are enforced by the exit code in the archived-evidence job.",
+  "draft_failures": [
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07",
+    "R08"
+  ],
+  "draft_installable": false,
+  "live_failures": [],
+  "sets": {
+    "draft": [
+      "e2_ro_puf.v",
+      "e2_ro_puf_core.v",
+      "e2_tt_um_ro_puf.v",
+      "ro_armc.v",
+      "ro_macro.v",
+      "ro_macro_hard_bb.v"
+    ],
+    "live": [
+      "ro_macro.v",
+      "ro_macro_hard_bb.v",
+      "ro_puf.v",
+      "ro_puf_core.v",
+      "tt_um_ro_puf.v"
+    ]
+  },
+  "top_module": "tt_um_nikodemetrashvili20_ro_puf"
+}
