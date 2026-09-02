@@ -115,29 +115,29 @@
     "ARMC_REGIONS.json": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
     "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
     "G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
-    "G3_RUNBOOK.json": "fce2185598c435f1ff457f6d37a8eb14a2030e3bf4a580310baf56ef2a737b16",
+    "G3_RUNBOOK.json": "c8f711390eafd5f511e21e04327c48f97ea15e64a3bc1fb2c7ffeb85ab8b9999",
     "G3_RUNBOOK_CHECK.json": "6e786aa11153d246fa4a93c7f1f4df196fc39960365bafbb0861f7406545a578",
     "OBSERVABILITY.json": "7de147297376198b5119de5567c16e237d91b3a0c6c61cd66d58cfdbb0617f0f",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
     "RELEASE_MANIFEST.json": null,
-    "RTL_LINT.json": "01810f1a8927a180d07cc6bd37ea8e5fcbe01967fb883e8a123cba195797fb64",
+    "RTL_LINT.json": "dc73dd5d6d59d8a2eb195e649ae06d3ed20f046898c6dab1f1e1f624ca2bed03",
     "TILE_BUDGET.json": "a9c227441cb32f3c4770e7a73c7620b59c1201ea3c066d17a22718cdf88638cf",
     "armc_cost.py": "492278681363c426c4caf1a47789470bbcc75a559313a6cba658d5235785865f",
     "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
     "e2_acceptance.csv": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
-    "e2_ro_puf.v": "02261c9137d8a0800ff318f0c9c3e5701d3e66a409f88a386a89c1db98796da4",
-    "e2_ro_puf_core.v": "082046a54636e9f7fd5c1ef85e5fe45a91b2bbdfe2e448c526e9c627de0859b3",
-    "e2_tb_plan.csv": "333fd466864e01bd9f25ca2f37f742d55cdef99dcbf2efa974b85c6a86a83208",
-    "e2_tt_um_ro_puf.v": "2c3068bb8514b475a9c34467a2d07dc562a5de770a6c2cb6d9a566b632672305",
+    "e2_ro_puf.v": "4541626cea4c70c6f255766f5d14786baf32de338fe0448ae6c231844c217bc6",
+    "e2_ro_puf_core.v": "222c218df7899bfa0b3740030d1eaed9bce381af66ce38a968ceeb1f01ac181d",
+    "e2_tb_plan.csv": "3c1813a9dd4f39241666c47ed22aa1f29d881a05aa460d84e137b7a2c511492d",
+    "e2_tt_um_ro_puf.v": "c8f567ed34a74278db63421777651df8d6c80b14b3669c0e1036253a1cc009a3",
     "g2_decision.py": "abc63d12e2ed1f7478001b619cf2fe5b58b2ca648d330cd5d87dc1953f864b87",
     "g3_runbook.py": "bb830b1e36da3ad726ffff8d0aa26ea564955526c8f6095f0fa3b9bf0b5c8b01",
-    "gen_armc.py": "ab77eaf1450708ed2b92c730529e2ce196a5b21342de895066aebbd2d959309c",
-    "gen_e2_rtl.py": "b9eb3062a8d53eccb59061fa351225dd9fa1291937a6fb5b26427aa63ef73633",
-    "lint_rtl.py": "281f2c6416fba03a93f0c514f0c83c57f9fdbcc29d051cda04d4a78ad8510948",
+    "gen_armc.py": "a3488eb3d1f99f6ccf07d9151312449a7a7d48ac2dff5ff268bca6c9dff44ebd",
+    "gen_e2_rtl.py": "523350f0e9b8e3dbf3e1dd9fe9d22e47bf07c773a4ab8c93ae62afccf3166022",
+    "lint_rtl.py": "0bfd9829205daaca3f85f15d6f85eeb81cf2f68a9494a7a5723e3401eba99fe0",
     "observability_spec.py": "770e1b7a16f73f41c5725a15f5554abca6930cde0f6dcd05a5ee370f861080ba",
     "preregister.py": "bf1e1c7c78863bbbfd96020b70f90c11def143234e3ddf6ebf7dfe02ec4182d7",
     "release_manifest.py": "a533334668433b3fd1195c26414760a50055d4c4953420ae1db087a10f2c9acf",
-    "ro_armc.v": "91142cb50babf876b03fea3d5c6448b33e2217974cfd73471740c0983b089041",
+    "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
     "tile_budget.py": "760097af36e3a468dd2759901222dbb84beeee029302c512df5752d3f5892afc",
     "verify_phaseE.py": "c723f1ec0164f04509ae528995d14fdb60f1f6cbc590b33ef18aef1954e5d9b2"
   },
@@ -190,7 +190,7 @@
     },
     "RTL_LINT.json": {
       "producer": "lint_rtl.py",
-      "sha256": "01810f1a8927a180d07cc6bd37ea8e5fcbe01967fb883e8a123cba195797fb64",
+      "sha256": "dc73dd5d6d59d8a2eb195e649ae06d3ed20f046898c6dab1f1e1f624ca2bed03",
       "sources": {}
     },
     "TILE_BUDGET.json": {
@@ -216,27 +216,27 @@
     },
     "e2_ro_puf.v": {
       "producer": "gen_e2_rtl.py",
-      "sha256": "02261c9137d8a0800ff318f0c9c3e5701d3e66a409f88a386a89c1db98796da4",
+      "sha256": "4541626cea4c70c6f255766f5d14786baf32de338fe0448ae6c231844c217bc6",
       "sources": {}
     },
     "e2_ro_puf_core.v": {
       "producer": "gen_e2_rtl.py",
-      "sha256": "082046a54636e9f7fd5c1ef85e5fe45a91b2bbdfe2e448c526e9c627de0859b3",
+      "sha256": "222c218df7899bfa0b3740030d1eaed9bce381af66ce38a968ceeb1f01ac181d",
       "sources": {}
     },
     "e2_tb_plan.csv": {
       "producer": "gen_e2_rtl.py",
-      "sha256": "333fd466864e01bd9f25ca2f37f742d55cdef99dcbf2efa974b85c6a86a83208",
+      "sha256": "3c1813a9dd4f39241666c47ed22aa1f29d881a05aa460d84e137b7a2c511492d",
       "sources": {}
     },
     "e2_tt_um_ro_puf.v": {
       "producer": "gen_e2_rtl.py",
-      "sha256": "2c3068bb8514b475a9c34467a2d07dc562a5de770a6c2cb6d9a566b632672305",
+      "sha256": "c8f567ed34a74278db63421777651df8d6c80b14b3669c0e1036253a1cc009a3",
       "sources": {}
     },
     "ro_armc.v": {
       "producer": "gen_armc.py",
-      "sha256": "91142cb50babf876b03fea3d5c6448b33e2217974cfd73471740c0983b089041",
+      "sha256": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
       "sources": {}
     }
   },

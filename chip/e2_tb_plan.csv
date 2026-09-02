@@ -1,22 +1,22 @@
-id,kind,arm,ro_idx,win_sel,rd_ver,byte_sel,reset_first,expect
-E2-01,reset,0,0,0,0,0,1,"done=0, active=0, overflow=0, count reads 0"
-E2-02,reset,0,0,3,0,0,1,overflow=0 after reset
-E2-03,mode,0,0,0,0,0,0,done rises within 264 clocks; count is nonzero
-E2-04,mode,0,0,1,0,0,0,done rises within 520 clocks; count is nonzero
-E2-05,mode,0,0,2,0,0,0,done rises within 2056 clocks; count is nonzero
-E2-06,mode,0,0,3,0,0,0,done rises within 16392 clocks; count is nonzero
-E2-07,state,0,0,0,0,1,0,active high for 256 clocks then low; done rises as active falls
-E2-08,state,0,0,0,0,0,0,"done=0 and active=0, which no completed run can show"
-E2-09,linearity,0,0,1,0,0,0,"ratio in [1.98, 2.02]"
-E2-10,linearity,0,0,2,0,0,0,"ratio in [7.92, 8.08]"
-E2-11,overflow,0,0,3,0,0,0,overflow=1 on every die and every corner
-E2-12,overflow,0,0,3,0,0,0,overflow stays 1
-E2-13,overflow,0,0,0,0,0,0,overflow stays 0
-E2-14,readout,0,0,0,0,1,0,"high<<8 | low equals the count, and repeats stably"
-E2-15,readout,0,0,0,0,0,0,identical
-E2-16,version,0,0,0,1,0,0,uo_out = 2
-E2-17,version,0,0,0,1,0,0,uo_out = 0x1A
-E2-18,version,0,0,0,1,0,0,count unchanged
-E2-19,mode,0,0,1,0,0,0,"16 distinct done pulses, every count in range"
-E2-20,mode,0,0,1,0,0,0,"16 distinct done pulses, every count in range"
-E2-21,mode,0,0,1,0,0,0,"16 distinct done pulses, every count in range"
+id,kind,arm,ro_idx,sweep,win_sel,rd_ver,byte_sel,reset_first,expect
+E2-01,reset,0,0,0,0,0,0,1,"done=0, active=0, overflow=0, count reads 0"
+E2-02,reset,0,0,0,3,0,0,1,overflow=0 after reset
+E2-03,mode,0,0,0,0,0,0,0,done rises within 264 clocks; count is nonzero
+E2-04,mode,0,0,0,1,0,0,0,done rises within 520 clocks; count is nonzero
+E2-05,mode,0,0,0,2,0,0,0,done rises within 2056 clocks; count is nonzero
+E2-06,mode,0,0,0,3,0,0,0,done rises within 16392 clocks; count is nonzero
+E2-07,state,0,0,0,0,0,0,0,active high for 256 clocks then low; done rises as active falls
+E2-08,state,0,0,0,0,0,0,0,"done=0 and active=0, which no completed run can show"
+E2-09,linearity,0,0,0,1,0,0,0,"ratio in [1.98, 2.02]"
+E2-10,linearity,0,0,0,2,0,0,0,"ratio in [7.92, 8.08]"
+E2-11,overflow,0,0,0,3,0,0,0,overflow=1 on every die and every corner
+E2-12,overflow,0,0,0,3,0,0,0,overflow stays 1
+E2-13,overflow,0,0,0,0,0,0,0,overflow stays 0
+E2-14,readout,0,0,0,0,0,1,0,"high<<8 | low equals the count, and repeats stably"
+E2-15,readout,0,0,0,0,0,0,0,identical
+E2-16,version,0,0,0,0,1,0,0,uo_out = 2
+E2-17,version,0,0,0,0,1,1,0,uo_out = 0x1A
+E2-18,version,0,0,0,0,1,0,0,count unchanged
+E2-19,mode,0,0,1,1,0,0,0,"16 distinct done pulses, every count in range"
+E2-20,mode,1,0,1,1,0,0,0,"16 distinct done pulses, every count in range"
+E2-21,mode,2,0,1,1,0,0,0,"16 distinct done pulses, every count in range"

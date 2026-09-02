@@ -100,6 +100,12 @@
         {"from": "dualarm/info.yaml", "to": "info.yaml"}
       ],
       "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August",
+      "notes": [
+        "chip/gen_e2_rtl.py transforms dualarm/src rather than writing fresh RTL, so this install destroys its own input and the transformation is one-shot.",
+        "In the same commit as this step, take the four gen_e2_rtl.py lines out of ci/gds.yaml and delete chip/e2_ro_puf_core.v, chip/e2_ro_puf.v and chip/e2_tt_um_ro_puf.v. The gate diffs those drafts against a regeneration that can no longer happen, so leaving them in turns a finished job into a permanently red build.",
+        "chip/lint_rtl.py stays. Its live set becomes the three-arm design and its draft set goes away, which is the point of having written it.",
+        "gen_e2_rtl.py refuses to run once dualarm/src carries g_armc and prints this, so the failure stays legible if the step is forgotten."
+      ],
       "irreversible": true,
       "days": 0.25
     },

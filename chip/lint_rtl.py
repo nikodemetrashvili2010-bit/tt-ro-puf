@@ -27,11 +27,13 @@ synchronizer, sixteen macro instances that vanish, an arm that is supposed
 to be a copy of another arm and is not. A compiler catches none of those.
 They are all legal Verilog.
 
-The live design is required to pass. The drafts are reported, not enforced,
-because they are known to be broken and the point of recording them is that
-the state cannot change without this file's JSON changing with it. That is
-the same trick `release_manifest.py` uses for the CI actions still pinned to
-tags.
+The live design is required to pass. The drafts are reported rather than
+enforced, so that the state cannot change without this file's JSON changing
+with it. That is the same trick `release_manifest.py` uses for the CI
+actions still pinned to tags. On 1 September the drafts failed nine of ten;
+on the 2nd, rebuilt by `chip/gen_e2_rtl.py` as a transformation of the live
+RTL rather than as fresh Verilog, they pass all ten. `draft_installable` in
+the JSON is what G.3 step 2 reads.
 
 A check that does not apply to a file set reports `n/a` and is counted
 separately. It is never folded into the pass count. A check that passes
@@ -371,20 +373,54 @@ def check_r04(sources, target, res):
 # ---------------------------------------------------------------------------
 # R05: the board GPIOs are asynchronous to clk, so the control bundle goes
 # through two async_reg stages in the top before anything reads it.
+#
+# Named, not counted. The top has three async_reg registers and the first of
+# them is the reset synchronizer, so "there are at least two" says nothing
+# about the control path. This finds the register that actually samples
+# ui_in and then the register that samples that one, which is the two-stage
+# chain the property is about.
+#
+# The bundle is not required to be ui_in on its own. E.2 puts three more
+# control signals on uio_in and they go through the same chain, so the test
+# is that a register carrying ui_in feeds a second register, whatever else
+# rides alongside it. Which pins have to be in that bundle is a question
+# about the spec rather than about the RTL, and chip/gen_e2_rtl.py R03
+# answers it against OBSERVABILITY.json.
 # ---------------------------------------------------------------------------
 def check_r05(sources, target, res):
     name, code = top_text(sources)
     if code is None:
-        res.add("R05", target, "the top synchronizes ui_in through two "
-                "async_reg stages", None, "no top module in this set",
-                applies=False)
+        res.add("R05", target, "the control bundle reaches the design "
+                "through two async_reg stages", None,
+                "no top module in this set", applies=False)
         return
-    stages = len(re.findall(r'async_reg\s*=\s*"true"\s*\*\)\s*reg', code))
-    feeds = bool(re.search(r"<=\s*ui_in\b", code))
-    ok = stages >= 2 and feeds
-    res.add("R05", target, "the top synchronizes ui_in through two async_reg "
-            "stages", ok, "%d async_reg stages, ui_in %s sampled into one"
-            % (stages, "is" if feeds else "is NOT"))
+    names = re.findall(r'async_reg\s*=\s*"true"\s*\*\)\s*reg'
+                       r'\s*(?:\[[^\]]*\])?\s*(\w+)', code)
+    meta = None
+    for n in names:
+        rhs = re.findall(r"\b%s\s*<=\s*([^;]+);" % n, code)
+        if any("ui_in" in r for r in rhs):
+            meta = n
+            break
+    second = None
+    if meta is not None:
+        for n in names:
+            if n != meta and re.search(r"\b%s\s*<=\s*%s\s*;" % (n, meta),
+                                       code):
+                second = n
+                break
+    ok = meta is not None and second is not None
+    if ok:
+        detail = "%d async_reg registers, %s samples ui_in and %s samples %s" \
+            % (len(names), meta, second, meta)
+    elif meta is None:
+        detail = "%d async_reg registers, none of them samples ui_in" \
+            % len(names)
+    else:
+        detail = "%s samples ui_in but no second async_reg stage reads it" \
+            % meta
+    res.add("R05", target, "the control bundle reaches the design through "
+            "two async_reg stages", ok, detail)
 
 
 # ---------------------------------------------------------------------------
@@ -690,6 +726,13 @@ def selftest():
                    '    (* async_reg = "true" *) reg [6:0] ui_sync;',
         "reg [6:0] ui_meta;\n    reg [6:0] ui_sync;"), None))
 
+    # The second R05 fault is the one E.2 made reachable: the chain is still
+    # there and still two stages deep, but the control bits are taken off the
+    # port instead of out of it. Counting stages cannot see this.
+    cases.append(({"R05"}, _sub(
+        live, top, "ui_meta      <= ui_in[6:0];",
+        "ui_meta      <= 7'b0;"), None))
+
     cases.append(({"R06"}, _sub(
         live, top,
         "ro_macro_hard u_rob7  (.en(armb_en[7]),  .out(armb_out[7]));",
@@ -793,11 +836,22 @@ def main():
     uncompiled = not live_info["available"]
     structural_bad = [c for c in live_bad if not c.startswith("E")]
 
-    if draft_bad:
+    # The verdict on the drafts is read off the structural half, the same
+    # half the JSON records. Whether this machine has a compiler is reported
+    # on its own line, because it is a fact about the machine.
+    draft_structural_bad = [c for c in draft_bad if not c.startswith("E")]
+    if draft_structural_bad:
         print("  the drafts under chip/ are NOT installable: %s"
-              % ", ".join(draft_bad))
+              % ", ".join(draft_structural_bad))
         print("  G.3 step 2 must not run until they are rebuilt from the "
               "live RTL.")
+    elif uncompiled:
+        print("  the drafts under chip/ pass every structural check. Nothing "
+              "was compiled here, so G.3 step 2's stop condition is met only "
+              "once the gate has run them through iverilog.")
+    else:
+        print("  the drafts under chip/ pass all ten checks, so G.3 step 2's "
+              "stop condition is met.")
     if structural_bad:
         print("  the live design FAILS %s" % ", ".join(structural_bad))
     elif uncompiled:

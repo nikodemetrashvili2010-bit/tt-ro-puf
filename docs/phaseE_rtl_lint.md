@@ -150,15 +150,23 @@ findings two through five are all legal Verilog:
 | R02 | the ripple counter's first stage is clocked by an ungated ring output |
 | R03 | `count_out` is published from a register |
 | R04 | the stopped-ring settle handshake is present |
-| R05 | the top synchronizes `ui_in` through two `async_reg` stages |
+| R05 | the control bundle reaches the design through two `async_reg` stages |
 | R06 | every macro instance named in `config.json` is instantiated in the top |
 | R07 | `ena` takes part in the project reset |
 | R08 | the Arm C ring matches the Arm A ring node for node |
 
 Both halves run against two file sets. The live design is required to pass
 and does, nine checks with R08 not applicable because there is no Arm C in
-it. The drafts fail nine of ten; E02 is the only one they pass, and only
-because a file that will not parse produces no width warnings.
+it. On 31 August the drafts failed nine of ten; E02 was the only one they
+passed, and only because a file that will not parse produces no width
+warnings.
+
+**On 2 September the drafts pass all ten.** `chip/gen_e2_rtl.py` was rebuilt
+as a transformation of the live RTL rather than as fresh Verilog, and
+`draft_installable` in `RTL_LINT.json` is what G.3 step 2 reads before it
+copies anything into the source tree. Yosys 0.33 reads the same set,
+resolves the hierarchy and passes `check -assert` with no warnings, which
+this script does not run and the TT flow will.
 
 A check that does not apply reports `n/a` and is counted separately from the
 passes. On 31 August `B07` in the runbook read an empty gate list inside the
@@ -169,6 +177,30 @@ The drafts are reported and not enforced. `RTL_LINT.json` records their
 state and the gate diffs it, so the state cannot change without the diff
 moving, which is the same arrangement the release manifest uses for the CI
 actions still pinned to tags. What the exit code enforces is the live design.
+
+## R05 had to get stronger to let the new top through
+
+The first version counted `async_reg` attributes and looked for `<= ui_in`
+anywhere in the top. The three-arm top samples `{uio_in[3:1], ui_in[7:0]}`,
+so the regex missed and the check failed on a design that synchronizes more
+than the one it was written against, not less.
+
+Widening the regex would have been loosening it, which is the thing freezing
+exists to prevent, so the check was made narrower instead. It now finds the
+`async_reg` register that actually samples `ui_in`, then the second
+`async_reg` register that samples that one. Counting attributes said nothing
+useful anyway: the top has three of them and the first is the reset
+synchronizer.
+
+That is strictly stronger than what it replaced, and there is a second fault
+in the selftest to show it. The bundle stays two stages deep and the
+attributes stay in place, but the first stage is fed a constant and the
+control bits are decoded off the port. The old check passed that. This one
+does not.
+
+Which pins have to be inside the bundle is a question about the spec rather
+than about the RTL, so it is not asked here. `chip/gen_e2_rtl.py` R03 asks
+it, against `OBSERVABILITY.json`.
 
 ## Three things I got wrong while writing it
 
