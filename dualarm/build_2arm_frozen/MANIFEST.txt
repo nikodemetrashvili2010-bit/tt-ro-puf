@@ -1,0 +1,44 @@
+two-arm baseline, frozen before G.3 step 2 replaced dualarm/src
+
+The design as it stood when Phase E measured it and when the E.2
+transformation was written against it. chip/gen_e2_rtl.py reads
+dualarm_src/ from here once the install has happened, so this archive
+is a live input to the evidence gate and not only a safety copy.
+
+No date line. The gate regenerates this file and diffs it against the
+committed copy, so every line has to be derivable from the archive and
+a date is not. Git holds the date.
+
+Copies are stored with LF endings. Four of the twelve originals are
+CRLF on disk and .gitattributes rewrites them on commit, so a copy kept
+byte for byte would hash one way here and another way in a checkout,
+and every hash below would be wrong in CI and right on this machine.
+
+build frozen, hashes as RELEASE_MANIFEST.json recorded them
+  def                      e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7
+  dualarm_par_ff_out.txt   1c501b725bec18bfa4cbfd07b170811da6dec9d862182e05cc88a07a461f0961
+  dualarm_par_out.txt      ef41e9e66d03b6ed7774d15944ee46ddcc7c16ba39e480363bd9900cd5cf1753
+  dualarm_par_ss_out.txt   3f4326e28bd0cf300d536797ea9883a66152082548fc41269475076230274e6f
+  metrics                  1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22
+  netlist                  9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56
+  positions                d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e
+  spef                     1015bcff163d9f3610b882aed3001f9128dd01919e1892b00436553be6795795
+
+archived files, 12 of them
+  dualarm_info.yaml          dualarm/info.yaml          c67c4f31df93739f854c30ef5a0a2838d1c30cce3184469c7ff2abf9d9530026    1961
+  dualarm_src/config.json    dualarm/src/config.json    8e0a295e30546eac1e3190e6b0d8df6937722fafcaaa3ffc70d30139a7226458    3890
+  dualarm_src/ro_macro.v     dualarm/src/ro_macro.v     9dca9a64fe6acc6276f4d50b334afe629f9730989984e97828056386b0fa3f39    2453
+  dualarm_src/ro_puf.v       dualarm/src/ro_puf.v       d73006d1c0c20df1487ee4df3bcd257d4a78b216caafb4193f2aaae1a091dbda    1559
+  dualarm_src/ro_puf_core.v  dualarm/src/ro_puf_core.v  b4319657c9efd449c8c63ab5f5f6e568aa4977dc93f913e6acb8d7ae3a5ceed8    9026
+  dualarm_src/tt_um_ro_puf.v dualarm/src/tt_um_ro_puf.v 4d05e6dd2a3b060c6b0841738cb8ecd3697235a8cdddc7d45c866a55ad3867ea    5327
+  top_info.yaml              info.yaml                  c67c4f31df93739f854c30ef5a0a2838d1c30cce3184469c7ff2abf9d9530026    1961
+  top_src/config.json        src/config.json            8dfa9d29537da2a16c748f8264b2839d4af84250b7c043174041ef154bfda2cc    2520
+  top_src/ro_macro.v         src/ro_macro.v             e7fcb9bd5891da423199c218a5d9ed19b1ce9d646f793ac1bea1f8ee7fb3df19    2438
+  top_src/ro_puf.v           src/ro_puf.v               647845acafb0576c0932d96712753e684719caecc22def0436ef43eb8a39977f    1331
+  top_src/ro_puf_core.v      src/ro_puf_core.v          06cf3634293728e622ace9323d4fd5ab16b87c88991047076b192a270e3be9de    3448
+  top_src/tt_um_ro_puf.v     src/tt_um_ro_puf.v         17bc21a13db0fc0bc6a1c37c72bbefc8cce1bbbe9e6f5a97703aedbbed17d2fe    2286
+
+the two source trees
+  6 files held in both, 5 differ
+  src/ is the June single-arm design and has been since
+  dual-arm v2 landed in dualarm/src on 22 July

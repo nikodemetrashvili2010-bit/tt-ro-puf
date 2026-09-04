@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
-"""Lint the RTL, and check the Phase E drafts against the design they replace.
+"""Lint the RTL that is going to the chip.
 
 Ten days of Phase E produced three generated Verilog modules under `chip/`
 and a runbook whose second step copies them into the source tree. Nothing in
 the ninety-seven command gate ever compiled a `.v` file. The gate regenerates
-each draft and diffs it against the committed copy, which proves the
+each module and diffs it against the committed copy, which proves the
 generator is deterministic and proves nothing at all about the Verilog.
 
 This script is the missing half. It does two separate jobs.
@@ -27,13 +27,19 @@ synchronizer, sixteen macro instances that vanish, an arm that is supposed
 to be a copy of another arm and is not. A compiler catches none of those.
 They are all legal Verilog.
 
-The live design is required to pass. The drafts are reported rather than
-enforced, so that the state cannot change without this file's JSON changing
-with it. That is the same trick `release_manifest.py` uses for the CI
-actions still pinned to tags. On 1 September the drafts failed nine of ten;
-on the 2nd, rebuilt by `chip/gen_e2_rtl.py` as a transformation of the live
-RTL rather than as fresh Verilog, they pass all ten. `draft_installable` in
-the JSON is what G.3 step 2 reads.
+Until 4 September there were two file sets. The drafts under `chip/` were a
+different design from the one in `dualarm/src`, so both were linted and the
+drafts were reported rather than enforced, which is how `draft_installable`
+came to be the field G.3 step 2 read before it ran. On 1 September the
+drafts failed nine of ten; on the 2nd, rebuilt by `chip/gen_e2_rtl.py` as a
+transformation of the live RTL rather than as fresh Verilog, they passed all
+ten, and on the 4th step 2 installed them. There is one design now and one
+set, and the copies under `chip/` are held to it by a diff in the gate
+rather than by a second lint of the same bytes.
+
+R08 has stopped being n/a as a result. The live set carries `ro_armc.v`, so
+the check that Arm C is the Arm A ring node for node now runs on what is
+going to the chip rather than on a draft of it.
 
 A check that does not apply to a file set reports `n/a` and is counted
 separately. It is never folded into the pass count. A check that passes
@@ -60,14 +66,13 @@ ROOT = os.path.dirname(HERE)
 LIVE_DIR = os.path.join(ROOT, "dualarm", "src")
 CONFIG_JSON = os.path.join(LIVE_DIR, "config.json")
 
-# The two file sets. "live" is the two-arm design that is actually on the
-# shuttle path. "draft" is what Phase E generated and G.3 step 2 wants to
-# install over it. Both need ro_macro.v for Arm A and the Arm B blackbox.
-LIVE_SET = ["tt_um_ro_puf.v", "ro_puf.v", "ro_puf_core.v",
+# One file set. Until G.3 step 2 there were two, because the Phase E drafts
+# under chip/ were a different design from the one in dualarm/src and both
+# had to be reported. Step 2 installed them on 4 September, so dualarm/src
+# is the three-arm design and the copies under chip/ are copies: the gate
+# diffs them against these files rather than linting them twice.
+LIVE_SET = ["tt_um_ro_puf.v", "ro_puf.v", "ro_puf_core.v", "ro_armc.v",
             "ro_macro.v", "ro_macro_hard_bb.v"]
-DRAFT_SET = ["e2_tt_um_ro_puf.v", "e2_ro_puf.v", "e2_ro_puf_core.v",
-             "ro_armc.v"]
-DRAFT_SHARED = ["ro_macro.v", "ro_macro_hard_bb.v"]
 
 TOP_MODULE = "tt_um_nikodemetrashvili20_ro_puf"
 
@@ -617,17 +622,6 @@ def live_sources():
     return load(LIVE_DIR, LIVE_SET)
 
 
-def draft_sources():
-    s = load(HERE, DRAFT_SET)
-    s.update(load(LIVE_DIR, DRAFT_SHARED))
-    return s
-
-
-# ---------------------------------------------------------------------------
-# Selftest. One planted fault, one check. The assertion names the check it
-# expects and fails if a second one also fires, because a fault that trips
-# three checks does not tell you which check caught it.
-# ---------------------------------------------------------------------------
 def _sub(sources, name, old, new, count=1):
     s = dict(sources)
     if s[name].count(old) != count:
@@ -722,16 +716,16 @@ def selftest():
         live, core, "ST_SETTLE", "ST_QUIET", count=5), None))
 
     cases.append(({"R05"}, _sub(
-        live, top, '(* async_reg = "true" *) reg [6:0] ui_meta;\n'
-                   '    (* async_reg = "true" *) reg [6:0] ui_sync;',
-        "reg [6:0] ui_meta;\n    reg [6:0] ui_sync;"), None))
+        live, top, '(* async_reg = "true" *) reg [10:0] ui_meta;\n'
+                   '    (* async_reg = "true" *) reg [10:0] ui_sync;',
+        "reg [10:0] ui_meta;\n    reg [10:0] ui_sync;"), None))
 
     # The second R05 fault is the one E.2 made reachable: the chain is still
     # there and still two stages deep, but the control bits are taken off the
     # port instead of out of it. Counting stages cannot see this.
     cases.append(({"R05"}, _sub(
-        live, top, "ui_meta      <= ui_in[6:0];",
-        "ui_meta      <= 7'b0;"), None))
+        live, top, "ui_meta      <= {uio_in[3:1], ui_in[7:0]};",
+        "ui_meta      <= 11'b0;"), None))
 
     cases.append(({"R06"}, _sub(
         live, top,
@@ -799,7 +793,6 @@ def main():
 
     res = Results()
     live = live_sources()
-    draft = draft_sources()
 
     missing = [n for n in LIVE_SET if n not in live]
     if missing:
@@ -809,11 +802,9 @@ def main():
     print("")
     print("  live   %s" % ", ".join(sorted(live)))
     live_info = run_set(live, "live", res)
-    print("  draft  %s" % ", ".join(sorted(draft)))
-    draft_info = run_set(draft, "draft", res)
     print("")
 
-    for target in ("live", "draft"):
+    for target in ("live",):
         ok, bad, na = res.counts(target)
         print("  %-6s %d pass, %d fail, %d n/a" % (target, ok, bad, na))
         for r in res.rows:
@@ -827,7 +818,6 @@ def main():
         print("")
 
     live_bad = res.failed("live")
-    draft_bad = res.failed("draft")
     # Not compiling anything and failing to compile are different answers and
     # deserve different exit codes. A machine with no iverilog gets 2, which
     # says the structural half passed and the compiler half did not run. CI
@@ -836,22 +826,6 @@ def main():
     uncompiled = not live_info["available"]
     structural_bad = [c for c in live_bad if not c.startswith("E")]
 
-    # The verdict on the drafts is read off the structural half, the same
-    # half the JSON records. Whether this machine has a compiler is reported
-    # on its own line, because it is a fact about the machine.
-    draft_structural_bad = [c for c in draft_bad if not c.startswith("E")]
-    if draft_structural_bad:
-        print("  the drafts under chip/ are NOT installable: %s"
-              % ", ".join(draft_structural_bad))
-        print("  G.3 step 2 must not run until they are rebuilt from the "
-              "live RTL.")
-    elif uncompiled:
-        print("  the drafts under chip/ pass every structural check. Nothing "
-              "was compiled here, so G.3 step 2's stop condition is met only "
-              "once the gate has run them through iverilog.")
-    else:
-        print("  the drafts under chip/ pass all ten checks, so G.3 step 2's "
-              "stop condition is met.")
     if structural_bad:
         print("  the live design FAILS %s" % ", ".join(structural_bad))
     elif uncompiled:
@@ -870,7 +844,7 @@ def main():
         # the manifest that could not carry its own hash.
         rows = [r for r in res.rows if not r["id"].startswith("E")]
         out = {"top_module": TOP_MODULE,
-               "sets": {"live": sorted(live), "draft": sorted(draft)},
+               "sets": {"live": sorted(live)},
                "compiler_checks": "E01 and E02 run but are not recorded "
                                   "here, because whether a compiler was "
                                   "present is not a property of the RTL. "
@@ -878,11 +852,7 @@ def main():
                                   "the archived-evidence job.",
                "checks": rows,
                "live_failures": [c for c in sorted(live_bad)
-                                 if not c.startswith("E")],
-               "draft_failures": [c for c in sorted(draft_bad)
-                                  if not c.startswith("E")],
-               "draft_installable": not [c for c in draft_bad
-                                         if not c.startswith("E")]}
+                                 if not c.startswith("E")]}
         with open(a.json, "w", encoding="utf-8", newline="\n") as fh:
             json.dump(out, fh, indent=2, sort_keys=True)
             fh.write("\n")

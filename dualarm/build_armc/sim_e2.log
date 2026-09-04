@@ -1,0 +1,109 @@
+G.3 step 6, the E.2 acceptance table, 21 rows from chip/e2_tb_plan.csv
+
+iverilog 12.0, cocotb 2.1.0, RTL run
+
+rm -f results.xml
+mkdir -p sim_build/rtl
+/usr/bin/iverilog -o sim_build/rtl/sim.vvp -s tb -g2012 -f sim_build/rtl/cmds.f  <repo>/test/../src/ro_macro_sim.v <repo>/test/../src/ro_armc_sim.v <repo>/test/../src/ro_puf_core.v <repo>/test/../src/ro_puf.v <repo>/test/../src/tt_um_ro_puf.v <repo>/test/ro_macro_hard_sim.v <repo>/test/tb.v
+rm -f results.xml
+COCOTB_TEST_MODULES=test_e2 COCOTB_TESTCASE=  COCOTB_TOPLEVEL=tb TOPLEVEL_LANG=verilog       \
+	 /usr/bin/vvp -m <site-packages>/cocotb/libs/libcocotbvpi_icarus.so   sim_build/rtl/sim.vvp -fst  
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/usr/lib/x86_64-linux-gnu/libpython3.11.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '<site-packages>/cocotb/simulator.cpython-311-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.11.14 interpreter at /usr/bin/python3
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1788537851
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from <site-packages>/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on Icarus Verilog version 12.0 (stable)
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running test_e2.test_e2_01 (1/21)
+                                                            reset clears everything
+FST info: dumpfile tb.fst opened for output.
+   240.00ns INFO     cocotb.regression                  test_e2.test_e2_01 passed
+   240.00ns INFO     cocotb.regression                  running test_e2.test_e2_02 (2/21)
+                                                            reset clears a sticky overflow
+328600.00ns INFO     cocotb.regression                  test_e2.test_e2_02 passed
+328600.00ns INFO     cocotb.regression                  running test_e2.test_e2_03 (3/21)
+                                                            window select 0 selects 256 cycles
+334350.00ns INFO     cocotb.regression                  test_e2.test_e2_03 passed
+334350.00ns INFO     cocotb.regression                  running test_e2.test_e2_04 (4/21)
+                                                            window select 1 selects 512 cycles
+345200.00ns INFO     cocotb.regression                  test_e2.test_e2_04 passed
+345200.00ns INFO     cocotb.regression                  running test_e2.test_e2_05 (5/21)
+                                                            window select 2 selects 2048 cycles
+386770.00ns INFO     cocotb.regression                  test_e2.test_e2_05 passed
+386770.00ns INFO     cocotb.regression                  running test_e2.test_e2_06 (6/21)
+                                                            window select 3 selects 16384 cycles
+715060.01ns INFO     cocotb.regression                  test_e2.test_e2_06 passed
+715060.01ns INFO     cocotb.regression                  running test_e2.test_e2_07 (7/21)
+                                                            active is high only while the window is open
+720660.01ns INFO     cocotb.regression                  test_e2.test_e2_07 passed
+720660.01ns INFO     cocotb.regression                  running test_e2.test_e2_08 (8/21)
+                                                            done and active tell a fresh result from a stale one
+721080.01ns INFO     cocotb.regression                  test_e2.test_e2_08 passed
+721080.01ns INFO     cocotb.regression                  running test_e2.test_e2_09 (9/21)
+                                                            double the window, double the count
+737450.01ns INFO     cocotb.regression                  test_e2.test_e2_09 passed
+737450.01ns INFO     cocotb.regression                  running test_e2.test_e2_10 (10/21)
+                                                            eight times the window, eight times the count
+784520.01ns INFO     cocotb.regression                  test_e2.test_e2_10 passed
+784520.01ns INFO     cocotb.regression                  running test_e2.test_e2_11 (11/21)
+                                                            the overflow window sets the sticky flag
+1112680.01ns INFO     cocotb.regression                  test_e2.test_e2_11 passed
+1112680.01ns INFO     cocotb.regression                  running test_e2.test_e2_12 (12/21)
+                                                            the sticky flag survives the next measurement
+1446350.01ns INFO     cocotb.regression                  test_e2.test_e2_12 passed
+1446350.01ns INFO     cocotb.regression                  running test_e2.test_e2_13 (13/21)
+                                                            a safe window never sets it
+4204660.01ns INFO     cocotb.regression                  test_e2.test_e2_13 passed
+4204660.01ns INFO     cocotb.regression                  running test_e2.test_e2_14 (14/21)
+                                                            both bytes reassemble the count
+4210530.01ns INFO     cocotb.regression                  test_e2.test_e2_14 passed
+4210530.01ns INFO     cocotb.regression                  running test_e2.test_e2_15 (15/21)
+                                                            the count does not move between the two byte reads
+4218190.01ns INFO     cocotb.regression                  test_e2.test_e2_15 passed
+4218190.01ns INFO     cocotb.regression                  running test_e2.test_e2_16 (16/21)
+                                                            the protocol byte reads back
+4218530.01ns INFO     cocotb.regression                  test_e2.test_e2_16 passed
+4218530.01ns INFO     cocotb.regression                  running test_e2.test_e2_17 (17/21)
+                                                            the build byte reads back
+4218870.02ns INFO     cocotb.regression                  test_e2.test_e2_17 passed
+4218870.02ns INFO     cocotb.regression                  running test_e2.test_e2_18 (18/21)
+                                                            the version select does not disturb a stored count
+4224920.02ns INFO     cocotb.regression                  test_e2.test_e2_18 passed
+4224920.02ns INFO     cocotb.regression                  running test_e2.test_e2_19 (19/21)
+                                                            every oscillator in arm A, automated answers
+4395070.02ns INFO     cocotb.regression                  test_e2.test_e2_19 passed
+4395070.02ns INFO     cocotb.regression                  running test_e2.test_e2_20 (20/21)
+                                                            every oscillator in arm B, hardened answers
+4565220.02ns INFO     cocotb.regression                  test_e2.test_e2_20 passed
+4565220.02ns INFO     cocotb.regression                  running test_e2.test_e2_21 (21/21)
+                                                            every oscillator in arm C, constrained answers
+4735370.02ns INFO     cocotb.regression                  test_e2.test_e2_21 passed
+4735370.02ns INFO     cocotb.regression                  ****************************************************************************************
+                                                        ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ****************************************************************************************
+                                                        ** test_e2.test_e2_01               PASS         240.00           0.00      71708.77  **
+                                                        ** test_e2.test_e2_02               PASS      328360.00           3.57      92104.09  **
+                                                        ** test_e2.test_e2_03               PASS        5750.00           0.06      99369.66  **
+                                                        ** test_e2.test_e2_04               PASS       10850.00           0.11      94568.03  **
+                                                        ** test_e2.test_e2_05               PASS       41570.00           0.45      92964.92  **
+                                                        ** test_e2.test_e2_06               PASS      328290.00           3.51      93533.60  **
+                                                        ** test_e2.test_e2_07               PASS        5600.00           0.06      96939.58  **
+                                                        ** test_e2.test_e2_08               PASS         420.00           0.00     146866.09  **
+                                                        ** test_e2.test_e2_09               PASS       16370.00           0.17      96893.41  **
+                                                        ** test_e2.test_e2_10               PASS       47070.00           0.50      93529.79  **
+                                                        ** test_e2.test_e2_11               PASS      328160.00           3.63      90406.29  **
+                                                        ** test_e2.test_e2_12               PASS      333670.00           3.67      90960.95  **
+                                                        ** test_e2.test_e2_13               PASS     2758310.00          30.82      89497.16  **
+                                                        ** test_e2.test_e2_14               PASS        5870.00           0.06      98403.55  **
+                                                        ** test_e2.test_e2_15               PASS        7660.00           0.07     109587.87  **
+                                                        ** test_e2.test_e2_16               PASS         340.00           0.00     153243.30  **
+                                                        ** test_e2.test_e2_17               PASS         340.00           0.00     167688.83  **
+                                                        ** test_e2.test_e2_18               PASS        6050.00           0.06      97976.31  **
+                                                        ** test_e2.test_e2_19               PASS      170150.00           1.67     101788.77  **
+                                                        ** test_e2.test_e2_20               PASS      170150.00           1.93      88189.92  **
+                                                        ** test_e2.test_e2_21               PASS      170150.00           2.23      76226.63  **
+                                                        ****************************************************************************************
+                                                        ** TESTS=21 PASS=21 FAIL=0 SKIP=0            4735370.02          52.59      90050.37  **
+                                                        ****************************************************************************************

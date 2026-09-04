@@ -99,12 +99,13 @@
         {"from": "dualarm/src", "to": "src"},
         {"from": "dualarm/info.yaml", "to": "info.yaml"}
       ],
-      "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August",
+      "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August. Met on 2026-09-04. The draft_installable field went away with the draft set when the step ran; what holds the same ground now is the gate diffing chip/e2_*.v against the installed files.",
       "notes": [
         "chip/gen_e2_rtl.py transforms dualarm/src rather than writing fresh RTL, so this install destroys its own input and the transformation is one-shot.",
-        "In the same commit as this step, take the four gen_e2_rtl.py lines out of ci/gds.yaml and delete chip/e2_ro_puf_core.v, chip/e2_ro_puf.v and chip/e2_tt_um_ro_puf.v. The gate diffs those drafts against a regeneration that can no longer happen, so leaving them in turns a finished job into a permanently red build.",
+        "REVISED 2026-09-04, and the paragraph this replaces said: take the gen_e2_rtl.py lines out of ci/gds.yaml and delete the three drafts, because the gate would otherwise diff them against a regeneration that can no longer happen and go red forever. That is true only if the generator has no input left. Step 1 froze the two-arm sources, so it has one: gen_e2_rtl.py reads dualarm/build_2arm_frozen/dualarm_src/ when dualarm/src already carries g_armc, and the gate keeps every one of its commands.",
+        "What the gate gains instead of losing: four diffs of the emitted modules against what is installed in dualarm/src, so the claim CI makes is that the design going to the chip is exactly what transforming the recorded two-arm design produces. The drafts under chip/ stay as checked copies, diffed against their installed twins the same way src/ has always been diffed against dualarm/src.",
         "chip/lint_rtl.py stays. Its live set becomes the three-arm design and its draft set goes away, which is the point of having written it.",
-        "gen_e2_rtl.py refuses to run once dualarm/src carries g_armc and prints this, so the failure stays legible if the step is forgotten."
+        "gen_e2_rtl.py says so and stops if dualarm/src carries g_armc and no frozen baseline is on disk, so the failure stays legible if somebody deletes the archive."
       ],
       "irreversible": true,
       "days": 0.25
@@ -220,6 +221,7 @@
       ],
       "writes": ["dualarm/build_armc/evidence.log"],
       "covers": [
+        "archive_baseline.py",
         "tile_budget.py",
         "armc_cost.py",
         "g2_decision.py",

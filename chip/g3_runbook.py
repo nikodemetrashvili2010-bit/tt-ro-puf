@@ -53,6 +53,11 @@ RUNBOOK = os.path.join(HERE, "G3_RUNBOOK.json")
 MANIFEST = os.path.join(HERE, "RELEASE_MANIFEST.json")
 ACCEPT = os.path.join(HERE, "e2_acceptance.csv")
 TB_PLAN = os.path.join(HERE, "e2_tb_plan.csv")
+# The acceptance testbench, which step 6 writes. Two homes, the same way the
+# workflow has two: dualarm/test is what backup_to_repo.sh mirrors and test/
+# is where it lands in the clone. Look in both rather than assume one.
+TB_CANDIDATES = (os.path.join(ROOT, "test", "test_e2.py"),
+                 os.path.join(ROOT, "dualarm", "test", "test_e2.py"))
 # ci/gds.yaml here, .github/workflows/gds.yaml in the clone. Both.
 GATE_CANDIDATES = (os.path.join(ROOT, "ci", "gds.yaml"),
                    os.path.join(ROOT, ".github", "workflows", "gds.yaml"))
@@ -173,6 +178,21 @@ def gate_commands(text):
     return out
 
 
+def tb_tests():
+    """The row ids the acceptance testbench has a test for.
+
+    test_e2_07 covers E2-07. Nothing clever: the naming is the contract, and
+    B16 below is what makes it one.
+    """
+    for path in TB_CANDIDATES:
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as fh:
+                names = re.findall(r"^(?:async )?def (test_e2_(\d+))\(",
+                                   fh.read(), re.M)
+            return sorted("E2-%s" % n for _, n in names)
+    return None
+
+
 def csv_rows(path):
     with open(path, encoding="utf-8", newline="") as fh:
         return [r for r in csv.reader(fh) if r and r[0].strip()][1:]
@@ -181,7 +201,7 @@ def csv_rows(path):
 # ------------------------------------------------------------------- checks
 
 def run_checks(book, emitted, gate_scripts, produced, raw_keys,
-               accept_n, plan_n):
+               accept_n, plan_n, plan_ids=None, tb_ids=None):
     res = Results()
     steps = book["steps"]
     pre = book.get("pre_existing", [])
@@ -265,6 +285,21 @@ def run_checks(book, emitted, gate_scripts, produced, raw_keys,
                    "step agree on how many tests there are",
             declared is not None and declared == accept_n == plan_n,
             "step %s, table %s, plan %s" % (declared, accept_n, plan_n))
+
+    # B08 counts the rows. B16 asks whether anything runs them. A plan and a
+    # table that agree on 21 while the testbench covers 19 is exactly the
+    # shape B07 was caught in on 31 August: green, and proving nothing.
+    want = sorted(plan_ids or [])
+    have = tb_ids
+    if have is None:
+        missing = ["no test_e2.py found in either tree"]
+    else:
+        missing = sorted(set(want) - set(have)) + \
+            ["%s has no row" % x for x in sorted(set(have) - set(want))]
+    res.add("B16", "every row of the stimulus plan has a test in the "
+                   "acceptance testbench",
+            bool(want) and not missing,
+            ", ".join(missing) or "%d rows, %d tests" % (len(want), len(have)))
 
     total = sum(float(s.get("days", 0)) for s in steps)
     lo, hi = book["budget_days"]
@@ -356,6 +391,9 @@ FIX_PRODUCED = ("TILE_BUDGET.json", "ARMC_COST.json", "G2_DECISION.json",
 FIX_RAW = ("def", "netlist", "spef", "metrics", "positions")
 
 
+FIX_ROWS = tuple("E2-%02d" % i for i in range(1, 22))
+
+
 def fixture(book, mutate=None):
     """The committed runbook plus a stand-in for everything around it.
 
@@ -370,7 +408,9 @@ def fixture(book, mutate=None):
            "produced": list(FIX_PRODUCED),
            "raw": list(FIX_RAW),
            "accept_n": 21,
-           "plan_n": 21}
+           "plan_n": 21,
+           "plan_ids": list(FIX_ROWS),
+           "tb_ids": list(FIX_ROWS)}
     if mutate:
         mutate(ctx)
     return ctx
@@ -379,7 +419,8 @@ def fixture(book, mutate=None):
 def run_fixture(book, mutate=None):
     c = fixture(book, mutate)
     return run_checks(c["book"], c["emitted"], c["gate"], c["produced"],
-                      c["raw"], c["accept_n"], c["plan_n"])
+                      c["raw"], c["accept_n"], c["plan_n"],
+                      c["plan_ids"], c["tb_ids"])
 
 
 def find_step(book, sid):
@@ -391,6 +432,10 @@ def find_step(book, sid):
 
 def f_b01(c):
     find_step(c["book"], "lint")["reads"].append("dualarm/src/ro_armd.v")
+
+
+def f_b16(c):
+    c["tb_ids"] = [x for x in c["tb_ids"] if x != "E2-21"]
 
 
 def f_b02(c):
@@ -486,6 +531,7 @@ FAULTS = (
     ("B13", "a step writing a file that is frozen by hash", f_b13),
     ("B14", "a raw input the build never remakes", f_b14),
     ("B15", "a known failure pointed at a step that cannot fix it", f_b15),
+    ("B16", "a plan row with no test behind it", f_b16),
 )
 
 
@@ -550,9 +596,11 @@ def gather():
             if m and m.group(1) not in gate_scripts:
                 gate_scripts.append(m.group(1))
 
-    accept_n = len(csv_rows(ACCEPT))
-    plan_n = len(csv_rows(TB_PLAN))
-    return book, emitted, gate_scripts, produced, raw_keys, accept_n, plan_n
+    accept_rows = csv_rows(ACCEPT)
+    plan_rows = csv_rows(TB_PLAN)
+    return (book, emitted, gate_scripts, produced, raw_keys,
+            len(accept_rows), len(plan_rows),
+            [r[0].strip() for r in plan_rows], tb_tests())
 
 
 def main():
@@ -565,9 +613,11 @@ def main():
     if a.selftest:
         return selftest(book)
 
-    book, emitted, gate, produced, raw, accept_n, plan_n = gather()
+    (book, emitted, gate, produced, raw, accept_n, plan_n,
+     plan_ids, tb_ids) = gather()
     steps = book["steps"]
-    res = run_checks(book, emitted, gate, produced, raw, accept_n, plan_n)
+    res = run_checks(book, emitted, gate, produced, raw, accept_n, plan_n,
+                     plan_ids, tb_ids)
 
     total = sum(float(s.get("days", 0)) for s in steps)
     print("Phase G.3 build runbook")

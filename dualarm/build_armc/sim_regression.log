@@ -1,0 +1,101 @@
+G.3 step 5, the existing protocol regression against the installed three-arm RTL
+
+iverilog 12.0, cocotb 2.1.0, RTL run, window select 0 (256 cycles)
+
+rm -f results.xml
+mkdir -p sim_build/rtl
+/usr/bin/iverilog -o sim_build/rtl/sim.vvp -s tb -g2012 -f sim_build/rtl/cmds.f  <repo>/test/../src/ro_macro_sim.v <repo>/test/../src/ro_armc_sim.v <repo>/test/../src/ro_puf_core.v <repo>/test/../src/ro_puf.v <repo>/test/../src/tt_um_ro_puf.v <repo>/test/ro_macro_hard_sim.v <repo>/test/tb.v
+rm -f results.xml
+COCOTB_TEST_MODULES=test COCOTB_TESTCASE=  COCOTB_TOPLEVEL=tb TOPLEVEL_LANG=verilog       \
+	 /usr/bin/vvp -m <site-packages>/cocotb/libs/libcocotbvpi_icarus.so   sim_build/rtl/sim.vvp -fst  
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/usr/lib/x86_64-linux-gnu/libpython3.11.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '<site-packages>/cocotb/simulator.cpython-311-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.11.14 interpreter at /usr/bin/python3
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1788537845
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from <site-packages>/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on Icarus Verilog version 12.0 (stable)
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running test.test_power_on_defaults (1/7)
+                                                            After reset the outputs are quiet and the bidir bus drives three bits.
+FST info: dumpfile tb.fst opened for output.
+   240.00ns INFO     cocotb.regression                  test.test_power_on_defaults passed
+   240.00ns INFO     cocotb.regression                  running test.test_all_selectors_and_bytes (2/7)
+                                                            Every arm/index selection measures, and both result bytes read back.
+  5990.00ns INFO     cocotb.tb                          arm=0 idx=0 count=1707
+ 11490.00ns INFO     cocotb.tb                          arm=0 idx=1 count=1662
+ 16990.00ns INFO     cocotb.tb                          arm=0 idx=2 count=1620
+ 22490.00ns INFO     cocotb.tb                          arm=0 idx=3 count=1580
+ 27990.00ns INFO     cocotb.tb                          arm=0 idx=4 count=1542
+ 33490.00ns INFO     cocotb.tb                          arm=0 idx=5 count=1506
+ 38990.00ns INFO     cocotb.tb                          arm=0 idx=6 count=1471
+ 44490.00ns INFO     cocotb.tb                          arm=0 idx=7 count=1438
+ 49990.00ns INFO     cocotb.tb                          arm=0 idx=8 count=1406
+ 55490.00ns INFO     cocotb.tb                          arm=0 idx=9 count=1376
+ 60990.00ns INFO     cocotb.tb                          arm=0 idx=10 count=1347
+ 66490.00ns INFO     cocotb.tb                          arm=0 idx=11 count=1319
+ 71990.00ns INFO     cocotb.tb                          arm=0 idx=12 count=1293
+ 77490.00ns INFO     cocotb.tb                          arm=0 idx=13 count=1267
+ 82990.00ns INFO     cocotb.tb                          arm=0 idx=14 count=1242
+ 88490.00ns INFO     cocotb.tb                          arm=0 idx=15 count=1219
+ 93990.00ns INFO     cocotb.tb                          arm=1 idx=0 count=1620
+ 99490.00ns INFO     cocotb.tb                          arm=1 idx=1 count=1620
+104990.00ns INFO     cocotb.tb                          arm=1 idx=2 count=1620
+110490.00ns INFO     cocotb.tb                          arm=1 idx=3 count=1620
+115990.00ns INFO     cocotb.tb                          arm=1 idx=4 count=1620
+121490.00ns INFO     cocotb.tb                          arm=1 idx=5 count=1620
+126990.00ns INFO     cocotb.tb                          arm=1 idx=6 count=1620
+132490.00ns INFO     cocotb.tb                          arm=1 idx=7 count=1620
+137990.00ns INFO     cocotb.tb                          arm=1 idx=8 count=1620
+143490.00ns INFO     cocotb.tb                          arm=1 idx=9 count=1620
+148990.00ns INFO     cocotb.tb                          arm=1 idx=10 count=1620
+154490.00ns INFO     cocotb.tb                          arm=1 idx=11 count=1620
+159990.00ns INFO     cocotb.tb                          arm=1 idx=12 count=1620
+165490.00ns INFO     cocotb.tb                          arm=1 idx=13 count=1620
+170990.00ns INFO     cocotb.tb                          arm=1 idx=14 count=1620
+176490.00ns INFO     cocotb.tb                          arm=1 idx=15 count=1620
+181990.00ns INFO     cocotb.tb                          arm=2 idx=0 count=1828
+187490.00ns INFO     cocotb.tb                          arm=2 idx=1 count=1777
+192990.00ns INFO     cocotb.tb                          arm=2 idx=2 count=1730
+198490.00ns INFO     cocotb.tb                          arm=2 idx=3 count=1684
+203990.00ns INFO     cocotb.tb                          arm=2 idx=4 count=1641
+209490.00ns INFO     cocotb.tb                          arm=2 idx=5 count=1600
+214990.00ns INFO     cocotb.tb                          arm=2 idx=6 count=1561
+220490.00ns INFO     cocotb.tb                          arm=2 idx=7 count=1524
+225990.00ns INFO     cocotb.tb                          arm=2 idx=8 count=1488
+231490.00ns INFO     cocotb.tb                          arm=2 idx=9 count=1454
+236990.00ns INFO     cocotb.tb                          arm=2 idx=10 count=1422
+242490.00ns INFO     cocotb.tb                          arm=2 idx=11 count=1391
+247990.00ns INFO     cocotb.tb                          arm=2 idx=12 count=1362
+253490.00ns INFO     cocotb.tb                          arm=2 idx=13 count=1333
+258990.00ns INFO     cocotb.tb                          arm=2 idx=14 count=1306
+264490.00ns INFO     cocotb.tb                          arm=2 idx=15 count=1280
+264490.00ns INFO     cocotb.regression                  test.test_all_selectors_and_bytes passed
+264490.00ns INFO     cocotb.regression                  running test.test_held_start_is_one_run (3/7)
+                                                            Holding start high creates one measurement, not repeated restarts.
+275720.00ns INFO     cocotb.regression                  test.test_held_start_is_one_run passed
+275720.00ns INFO     cocotb.regression                  running test.test_selector_is_latched (4/7)
+                                                            Changing arm/index mid-run must not change the captured selection.
+286950.00ns INFO     cocotb.regression                  test.test_selector_is_latched passed
+286950.00ns INFO     cocotb.regression                  running test.test_restart_during_measurement (5/7)
+                                                            A second start aborts the in-flight run and re-arms cleanly.
+300300.00ns INFO     cocotb.regression                  test.test_restart_during_measurement passed
+300300.00ns INFO     cocotb.regression                  running test.test_reset_during_measurement (6/7)
+                                                            Reset mid-run clears done and the snapshot; the core still works after.
+307330.01ns INFO     cocotb.regression                  test.test_reset_during_measurement passed
+307330.01ns INFO     cocotb.regression                  running test.test_deselect_shutdown (7/7)
+                                                            Deselecting the project shuts the RO down asynchronously and recovers.
+313720.01ns INFO     cocotb.regression                  test.test_deselect_shutdown passed
+313720.01ns INFO     cocotb.regression                  **********************************************************************************************
+                                                        ** TEST                                  STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **********************************************************************************************
+                                                        ** test.test_power_on_defaults            PASS         240.00           0.00      62655.09  **
+                                                        ** test.test_all_selectors_and_bytes      PASS      264250.00           3.26      80946.89  **
+                                                        ** test.test_held_start_is_one_run        PASS       11230.00           0.14      80936.90  **
+                                                        ** test.test_selector_is_latched          PASS       11230.00           0.13      87757.06  **
+                                                        ** test.test_restart_during_measurement   PASS       13350.00           0.14      95650.21  **
+                                                        ** test.test_reset_during_measurement     PASS        7030.00           0.08      83098.96  **
+                                                        ** test.test_deselect_shutdown            PASS        6390.00           0.07      88661.10  **
+                                                        **********************************************************************************************
+                                                        ** TESTS=7 PASS=7 FAIL=0 SKIP=0                     313720.01           3.83      81829.29  **
+                                                        **********************************************************************************************

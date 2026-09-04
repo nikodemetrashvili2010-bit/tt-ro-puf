@@ -65,14 +65,18 @@ def par_freqs(path):
 
 # ---------------------------------------------------------------- the hardware
 
-window = int(re.search(r'localparam \[15:0\] WINDOW = 16\'d(\d+)', top).group(1))
+# The window used to be one constant. E.2 made it four, chosen on uio[2:1],
+# so the number every count below is derived from is no longer a property of
+# the RTL alone: it is the RTL's table read at the firmware's selection.
+wins = dict((int(i), int(v)) for i, v in
+            re.findall(r"localparam \[15:0\] WIN(\d)\s*=\s*16'd(\d+);", top))
 cnt_w = int(re.search(r'\.CNT_W\((\d+)\)', top).group(1))
 ceiling = 2 ** cnt_w - 1
 
-check("the window in the RTL is the one the datasheet quotes",
-      re.search(r'\b%d[- ]cycle measurement window' % window, flat)
-      or ("%d reference-clock cycles" % window) in flat,
-      "WINDOW = %d" % window)
+check("the RTL offers the four windows the datasheet lists",
+      sorted(wins) == [0, 1, 2, 3]
+      and "256, 512,\n2048 or 16384 reference-clock cycles" in doc,
+      "WIN0..3 = %s" % ", ".join(str(wins[k]) for k in sorted(wins)))
 check("the counter width in the RTL is the one the datasheet quotes",
       ("%d-bit count" % cnt_w) in flat and ("%d bits" % cnt_w) in flat,
       "CNT_W = %d, ceiling %d" % (cnt_w, ceiling))
@@ -80,10 +84,10 @@ check("the counter width in the RTL is the one the datasheet quotes",
 # The whole point of item H. ui_in[6] is registered twice before it selects a
 # byte, so a reader who changes the pin and looks at uo on the next edge sees
 # the previous byte.
-stages = re.findall(r'reg \[6:0\] (ui_meta|ui_sync);', top)
+stages = re.findall(r'reg \[10:0\] (ui_meta|ui_sync);', top)
 check("the control bundle really is two flops deep",
       set(stages) == {"ui_meta", "ui_sync"}
-      and "ui_meta      <= ui_in[6:0];" in top
+      and "ui_meta      <= {uio_in[3:1], ui_in[7:0]};" in top
       and "ui_sync      <= ui_meta;" in top,
       "stages found: %s" % ", ".join(stages))
 check("byte select is taken from the second stage, not the pin",
@@ -93,20 +97,27 @@ check("the datasheet now tells the reader to wait after changing ui[6]",
 check("the wait the datasheet asks for covers two flops",
       3 >= len(stages), "three cycles against %d stages" % len(stages))
 
-# There is no overflow flag to find, which is why the datasheet has to say so.
+# There is an overflow flag now, and the paragraph that told the reader there
+# was not has gone. Both halves have to move together or the datasheet is
+# describing a different chip, which is what this whole file exists to catch.
 outs = re.search(r'assign uio_out\s*=\s*\{([^}]*)\}', top).group(1)
-check("done is the only status bit the chip exposes",
-      outs.replace(" ", "") == "7'b0,done",
+check("the chip exposes done, overflow and active",
+      outs.replace(" ", "") == "2'b0,active,overflow,3'b0,done",
       "uio_out = {%s}" % outs.strip())
-check("the datasheet says the counter wraps silently",
-      "no overflow flag" in flat and "wraps silently" in flat)
+check("the datasheet documents the flag rather than the old silence",
+      "no overflow flag" not in flat and "wraps silently" not in flat
+      and "latches on the wrap and holds until reset" in flat
+      and "`uio[4]` latches" in flat)
 
 # The counter is a ripple chain clocked by the ring, one toggle per ring period,
 # so a count is a ring period and the formula below is the whole story.
 check("the counter is clocked by the selected ring itself",
       "assign tff_clk[0] = sel_ro;" in core)
+# The sampler got a bit wider when the overflow flag went in: it carries
+# bit CNT_W as the wrap, so the latch takes a slice now rather than the whole
+# word. Same property, one index deeper.
 check("the count holds until the next start, as the datasheet claims",
-      "count_latched  <= cnt_sync;" in core
+      "count_latched  <= cnt_sync[CNT_W-1:0];" in core
       and "There is no hurry over step 4." in flat)
 
 
@@ -115,15 +126,19 @@ check("the count holds until the next start, as the datasheet claims",
 declared = int(re.search(r'clock_hz:\s*(\d+)', text(YAML)).group(1))
 fw_clk = int(re.search(r'^CLK_HZ\s*=\s*([\d_]+)', text(FW), re.M).group(1).replace("_", ""))
 fw_window = int(re.search(r'^WINDOW = (\d+)', text(FW), re.M).group(1))
+fw_win_sel = int(re.search(r'^WIN_SEL = (\d+)', text(FW), re.M).group(1))
+window = fw_window
 
 check("info.yaml declares the rate the datasheet says it declares",
       declared == 50_000_000 and "declares 50 MHz" in flat,
       "clock_hz = %d" % declared)
 check("the firmware asks for the rate the datasheet recommends",
-      fw_clk == 25_000_000 and "asks for 25 MHz" in flat,
+      fw_clk == 50_000_000 and "asks for 50 MHz" in flat,
       "CLK_HZ = %d" % fw_clk)
-check("the firmware and the RTL agree on the window",
-      fw_window == window, "firmware %d, RTL %d" % (fw_window, window))
+check("the firmware and the RTL agree on the window it selects",
+      fw_win_sel in wins and fw_window == wins[fw_win_sel],
+      "WIN_SEL %d, firmware %d, RTL %s"
+      % (fw_win_sel, fw_window, wins.get(fw_win_sel)))
 
 
 def counts(f_mhz, clk_hz):
@@ -172,9 +187,16 @@ check("the fast-corner count at the recommended clock is right",
 check("that count really is a little over half of full scale",
       0.5 < counts(fast, fw_clk) / ceiling < 0.6,
       "%.1f%% of %d" % (100 * counts(fast, fw_clk) / ceiling, ceiling))
-check("halving the window doubles the headroom, as the datasheet says",
-      abs(counts(fast, declared) / ceiling - counts(fast, fw_clk) / ceiling / 2)
-      < 1e-9, "%.1f%% at %d Hz" % (100 * counts(fast, declared) / ceiling, declared))
+check("the window below the one in use is a quarter of it, as the "
+      "datasheet says",
+      wins[1] * 4 == wins[2] and wins[0] * 8 == wins[2]
+      and "The 512 window gives a quarter of each, and 256 an eighth." in flat,
+      "%d, %d, %d" % (wins[0], wins[1], wins[2]))
+
+ppm_512 = int(re.search(r'At 512 it is (\d+) ppm', flat).group(1))
+check("the finer window's resolution follows from the same frequencies",
+      abs(1e6 / (hi * 1e6 * wins[1] / fw_clk) - ppm_512) < 1,
+      "%.1f ppm against %d" % (1e6 / (hi * 1e6 * wins[1] / fw_clk), ppm_512))
 
 
 # ------------------------------------------------------------------------ report

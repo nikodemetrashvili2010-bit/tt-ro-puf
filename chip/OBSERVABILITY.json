@@ -28,7 +28,7 @@
     {
       "detail": "yaml free 8, spec claims 8, differ none",
       "id": "O05",
-      "name": "info.yaml and the spec agree on which pins were free",
+      "name": "the two-arm info.yaml and the spec agree on which pins were free",
       "pass": true
     },
     {
@@ -199,7 +199,7 @@
     "corner_ff": "dualarm/build_current/dualarm_par_ff_out.txt",
     "corner_ss": "dualarm/build_current/dualarm_par_ss_out.txt",
     "corner_tt": "dualarm/build_current/dualarm_par_out.txt",
-    "info": "dualarm/info.yaml",
+    "info": "dualarm/build_2arm_frozen/dualarm_info.yaml",
     "netlist": "dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.nl.v"
   },
   "tests": [

@@ -65,6 +65,8 @@ ROOT = os.path.dirname(HERE)
 OBS_JSON = os.path.join(HERE, "OBSERVABILITY.json")
 REGIONS_JSON = os.path.join(HERE, "ARMC_REGIONS.json")
 LIVE_DIR = os.path.join(ROOT, "dualarm", "src")
+# The two-arm design as chip/archive_baseline.py froze it in G.3 step 1.
+FROZEN_DIR = os.path.join(ROOT, "dualarm", "build_2arm_frozen", "dualarm_src")
 
 N_PER_ARM = 16
 CNT_W = 16
@@ -255,9 +257,10 @@ def core_edits(obs, regions):
         " buses.\n",
         "// Serial RO-PUF measurement core, three-arm version (v3).\n"
         "//\n"
-        "// Produced by chip/gen_e2_rtl.py from dualarm/src/ro_puf_core.v by\n"
-        "// named edits. Do not edit this copy: edit the live file or the\n"
-        "// generator, whichever the change belongs to.\n"
+        "// Produced by chip/gen_e2_rtl.py from the frozen two-arm design\n"
+        "// in dualarm/build_2arm_frozen/dualarm_src/ by named edits. The\n"
+        "// transformation is one-shot, so this file is the design now:\n"
+        "// change it here and say why in the day's writeup.\n"
         "//\n"
         "// Arm A (oscillators 0..N_A-1) is generated here as ro_macro\n"
         "// instances and auto-placed by the flow. Arm C (2*N_A..3*N_A-1) is\n"
@@ -436,8 +439,8 @@ def puf_edits(obs, regions):
         "// constraints. `arm` selects the arm and `ro_idx` the oscillator\n"
         "// within it.\n"
         "//\n"
-        "// Produced by chip/gen_e2_rtl.py from dualarm/src/ro_puf.v. Do not\n"
-        "// edit this copy.\n"
+        "// Produced by chip/gen_e2_rtl.py from the frozen two-arm design\n"
+        "// in dualarm/build_2arm_frozen/dualarm_src/ro_puf.v.\n"
         % (3 * N_PER_ARM, N_PER_ARM)))
     e.append(Edit(
         "P02", "two arm bits, three arms, and the two new flags",
@@ -518,8 +521,9 @@ def top_edits(obs, regions):
         " (v2).\n",
         "// TinyTapeout top level for the three-arm RO-PUF, version v3.\n"
         "//\n"
-        "// Produced by chip/gen_e2_rtl.py from dualarm/src/tt_um_ro_puf.v\n"
-        "// and chip/OBSERVABILITY.json. Do not edit this copy.\n"))
+        "// Produced by chip/gen_e2_rtl.py from the frozen two-arm design\n"
+        "// in dualarm/build_2arm_frozen/dualarm_src/tt_um_ro_puf.v and\n"
+        "// chip/OBSERVABILITY.json.\n"))
     e.append(Edit(
         "T02", "the pin map comes out of the spec",
         "// Pin map (unchanged from v1):\n"
@@ -982,6 +986,33 @@ def run_checks(obs, regions, emitted, tb_rows, counts, live, config):
 
 # ----------------------------------------------------------------- build
 
+def source_dir():
+    """Where the untransformed two-arm design is.
+
+    Before G.3 step 2 that is dualarm/src. Step 2 copies the emitted modules
+    over it, and from that moment the live tree IS the three-arm design and
+    this transformation has no input left. The plan written on 31 August
+    dealt with that by retiring this script from the gate along with the
+    drafts it diffs, which would have thrown away the checks, the control
+    and the sixteen planted faults on the day they stopped being
+    hypothetical.
+
+    Step 1 freezes the two-arm sources first, so there is a better answer:
+    read them from the archive, and let the gate diff the emitted modules
+    against what is installed in dualarm/src. That is a stronger claim than
+    the draft diff made. It says the design going to the chip is exactly
+    what transforming the recorded two-arm design produces, and it says it
+    again every time CI runs.
+    """
+    if os.path.isdir(FROZEN_DIR):
+        probe = os.path.join(LIVE_DIR, "ro_puf_core.v")
+        if os.path.exists(probe):
+            with open(probe, "r", encoding="utf-8") as fh:
+                if "begin : g_armc" in fh.read():
+                    return FROZEN_DIR
+    return LIVE_DIR
+
+
 def read_live(dirpath=None):
     """The live design, with line endings normalised.
 
@@ -990,7 +1021,7 @@ def read_live(dirpath=None):
     and the emitter writes \\n on the way out, so the emitted files are the
     same bytes on any machine and the gate's diff means something.
     """
-    d = dirpath or LIVE_DIR
+    d = dirpath or source_dir()
     out = collections.OrderedDict()
     for n in SOURCES:
         p = os.path.join(d, n)
@@ -1002,7 +1033,7 @@ def read_live(dirpath=None):
 
 
 def read_config(dirpath=None):
-    p = os.path.join(dirpath or LIVE_DIR, "config.json")
+    p = os.path.join(dirpath or source_dir(), "config.json")
     if not os.path.exists(p):
         return {}
     with open(p, "r", encoding="utf-8") as fh:
@@ -1324,16 +1355,17 @@ def main():
     live = read_live()
     config = read_config()
     if already_installed(live):
-        print("dualarm/src already carries the three-arm design, so there "
-              "is nothing left to transform.")
-        print("G.3 step 2 has run. Retire this script's four commands from "
-              "ci/gds.yaml and the e2_*.v drafts with them: the live design "
-              "is now the design they were written to produce.")
+        print("dualarm/src already carries the three-arm design and there "
+              "is no frozen two-arm baseline to transform instead.")
+        print("G.3 step 1 writes that archive and step 2 does the install. "
+              "If it has been deleted, restore dualarm/build_2arm_frozen "
+              "from git before running this.")
         return 3
     emitted, tb, counts = build_all(obs, regions, live)
     res = run_checks(obs, regions, emitted, tb, counts, live, config)
 
-    print("E.2 and Arm C RTL, transformed from dualarm/src")
+    print("E.2 and Arm C RTL, transformed from %s"
+          % os.path.relpath(source_dir(), ROOT).replace(os.sep, "/"))
     print("  windows   %s cycles, select %d bits, %d oscillators"
           % (window_constants(obs), regions["select"]["select_bits"],
              regions["select"]["oscillators"]))

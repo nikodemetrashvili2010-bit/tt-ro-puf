@@ -8,26 +8,50 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, FallingEdge, ReadOnly, RisingEdge, Timer
 
 
-WINDOW = 1000
+# The window used to be the constant 1000 and is now one of four, chosen on
+# uio[2:1]. This suite runs on the shortest, because it takes 48 measurements
+# and the ring models toggle every 1.5 ns or so; the longer windows are
+# exercised one ring at a time by the E.2 acceptance table in test_e2.py.
+WINDOWS = (256, 512, 2048, 16384)
+WIN_SEL = 0
+WINDOW = WINDOWS[WIN_SEL]
 CLK_NS = 20
 
-# A gate-level run swaps Arm A's behavioural oscillator for the real standard
-# cells, and sky130's simulation models give combinational cells no delay at
-# all. sky130_fd_sc_hd__inv is a bare `not`, a power-good UDP and a `buf` in
-# the functional view and in the behavioural view alike, so -DUNIT_DELAY has
+# Half period of each behavioural ring, in ps. Arm A and Arm C are the same
+# ladder offset by 100 ps so that a selector landing on the wrong arm reads a
+# different count at the same index; Arm B is the matched macro, sixteen
+# copies of one number, which is the whole point of that arm.
+def half_period_ps(arm, idx):
+    if arm == 0:
+        return 1500 + idx * 40
+    if arm == 1:
+        return 1580
+    return 1400 + idx * 40
+
+
+def model_count(arm, idx, window=WINDOW):
+    return (window * CLK_NS * 1000) // (2 * half_period_ps(arm, idx))
+
+
+# A gate-level run swaps the standard-cell arms for the real cells, and
+# sky130's simulation models give combinational cells no delay at all.
+# sky130_fd_sc_hd__inv is a bare `not`, a power-good UDP and a `buf` in the
+# functional view and in the behavioural view alike, so -DUNIT_DELAY has
 # nothing to attach to. An enabled Arm A ring is then a zero-delay feedback
 # loop: the simulator cycles it forever at one timestamp and simulated time
 # never moves. That is why the gate-level job has been running until CI kills
-# it at six hours rather than failing.
+# it at six hours rather than failing. Arm C is the same circuit under a
+# different module name, so it is in exactly the same position.
 #
 # Arm B comes through synthesis as a preserved black box driven by
 # ro_macro_hard_sim.v, whose half period is a real 1580 ps, so it simulates at
 # ordinary speed. Gate-level runs therefore drive Arm B and the whole protocol
-# around it, including the sixteen preserved macro enable pins, and leave Arm
-# A's frequencies to SPICE and its ring structure to verify_ring_topology.py,
-# which reads the same netlist this test elaborates.
+# around it, including the sixteen preserved macro enable pins, and leave the
+# two auto-placed arms' frequencies to SPICE and their ring structure to
+# verify_ring_topology.py and to lint_rtl.py R08, which read the same netlist
+# this test elaborates.
 GL = os.environ.get("GATES") == "yes"
-ARMS = (1,) if GL else (0, 1)
+ARMS = (1,) if GL else (0, 1, 2)
 PROTOCOL_ARM = 1 if GL else 0
 
 
@@ -43,6 +67,12 @@ def budget_us(measurements):
     """
     return round(measurements * (WINDOW + 64) * CLK_NS / 1000 * 2 + 20)
 
+
+def uio_word(win_sel=WIN_SEL, rd_ver=False):
+    """What the board drives in. Only uio[3:1] are read by the chip."""
+    return ((win_sel & 3) << 1) | (int(bool(rd_ver)) << 3)
+
+
 async def setup(dut):
     """Start the clock, then reset the design to a known state.
 
@@ -52,7 +82,7 @@ async def setup(dut):
     cocotb.start_soon(Clock(dut.clk, CLK_NS, unit="ns").start())
     dut.ena.value = 1
     dut.ui_in.value = 0
-    dut.uio_in.value = 0
+    dut.uio_in.value = uio_word()
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 8)
     dut.rst_n.value = 1
@@ -65,6 +95,7 @@ def ui_word(arm, idx, *, start=False, high_byte=False):
         | ((arm & 1) << 1)
         | ((idx & 0xF) << 2)
         | (int(bool(high_byte)) << 6)
+        | (((arm >> 1) & 1) << 7)
     )
 
 
@@ -123,6 +154,7 @@ async def wait_for_result(
     saw_done_low = False
     high_cycles = 0
     bad_enable_samples = []
+    bad_active_samples = []
     mutated = False
     saw_rearm_low = (
         not require_rearm or en_window is None or rearm_low_already_seen
@@ -134,13 +166,19 @@ async def wait_for_result(
         await RisingEdge(dut.clk)
         await ReadOnly()
 
-        done = int(dut.uio_out.value) & 1
+        status = int(dut.uio_out.value)
+        done = status & 1
         if not done:
             saw_done_low = True
 
         window_high = False
         if en_window is not None:
             window_high = int(en_window.value) == 1
+
+            # E.2 put the window on a pin. uio[5] must agree with the internal
+            # signal on every cycle, or the pin is decoration.
+            if ((status >> 5) & 1) != int(window_high):
+                bad_active_samples.append((elapsed, status, int(window_high)))
 
             # During an in-flight restart, ignore the tail of the aborted
             # window. Count only after the required low gap and the next rise.
@@ -186,6 +224,10 @@ async def wait_for_result(
     assert not bad_enable_samples, (
         f"Arm-B enable was not one-hot/quiet for arm={arm}, idx={idx}: "
         f"{bad_enable_samples[:4]}"
+    )
+    assert not bad_active_samples, (
+        f"uio[5] disagreed with the internal window for arm={arm}, idx={idx}: "
+        f"{bad_active_samples[:4]}"
     )
     if en_window is not None and check_window:
         assert high_cycles == WINDOW, (
@@ -238,9 +280,9 @@ async def measure(
 
 @cocotb.test(timeout_time=budget_us(0), timeout_unit="us")
 async def test_power_on_defaults(dut):
-    """After reset the outputs are quiet and only done drives the bidir bus."""
+    """After reset the outputs are quiet and the bidir bus drives three bits."""
     await setup(dut)
-    assert int(dut.uio_oe.value) == 0x01
+    assert int(dut.uio_oe.value) == 0x31
     assert int(dut.uio_out.value) == 0
     assert int(dut.uo_out.value) == 0
 
@@ -249,7 +291,7 @@ async def test_power_on_defaults(dut):
 async def test_all_selectors_and_bytes(dut):
     """Every arm/index selection measures, and both result bytes read back."""
     await setup(dut)
-    counts = {0: [], 1: []}
+    counts = {0: [], 1: [], 2: []}
     en_window, _ = rtl_handles(dut)
 
     for arm in ARMS:
@@ -258,22 +300,31 @@ async def test_all_selectors_and_bytes(dut):
             counts[arm].append(count)
             dut._log.info("arm=%d idx=%d count=%d", arm, idx, count)
             assert 0 < count < 65536
-            assert int(dut.uio_oe.value) == 0x01
+            assert int(dut.uio_oe.value) == 0x31
+            assert not (int(dut.uio_out.value) >> 4) & 1, "overflow on a safe window"
 
-    if en_window is not None and 0 in ARMS:
-        # Arm A's behavioral model deliberately slows with IDX.
-        assert all(a > b for a, b in zip(counts[0], counts[0][1:])), counts[0]
-        for idx, count in enumerate(counts[0]):
-            half_period_ps = 1500 + idx * 40
-            expected = (WINDOW * CLK_NS * 1000) // (2 * half_period_ps)
-            assert abs(count - expected) <= 2, (idx, count, expected)
+    if en_window is not None:
+        for arm in ARMS:
+            if arm == 1:
+                continue
+            # Arm A and Arm C models deliberately slow with IDX.
+            assert all(a > b for a, b in zip(counts[arm], counts[arm][1:])), counts[arm]
+            for idx, count in enumerate(counts[arm]):
+                assert abs(count - model_count(arm, idx)) <= 2, (arm, idx, count)
 
         # The absolute Arm B count is checked against the model only where the
         # rest of the path is behavioural too. Gate-level adds the real counter
         # and readout cells around the same macro model, and I have no measured
         # basis yet for how many counts that is allowed to move.
-        expected_b = (WINDOW * CLK_NS * 1000) // (2 * 1580)
+        expected_b = model_count(1, 0)
         assert all(abs(count - expected_b) <= 2 for count in counts[1])
+
+        # Arm A and Arm C are the same ring in the design and different
+        # numbers in the models, which is what makes a selector that lands on
+        # the wrong arm visible at all. If these ever coincide, that check has
+        # quietly stopped working.
+        if 0 in ARMS and 2 in ARMS:
+            assert all(abs(a - c) > 2 for a, c in zip(counts[0], counts[2]))
 
     if 1 in ARMS:
         # This half holds in both runs. Arm B is the same parameterless macro
@@ -304,7 +355,7 @@ async def test_selector_is_latched(dut):
     """Changing arm/index mid-run must not change the captured selection."""
     await setup(dut)
     baseline = await measure(dut, PROTOCOL_ARM, 2)
-    # In RTL the mutation crosses arms, and Arm A's model frequencies differ
+    # In RTL the mutation crosses arms, and the model frequencies differ
     # enough that a non-latched selector shows up as a different count. In a
     # gate-level run both selections are Arm B, where every copy toggles at the
     # same rate and the count cannot tell them apart. There the evidence is the

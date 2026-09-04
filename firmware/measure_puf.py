@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
 #
-# Acquisition firmware for the two-arm RO-PUF on the TinyTapeout demo board.
+# Acquisition firmware for the three-arm RO-PUF on the TinyTapeout demo board.
 # Runs on the board (MicroPython, TT SDK v3). Prints a metadata header plus one
 # CSV row per sample to the USB console:
 #
@@ -14,18 +14,26 @@
 #
 # Chip protocol (from tt_um_ro_puf.v):
 #   ui[0] start (hold high for at least three clk cycles),
-#   ui[1] arm (0 = A auto-placed, 1 = B matched macro),
+#   ui[1] arm bit 0, ui[7] arm bit 1 (0 = A auto-placed, 1 = B matched
+#   macro, 2 = C equalized placement),
 #   ui[5:2] oscillator index, ui[6] byte select (0 low, 1 high),
-#   uo[7:0] selected count byte, uio[0] done (high = count valid).
-#   WINDOW is fixed at 1000 reference-clock cycles in the current RTL.
+#   uio[2:1] window select, uio[3] read version bytes instead of the count,
+#   uo[7:0] selected count byte, uio[0] done (high = count valid),
+#   uio[4] counter overflowed, sticky until reset, uio[5] measurement active.
 #
-# Clock choice: count = f_osc * WINDOW / f_clk. The counter is 16 bit
-# (ceiling 65535). At CLK_HZ = 25 MHz the window is 40 us, a 570 MHz nominal
-# oscillator reads about 22800, and the 16-bit ceiling is about 1.6 GHz. The
-# script flags any count near the ceiling, but you should confirm the fastest
-# process corner cannot overflow before trusting a run.
+# Window choice: count = f_osc * WINDOW / f_clk, and WINDOW is now one of
+# 256, 512, 2048 and 16384 rather than a fixed 1000. The counter is 16 bit,
+# ceiling 65535. 2048 at 50 MHz is 41 us and reads about 23400 for the
+# fastest nominal ring, which is where this script sits. 16384 exists to
+# make the counter wrap on purpose and is not a measurement setting.
 #
-# Ordering: samples are taken in randomized rounds. Each round measures all 32
+# Overflow is no longer something to be careful about. uio[4] latches when
+# the counter wraps and stays latched until reset, so a wrapped count is
+# reported rather than guessed at from how close to the ceiling it looks.
+# The old near-ceiling warning is kept as a second opinion, because a flag
+# that is never read is a flag nobody trusts.
+#
+# Ordering: samples are taken in randomized rounds. Each round measures all 48
 # (arm, idx) selections once in a fresh random order, and the run repeats that
 # for ROUNDS rounds. This keeps arm and oscillator index from being correlated
 # with acquisition time (a plain arm-by-arm sweep would confound slow thermal
@@ -44,7 +52,7 @@ CONDITION  = "room_1v8"      # nominal condition label (not a measurement)
 SHUTTLE    = "ttsky26c"      # shuttle the die came from
 BOARD_REV  = "unknown"       # demo board / devkit revision
 SITE       = "unknown"       # operator or measurement site id
-CLK_HZ     = 25_000_000      # requested project clock
+CLK_HZ     = 50_000_000      # requested project clock
 MEAS_CLK_HZ = 0              # measured project clock in Hz, 0 if not measured
 MEAS_VDD_V  = 0.0            # measured core supply in volts, 0.0 if not measured
 TEMP_METHOD = "none"         # e.g. "ambient", "thermocouple_on_package"
@@ -54,10 +62,11 @@ ROUNDS      = 60             # randomized rounds; raise for a real dataset
 TIMEOUT_MS  = 200
 # -------------------------------------------------------------------------
 
-SCRIPT_VERSION = "measure_puf/2"
-WINDOW = 1000
+SCRIPT_VERSION = "measure_puf/3"
+WIN_SEL = 2                  # 0=256, 1=512, 2=2048, 3=16384 clk cycles
+WINDOW = 2048                # must be the length WIN_SEL selects in the RTL
 SAT_WARN = 65000             # warn when a count gets this close to the ceiling
-N_ARM = 2
+N_ARM = 3
 N_IDX = 16
 PROJECT = "tt_um_nikodemetrashvili20_ro_puf"
 
@@ -65,12 +74,19 @@ tt = DemoBoard.get()
 
 
 def _ui(start, arm, idx, byte_sel):
-    return (start & 1) | ((arm & 1) << 1) | ((idx & 0xF) << 2) | ((byte_sel & 1) << 6)
+    return ((start & 1) | ((arm & 1) << 1) | ((idx & 0xF) << 2)
+            | ((byte_sel & 1) << 6) | (((arm >> 1) & 1) << 7))
+
+
+def _uio():
+    """What the board drives into the chip. Only bits 3:1 are read."""
+    return (WIN_SEL & 3) << 1
 
 
 def measure_one(arm, idx):
-    """One measurement. Returns the 16-bit count or -1 on timeout."""
+    """One measurement. Returns (count, overflow), or (-1, 0) on timeout."""
     base = _ui(0, arm, idx, 0)
+    tt.uio_in.value = _uio()
     tt.ui_in.value = base
     time.sleep_ms(1)
     tt.ui_in.value = base | 1
@@ -79,13 +95,13 @@ def measure_one(arm, idx):
     t0 = time.ticks_ms()
     while not tt.uio_out[0]:
         if time.ticks_diff(time.ticks_ms(), t0) > TIMEOUT_MS:
-            return -1
+            return -1, 0
     lo = int(tt.uo_out.value)
     tt.ui_in.value = _ui(0, arm, idx, 1)
     time.sleep_ms(1)
     hi = int(tt.uo_out.value)
     tt.ui_in.value = base
-    return (hi << 8) | lo
+    return (hi << 8) | lo, int(tt.uio_out[4])
 
 
 def _shuffled(pairs, _rand):
@@ -109,7 +125,8 @@ def _emit_metadata(run_id, seed):
         "chip_id": CHIP_ID, "condition": CONDITION, "shuttle": SHUTTLE,
         "board_rev": BOARD_REV, "site": SITE,
         "clk_hz_requested": CLK_HZ, "clk_hz_measured": MEAS_CLK_HZ,
-        "window": WINDOW, "rounds": ROUNDS, "counter_bits": 16,
+        "window": WINDOW, "win_sel": WIN_SEL, "arms": N_ARM,
+        "rounds": ROUNDS, "counter_bits": 16,
         "vdd_v_measured": MEAS_VDD_V, "temp_method": TEMP_METHOD,
         "temp_c_measured": MEAS_TEMP_C, "seed": seed,
         "t_start_ms": time.ticks_ms(), "notes": NOTES,
@@ -158,30 +175,39 @@ def run():
     time.sleep_ms(10)
 
     _emit_metadata(run_id, seed)
-    print("run_id,chip_id,condition,round,order,arm,idx,count,t_ms")
+    print("run_id,chip_id,condition,round,order,arm,idx,count,overflow,t_ms")
 
     pairs = [(a, i) for a in range(N_ARM) for i in range(N_IDX)]
     timeouts = 0
     saturated = 0
+    wrapped = 0
     zeros = 0
     try:
         for r in range(ROUNDS):
             for order, (arm, idx) in enumerate(_shuffled(pairs, random)):
-                c = measure_one(arm, idx)
+                c, ovf = measure_one(arm, idx)
                 if c < 0:
                     timeouts += 1
+                elif ovf:
+                    wrapped += 1
                 elif c >= SAT_WARN:
                     saturated += 1
                 elif c == 0:
                     zeros += 1
-                print("%s,%s,%s,%d,%d,%d,%d,%d,%d"
+                print("%s,%s,%s,%d,%d,%d,%d,%d,%d,%d"
                       % (run_id, CHIP_ID, CONDITION, r, order, arm, idx, c,
-                         time.ticks_ms()))
-        print("# done rounds=%d timeouts=%d near_saturation=%d zero_counts=%d"
-              % (ROUNDS, timeouts, saturated, zeros))
+                         ovf, time.ticks_ms()))
+        print("# done rounds=%d timeouts=%d wrapped=%d near_saturation=%d"
+              " zero_counts=%d"
+              % (ROUNDS, timeouts, wrapped, saturated, zeros))
+        if wrapped:
+            print("# WARNING: %d samples set the overflow flag; drop WIN_SEL"
+                  " to 1 and rerun. A wrapped count is not a slow ring."
+                  % wrapped)
         if saturated:
-            print("# WARNING: %d samples near the 16-bit ceiling; lower CLK_HZ"
-                  " or shorten the window before trusting this run" % saturated)
+            print("# WARNING: %d samples near the 16-bit ceiling without the"
+                  " overflow flag; shorten the window before the next die"
+                  % saturated)
         if zeros:
             print("# WARNING: %d zero counts; check start/enable and the"
                   " selected oscillator" % zeros)

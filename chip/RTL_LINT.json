@@ -57,92 +57,19 @@
       "target": "live"
     },
     {
-      "applies": false,
-      "detail": "this set has no ro_armc",
-      "id": "R08",
-      "name": "the Arm C ring matches the Arm A ring node for node",
-      "pass": null,
-      "target": "live"
-    },
-    {
-      "applies": true,
-      "detail": "none found",
-      "id": "R01",
-      "name": "no part-select applied to a parenthesised expression",
-      "pass": true,
-      "target": "draft"
-    },
-    {
-      "applies": true,
-      "detail": "tff_clk[0] resolves to 'ro_out[active_sel]'",
-      "id": "R02",
-      "name": "the ripple counter's first stage is clocked by an ungated ring output",
-      "pass": true,
-      "target": "draft"
-    },
-    {
-      "applies": true,
-      "detail": "count_out = count_latched, a reg",
-      "id": "R03",
-      "name": "count_out is published from a register",
-      "pass": true,
-      "target": "draft"
-    },
-    {
-      "applies": true,
-      "detail": "settle state yes, stable-sample rule yes, 2 async_reg sampler stages",
-      "id": "R04",
-      "name": "the stopped-ring settle handshake is present",
-      "pass": true,
-      "target": "draft"
-    },
-    {
-      "applies": true,
-      "detail": "3 async_reg registers, ui_meta samples ui_in and ui_sync samples ui_meta",
-      "id": "R05",
-      "name": "the control bundle reaches the design through two async_reg stages",
-      "pass": true,
-      "target": "draft"
-    },
-    {
-      "applies": true,
-      "detail": "16 of 16 present",
-      "id": "R06",
-      "name": "every macro instance named in config.json is instantiated in the top",
-      "pass": true,
-      "target": "draft"
-    },
-    {
-      "applies": true,
-      "detail": "ena is in a reset expression and not tied off",
-      "id": "R07",
-      "name": "ena takes part in the project reset",
-      "pass": true,
-      "target": "draft"
-    },
-    {
       "applies": true,
       "detail": "identical, 32 cells each",
       "id": "R08",
       "name": "the Arm C ring matches the Arm A ring node for node",
       "pass": true,
-      "target": "draft"
+      "target": "live"
     }
   ],
   "compiler_checks": "E01 and E02 run but are not recorded here, because whether a compiler was present is not a property of the RTL. They are enforced by the exit code in the archived-evidence job.",
-  "draft_failures": [],
-  "draft_installable": true,
   "live_failures": [],
   "sets": {
-    "draft": [
-      "e2_ro_puf.v",
-      "e2_ro_puf_core.v",
-      "e2_tt_um_ro_puf.v",
-      "ro_armc.v",
-      "ro_macro.v",
-      "ro_macro_hard_bb.v"
-    ],
     "live": [
+      "ro_armc.v",
       "ro_macro.v",
       "ro_macro_hard_bb.v",
       "ro_puf.v",

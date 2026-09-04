@@ -100,6 +100,10 @@ jobs:
           python3 chip/observability_spec.py --json /tmp/obs.json --csv /tmp/e2.csv
           diff /tmp/obs.json chip/OBSERVABILITY.json
           diff /tmp/e2.csv chip/e2_acceptance.csv
+          python3 chip/archive_baseline.py --selftest
+          python3 chip/archive_baseline.py --manifest /tmp/frozen_manifest.txt
+          diff /tmp/frozen_manifest.txt dualarm/build_2arm_frozen/MANIFEST.txt
+          python3 chip/archive_baseline.py
           python3 chip/gen_armc.py --selftest
           python3 chip/gen_armc.py --json /tmp/armc_regions.json --emit /tmp/armc
           diff /tmp/armc_regions.json chip/ARMC_REGIONS.json
@@ -111,6 +115,11 @@ jobs:
           diff /tmp/e2/e2_ro_puf.v chip/e2_ro_puf.v
           diff /tmp/e2/e2_tt_um_ro_puf.v chip/e2_tt_um_ro_puf.v
           diff /tmp/e2/plan.csv chip/e2_tb_plan.csv
+          diff chip/e2_ro_puf_core.v dualarm/src/ro_puf_core.v
+          diff chip/e2_ro_puf.v dualarm/src/ro_puf.v
+          diff chip/e2_tt_um_ro_puf.v dualarm/src/tt_um_ro_puf.v
+          diff chip/ro_armc.v dualarm/src/ro_armc.v
+          diff -r src dualarm/src
           python3 chip/preregister.py --selftest
           python3 chip/preregister.py --freeze-check
           python3 chip/preregister.py

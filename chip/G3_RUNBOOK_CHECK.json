@@ -41,7 +41,7 @@
       "pass": true
     },
     {
-      "detail": "11 of 11 scripts",
+      "detail": "12 of 12 scripts",
       "id": "B07",
       "name": "the re-run step covers every script the gate runs",
       "pass": true
@@ -50,6 +50,12 @@
       "detail": "step 21, table 21, plan 21",
       "id": "B08",
       "name": "the acceptance table, the stimulus plan and the sim step agree on how many tests there are",
+      "pass": true
+    },
+    {
+      "detail": "21 rows, 21 tests",
+      "id": "B16",
+      "name": "every row of the stimulus plan has a test in the acceptance testbench",
       "pass": true
     },
     {
@@ -125,7 +131,7 @@
         "chip/e2_tt_um_ro_puf.v",
         "chip/ro_armc.v"
       ],
-      "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August",
+      "stop": "chip/RTL_LINT.json does not report the drafts installable, or a destination in dualarm/src/ differs from the archived copy in any way the generators do not account for, which means somebody edited it by hand since 7 August. Met on 2026-09-04. The draft_installable field went away with the draft set when the step ran; what holds the same ground now is the gate diffing chip/e2_*.v against the installed files.",
       "title": "put the generated modules into dualarm/src/ under their real names, then resync the top-level copy",
       "writes": [
         "dualarm/src/ro_armc.v",

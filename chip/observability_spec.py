@@ -254,7 +254,8 @@ def run_checks(pinmap, busy_pins, yaml_pins, corners, windows, tests):
                     if not yaml_pins.get("ui[%d]" % b))
     yaml_free |= set(("uio", b) for b in range(8)
                      if not yaml_pins.get("uio[%d]" % b))
-    res.add("O05", "info.yaml and the spec agree on which pins were free",
+    res.add("O05", "the two-arm info.yaml and the spec agree on which pins "
+                   "were free",
             set(CLAIMED) == yaml_free,
             "yaml free %d, spec claims %d, differ %s"
             % (len(yaml_free), len(CLAIMED),
@@ -581,9 +582,26 @@ def selftest():
 YAML_PIN_RE = re.compile(r"^\s{2}(ui|uo|uio)\[(\d)\]:\s*\"(.*)\"\s*$", re.M)
 
 
+# O05 asks which pins were free when E.2 claimed them, which is a question
+# about the two-arm design and stops being answerable off the live file the
+# moment G.3 step 3 fills those pins in. The frozen copy chip/
+# archive_baseline.py took in step 1 is the two-arm info.yaml, so read that
+# where it exists. Widening O05 to accept a named pin would have been
+# loosening a check to let an edit through, which is the thing freezing is
+# for.
+FROZEN_INFO = os.path.join(ROOT, "dualarm", "build_2arm_frozen",
+                           "dualarm_info.yaml")
+
+
+def info_path():
+    if os.path.exists(FROZEN_INFO):
+        return FROZEN_INFO
+    return os.path.join(ROOT, "dualarm", "info.yaml")
+
+
 def load():
     paths = {"netlist": os.path.join(BUILD, DESIGN + ".nl.v"),
-             "info": os.path.join(ROOT, "dualarm", "info.yaml")}
+             "info": info_path()}
     for k, v in CORNER_FILES.items():
         paths["corner_" + k] = os.path.join(BUILD, v)
     for p in paths.values():

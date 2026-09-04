@@ -1,12 +1,22 @@
 // SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 // SPDX-License-Identifier: Apache-2.0
 //
-// Serial RO-PUF measurement core, dual-arm version (v2).
-// Arm A (oscillators 0..N_RO/2-1) is generated here as ro_macro instances and
-// auto-placed by the flow. Arm B (oscillators N_RO/2..N_RO-1) lives OUTSIDE
-// this module: the top level instantiates the hardened ro_macro_hard macros
-// flat (so their instance names match the MACROS placement keys in
-// config.json) and connects them through the armb_en / armb_out buses.
+// Serial RO-PUF measurement core, three-arm version (v3).
+//
+// Produced by chip/gen_e2_rtl.py from the frozen two-arm design
+// in dualarm/build_2arm_frozen/dualarm_src/ by named edits. The
+// transformation is one-shot, so this file is the design now:
+// change it here and say why in the day's writeup.
+//
+// Arm A (oscillators 0..N_A-1) is generated here as ro_macro
+// instances and auto-placed by the flow. Arm C (2*N_A..3*N_A-1) is
+// generated here too, as ro_armc, the same ring under its own name
+// so that the placement constraints in chip/armc_place.tcl can hold
+// it to equalized regions. Arm B (N_A..2*N_A-1) lives OUTSIDE this
+// module: the top level instantiates the hardened ro_macro_hard
+// macros flat (so their instance names match the MACROS placement
+// keys in config.json) and connects them through the armb_en /
+// armb_out buses.
 // `start` latches the selector, resets the ripple counter during a quiet arm
 // cycle, runs exactly `window` xclk periods, stops the RO, synchronizes the
 // stopped counter, and publishes it only after repeated stable samples.
@@ -15,8 +25,8 @@
 `default_nettype none
 
 module ro_puf_core #(
-    parameter integer N_RO  = 8,
-    parameter integer SEL_W = 3,
+    parameter integer N_RO  = 12,
+    parameter integer SEL_W = 4,
     parameter integer CNT_W = 16
 ) (
     input  wire                 xclk,
@@ -24,12 +34,15 @@ module ro_puf_core #(
     input  wire                 start,
     input  wire [SEL_W-1:0]     ro_sel,
     input  wire [CNT_W-1:0]     window,
-    output wire [N_RO/2-1:0]    armb_en,   // per-oscillator enables for Arm B
-    input  wire [N_RO/2-1:0]    armb_out,  // Arm B oscillator outputs
+    output wire [N_RO/3-1:0]    armb_en,   // per-oscillator enables for Arm B
+    input  wire [N_RO/3-1:0]    armb_out,  // Arm B oscillator outputs
     output reg                  done,
+    output wire                 active,    // the window is open
+    output reg                  overflow,  // sticky: a run wrapped the counter
     output wire [CNT_W-1:0]     count_out
 );
-    localparam integer N_A            = N_RO / 2;
+    localparam integer N_A            = N_RO / 3;
+    localparam integer N_SLOT         = 1 << SEL_W;
     localparam [2:0] MIN_SETTLE_CYCLES = 3'd2;
     localparam [1:0] REQUIRED_STABLE_SAMPLES = 2'd3;
     localparam [1:0] ST_IDLE          = 2'd0;
@@ -44,14 +57,18 @@ module ro_puf_core #(
     reg [2:0]       settle_timer;
     reg [1:0]       stable_samples;
     reg [CNT_W-1:0] count_latched;
-    (* async_reg = "true" *) reg [CNT_W-1:0] cnt_meta;
-    (* async_reg = "true" *) reg [CNT_W-1:0] cnt_sync;
-    reg [CNT_W-1:0] cnt_sync_prev;
+    // One bit wider than the counter. Bit CNT_W is the ring-domain
+    // wrap flag, so a wrap crosses into xclk through the same two
+    // async_reg stages and the same stable-sample rule as the count,
+    // rather than through a path of its own.
+    (* async_reg = "true" *) reg [CNT_W:0] cnt_meta;
+    (* async_reg = "true" *) reg [CNT_W:0] cnt_sync;
+    reg [CNT_W:0]   cnt_sync_prev;
 
     // Arm A: only the selected oscillator runs, and only while the window is
     // open. ro_macro is the real cell for synthesis; a matching behavioural
     // ro_macro (ro_macro_sim.v) stands in for simulation.
-    wire [N_RO-1:0] ro_out;
+    wire [N_SLOT-1:0] ro_out;
     genvar i;
     generate
         for (i = 0; i < N_A; i = i + 1) begin : g_ro_bank
@@ -70,6 +87,36 @@ module ro_puf_core #(
             assign ro_out[N_A+i]  = armb_out[i];
         end
     endgenerate
+
+    // Arm C: the same ring as Arm A, under its own module name so
+    // synthesis cannot share cells between the arms, placed inside
+    // the equalized regions chip/armc_place.tcl declares. The select
+    // constant goes through a localparam the way Arm B's does,
+    // because a part-select applies to a name and never to a
+    // parenthesised expression.
+    generate
+        for (i = 0; i < N_A; i = i + 1) begin : g_armc
+            localparam integer SC = 2 * N_A + i;
+            ro_armc #(.IDX(i)) u_roc (
+                .en (en_window & (active_sel == SC[SEL_W-1:0])),
+                .out(ro_out[2*N_A+i])
+            );
+        end
+    endgenerate
+
+    // Two arm bits name four arms and there are three, so active_sel
+    // can point at a slot no oscillator fills. Those slots are tied
+    // low here rather than left off the vector, which keeps the
+    // selection below a plain index with no gate in front of it.
+    generate
+        for (i = N_RO; i < N_SLOT; i = i + 1) begin : g_no_arm
+            assign ro_out[i] = 1'b0;
+        end
+    endgenerate
+
+    // The measurement-active flag is the window enable brought out,
+    // not a second timer that could disagree with it.
+    assign active = en_window;
 
     wire sel_ro = ro_out[active_sel];
 
@@ -113,6 +160,24 @@ module ro_puf_core #(
         end
     endgenerate
 
+    // Wrap flag, in the ring domain. tff_clk[CNT_W] is the top bit's
+    // Q-bar, so its rising edge is the counter rolling over. The
+    // flop only ever sets and its D is tied high, so there is no
+    // data edge for the ring clock to catch. cnt_rst_n clears it
+    // with the counter at the start of each measurement, which is
+    // also why the falling edge the counter's own clear produces on
+    // tff_clk[CNT_W] cannot set it: the clear is asserted first and
+    // is held for the whole of ST_ARM.
+    //
+    // Set-only and not a seventeenth toggle bit, deliberately. The
+    // overflow window wraps once at the slow corner and four times
+    // at the fast one, and a toggle would read back as no wrap at
+    // all on a fast die.
+    reg wrapped;
+    always @(posedge tff_clk[CNT_W] or negedge cnt_rst_n)
+        if (!cnt_rst_n) wrapped <= 1'b0;
+        else            wrapped <= 1'b1;
+
     // The ripple counter is not published while it is changing. ST_SETTLE
     // first stops every oscillator, lets a two-flop sampler drain, and then
     // requires three consecutive equal synchronized samples before capture.
@@ -132,12 +197,13 @@ module ro_puf_core #(
             settle_timer <= 3'd0;
             stable_samples <= 2'd0;
             count_latched <= {CNT_W{1'b0}};
-            cnt_meta      <= {CNT_W{1'b0}};
-            cnt_sync      <= {CNT_W{1'b0}};
-            cnt_sync_prev <= {CNT_W{1'b0}};
+            cnt_meta      <= {(CNT_W+1){1'b0}};
+            cnt_sync      <= {(CNT_W+1){1'b0}};
+            cnt_sync_prev <= {(CNT_W+1){1'b0}};
             done         <= 1'b0;
+            overflow     <= 1'b0;
         end else begin
-            cnt_meta <= cnt;
+            cnt_meta <= {wrapped, cnt};
             cnt_sync <= cnt_meta;
 
             if (start) begin
@@ -147,7 +213,7 @@ module ro_puf_core #(
                 state          <= ST_ARM;
                 settle_timer   <= 3'd0;
                 stable_samples <= 2'd0;
-                cnt_sync_prev  <= {CNT_W{1'b0}};
+                cnt_sync_prev  <= {(CNT_W+1){1'b0}};
                 count_latched  <= {CNT_W{1'b0}};
                 done           <= 1'b0;
             end else begin
@@ -186,7 +252,9 @@ module ro_puf_core #(
                         stable_samples <= 2'd0;
                     end else if (cnt_sync == cnt_sync_prev) begin
                         if (stable_samples == REQUIRED_STABLE_SAMPLES - 1'b1) begin
-                            count_latched  <= cnt_sync;
+                            count_latched  <= cnt_sync[CNT_W-1:0];
+                            if (cnt_sync[CNT_W])
+                                overflow   <= 1'b1;
                             done           <= 1'b1;
                             state          <= ST_IDLE;
                             stable_samples <= 2'd0;

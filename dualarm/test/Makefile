@@ -1,18 +1,24 @@
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
 #
-# cocotb test makefile, dual-arm version (v2). RTL simulation uses behavioural
-# oscillator models in place of the real cells: ro_macro_sim.v for Arm A and
-# ro_macro_hard_sim.v (parameterless, all copies identical - that is the point
-# of the matched arm) for Arm B. Gate-level simulation uses the post-layout
-# Arm-A logic while preserving the intentional Arm-B hard-macro boundary and
-# supplying that boundary's parameterless functional model.
+# cocotb test makefile, three-arm version (v3). RTL simulation uses
+# behavioural oscillator models in place of the real cells: ro_macro_sim.v for
+# Arm A, ro_armc_sim.v for Arm C, and ro_macro_hard_sim.v (parameterless, all
+# copies identical - that is the point of the matched arm) for Arm B.
+# Gate-level simulation uses the post-layout Arm-A and Arm-C logic while
+# preserving the intentional Arm-B hard-macro boundary and supplying that
+# boundary's parameterless functional model.
+#
+# Two test modules. `make` runs the protocol regression in test.py. `make
+# E2=yes` runs the E.2 acceptance table in test_e2.py, which is G.3 step 6 and
+# works chip/e2_tb_plan.csv row by row.
 
 SIM ?= icarus
 FST ?= -fst
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = ro_macro_sim.v ro_puf_core.v ro_puf.v tt_um_ro_puf.v
+PROJECT_SOURCES = ro_macro_sim.v ro_armc_sim.v ro_puf_core.v ro_puf.v \
+                  tt_um_ro_puf.v
 
 ifneq ($(GATES),yes)
 
@@ -43,6 +49,11 @@ endif
 
 VERILOG_SOURCES += $(PWD)/tb.v
 COCOTB_TOPLEVEL = tb
+
+ifeq ($(E2),yes)
+COCOTB_TEST_MODULES = test_e2
+else
 COCOTB_TEST_MODULES = test
+endif
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
