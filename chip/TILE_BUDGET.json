@@ -223,7 +223,7 @@
     "build": "dualarm/build_current",
     "sha256": {
       "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
-      "macro_lef": "8cf8660c57c44e90ff30f0a52bd94a7e24c2cee62a58121b7f9e1d2c91b6fb96",
+      "macro_lef": "1c7442880aca929067e34481e58480777161bc541cc78fbfbf90f84e1e18e876",
       "metrics": "1b7ef9343d86945e9b94cd55e3dbe014ca2ea6ec9161e045ad68d5b2d2a2bc22",
       "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
       "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e"

@@ -1,5 +1,9 @@
 * text=auto
 
+# Spelled out rather than left to the text=auto guess. Each of these holds a
+# file whose hash some chip artefact records, and a hash of the wrong bytes is
+# a hash CI cannot reproduce. chip/hash_stability.py H03 wants the line here
+# and H04 wants it to be true of the bytes.
 *.md text eol=lf
 *.py text eol=lf
 *.sh text eol=lf
@@ -7,7 +11,22 @@
 *.json text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
+*.csv text eol=lf
+*.def text eol=lf
+*.lef text eol=lf
+*.spef text eol=lf
+*.tcl text eol=lf
+*.txt text eol=lf
 Makefile text eol=lf
+
+# ngspice writes these two with bare carriage returns and no NUL,
+# so git's own reading has always been that they are not line
+# oriented text and it has stored them verbatim. The archived
+# evidence hashes are of those bytes. Without these lines the
+# *.txt rule above would tell git to convert them and move two
+# blobs sim/spice/gono/verify_provenance.py is holding.
+ctrl2.txt -text
+par2.txt -text
 
 *.docx binary
 *.gds binary

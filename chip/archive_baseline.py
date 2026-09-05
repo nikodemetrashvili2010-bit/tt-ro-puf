@@ -101,8 +101,24 @@ def sha256_bytes(blob):
 
 
 def sha256_file(path):
+    """The bytes a checkout produces, not the bytes on this disk.
+
+    `.gitattributes` opens with `* text=auto`, so git stores a text file
+    with LF endings whatever the machine that wrote it used. Hash the raw
+    bytes of a CRLF file and the number recorded is one CI can never
+    reproduce. That is what put TILE_BUDGET.json's macro_lef entry wrong
+    on 31 August and held the evidence gate red for five pushes.
+
+    The test below is git's own and both halves of it matter: a NUL in
+    the first 8000 bytes, or a carriage return with no line feed behind
+    it, and git leaves the file alone. It reads no attributes, which is
+    safe only while no explicit rule contradicts the heuristic, and that
+    is what chip/hash_stability.py H03 and H04 are there to require."""
     with open(path, "rb") as fh:
-        return sha256_bytes(fh.read())
+        blob = fh.read()
+    if b"\x00" in blob[:8000] or blob.count(b"\r") != blob.count(b"\r\n"):
+        return sha256_bytes(blob)
+    return sha256_bytes(blob.replace(b"\r\n", b"\n"))
 
 
 class Results(object):

@@ -221,6 +221,7 @@
       ],
       "writes": ["dualarm/build_armc/evidence.log"],
       "covers": [
+        "hash_stability.py",
         "archive_baseline.py",
         "tile_budget.py",
         "armc_cost.py",

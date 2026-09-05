@@ -86,6 +86,8 @@ jobs:
           python3 extraction/ring_topology.py --selftest
           python3 extraction/ring_topology.py --verify-archive
           python3 extraction/verify_inputs.py
+          python3 chip/hash_stability.py --selftest
+          python3 chip/hash_stability.py
           python3 chip/tile_budget.py --selftest
           python3 chip/tile_budget.py --json /tmp/tile_budget.json
           diff /tmp/tile_budget.json chip/TILE_BUDGET.json
