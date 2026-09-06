@@ -77,6 +77,8 @@ PRODUCERS = {
     "OBSERVABILITY.json": "observability_spec.py",
     "e2_acceptance.csv": "observability_spec.py",
     "ARMC_REGIONS.json": "gen_armc.py",
+    "PLACEMENT_CFG.json": "gen_placement_cfg.py",
+    "placement.cfg": "gen_placement_cfg.py",
     "armc_place.tcl": "gen_armc.py",
     "ro_armc.v": "gen_armc.py",
     "e2_ro_puf_core.v": "gen_e2_rtl.py",
@@ -92,7 +94,12 @@ PRODUCERS = {
 # runbook belongs here rather than under FROZEN: a plan that cannot be
 # revised when a step turns out to be wrong is only a way of being wrong on
 # schedule, so what is required of it is a checker, not a hash.
-AUTHORED = {"G3_RUNBOOK.json": "g3_runbook.py"}
+AUTHORED = {"G3_RUNBOOK.json": "g3_runbook.py",
+            "FLOW_SURFACE.json": "gen_placement_cfg.py"}
+# FLOW_SURFACE.json is here rather than under PRODUCERS because CI cannot
+# rebuild it. It is the flow's own run record and gds_build/ is not
+# mirrored, so --refresh-surface only runs on a machine that has the run
+# directory, the same arrangement extraction/library_sources.json has.
 
 # This script's own output. See the note where produced records are built.
 SELF = "RELEASE_MANIFEST.json"

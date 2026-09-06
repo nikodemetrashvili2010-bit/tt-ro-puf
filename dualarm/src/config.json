@@ -27,6 +27,7 @@
   "VERILOG_FILES_BLACKBOX": [
     "dir::ro_macro_hard_bb.v"
   ],
+  "MACRO_PLACEMENT_CFG": "dir::placement.cfg",
   "MACROS": {
     "ro_macro_hard": {
       "gds": [

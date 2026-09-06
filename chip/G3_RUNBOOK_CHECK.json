@@ -41,7 +41,7 @@
       "pass": true
     },
     {
-      "detail": "13 of 13 scripts",
+      "detail": "14 of 14 scripts",
       "id": "B07",
       "name": "the re-run step covers every script the gate runs",
       "pass": true
@@ -71,7 +71,7 @@
       "pass": true
     },
     {
-      "detail": "15 artefacts",
+      "detail": "17 artefacts",
       "id": "B11",
       "name": "every artefact the manifest attributes to a producer is regenerated after the build",
       "pass": true
@@ -206,12 +206,15 @@
       "irreversible": false,
       "reads": [
         "chip/ARMC_REGIONS.json",
-        "chip/armc_place.tcl"
+        "chip/FLOW_SURFACE.json",
+        "chip/armc_place.tcl",
+        "chip/placement.cfg"
       ],
-      "stop": "any place_cell is rejected, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
-      "title": "pin Arm A and bind the sixteen Arm C regions",
+      "stop": "the build log does not say 528 instances were placed, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
+      "title": "pin Arm A. The Arm C regions have no mechanism in this flow",
       "writes": [
-        "dualarm/build_armc/place.log"
+        "dualarm/src/config.json",
+        "dualarm/src/placement.cfg"
       ]
     },
     {

@@ -111,6 +111,11 @@ jobs:
           diff /tmp/armc_regions.json chip/ARMC_REGIONS.json
           diff /tmp/armc/armc_place.tcl chip/armc_place.tcl
           diff /tmp/armc/ro_armc.v chip/ro_armc.v
+          python3 chip/gen_placement_cfg.py --selftest
+          python3 chip/gen_placement_cfg.py --json /tmp/placement_cfg.json --emit /tmp/pl
+          diff /tmp/placement_cfg.json chip/PLACEMENT_CFG.json
+          diff /tmp/pl/placement.cfg chip/placement.cfg
+          diff chip/placement.cfg dualarm/src/placement.cfg
           python3 chip/gen_e2_rtl.py --selftest
           python3 chip/gen_e2_rtl.py --emit /tmp/e2 --csv /tmp/e2/plan.csv
           diff /tmp/e2/e2_ro_puf_core.v chip/e2_ro_puf_core.v

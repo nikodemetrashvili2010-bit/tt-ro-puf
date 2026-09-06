@@ -1,0 +1,141 @@
+{
+  "_comment": [
+    "G.3 step 7. What the flow will accept, what it was given,",
+    "and the half of the step that has no mechanism behind it.",
+    "Regenerated and diffed in CI. See",
+    "docs/phaseG_g3_step7.md."
+  ],
+  "_hashes_not_in_this_tree": {
+    "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7": "the MANUAL_GLOBAL_PLACEMENTS fallback rendering, which is generated on demand and deliberately not committed. chip/hash_stability.py H06 requires this to be true."
+  },
+  "arm_c": {
+    "blocked_by": "LibreLane exposes no fence, region or cell-group constraint. There is no supported way to tell this flow that sixteen groups of standard cells must each stay inside a rectangle.",
+    "decision_belongs_to": "G.2",
+    "emitted": 0,
+    "regions_on_record": 16,
+    "regions_source": "chip/ARMC_REGIONS.json",
+    "what_an_unconstrained_arm_c_would_be": "sixteen rings handed to the same unconstrained placer that produced Arm A, which is Arm A's treatment under a second name"
+  },
+  "checks": [
+    {
+      "detail": "LibreLane 3.0.3 on disk, 3.0.5 in CI, 5 files pinned at 2 tags",
+      "id": "P01",
+      "name": "the flow is named, both versions are pinned, and the files that decide placement hash the same at each",
+      "pass": true
+    },
+    {
+      "detail": "6 of 413 variable names carry an area word: CTS_MACRO_CLUSTERING_MAX_DIAMETER, CTS_MACRO_CLUSTERING_SIZE, CTS_SINK_CLUSTERING_ENABLE, CTS_SINK_CLUSTERING_MAX_DIAMETER, CTS_SINK_CLUSTERING_SIZE, IO_EXCLUDE_PIN_REGION",
+      "id": "P02",
+      "name": "no variable in the flow can hold a cell inside an area",
+      "pass": true
+    },
+    {
+      "detail": "place_cell present: True, tcl hooks reaching a placement step: False",
+      "id": "P03",
+      "name": "armc_place.tcl asks for a command no step will source",
+      "pass": true
+    },
+    {
+      "detail": "16 declared, 16 emitted, 0 moved or missing",
+      "id": "P04",
+      "name": "every macro the MACROS block places is in the file, because the step reads one or the other and not both",
+      "pass": true
+    },
+    {
+      "detail": "512 in the DEF, 512 emitted, 0 duplicated, 0 moved",
+      "id": "P05",
+      "name": "every Arm A cell is in the file once, at the coordinate and orientation the frozen DEF gives it",
+      "pass": true
+    },
+    {
+      "detail": "0 of 1056 coordinates are not a multiple of 5 dbu",
+      "id": "P06",
+      "name": "no coordinate is moved by the flow's own rounding",
+      "pass": true
+    },
+    {
+      "detail": "2 distinct orientations, 0 untranslatable",
+      "id": "P07",
+      "name": "every orientation the inputs carry is one the flow can translate",
+      "pass": true
+    },
+    {
+      "detail": "0 names carry a backslash, 0 fail the round trip",
+      "id": "P08",
+      "name": "names go in unescaped and come back as the DEF spells them",
+      "pass": true
+    },
+    {
+      "detail": "0 of 512 off any row",
+      "id": "P09",
+      "name": "every pinned cell stands on a row of the frozen DEF, inside that row's span",
+      "pass": true
+    },
+    {
+      "detail": "0 off the grid, site 460 dbu",
+      "id": "P10",
+      "name": "every pinned cell starts on its row's site grid",
+      "pass": true
+    },
+    {
+      "detail": "0 Arm C lines, 16 regions on record, conclusion recorded: True",
+      "id": "P11",
+      "name": "no Arm C line is emitted and the capability that would be needed is named",
+      "pass": true
+    },
+    {
+      "detail": "75451 bytes, stable: True",
+      "id": "P12",
+      "name": "the declared fallback renders the same bytes twice",
+      "pass": true
+    }
+  ],
+  "emitted": {
+    "arm_a_cells": 512,
+    "arm_c_cells": 0,
+    "lines": 528,
+    "macros": 16,
+    "path": "dualarm/src/placement.cfg",
+    "sha256": "e26b1b1f51554c9ec1081635e885d45282004c31fd5b5e990abbb846c7d990e6"
+  },
+  "fallback": {
+    "cost": "PLACED is not FIRM, so detailed placement may move a pinned cell and will only report the displacement afterwards",
+    "entries": 512,
+    "id": "MANUAL_GLOBAL_PLACEMENTS",
+    "not_committed": true,
+    "render": "gen_placement_cfg.py --emit-fallback",
+    "sha256": "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7",
+    "status": "PLACED",
+    "step": "Odb.ManualGlobalPlacement",
+    "step_position": 33,
+    "why": "runs after global placement, leaves MACROS alone, and is not deprecated"
+  },
+  "flow": {
+    "name": "LibreLane",
+    "pdk": "sky130A",
+    "pdk_source": "open_pdks",
+    "pdk_version": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
+    "version_in_ci": "3.0.5",
+    "version_in_ci_source": "TinyTapeout/tt-gds-action@ttsky26c action.yml, input librelane-version, default value",
+    "version_on_disk": "3.0.3"
+  },
+  "inputs": {
+    "armc_place_tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
+    "config": "7d0b9eac05f9379896665d5a754f2faa57b96b93b8293b9add6aa090d79f7b11",
+    "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+    "regions": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
+    "surface": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa"
+  },
+  "mechanism": {
+    "chosen": "MACRO_PLACEMENT_CFG",
+    "config_key": {
+      "MACRO_PLACEMENT_CFG": "dir::placement.cfg"
+    },
+    "cost": "the step reads MACRO_PLACEMENT_CFG instead of MACROS, so the sixteen hardened macros have to be carried in the same file",
+    "file": "src/placement.cfg",
+    "status": "FIRM",
+    "step": "Odb.ManualMacroPlacement",
+    "step_position": 17,
+    "why": "the only mechanism in this flow that fixes a cell so detailed placement cannot move it"
+  }
+}

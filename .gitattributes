@@ -11,6 +11,7 @@
 *.json text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
+*.cfg text eol=lf
 *.csv text eol=lf
 *.def text eol=lf
 *.lef text eol=lf

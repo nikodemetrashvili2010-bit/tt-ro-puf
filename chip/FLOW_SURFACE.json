@@ -1,0 +1,881 @@
+{
+  "_comment": [
+    "What the flow that builds this chip will and will not accept, taken",
+    "from the flow's own record rather than from documentation.",
+    "",
+    "Written 2026-09-06 for G.3 step 7. The runbook left the Arm C region",
+    "binding blank because the command differs between flow versions and",
+    "the generator had run neither. This is the answer to that: the flow",
+    "is LibreLane, and its whole configuration surface is listed below.",
+    "",
+    "Two versions are involved and the difference matters. The run",
+    "directory on this disk was produced by 3.0.3. CI hardens with",
+    "tt-gds-action@ttsky26c, whose librelane-version input defaults to",
+    "3.0.5. The four files that decide every placement question are",
+    "byte identical between the two tags, and their SHA-256 values are",
+    "recorded below so anybody can check that without taking my word.",
+    "",
+    "gds_build/ is not mirrored to the clone, so CI cannot rebuild this",
+    "file. It is a pinned record, the same arrangement as",
+    "extraction/library_sources.json. chip/gen_placement_cfg.py reads it",
+    "and --refresh-surface rebuilds it on a machine that has the run",
+    "directory. That mode fails rather than skips when the directory is",
+    "missing."
+  ],
+  "pinned": "2026-09-06",
+  "flow": {
+    "name": "LibreLane",
+    "version_on_disk": "3.0.3",
+    "version_in_ci": "3.0.5",
+    "version_in_ci_source": "TinyTapeout/tt-gds-action@ttsky26c action.yml, input librelane-version, default value",
+    "pdk": "sky130A",
+    "pdk_source": "open_pdks",
+    "pdk_version": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71"
+  },
+  "source": {
+    "run_dir": "gds_build/runs/wokwi",
+    "run_tag": "wokwi",
+    "run_tag_note": "tt-support-tools harden() passes --run-tag wokwi --force-run-dir runs/wokwi for every project, so the name says nothing about the design. This run is this design.",
+    "resolved_json_sha256": "54cd313f1c0bba43513385627ccc5bf6c10e3f4fc29aaf7bdf6f5c84a64d9d09",
+    "pdk_json_sha256": "d551717008d61a63fef26471923ab841538583053fb5b0f238e8adef50542a39",
+    "flow_log_sha256": "29cd2da8a6054df2f1dec02ab67fd87dd12c54132e46e146dd99ece0cde623a6"
+  },
+  "identical_across_versions": {
+    "_comment": [
+      "Retrieved 2026-09-06 from raw.githubusercontent.com at both tags.",
+      "Same SHA-256 at 3.0.3 and 3.0.5 for all four, so every conclusion",
+      "drawn from the 3.0.3 run directory holds for the 3.0.5 CI build."
+    ],
+    "base_url": "https://raw.githubusercontent.com/librelane/librelane/<tag>/",
+    "tags": [
+      "3.0.3",
+      "3.0.5"
+    ],
+    "files": {
+      "librelane/steps/odb.py": "2156a3279f72a6cb39528e8619f451f2d4f7c44440283ecc0e995c8095ff7e13",
+      "librelane/steps/openroad.py": "5eecc6d75cd78a80900d2ec1626cf30f26c4766bff77611b9fc425f5a6e79d34",
+      "librelane/scripts/odbpy/placers.py": "9a0cbff8661e2c33cc1b8d58028a4c4ed2720873fab9c25193b709cc8f4f2d14",
+      "librelane/flows/classic.py": "db887038493b0b33def8f6317548c7a47ef292ca6fcdcfb43f5f4598a9a2caed",
+      "librelane/scripts/odbpy/reader.py": "ba82c718a7d746831dadf5e6920223dc71dafeca8c385bc1dc32144f7bd2490c"
+    }
+  },
+  "variables": [
+    "BOTTOM_MARGIN_MULT",
+    "CELL_BB_VERILOG_MODELS",
+    "CELL_CDLS",
+    "CELL_GDS",
+    "CELL_LEFS",
+    "CELL_MAGLEFS",
+    "CELL_MAGS",
+    "CELL_PAD_EXCLUDE",
+    "CELL_SPICE_MODELS",
+    "CELL_VERILOG_MODELS",
+    "CLOCK_NET",
+    "CLOCK_PERIOD",
+    "CLOCK_PORT",
+    "CLOCK_TRANSITION_CONSTRAINT",
+    "CLOCK_UNCERTAINTY_CONSTRAINT",
+    "CLOCK_WIRE_RC_LAYERS",
+    "CORE_AREA",
+    "CTS_APPLY_NDR",
+    "CTS_BALANCE_LEVELS",
+    "CTS_CLK_BUFFERS",
+    "CTS_CLK_MAX_WIRE_LENGTH",
+    "CTS_CORNERS",
+    "CTS_DELAY_BUFFER_DERATE_PCT",
+    "CTS_DISABLE_POST_PROCESSING",
+    "CTS_DISTANCE_BETWEEN_BUFFERS",
+    "CTS_MACRO_CLUSTERING_MAX_DIAMETER",
+    "CTS_MACRO_CLUSTERING_SIZE",
+    "CTS_MAX_CAP",
+    "CTS_MAX_SLEW",
+    "CTS_OBSTRUCTION_AWARE",
+    "CTS_ROOT_BUFFER",
+    "CTS_SINK_BUFFER_MAX_CAP_DERATE_PCT",
+    "CTS_SINK_CLUSTERING_ENABLE",
+    "CTS_SINK_CLUSTERING_MAX_DIAMETER",
+    "CTS_SINK_CLUSTERING_SIZE",
+    "DECAP_CELLS",
+    "DEDUPLICATE_CORNERS",
+    "DEFAULT_CORNER",
+    "DEFAULT_MAX_TRAN",
+    "DESIGN_DIR",
+    "DESIGN_NAME",
+    "DESIGN_REPAIR_BUFFER_INPUT_PORTS",
+    "DESIGN_REPAIR_BUFFER_OUTPUT_PORTS",
+    "DESIGN_REPAIR_MAX_CAP_PCT",
+    "DESIGN_REPAIR_MAX_SLEW_PCT",
+    "DESIGN_REPAIR_MAX_WIRE_LENGTH",
+    "DESIGN_REPAIR_REMOVE_BUFFERS",
+    "DESIGN_REPAIR_TIE_FANOUT",
+    "DESIGN_REPAIR_TIE_SEPARATION",
+    "DIE_AREA",
+    "DIODE_CELL",
+    "DIODE_ON_PORTS",
+    "DIODE_PADDING",
+    "DPL_CELL_PADDING",
+    "DRT_ANTENNA_REPAIR_DIODE_ONLY",
+    "DRT_ANTENNA_REPAIR_ITERS",
+    "DRT_ANTENNA_REPAIR_JUMPER_ONLY",
+    "DRT_ANTENNA_REPAIR_MARGIN",
+    "DRT_ASSIGN_NDR",
+    "DRT_OPT_ITERS",
+    "DRT_SAVE_DRC_REPORT_ITERS",
+    "DRT_SAVE_SNAPSHOTS",
+    "DRT_THREADS",
+    "ENDCAP_CELL",
+    "EQY_FORCE_ACCEPT_PDK",
+    "EQY_SCRIPT",
+    "ERRORS_ON_UNMATCHED_IO",
+    "ERROR_ON_DISCONNECTED_PINS",
+    "ERROR_ON_ILLEGAL_OVERLAPS",
+    "ERROR_ON_KLAYOUT_DRC",
+    "ERROR_ON_LINTER_ERRORS",
+    "ERROR_ON_LINTER_TIMING_CONSTRUCTS",
+    "ERROR_ON_LINTER_WARNINGS",
+    "ERROR_ON_LONG_WIRE",
+    "ERROR_ON_LVS_ERROR",
+    "ERROR_ON_MAGIC_DRC",
+    "ERROR_ON_NL_ASSIGN_STATEMENTS",
+    "ERROR_ON_PDN_VIOLATIONS",
+    "ERROR_ON_SYNTH_CHECKS",
+    "ERROR_ON_TR_DRC",
+    "ERROR_ON_UNMAPPED_CELLS",
+    "ERROR_ON_XOR_ERROR",
+    "EXTRA_CDLS",
+    "EXTRA_EXCLUDED_CELLS",
+    "EXTRA_GDS",
+    "EXTRA_LEFS",
+    "EXTRA_LIBS",
+    "EXTRA_SITES",
+    "EXTRA_SPEFS",
+    "EXTRA_SPICE_MODELS",
+    "EXTRA_VERILOG_MODELS",
+    "FALLBACK_SDC",
+    "FILL_CELLS",
+    "FP_ASPECT_RATIO",
+    "FP_CORE_UTIL",
+    "FP_DEF_TEMPLATE",
+    "FP_FLIP_SITES",
+    "FP_MACRO_HORIZONTAL_HALO",
+    "FP_MACRO_VERTICAL_HALO",
+    "FP_OBSTRUCTIONS",
+    "FP_PRUNE_THRESHOLD",
+    "FP_SIZING",
+    "FP_TAPCELL_DIST",
+    "FP_TEMPLATE_COPY_POWER_PINS",
+    "FP_TEMPLATE_MATCH_MODE",
+    "FP_TRACKS_INFO",
+    "GND_NETS",
+    "GND_PIN",
+    "GPL_CELL_PADDING",
+    "GRT_ADJUSTMENT",
+    "GRT_ALLOW_CONGESTION",
+    "GRT_ANTENNA_REPAIR_DIODE_ONLY",
+    "GRT_ANTENNA_REPAIR_ITERS",
+    "GRT_ANTENNA_REPAIR_JUMPER_ONLY",
+    "GRT_ANTENNA_REPAIR_MARGIN",
+    "GRT_DESIGN_REPAIR_MAX_CAP_PCT",
+    "GRT_DESIGN_REPAIR_MAX_SLEW_PCT",
+    "GRT_DESIGN_REPAIR_MAX_WIRE_LENGTH",
+    "GRT_DESIGN_REPAIR_RUN_GRT",
+    "GRT_LAYER_ADJUSTMENTS",
+    "GRT_MACRO_EXTENSION",
+    "GRT_OVERFLOW_ITERS",
+    "GRT_RESIZER_ALLOW_SETUP_VIOS",
+    "GRT_RESIZER_FIX_HOLD_FIRST",
+    "GRT_RESIZER_HOLD_MAX_BUFFER_PCT",
+    "GRT_RESIZER_HOLD_MAX_UTIL_PCT",
+    "GRT_RESIZER_HOLD_REPAIR_TNS_PCT",
+    "GRT_RESIZER_HOLD_SLACK_MARGIN",
+    "GRT_RESIZER_RUN_GRT",
+    "GRT_RESIZER_SETUP_BUFFERING",
+    "GRT_RESIZER_SETUP_BUFFER_REMOVAL",
+    "GRT_RESIZER_SETUP_GATE_CLONING",
+    "GRT_RESIZER_SETUP_MAX_BUFFER_PCT",
+    "GRT_RESIZER_SETUP_MAX_UTIL_PCT",
+    "GRT_RESIZER_SETUP_REPAIR_TNS_PCT",
+    "GRT_RESIZER_SETUP_SLACK_MARGIN",
+    "HEURISTIC_ANTENNA_THRESHOLD",
+    "HOLD_VIOLATION_CORNERS",
+    "IGNORE_DISCONNECTED_MODULES",
+    "IO_DELAY_CONSTRAINT",
+    "IO_EXCLUDE_PIN_REGION",
+    "IO_PIN_CORNER_AVOIDANCE",
+    "IO_PIN_H_EXTENSION",
+    "IO_PIN_H_LAYER",
+    "IO_PIN_H_LENGTH",
+    "IO_PIN_H_THICKNESS_MULT",
+    "IO_PIN_MIN_DISTANCE",
+    "IO_PIN_MIN_DISTANCE_IN_TRACKS",
+    "IO_PIN_ORDER_CFG",
+    "IO_PIN_PLACEMENT_MODE",
+    "IO_PIN_V_EXTENSION",
+    "IO_PIN_V_LAYER",
+    "IO_PIN_V_LENGTH",
+    "IO_PIN_V_THICKNESS_MULT",
+    "KLAYOUT_CONFLICT_RESOLUTION",
+    "KLAYOUT_DEF_LAYER_MAP",
+    "KLAYOUT_DRC_OPTIONS",
+    "KLAYOUT_DRC_RUNSET",
+    "KLAYOUT_DRC_THREADS",
+    "KLAYOUT_PROPERTIES",
+    "KLAYOUT_RENDER_BACKGROUND_COLOR",
+    "KLAYOUT_RENDER_GRID_VISBLE",
+    "KLAYOUT_RENDER_OVERSAMPLING",
+    "KLAYOUT_RENDER_RESOLUTION",
+    "KLAYOUT_RENDER_SHOW_RULER",
+    "KLAYOUT_RENDER_TEXT_VISIBLE",
+    "KLAYOUT_TECH",
+    "KLAYOUT_XOR_IGNORE_LAYERS",
+    "KLAYOUT_XOR_THREADS",
+    "KLAYOUT_XOR_TILE_SIZE",
+    "LAYERS_RC",
+    "LEFT_MARGIN_MULT",
+    "LIB",
+    "LINTER_DEFINES",
+    "LINTER_DISABLE_WARNINGS",
+    "LINTER_DISABLE_WARNINGS_BLACKBOX",
+    "LINTER_ERROR_ON_LATCH",
+    "LINTER_ERROR_ON_MULTIDRIVEN",
+    "LINTER_INCLUDE_PDK_MODELS",
+    "LINTER_RELATIVE_INCLUDES",
+    "LINTER_VLT",
+    "LVS_FLATTEN_CELLS",
+    "LVS_IGNORE_CELLS",
+    "LVS_INCLUDE_MARCO_NETLISTS",
+    "MACROS",
+    "MACRO_PLACEMENT_CFG",
+    "MAGICRC",
+    "MAGIC_CAPTURE_ERRORS",
+    "MAGIC_DEF_LABELS",
+    "MAGIC_DEF_NO_BLOCKAGES",
+    "MAGIC_DISABLE_CIF_INFO",
+    "MAGIC_DRC_MAGLEFS",
+    "MAGIC_DRC_USE_GDS",
+    "MAGIC_EXT_ABSTRACT",
+    "MAGIC_EXT_ABSTRACT_CELLS",
+    "MAGIC_EXT_SHORT_RESISTOR",
+    "MAGIC_EXT_UNIQUE",
+    "MAGIC_EXT_USE_GDS",
+    "MAGIC_FEEDBACK_CONVERSION_THRESHOLD",
+    "MAGIC_GDS_FLATGLOB",
+    "MAGIC_GDS_MERGE",
+    "MAGIC_GDS_POLYGON_SUBCELLS",
+    "MAGIC_INCLUDE_GDS_POINTERS",
+    "MAGIC_LEF_WRITE_USE_GDS",
+    "MAGIC_MACRO_STD_CELL_SOURCE",
+    "MAGIC_PDK_SETUP",
+    "MAGIC_TECH",
+    "MAGIC_WRITE_FULL_LEF",
+    "MAGIC_WRITE_LEF_PINONLY",
+    "MAGIC_ZEROIZE_ORIGIN",
+    "MANUAL_GLOBAL_PLACEMENTS",
+    "MAX_CAPACITANCE_CONSTRAINT",
+    "MAX_CAP_VIOLATION_CORNERS",
+    "MAX_FANOUT_CONSTRAINT",
+    "MAX_SLEW_VIOLATION_CORNERS",
+    "MAX_TRANSITION_CONSTRAINT",
+    "NETGEN_SETUP",
+    "NON_DEFAULT_RULES",
+    "OUTPUT_CAP_LOAD",
+    "PAD_BONDPAD_HEIGHT",
+    "PAD_BONDPAD_NAME",
+    "PAD_BONDPAD_OFFSETS",
+    "PAD_BONDPAD_WIDTH",
+    "PAD_CDLS",
+    "PAD_CORNER",
+    "PAD_CORNER_SITE_NAME",
+    "PAD_EDGE_SPACING",
+    "PAD_FAKE_SITES",
+    "PAD_FILLERS",
+    "PAD_GDS",
+    "PAD_LEFS",
+    "PAD_LIBS",
+    "PAD_PLACE_IO_TERMINALS",
+    "PAD_SITE_NAME",
+    "PAD_SPICE_MODELS",
+    "PAD_VERILOG_MODELS",
+    "PDK",
+    "PDK_ROOT",
+    "PDN_CFG",
+    "PDN_CONNECT_MACROS_TO_GRID",
+    "PDN_CORE_HORIZONTAL_LAYER",
+    "PDN_CORE_RING",
+    "PDN_CORE_RING_ALLOW_OUT_OF_DIE",
+    "PDN_CORE_RING_CONNECT_TO_PADS",
+    "PDN_CORE_RING_HOFFSET",
+    "PDN_CORE_RING_HSPACING",
+    "PDN_CORE_RING_HWIDTH",
+    "PDN_CORE_RING_VOFFSET",
+    "PDN_CORE_RING_VSPACING",
+    "PDN_CORE_RING_VWIDTH",
+    "PDN_CORE_VERTICAL_LAYER",
+    "PDN_ENABLE_GLOBAL_CONNECTIONS",
+    "PDN_ENABLE_PINS",
+    "PDN_ENABLE_RAILS",
+    "PDN_EXTEND_TO",
+    "PDN_HOFFSET",
+    "PDN_HORIZONTAL_HALO",
+    "PDN_HORIZONTAL_LAYER",
+    "PDN_HPITCH",
+    "PDN_HSPACING",
+    "PDN_HWIDTH",
+    "PDN_MACRO_CONNECTIONS",
+    "PDN_MULTILAYER",
+    "PDN_OBSTRUCTIONS",
+    "PDN_RAIL_LAYER",
+    "PDN_RAIL_OFFSET",
+    "PDN_RAIL_WIDTH",
+    "PDN_SKIPTRIM",
+    "PDN_VERTICAL_HALO",
+    "PDN_VERTICAL_LAYER",
+    "PDN_VOFFSET",
+    "PDN_VPITCH",
+    "PDN_VSPACING",
+    "PDN_VWIDTH",
+    "PLACE_SITE",
+    "PL_KEEP_RESIZE_BELOW_OVERFLOW",
+    "PL_MAX_DISPLACEMENT_X",
+    "PL_MAX_DISPLACEMENT_Y",
+    "PL_MAX_PHI_COEFFICIENT",
+    "PL_MIN_PHI_COEFFICIENT",
+    "PL_OPTIMIZE_MIRRORING",
+    "PL_RESIZER_ALLOW_SETUP_VIOS",
+    "PL_RESIZER_FIX_HOLD_FIRST",
+    "PL_RESIZER_HOLD_MAX_BUFFER_PCT",
+    "PL_RESIZER_HOLD_MAX_UTIL_PCT",
+    "PL_RESIZER_HOLD_REPAIR_TNS_PCT",
+    "PL_RESIZER_HOLD_SLACK_MARGIN",
+    "PL_RESIZER_SETUP_BUFFERING",
+    "PL_RESIZER_SETUP_BUFFER_REMOVAL",
+    "PL_RESIZER_SETUP_GATE_CLONING",
+    "PL_RESIZER_SETUP_MAX_BUFFER_PCT",
+    "PL_RESIZER_SETUP_MAX_UTIL_PCT",
+    "PL_RESIZER_SETUP_REPAIR_TNS_PCT",
+    "PL_RESIZER_SETUP_SLACK_MARGIN",
+    "PL_ROUTABILITY_DRIVEN",
+    "PL_ROUTABILITY_OVERFLOW_THRESHOLD",
+    "PL_SKIP_INITIAL_PLACEMENT",
+    "PL_SOFT_OBSTRUCTIONS",
+    "PL_TARGET_DENSITY_PCT",
+    "PL_TIMING_DRIVEN",
+    "PL_WIRE_LENGTH_COEF",
+    "PNR_CORNERS",
+    "PNR_EXCLUDED_CELL_FILE",
+    "PNR_SDC_FILE",
+    "PRIMARY_GDSII_STREAMOUT_TOOL",
+    "RCX_MERGE_VIA_WIRE_RES",
+    "RCX_RULESETS",
+    "RCX_SDC_FILE",
+    "RIGHT_MARGIN_MULT",
+    "ROUTING_OBSTRUCTIONS",
+    "RSZ_CORNERS",
+    "RSZ_DONT_TOUCH_LIST",
+    "RSZ_DONT_TOUCH_RX",
+    "RT_CLOCK_MAX_LAYER",
+    "RT_CLOCK_MIN_LAYER",
+    "RT_MAX_LAYER",
+    "RT_MIN_LAYER",
+    "RUN_ANTENNA_REPAIR",
+    "RUN_CTS",
+    "RUN_DRT",
+    "RUN_EQY",
+    "RUN_FILL_INSERTION",
+    "RUN_HEURISTIC_DIODE_INSERTION",
+    "RUN_IRDROP_REPORT",
+    "RUN_KLAYOUT_DRC",
+    "RUN_KLAYOUT_STREAMOUT",
+    "RUN_KLAYOUT_XOR",
+    "RUN_LINTER",
+    "RUN_LVS",
+    "RUN_MAGIC_DRC",
+    "RUN_MAGIC_STREAMOUT",
+    "RUN_MAGIC_WRITE_LEF",
+    "RUN_MCSTA",
+    "RUN_POST_CTS_RESIZER_TIMING",
+    "RUN_POST_GPL_DESIGN_REPAIR",
+    "RUN_POST_GRT_DESIGN_REPAIR",
+    "RUN_POST_GRT_RESIZER_TIMING",
+    "RUN_SPEF_EXTRACTION",
+    "RUN_TAP_ENDCAP_INSERTION",
+    "SCL_GROUND_PINS",
+    "SCL_POWER_PINS",
+    "SETUP_VIOLATION_CORNERS",
+    "SET_RC_VERBOSE",
+    "SIGNAL_WIRE_RC_LAYERS",
+    "SIGNOFF_SDC_FILE",
+    "SLANG_ARGUMENTS",
+    "STA_CORNERS",
+    "STA_EXTRA_CORNER_TCL_FILE",
+    "STA_MACRO_PRIORITIZE_NL",
+    "STA_MAX_VIOLATOR_COUNT",
+    "STA_THREADS",
+    "STD_CELL_LIBRARY",
+    "SYNTH_ABC_AREA_USE_NF",
+    "SYNTH_ABC_BUFFERING",
+    "SYNTH_ABC_DFF",
+    "SYNTH_ABC_LEGACY_REFACTOR",
+    "SYNTH_ABC_LEGACY_REWRITE",
+    "SYNTH_ABC_USE_MFS3",
+    "SYNTH_ADDER_TYPE",
+    "SYNTH_AUTONAME",
+    "SYNTH_BUFFER_CELL",
+    "SYNTH_CHECKS_ALLOW_TRISTATE",
+    "SYNTH_CLK_DRIVING_CELL",
+    "SYNTH_CLOCKGATE_MIN_WIDTH",
+    "SYNTH_CLOCKGATE_NEGEDGE_ICG",
+    "SYNTH_CLOCKGATE_POSEDGE_ICG",
+    "SYNTH_CORNER",
+    "SYNTH_CSA_MAP",
+    "SYNTH_DIRECT_WIRE_BUFFERING",
+    "SYNTH_DRIVING_CELL",
+    "SYNTH_ELABORATE_ONLY",
+    "SYNTH_EXCLUDED_CELL_FILE",
+    "SYNTH_EXTRA_MAPPING_FILE",
+    "SYNTH_FA_MAP",
+    "SYNTH_HIERARCHY_MODE",
+    "SYNTH_KEEP_HIERARCHY_INSTANCES",
+    "SYNTH_KEEP_HIERARCHY_MIN_COST",
+    "SYNTH_KEEP_HIERARCHY_MODULES",
+    "SYNTH_LATCH_MAP",
+    "SYNTH_MUL_BOOTH",
+    "SYNTH_MUX4_MAP",
+    "SYNTH_MUX_MAP",
+    "SYNTH_NORMALIZE_SINGLE_BIT_VECTORS",
+    "SYNTH_PARAMETERS",
+    "SYNTH_RCA_MAP",
+    "SYNTH_SHARE_RESOURCES",
+    "SYNTH_SHOW",
+    "SYNTH_SIZING",
+    "SYNTH_SPLITNETS",
+    "SYNTH_STRATEGY",
+    "SYNTH_TIEHI_CELL",
+    "SYNTH_TIELO_CELL",
+    "SYNTH_TIE_UNDEFINED",
+    "SYNTH_TRISTATE_MAP",
+    "SYNTH_WRITE_NOATTR",
+    "TECH_LEFS",
+    "TIME_DERATING_CONSTRAINT",
+    "TIMING_VIOLATION_CORNERS",
+    "TOP_MARGIN_MULT",
+    "TRISTATE_CELLS",
+    "USE_SLANG",
+    "VDD_NETS",
+    "VDD_PIN",
+    "VERILOG_DEFINES",
+    "VERILOG_FILES",
+    "VERILOG_INCLUDE_DIRS",
+    "VERILOG_POWER_DEFINE",
+    "VIAS_R",
+    "VSRC_LOC_FILES",
+    "WELLTAP_CELL",
+    "WIRE_LENGTH_THRESHOLD",
+    "YOSYS_LOG_LEVEL",
+    "meta"
+  ],
+  "variable_count": 413,
+  "steps_executed": [
+    {
+      "dir": "01-verilator-lint",
+      "id": "Verilator.Lint"
+    },
+    {
+      "dir": "02-checker-linttimingconstructs",
+      "id": "Checker.LintTimingConstructs"
+    },
+    {
+      "dir": "03-checker-linterrors",
+      "id": "Checker.LintErrors"
+    },
+    {
+      "dir": "04-checker-lintwarnings",
+      "id": "Checker.LintWarnings"
+    },
+    {
+      "dir": "05-yosys-jsonheader",
+      "id": "Yosys.JsonHeader"
+    },
+    {
+      "dir": "06-yosys-synthesis",
+      "id": "Yosys.Synthesis"
+    },
+    {
+      "dir": "07-checker-yosysunmappedcells",
+      "id": "Checker.YosysUnmappedCells"
+    },
+    {
+      "dir": "08-checker-yosyssynthchecks",
+      "id": "Checker.YosysSynthChecks"
+    },
+    {
+      "dir": "09-checker-netlistassignstatements",
+      "id": "Checker.NetlistAssignStatements"
+    },
+    {
+      "dir": "10-openroad-checksdcfiles",
+      "id": "OpenROAD.CheckSDCFiles"
+    },
+    {
+      "dir": "11-openroad-checkmacroinstances",
+      "id": "OpenROAD.CheckMacroInstances"
+    },
+    {
+      "dir": "12-openroad-staprepnr",
+      "id": "OpenROAD.STAPrePNR"
+    },
+    {
+      "dir": "13-openroad-floorplan",
+      "id": "OpenROAD.Floorplan"
+    },
+    {
+      "dir": "14-openroad-dumprcvalues",
+      "id": "OpenROAD.DumpRCValues"
+    },
+    {
+      "dir": "15-odb-checkmacroantennaproperties",
+      "id": "Odb.CheckMacroAntennaProperties"
+    },
+    {
+      "dir": "16-odb-setpowerconnections",
+      "id": "Odb.SetPowerConnections"
+    },
+    {
+      "dir": "17-odb-manualmacroplacement",
+      "id": "Odb.ManualMacroPlacement"
+    },
+    {
+      "dir": "18-openroad-cutrows",
+      "id": "OpenROAD.CutRows"
+    },
+    {
+      "dir": "19-openroad-tapendcapinsertion",
+      "id": "OpenROAD.TapEndcapInsertion"
+    },
+    {
+      "dir": "20-odb-addpdnobstructions",
+      "id": "Odb.AddPDNObstructions"
+    },
+    {
+      "dir": "21-openroad-generatepdn",
+      "id": "OpenROAD.GeneratePDN"
+    },
+    {
+      "dir": "22-odb-removepdnobstructions",
+      "id": "Odb.RemovePDNObstructions"
+    },
+    {
+      "dir": "23-odb-addroutingobstructions",
+      "id": "Odb.AddRoutingObstructions"
+    },
+    {
+      "dir": "24-openroad-globalplacementskipio",
+      "id": "OpenROAD.GlobalPlacementSkipIO"
+    },
+    {
+      "dir": "25-openroad-ioplacement",
+      "id": "OpenROAD.IOPlacement"
+    },
+    {
+      "dir": "26-odb-customioplacement",
+      "id": "Odb.CustomIOPlacement"
+    },
+    {
+      "dir": "27-odb-applydeftemplate",
+      "id": "Odb.ApplyDEFTemplate"
+    },
+    {
+      "dir": "28-openroad-globalplacement",
+      "id": "OpenROAD.GlobalPlacement"
+    },
+    {
+      "dir": "29-odb-writeverilogheader",
+      "id": "Odb.WriteVerilogHeader"
+    },
+    {
+      "dir": "30-checker-powergridviolations",
+      "id": "Checker.PowerGridViolations"
+    },
+    {
+      "dir": "31-openroad-stamidpnr",
+      "id": "OpenROAD.STAMidPNR"
+    },
+    {
+      "dir": "32-openroad-repairdesignpostgpl",
+      "id": "OpenROAD.RepairDesignPostGPL"
+    },
+    {
+      "dir": "33-odb-manualglobalplacement",
+      "id": "Odb.ManualGlobalPlacement"
+    },
+    {
+      "dir": "34-openroad-detailedplacement",
+      "id": "OpenROAD.DetailedPlacement"
+    },
+    {
+      "dir": "35-openroad-cts",
+      "id": "OpenROAD.CTS"
+    },
+    {
+      "dir": "36-openroad-stamidpnr-1",
+      "id": "OpenROAD.STAMidPNR-1"
+    },
+    {
+      "dir": "37-openroad-resizertimingpostcts",
+      "id": "OpenROAD.ResizerTimingPostCTS"
+    },
+    {
+      "dir": "38-openroad-stamidpnr-2",
+      "id": "OpenROAD.STAMidPNR-2"
+    },
+    {
+      "dir": "39-openroad-globalrouting",
+      "id": "OpenROAD.GlobalRouting"
+    },
+    {
+      "dir": "40-openroad-checkantennas",
+      "id": "OpenROAD.CheckAntennas"
+    },
+    {
+      "dir": "41-odb-diodesonports",
+      "id": "Odb.DiodesOnPorts"
+    },
+    {
+      "dir": "42-openroad-repairantennas",
+      "id": "OpenROAD.RepairAntennas"
+    },
+    {
+      "dir": "43-openroad-stamidpnr-3",
+      "id": "OpenROAD.STAMidPNR-3"
+    },
+    {
+      "dir": "44-openroad-detailedrouting",
+      "id": "OpenROAD.DetailedRouting"
+    },
+    {
+      "dir": "45-odb-removeroutingobstructions",
+      "id": "Odb.RemoveRoutingObstructions"
+    },
+    {
+      "dir": "46-openroad-checkantennas-1",
+      "id": "OpenROAD.CheckAntennas-1"
+    },
+    {
+      "dir": "47-checker-trdrc",
+      "id": "Checker.TrDRC"
+    },
+    {
+      "dir": "48-odb-reportdisconnectedpins",
+      "id": "Odb.ReportDisconnectedPins"
+    },
+    {
+      "dir": "49-checker-disconnectedpins",
+      "id": "Checker.DisconnectedPins"
+    },
+    {
+      "dir": "50-odb-reportwirelength",
+      "id": "Odb.ReportWireLength"
+    },
+    {
+      "dir": "51-checker-wirelength",
+      "id": "Checker.WireLength"
+    },
+    {
+      "dir": "52-openroad-fillinsertion",
+      "id": "OpenROAD.FillInsertion"
+    },
+    {
+      "dir": "53-odb-cellfrequencytables",
+      "id": "Odb.CellFrequencyTables"
+    },
+    {
+      "dir": "54-openroad-rcx",
+      "id": "OpenROAD.RCX"
+    },
+    {
+      "dir": "55-openroad-stapostpnr",
+      "id": "OpenROAD.STAPostPNR"
+    },
+    {
+      "dir": "56-openroad-irdropreport",
+      "id": "OpenROAD.IRDropReport"
+    },
+    {
+      "dir": "57-magic-streamout",
+      "id": "Magic.StreamOut"
+    },
+    {
+      "dir": "58-klayout-streamout",
+      "id": "KLayout.StreamOut"
+    },
+    {
+      "dir": "59-klayout-render",
+      "id": "KLayout.Render"
+    },
+    {
+      "dir": "60-magic-writelef",
+      "id": "Magic.WriteLEF"
+    },
+    {
+      "dir": "61-odb-checkdesignantennaproperties",
+      "id": "Odb.CheckDesignAntennaProperties"
+    },
+    {
+      "dir": "62-magic-drc",
+      "id": "Magic.DRC"
+    },
+    {
+      "dir": "63-checker-magicdrc",
+      "id": "Checker.MagicDRC"
+    },
+    {
+      "dir": "64-magic-spiceextraction",
+      "id": "Magic.SpiceExtraction"
+    },
+    {
+      "dir": "65-checker-illegaloverlap",
+      "id": "Checker.IllegalOverlap"
+    },
+    {
+      "dir": "66-netgen-lvs",
+      "id": "Netgen.LVS"
+    },
+    {
+      "dir": "67-checker-lvs",
+      "id": "Checker.LVS"
+    },
+    {
+      "dir": "68-checker-setupviolations",
+      "id": "Checker.SetupViolations"
+    },
+    {
+      "dir": "69-checker-holdviolations",
+      "id": "Checker.HoldViolations"
+    },
+    {
+      "dir": "70-checker-maxslewviolations",
+      "id": "Checker.MaxSlewViolations"
+    },
+    {
+      "dir": "71-checker-maxcapviolations",
+      "id": "Checker.MaxCapViolations"
+    },
+    {
+      "dir": "72-misc-reportmanufacturability",
+      "id": "Misc.ReportManufacturability"
+    }
+  ],
+  "step_count": 72,
+  "placement_mechanisms": [
+    {
+      "id": "MACRO_PLACEMENT_CFG",
+      "step": "Odb.ManualMacroPlacement",
+      "step_dir": "17-odb-manualmacroplacement",
+      "addresses": "any instance by name, one per line, name x y orient",
+      "status_set": "FIRM",
+      "status_source": "librelane/steps/odb.py passes --fixed; placers.py sets FIRM when it is given",
+      "excludes": "MACROS",
+      "excludes_detail": "the step writes placement.cfg from MACRO_PLACEMENT_CFG if it is set and from MACROS otherwise, an if/elif, so a cfg file must carry every macro instance the MACROS block would have placed",
+      "deprecated": true,
+      "runs_before": [
+        "OpenROAD.CutRows",
+        "OpenROAD.TapEndcapInsertion",
+        "OpenROAD.GeneratePDN",
+        "OpenROAD.GlobalPlacement"
+      ]
+    },
+    {
+      "id": "MANUAL_GLOBAL_PLACEMENTS",
+      "step": "Odb.ManualGlobalPlacement",
+      "step_dir": "33-odb-manualglobalplacement",
+      "addresses": "any instance by name, a dict of name to location and orientation",
+      "status_set": "PLACED",
+      "status_source": "placers.py manual_global_placement, no fixed option exists",
+      "excludes": null,
+      "deprecated": false,
+      "runs_before": [
+        "OpenROAD.DetailedPlacement"
+      ],
+      "caveat": "PLACED is not FIRM. Detailed placement is free to move the cell, and only reports displacement rather than refusing it."
+    },
+    {
+      "id": "MACROS",
+      "step": "Odb.ManualMacroPlacement",
+      "step_dir": "17-odb-manualmacroplacement",
+      "addresses": "instances declared inside a macro definition, which also carries its gds, lef and nl",
+      "status_set": "FIRM",
+      "excludes": null,
+      "deprecated": false,
+      "in_use": "this design places its sixteen ro_macro_hard instances this way"
+    }
+  ],
+  "region_binding": {
+    "exists": false,
+    "searched": "every one of the 413 variable names listed above, for REGION, FENCE, GROUP, GUIDE, CLUSTER and PARTITION",
+    "hits": [
+      "CTS_MACRO_CLUSTERING_MAX_DIAMETER",
+      "CTS_MACRO_CLUSTERING_SIZE",
+      "CTS_SINK_CLUSTERING_ENABLE",
+      "CTS_SINK_CLUSTERING_MAX_DIAMETER",
+      "CTS_SINK_CLUSTERING_SIZE",
+      "IO_EXCLUDE_PIN_REGION"
+    ],
+    "hits_note": "the six variable names in the whole flow that carry an area word. Five are clock tree synthesis clustering and group sinks or macros by distance for buffering, not by area. The sixth excludes an area from IO pin placement and cannot address a cell.",
+    "conclusion": "LibreLane exposes no fence, region or cell-group constraint. There is no supported way to tell this flow that sixteen groups of standard cells must each stay inside a rectangle."
+  },
+  "tcl_hooks": {
+    "_comment": [
+      "Variables that hand the flow a Tcl file. None of them is read by a",
+      "placement step, so chip/armc_place.tcl has nowhere to be sourced",
+      "from, its 512 place_cell lines included."
+    ],
+    "PDN_CFG": "OpenROAD.GeneratePDN",
+    "STA_EXTRA_CORNER_TCL_FILE": "the STA steps",
+    "PAD_CFG": "OpenROAD.PadRing, not in the Classic flow this build uses",
+    "IO_PIN_ORDER_CFG": "OpenROAD.IOPlacement, pin order only",
+    "reaches_a_placement_step": false
+  },
+  "config_merge": {
+    "_comment": [
+      "tt-support-tools project.py create_merged_config: it reads",
+      "src/config.json, then src/user_config.json, and the second",
+      "overwrites the first key by key. So anything TT generates wins."
+    ],
+    "tt_generated_keys": [
+      "DESIGN_NAME",
+      "VERILOG_FILES",
+      "DIE_AREA",
+      "FP_DEF_TEMPLATE",
+      "VDD_PIN",
+      "GND_PIN",
+      "RT_MAX_LAYER"
+    ],
+    "dir_prefix_resolves_to": "src/",
+    "dir_prefix_note": "dir:: is relative to the config file, which is src/config.json, so a file this design hands the flow has to live in src/ and not in chip/"
+  },
+  "name_escaping": {
+    "_comment": [
+      "placers.py does not look an instance up by the name it is given. It",
+      "calls reader.py's escape_verilog_name first, which puts a backslash",
+      "in front of each bus bit character, so g_ro_bank[0] becomes",
+      "g_ro_bank\\\\[0\\\\]. That is the DEF spelling, not the netlist one: the",
+      "netlist escapes the whole identifier behind a single leading",
+      "backslash. Mixing the two up cost a day in Phase E.",
+      "So a cfg file carries names unescaped and lets the flow put its own",
+      "escaping back."
+    ],
+    "rule": "re.sub(r'([BUSBITCHARS])', r'\\\\\\\\\\\\1', name)",
+    "busbitchars_from": "the DEF, BUSBITCHARS \"[]\"",
+    "source": "librelane/scripts/odbpy/reader.py, Reader.escape_verilog_name"
+  },
+  "_hashes_not_in_this_tree": {
+    "2156a3279f72a6cb39528e8619f451f2d4f7c44440283ecc0e995c8095ff7e13": "librelane/librelane librelane/steps/odb.py at tags 3.0.3 and 3.0.5, not a file in this repository",
+    "5eecc6d75cd78a80900d2ec1626cf30f26c4766bff77611b9fc425f5a6e79d34": "librelane/librelane librelane/steps/openroad.py at tags 3.0.3 and 3.0.5, not a file in this repository",
+    "9a0cbff8661e2c33cc1b8d58028a4c4ed2720873fab9c25193b709cc8f4f2d14": "librelane/librelane librelane/scripts/odbpy/placers.py at tags 3.0.3 and 3.0.5, not a file in this repository",
+    "db887038493b0b33def8f6317548c7a47ef292ca6fcdcfb43f5f4598a9a2caed": "librelane/librelane librelane/flows/classic.py at tags 3.0.3 and 3.0.5, not a file in this repository",
+    "ba82c718a7d746831dadf5e6920223dc71dafeca8c385bc1dc32144f7bd2490c": "librelane/librelane librelane/scripts/odbpy/reader.py at tags 3.0.3 and 3.0.5, not a file in this repository",
+    "54cd313f1c0bba43513385627ccc5bf6c10e3f4fc29aaf7bdf6f5c84a64d9d09": "gds_build/runs/wokwi/resolved.json, the flow's own run record, not mirrored to the clone",
+    "d551717008d61a63fef26471923ab841538583053fb5b0f238e8adef50542a39": "gds_build/runs/wokwi/pdk.json, same",
+    "29cd2da8a6054df2f1dec02ab67fd87dd12c54132e46e146dd99ece0cde623a6": "gds_build/runs/wokwi/flow.log, same"
+  }
+}

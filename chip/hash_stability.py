@@ -241,6 +241,45 @@ def collect_recorded(root, artefacts):
     return rec
 
 
+DECLARE_KEY = "_hashes_not_in_this_tree"
+
+
+def declared_external(root, artefacts):
+    """hash -> (artefact, reason), from each artefact's own declaration.
+
+    Some recorded hashes are of files that are not here and are not meant to
+    be. chip/FLOW_SURFACE.json pins five LibreLane source files at two tags,
+    which live in another repository, and chip/PLACEMENT_CFG.json records
+    the hash of a fallback rendering that is deliberately not committed.
+    Without a way to say so, H02 fires on both and the only ways out are to
+    stop recording the hashes or to stop running the check.
+
+    The declaration sits in the artefact, under one well known key, beside
+    the thing it is about. That is the one piece of schema this script
+    knows, against a docstring that otherwise refuses to walk one, and the
+    trade is deliberate: the alternative is a table of hash values in here
+    that goes stale the moment a producer runs.
+
+    H06 is what stops the key being a hiding place."""
+    import json
+    out = {}
+    for rel in artefacts:
+        try:
+            with open(os.path.join(root, rel), encoding="utf-8") as fh:
+                doc = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(doc, dict):
+            continue
+        block = doc.get(DECLARE_KEY)
+        if not isinstance(block, dict):
+            continue
+        for h, why in block.items():
+            if HEXHASH.fullmatch(h):
+                out[h] = (rel, why)
+    return out
+
+
 def index_tree(root, files, rules):
     """relpath -> dict of the three hashes plus what the bytes actually are."""
     idx = {}
@@ -275,7 +314,7 @@ class Results(object):
         return [r["id"] for r in self.rows if not r["pass"]]
 
 
-def run_checks(recorded, idx, ignore_plain, artefacts):
+def run_checks(recorded, idx, ignore_plain, artefacts, external=None):
     res = Results()
 
     by = {"checkout": {}, "raw": {}, "forced_lf": {}}
@@ -283,7 +322,9 @@ def run_checks(recorded, idx, ignore_plain, artefacts):
         for key in by:
             by[key].setdefault(v[key], []).append(rel)
 
+    external = external or {}
     wrong_bytes, orphan, resolved = [], [], {}
+    declared_orphan = []
     for h, where in sorted(recorded.items()):
         src = ",".join(sorted(where))
         if h in by["checkout"]:
@@ -298,6 +339,8 @@ def run_checks(recorded, idx, ignore_plain, artefacts):
                 "%s in %s is %s with its carriage returns stripped, and it "
                 "is not a text file" % (h[:12], src,
                                         ", ".join(by["forced_lf"][h])))
+        elif h in external:
+            declared_orphan.append(h)
         else:
             orphan.append("%s in %s" % (h[:12], src))
 
@@ -308,10 +351,11 @@ def run_checks(recorded, idx, ignore_plain, artefacts):
             "; ".join(wrong_bytes) or "%d hashes over %d files"
             % (len(recorded), len(named)))
 
-    res.add("H02", "every recorded hash belongs to a file in the tree",
+    res.add("H02", "every recorded hash belongs to a file in the tree "
+                   "or is declared as not being one",
             not orphan,
-            "; ".join(orphan) or "%d of %d resolve"
-            % (len(resolved), len(recorded)))
+            "; ".join(orphan) or "%d of %d resolve, %d declared external"
+            % (len(resolved), len(recorded), len(declared_orphan)))
 
     undeclared = sorted(set("%s (%s)" % (extension_key(r), r)
                             for r in named if idx[r]["kind"] is None))
@@ -338,6 +382,16 @@ def run_checks(recorded, idx, ignore_plain, artefacts):
 
     excluded = sorted(set("%s (matched %s)" % (r, ignored(r, ignore_plain))
                           for r in named if ignored(r, ignore_plain)))
+    hiding = sorted("%s declared in %s is %s"
+                    % (h[:12], external[h][0], ", ".join(resolved[h]))
+                    for h in external if h in resolved)
+    # No second half about a declaration nothing uses: collect_recorded
+    # reads the artefact as text, so the declaration block records its own
+    # hashes and that check could never fire.
+    res.add("H06", "every hash declared as not in this tree is absent from "
+                   "it", not hiding,
+            "; ".join(hiding) or "%d declared, all absent" % len(external))
+
     res.add("H05", "no recorded file sits somewhere .gitignore excludes",
             not excluded, "; ".join(excluded) or
             "%d artefacts read" % len(artefacts))
@@ -382,7 +436,8 @@ def write(root, rel, blob):
 
 def build_fixture(tmp, drop_lef_rule=False, flip_dat=False, flip_lone=False,
                   record_raw_lef=False, record_forced_gds=False,
-                  record_nothing=False, record_ignored=False):
+                  record_nothing=False, record_ignored=False,
+                  declare_missing=False, declare_present=False):
     for sub in ("chip", "keep", "scratch"):
         os.makedirs(os.path.join(tmp, sub), exist_ok=True)
 
@@ -415,7 +470,17 @@ def build_fixture(tmp, drop_lef_rule=False, flip_dat=False, flip_lone=False,
     if record_ignored:
         rec["i"] = sha256_bytes(FIX_I)
 
+    declare = {}
+    if declare_missing:
+        declare["f" * 64] = "not here on purpose"
+    if declare_present:
+        declare[sha256_bytes(FIX_A)] = "claims a.v is somewhere else"
+
     body = "".join('  "%s": "%s",\n' % (k, v) for k, v in sorted(rec.items()))
+    if declare:
+        inner = "".join('    "%s": "%s",\n' % (k, v)
+                        for k, v in sorted(declare.items()))
+        body += ('  "%s": {\n' % DECLARE_KEY) + inner.rstrip(",\n") + "\n  },\n"
     write(tmp, "chip/FIXTURE.json",
           ("{\n" + body.rstrip(",\n") + "\n}\n").encode("ascii"))
     return rec
@@ -429,7 +494,8 @@ def run_fixture(tmp, **kwargs):
         plain = parse_gitignore(fh.read())[0]
     arte = artefact_paths(tmp)
     idx = index_tree(tmp, walk_tree(tmp), rules)
-    return run_checks(collect_recorded(tmp, arte), idx, plain, arte)[0]
+    return run_checks(collect_recorded(tmp, arte), idx, plain, arte,
+                      declared_external(tmp, arte))[0]
 
 
 FAULTS = (
@@ -447,6 +513,8 @@ FAULTS = (
      dict(flip_lone=True)),
     ("H05", "a hash recorded for a file inside an ignored directory",
      dict(record_ignored=True)),
+    ("H06", "a declaration that a file which is here is somewhere else",
+     dict(declare_present=True)),
 )
 
 
@@ -523,7 +591,8 @@ def main():
                          % len(artefacts))
 
     idx = index_tree(root, walk_tree(root), rules)
-    res, resolved, named = run_checks(recorded, idx, plain, artefacts)
+    res, resolved, named = run_checks(recorded, idx, plain, artefacts,
+                                      declared_external(root, artefacts))
 
     print("Hash stability for %s" % os.path.basename(root))
     print("  %d artefacts, %d distinct hashes, %d files walked"
