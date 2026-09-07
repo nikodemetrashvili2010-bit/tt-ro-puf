@@ -98,7 +98,7 @@
       "pass": true
     },
     {
-      "detail": "2 authored",
+      "detail": "3 authored",
       "id": "S12",
       "name": "every authored file names a checker that is in chip/",
       "pass": true
@@ -114,10 +114,11 @@
     "ARMC_COST.json": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
     "ARMC_REGIONS.json": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
     "FLOW_SURFACE.json": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa",
+    "G2_AMENDMENT.json": "11cc93943c9a03e7c4c5415ec2706b54fadec57c4ac3181a208b28e44a85235e",
     "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
     "G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
-    "G3_RUNBOOK.json": "41f59ae5d25b36661a0f8175d72c2b4b0cc4d06e878f22bee16acce81dd838e0",
-    "G3_RUNBOOK_CHECK.json": "2b470c84dc608eda9418d2fa312b801ba220a87b482d60e0a5243fe806ebe3e5",
+    "G3_RUNBOOK.json": "a9c27b45d1bfa67d7c7685b4ae4bdce6e703a221f6fc0c32685f680ca0371cc6",
+    "G3_RUNBOOK_CHECK.json": "38aa31cd454c93938222f42781582d40133c7b2208b9d072b27544e878a83736",
     "OBSERVABILITY.json": "c3a6799bdbc74d0acafc71013f6f6c40db6c22b183486f56c565329264710c5a",
     "PLACEMENT_CFG.json": "a1523ac5a5a4a5a4461e3c2adef7569779b84ff866d81fb0d46229e8f9d2ad69",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
@@ -127,6 +128,7 @@
     "archive_baseline.py": "9eb190ca15832fd47d9ab1822a63c7a7b7f15cf7aab33664102ab01fa769bc94",
     "armc_cost.py": "492278681363c426c4caf1a47789470bbcc75a559313a6cba658d5235785865f",
     "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
+    "ci_failure_report.py": "d90219ca0c877ca5d8ebcca0a00ba05f031f93e00b9be92a1727f148453293ac",
     "e2_acceptance.csv": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
     "e2_ro_puf.v": "657a6166031eaa5059a881b4cfc81d578882af1c21af336906da23f589fe1214",
     "e2_ro_puf_core.v": "f3457e72a7f4651cae8658abf77aa40c25a9ce2ac2e2750ff73bac6ef4938ac2",
@@ -142,7 +144,7 @@
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
     "placement.cfg": "e26b1b1f51554c9ec1081635e885d45282004c31fd5b5e990abbb846c7d990e6",
     "preregister.py": "d983ccbce12077ebec4d1a782d464226898c9add12f38fe4687307bc1bad83cc",
-    "release_manifest.py": "f7c41f7216e6de35c525b4dd1cf1cc5f11d26a86815f5d947243bd3d25dbbca8",
+    "release_manifest.py": "8d09459aaa0d09d7db518b0493129c2582e7b4cdbb03357bb7603f574b3a26c6",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
     "tile_budget.py": "edaf919b06d0b269462a8894714dd24e70990f6e282328c14a3f84700acf7943",
     "verify_phaseE.py": "1f6d0b123a43495b84dc1cc69216309b96c44609655bccf48b310977bfb43f32"
@@ -152,7 +154,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 116,
+  "gate_commands": 117,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {
@@ -181,7 +183,7 @@
     },
     "G3_RUNBOOK_CHECK.json": {
       "producer": "g3_runbook.py",
-      "sha256": "2b470c84dc608eda9418d2fa312b801ba220a87b482d60e0a5243fe806ebe3e5",
+      "sha256": "38aa31cd454c93938222f42781582d40133c7b2208b9d072b27544e878a83736",
       "sources": {}
     },
     "OBSERVABILITY.json": {

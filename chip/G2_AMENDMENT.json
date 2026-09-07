@@ -1,0 +1,122 @@
+{
+  "_comment": [
+    "An amendment to G.2, written 2026-09-07. It does not replace",
+    "chip/G2_CRITERIA.json and it does not touch chip/G2_DECISION.json.",
+    "Both are recorded here by hash and both stay on disk exactly as they",
+    "were frozen on 27 August, because the point of freezing a decision is",
+    "that it can still be read after it turns out to be wrong.",
+    "",
+    "What happened: G.2 chose sixteen Arm C rings under placement and",
+    "routing equalization constraints. On 6 September, G.3 step 7 read the",
+    "flow's own sources and established that LibreLane has no region, no",
+    "fence and no cell group, and that none of the four variables taking a",
+    "Tcl file is read by a placement step. The chosen treatment has no",
+    "implementation in this flow. See chip/FLOW_SURFACE.json.",
+    "",
+    "That is the delivery risk in G2_CRITERIA.json firing, not a surprise.",
+    "The criteria file was written on 27 August with delivery_risk high and",
+    "the basis quoted in original_risk_text below, before anything was",
+    "scored.",
+    "",
+    "This file exists so that nobody, me included, can later read the",
+    "chip and think the third arm was the arm that was planned."
+  ],
+  "written": "2026-09-07",
+  "gate": "G.2",
+  "kind": "amendment",
+  "not_a_preregistration": true,
+  "not_a_preregistration_why": [
+    "G2_CRITERIA.json was frozen before either option was scored and that",
+    "is what makes it a preregistration. This file was written after the",
+    "chosen option was found to be unbuildable, with that knowledge in",
+    "hand. It is a record of a decision taken late, and it must never be",
+    "cited as though it carried the same weight. The paper says so in the",
+    "same words."
+  ],
+
+  "supersedes_nothing": true,
+  "frozen_record": {
+    "chip/G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
+    "chip/G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47"
+  },
+
+  "original_choice": "Arm C, sixteen rings, standard cells under placement and routing equalization constraints",
+  "original_fallback": "load ladder, 16 rungs",
+  "original_risk_text": "The open flow has no supported way to force sixteen identical placements. It is the point of the experiment and it is also the thing that might not work.",
+
+  "finding": {
+    "date": "2026-09-06",
+    "source": "chip/FLOW_SURFACE.json",
+    "writeup": "docs/phaseG_g3_step7.md",
+    "text": [
+      "413 configuration variables and not one binds a group of cells to an",
+      "area. Six carry a word that could mean a region: five are clock tree",
+      "clustering and the sixth keeps IO pins out of a rectangle. Four",
+      "variables take a Tcl file and no placement step reads any of them,",
+      "so chip/armc_place.tcl cannot be handed to this flow in either half,",
+      "neither the region binding it left blank nor the 512 place_cell",
+      "lines above it."
+    ]
+  },
+
+  "options": [
+    {
+      "id": "ladder",
+      "what": "take G.2's declared fallback, the sixteen-rung load ladder",
+      "keeps_three_arms": true,
+      "needs_g2_rewritten": false,
+      "measures": "how a ring's frequency moves with a known capacitive load, which is a calibration curve and not a countermeasure test",
+      "chosen": false
+    },
+    {
+      "id": "handplaced",
+      "what": "place all 512 Arm C cells from one template, placement fixed by hand and routing left free",
+      "keeps_three_arms": true,
+      "needs_g2_rewritten": true,
+      "measures": "an arm sitting between Arm A, where placement and routing are both free, and Arm B, where both are fixed in one hardened macro. It isolates routing as the remaining source of ring-to-ring difference.",
+      "does_not_measure": "whether an automated open flow can hold an equalization constraint, which is G.2's first preference and the question the original Arm C existed to ask. Placing by hand answers it in the negative by construction, because the flow has no such constraint to hold.",
+      "chosen": true
+    },
+    {
+      "id": "twoarms",
+      "what": "drop Arm C and build the two-arm design",
+      "keeps_three_arms": false,
+      "needs_g2_rewritten": false,
+      "chosen": false
+    }
+  ],
+
+  "decision": {
+    "by": "Nikoloz",
+    "date": "2026-09-07",
+    "option": "handplaced",
+    "instruction": "keep the third arm, take whichever version is the stronger result, do not downgrade the project"
+  },
+
+  "contingent_on": {
+    "_comment": [
+      "This is the part that is not settled and must not be presented as",
+      "though it were. Hand placing Arm C means 512 more standard cells",
+      "placed FIRM through MACRO_PLACEMENT_CFG, on top of the 512 Arm A",
+      "cells that step 7 already pinned. Run 72 is the first and only",
+      "evidence about whether this flow accepts standard cells pinned FIRM",
+      "at step 17 at all, and run 72's gds job failed.",
+      "",
+      "So the option chosen here depends on an answer nobody has yet. If",
+      "FIRM standard cell placement is what broke run 72, then hand placing",
+      "Arm C is unavailable for the same reason the original Arm C was, and",
+      "the choice collapses to the ladder or to two arms. Deciding that",
+      "before the next run reports would be guessing twice."
+    ],
+    "question": "does Odb.ManualMacroPlacement followed by CutRows and TapEndcapInsertion accept 512 standard cells placed FIRM",
+    "evidence_so_far": "run 72, gds job, failed after 2m41 with the reason unreadable",
+    "resolved_by": "the next push, which carries chip/ci_failure_report.py",
+    "if_unavailable": "ladder"
+  },
+
+  "still_applies": [
+    "The six hard constraints H1 to H6 in chip/G2_CRITERIA.json are not amended and the hand placed option has to be scored against them before it is built, not after. Its cell count is the same sixteen rings of thirty two cells that was scored on 27 August, so the expectation is that H1 to H6 land where they landed then, but an expectation is not a score.",
+    "The tile count stays four unless that re-scoring says otherwise. See chip_tiles.",
+    "chip/gen_placement_cfg.py still emits no Arm C line and its P11 still fails if one appears. That stays true until the contingency above is resolved and the re-scoring is done."
+  ]
+}

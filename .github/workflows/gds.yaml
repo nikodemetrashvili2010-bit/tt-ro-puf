@@ -86,6 +86,7 @@ jobs:
           python3 extraction/ring_topology.py --selftest
           python3 extraction/ring_topology.py --verify-archive
           python3 extraction/verify_inputs.py
+          python3 chip/ci_failure_report.py --selftest
           python3 chip/hash_stability.py --selftest
           python3 chip/hash_stability.py
           python3 chip/tile_budget.py --selftest
@@ -156,6 +157,15 @@ jobs:
         with:
           pdk: sky130A
 
+      # Run 72 failed here and the reason was unreadable: the job log wants
+      # a signed-in session and the GDS_logs artifact wants an API token.
+      # Annotations are the one thing a signed-out reader can see, so the
+      # flow's own account of the failure goes into one. This step never
+      # fails the job; it is only here to explain a job that already has.
+      - name: Why the build failed
+        if: failure()
+        run: python3 chip/ci_failure_report.py --run-dir runs/wokwi --annotate
+
   precheck:
     needs: gds
     runs-on: ubuntu-24.04
@@ -182,6 +192,43 @@ jobs:
 
       - name: GL test
         uses: TinyTapeout/tt-gds-action/gl_test@ttsky26c
+
+      # This job has exited 2 in about forty seconds on run 65 and again on
+      # run 71, two weeks apart, and both times the reason was in a log
+      # nobody without an account can open. Make exits 2 when it errors, so
+      # the guess is a make error rather than a failing test, and a guess is
+      # not worth having. Whatever is here when it next fails goes into an
+      # annotation, which is readable signed out.
+      - name: Why the GL test failed
+        if: failure()
+        run: |
+          {
+            echo "cocotb: $(cocotb-config --version 2>&1 | head -1)"
+            echo "makefiles: $(cocotb-config --makefiles 2>&1 | head -1)"
+            echo "iverilog: $(iverilog -V 2>&1 | head -1)"
+            echo "PDK_ROOT=$PDK_ROOT"
+            echo "cells: $(ls $PDK_ROOT/sky130A/libs.ref/sky130_fd_sc_hd/verilog/ 2>&1 | tr '\n' ' ')"
+            echo "test dir: $(ls test 2>&1 | tr '\n' ' ')"
+            if [ -f test/results.xml ]; then
+              echo "results.xml:"
+              grep -o 'failure[^>]*' test/results.xml | head -5
+            else
+              echo "no results.xml, so the tests did not get as far as running"
+            fi
+            for f in test/sim_build/gl/*.log test/sim_build/gl/*.txt; do
+              [ -f "$f" ] && echo "$f:" && tail -20 "$f" || true
+            done
+          } > /tmp/glfail.txt 2>&1
+          cat /tmp/glfail.txt
+          python3 - <<'PY'
+          import io
+          body = io.open("/tmp/glfail.txt", encoding="utf-8",
+                         errors="replace").read()[:3000]
+          enc = (body.replace("%", "%25").replace("\r", "%0D")
+                     .replace("\n", "%0A"))
+          print("::error title=gl_test failed, here is what was on the "
+                "runner::" + enc)
+          PY
 
   viewer:
     if: github.event_name != 'pull_request'

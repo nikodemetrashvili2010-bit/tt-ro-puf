@@ -228,6 +228,7 @@
       ],
       "writes": ["dualarm/build_armc/evidence.log"],
       "covers": [
+        "ci_failure_report.py",
         "hash_stability.py",
         "archive_baseline.py",
         "tile_budget.py",
