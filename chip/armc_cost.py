@@ -65,16 +65,37 @@ import tile_budget as tb                                    # noqa: E402
 BUILD = os.path.join(ROOT, "dualarm", "build_current")
 BUDGET_JSON = os.path.join(HERE, "TILE_BUDGET.json")
 
-# sky130_fd_sc_hd output pin names, plus the macro's. This is a stated table,
-# not a derivation, and A.1 was corrected in August for exactly that habit. It
-# is safe here only because it is checked globally: under this table every
-# signal net in the design must have exactly one driver, and the only nets
-# with none must be the top-level input ports. Both are checks (C01, C02). The
-# proper derivation, from the library's own functional views, lives in
-# `extraction/ring_topology.py` and belongs in `extraction/cell_library.py`
-# when that module is split out.
-OUTPUT_PINS = frozenset(("X", "Y", "Q", "Q_N", "SUM", "COUT", "COUT_N",
-                         "HI", "LO", "out"))
+# sky130_fd_sc_hd output pin names, plus the macro's. Until 2026-09-07 this
+# was a frozenset typed out here, with a note saying the derivation belonged
+# in extraction/cell_library.py when that module was split out. It is, so it
+# does: the sky130 names now come off extraction/CELL_LIBRARY.json, which
+# derives them by evaluating each published cell view's own truth table, and
+# L08 in that module fails if the library stops covering a master this
+# design uses. A.1 was corrected in August for exactly the habit this line
+# used to be.
+#
+# The hand-written table had ten names and the derivation has five. The four
+# it drops - Q_N, SUM, COUT, COUT_N - belong to cells this design does not
+# instantiate, so the set the classifier actually sees is unchanged and
+# ARMC_COST.json does not move. That is checked rather than asserted: C01
+# and C02 still require every signal net to have exactly one driver and only
+# the top-level inputs to have none, and they would both fire on the day a
+# dropped name turned out to matter.
+#
+# `out` is the hardened macro's output pin. It is not a library cell, it has
+# no published functional view, and it stays declared here.
+MACRO_OUTPUT_PINS = ("out",)
+CELL_LIBRARY_JSON = os.path.join(ROOT, "extraction", "CELL_LIBRARY.json")
+
+
+def library_output_pins(path=CELL_LIBRARY_JSON):
+    """The output pin names, derived, plus the macro's."""
+    with open(path) as handle:
+        doc = json.load(handle)
+    return frozenset(doc["output_pins"]) | frozenset(MACRO_OUTPUT_PINS)
+
+
+OUTPUT_PINS = library_output_pins()
 
 ROUTING_LAYERS = ("li1", "met1", "met2", "met3", "met4", "met5")
 

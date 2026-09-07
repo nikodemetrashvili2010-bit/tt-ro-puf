@@ -1,0 +1,1115 @@
+{
+  "cells": {
+    "sky130_fd_sc_hd__a2111o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "C1>X": "pos",
+        "D1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "C1",
+        "D1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a2111oi": {
+      "arcs": {
+        "A1>Y": "neg",
+        "A2>Y": "neg",
+        "B1>Y": "neg",
+        "C1>Y": "neg",
+        "D1>Y": "neg"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "C1",
+        "D1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a211o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "C1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "C1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a211oi": {
+      "arcs": {
+        "A1>Y": "neg",
+        "A2>Y": "neg",
+        "B1>Y": "neg",
+        "C1>Y": "neg"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "C1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a21o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a21oi": {
+      "arcs": {
+        "A1>Y": "neg",
+        "A2>Y": "neg",
+        "B1>Y": "neg"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a221o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "B2>X": "pos",
+        "C1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "C1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a22o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "B2>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "B2"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a2bb2o": {
+      "arcs": {
+        "A1_N>X": "neg",
+        "A2_N>X": "neg",
+        "B1>X": "pos",
+        "B2>X": "pos"
+      },
+      "inputs": [
+        "A1_N",
+        "A2_N",
+        "B1",
+        "B2"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a311o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "A3>X": "pos",
+        "B1>X": "pos",
+        "C1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "B1",
+        "C1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a31o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "A3>X": "pos",
+        "B1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a32o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "A3>X": "pos",
+        "B1>X": "pos",
+        "B2>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "B1",
+        "B2"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__a41o": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "A3>X": "pos",
+        "A4>X": "pos",
+        "B1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and2": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos"
+      },
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and2b": {
+      "arcs": {
+        "A_N>X": "neg",
+        "B>X": "pos"
+      },
+      "inputs": [
+        "A_N",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and3": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos",
+        "C>X": "pos"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and3b": {
+      "arcs": {
+        "A_N>X": "neg",
+        "B>X": "pos",
+        "C>X": "pos"
+      },
+      "inputs": [
+        "A_N",
+        "B",
+        "C"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and4": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos",
+        "C>X": "pos",
+        "D>X": "pos"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and4b": {
+      "arcs": {
+        "A_N>X": "neg",
+        "B>X": "pos",
+        "C>X": "pos",
+        "D>X": "pos"
+      },
+      "inputs": [
+        "A_N",
+        "B",
+        "C",
+        "D"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__and4bb": {
+      "arcs": {
+        "A_N>X": "neg",
+        "B_N>X": "neg",
+        "C>X": "pos",
+        "D>X": "pos"
+      },
+      "inputs": [
+        "A_N",
+        "B_N",
+        "C",
+        "D"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__buf": {
+      "arcs": {
+        "A>X": "pos"
+      },
+      "inputs": [
+        "A"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__clkbuf": {
+      "arcs": {
+        "A>X": "pos"
+      },
+      "inputs": [
+        "A"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__clkdlybuf4s25": {
+      "arcs": {
+        "A>X": "pos"
+      },
+      "inputs": [
+        "A"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__conb": {
+      "arcs": {},
+      "inputs": [],
+      "opaque": [],
+      "outputs": [
+        "HI",
+        "LO"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__decap": {
+      "arcs": {},
+      "inputs": [],
+      "opaque": [],
+      "outputs": [],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__dfrtp": {
+      "arcs": {},
+      "inputs": [
+        "CLK",
+        "D",
+        "RESET_B"
+      ],
+      "opaque": [
+        "Q"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "sequential": [
+        "Q"
+      ],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__dfxtp": {
+      "arcs": {},
+      "inputs": [
+        "CLK",
+        "D"
+      ],
+      "opaque": [
+        "Q"
+      ],
+      "outputs": [
+        "Q"
+      ],
+      "sequential": [
+        "Q"
+      ],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__diode": {
+      "arcs": {},
+      "inputs": [
+        "DIODE"
+      ],
+      "opaque": [],
+      "outputs": [],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__dlygate4sd3": {
+      "arcs": {
+        "A>X": "pos"
+      },
+      "inputs": [
+        "A"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__fill": {
+      "arcs": {},
+      "inputs": [],
+      "opaque": [],
+      "outputs": [],
+      "sequential": [],
+      "supplies": [
+        "VGND",
+        "VNB",
+        "VPB",
+        "VPWR"
+      ]
+    },
+    "sky130_fd_sc_hd__inv": {
+      "arcs": {
+        "A>Y": "neg"
+      },
+      "inputs": [
+        "A"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__mux2": {
+      "arcs": {},
+      "inputs": [
+        "A0",
+        "A1",
+        "S"
+      ],
+      "opaque": [
+        "X"
+      ],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__mux4": {
+      "arcs": {},
+      "inputs": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "S0",
+        "S1"
+      ],
+      "opaque": [
+        "X"
+      ],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nand2": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg"
+      },
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nand2b": {
+      "arcs": {
+        "A_N>Y": "pos",
+        "B>Y": "neg"
+      },
+      "inputs": [
+        "A_N",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nand3": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg",
+        "C>Y": "neg"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nand4": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg",
+        "C>Y": "neg",
+        "D>Y": "neg"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nor2": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg"
+      },
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nor3": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg",
+        "C>Y": "neg"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nor4": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg",
+        "C>Y": "neg",
+        "D>Y": "neg"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__nor4b": {
+      "arcs": {
+        "A>Y": "neg",
+        "B>Y": "neg",
+        "C>Y": "neg",
+        "D_N>Y": "pos"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C",
+        "D_N"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o211a": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "C1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "C1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o21a": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o21ai": {
+      "arcs": {
+        "A1>Y": "neg",
+        "A2>Y": "neg",
+        "B1>Y": "neg"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o21ba": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1_N>X": "neg"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1_N"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o21bai": {
+      "arcs": {
+        "A1>Y": "neg",
+        "A2>Y": "neg",
+        "B1_N>Y": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1_N"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o221a": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "B2>X": "pos",
+        "C1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "B2",
+        "C1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o22a": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "B1>X": "pos",
+        "B2>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "B1",
+        "B2"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o31a": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "A3>X": "pos",
+        "B1>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o31ai": {
+      "arcs": {
+        "A1>Y": "neg",
+        "A2>Y": "neg",
+        "A3>Y": "neg",
+        "B1>Y": "neg"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "B1"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__o32a": {
+      "arcs": {
+        "A1>X": "pos",
+        "A2>X": "pos",
+        "A3>X": "pos",
+        "B1>X": "pos",
+        "B2>X": "pos"
+      },
+      "inputs": [
+        "A1",
+        "A2",
+        "A3",
+        "B1",
+        "B2"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__or2": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos"
+      },
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__or3": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos",
+        "C>X": "pos"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__or3b": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos",
+        "C_N>X": "neg"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C_N"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__or4": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos",
+        "C>X": "pos",
+        "D>X": "pos"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__or4b": {
+      "arcs": {
+        "A>X": "pos",
+        "B>X": "pos",
+        "C>X": "pos",
+        "D_N>X": "neg"
+      },
+      "inputs": [
+        "A",
+        "B",
+        "C",
+        "D_N"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__tapvpwrvgnd": {
+      "arcs": {},
+      "inputs": [],
+      "opaque": [],
+      "outputs": [],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__xnor2": {
+      "arcs": {
+        "A>Y": "bin",
+        "B>Y": "bin"
+      },
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "Y"
+      ],
+      "sequential": [],
+      "supplies": []
+    },
+    "sky130_fd_sc_hd__xor2": {
+      "arcs": {
+        "A>X": "bin",
+        "B>X": "bin"
+      },
+      "inputs": [
+        "A",
+        "B"
+      ],
+      "opaque": [],
+      "outputs": [
+        "X"
+      ],
+      "sequential": [],
+      "supplies": []
+    }
+  },
+  "derived_utc": "2026-09-07",
+  "input_pins": [
+    "A",
+    "A0",
+    "A1",
+    "A1_N",
+    "A2",
+    "A2_N",
+    "A3",
+    "A4",
+    "A_N",
+    "B",
+    "B1",
+    "B1_N",
+    "B2",
+    "B_N",
+    "C",
+    "C1",
+    "CLK",
+    "C_N",
+    "D",
+    "D1",
+    "DIODE",
+    "D_N",
+    "RESET_B",
+    "S",
+    "S0",
+    "S1"
+  ],
+  "manifests": {
+    "library_sources.json": {
+      "cells": 43,
+      "commit": "ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1",
+      "declared_utc": "2026-08-20"
+    },
+    "library_sources_design.json": {
+      "cells": 16,
+      "commit": "ac7fb61f06e6470b94e8afdf7c25268f62fbd7b1",
+      "declared_utc": "2026-09-07"
+    }
+  },
+  "output_pins": [
+    "HI",
+    "LO",
+    "Q",
+    "X",
+    "Y"
+  ],
+  "schema": "phaseA-cell-library/1",
+  "supplies": [
+    "VGND",
+    "VNB",
+    "VPB",
+    "VPWR"
+  ],
+  "udps": {
+    "sky130_fd_sc_hd__udp_dff$P": "state",
+    "sky130_fd_sc_hd__udp_dff$PR": "state",
+    "sky130_fd_sc_hd__udp_mux_2to1": "combinational",
+    "sky130_fd_sc_hd__udp_mux_4to2": "combinational"
+  }
+}

@@ -126,7 +126,7 @@
     "RTL_LINT.json": "bd1abe521020a7b16d6089a1a0800a1704a06ec0224c02f187a7fa0f6642f291",
     "TILE_BUDGET.json": "36462dcd58b13a770be0a49a03f848dd427963896b4071b8f31ba45c5c4e4ce2",
     "archive_baseline.py": "9eb190ca15832fd47d9ab1822a63c7a7b7f15cf7aab33664102ab01fa769bc94",
-    "armc_cost.py": "492278681363c426c4caf1a47789470bbcc75a559313a6cba658d5235785865f",
+    "armc_cost.py": "f0216485e8f0cbd8e635a9779ed2725668e1fd11b9d24290e2f3ca968c4a71b9",
     "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
     "ci_failure_report.py": "d90219ca0c877ca5d8ebcca0a00ba05f031f93e00b9be92a1727f148453293ac",
     "e2_acceptance.csv": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
@@ -140,7 +140,7 @@
     "gen_e2_rtl.py": "5ffea24ff8d2e2fd196c409e0269c8ce631a0b4d08993be946b5408a79244a34",
     "gen_placement_cfg.py": "4ec085c8808116964870be1bb5150f33f4894fc2268c55c9e7e156c2773e8da5",
     "hash_stability.py": "c17f93363c945c8e2e57e76b9e5614a0a7bcb4ed71f3e6687ad0d260186c72a2",
-    "lint_rtl.py": "643aabccccdd329ff92374b925e961e31f2386a743377f2d091080b372ac31f8",
+    "lint_rtl.py": "e649c5b1ee098193931d100094e1ddb21a1f1324011f240ae698c874e7ea003e",
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
     "placement.cfg": "e26b1b1f51554c9ec1081635e885d45282004c31fd5b5e990abbb846c7d990e6",
     "preregister.py": "d983ccbce12077ebec4d1a782d464226898c9add12f38fe4687307bc1bad83cc",
@@ -154,7 +154,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 117,
+  "gate_commands": 119,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {
