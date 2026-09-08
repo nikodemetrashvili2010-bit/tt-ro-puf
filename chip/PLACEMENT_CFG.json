@@ -6,7 +6,7 @@
     "docs/phaseG_g3_step7.md."
   ],
   "_hashes_not_in_this_tree": {
-    "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7": "the MANUAL_GLOBAL_PLACEMENTS fallback rendering, which is generated on demand and deliberately not committed. chip/hash_stability.py H06 requires this to be true."
+    "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7": "the MANUAL_GLOBAL_PLACEMENTS rendering. Its content is in dualarm/src/config.json since 8 September, held there by P13, but it is not committed as a file of its own. chip/hash_stability.py H06 requires this to be true."
   },
   "arm_c": {
     "blocked_by": "LibreLane exposes no fence, region or cell-group constraint. There is no supported way to tell this flow that sixteen groups of standard cells must each stay inside a rectangle.",
@@ -88,6 +88,12 @@
       "id": "P12",
       "name": "the declared fallback renders the same bytes twice",
       "pass": true
+    },
+    {
+      "detail": "512 of 512 entries agree, 0 drift; MACRO_PLACEMENT_CFG absent; PL_OPTIMIZE_MIRRORING False",
+      "id": "P13",
+      "name": "config.json carries the rendering at step 33, not the cfg file at step 17, and mirroring is off",
+      "pass": true
     }
   ],
   "emitted": {
@@ -96,19 +102,7 @@
     "lines": 528,
     "macros": 16,
     "path": "dualarm/src/placement.cfg",
-    "sha256": "e26b1b1f51554c9ec1081635e885d45282004c31fd5b5e990abbb846c7d990e6"
-  },
-  "fallback": {
-    "cost": "PLACED is not FIRM, so detailed placement may move a pinned cell and will only report the displacement afterwards",
-    "entries": 512,
-    "id": "MANUAL_GLOBAL_PLACEMENTS",
-    "not_committed": true,
-    "render": "gen_placement_cfg.py --emit-fallback",
-    "sha256": "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7",
-    "status": "PLACED",
-    "step": "Odb.ManualGlobalPlacement",
-    "step_position": 33,
-    "why": "runs after global placement, leaves MACROS alone, and is not deprecated"
+    "sha256": "d8ca427015a626723ea9bc047a9266a8e1eaa065ed922394327cc10227cbec7c"
   },
   "flow": {
     "name": "LibreLane",
@@ -121,21 +115,39 @@
   },
   "inputs": {
     "armc_place_tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
-    "config": "7d0b9eac05f9379896665d5a754f2faa57b96b93b8293b9add6aa090d79f7b11",
+    "config": "ac69fc61ea63de85c21fe56daf807e3d48e6c29d9dc6df97e4bf0ccb2a54e0c1",
     "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
     "regions": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
     "surface": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa"
   },
   "mechanism": {
-    "chosen": "MACRO_PLACEMENT_CFG",
-    "config_key": {
-      "MACRO_PLACEMENT_CFG": "dir::placement.cfg"
+    "also": {
+      "PL_OPTIMIZE_MIRRORING": false
     },
-    "cost": "the step reads MACRO_PLACEMENT_CFG instead of MACROS, so the sixteen hardened macros have to be carried in the same file",
+    "chosen": "MANUAL_GLOBAL_PLACEMENTS",
+    "chosen_on": "2026-09-08",
+    "config_key": "MANUAL_GLOBAL_PLACEMENTS",
+    "cost": "PLACED is not FIRM, so detailed placement may move a cell and only reports the displacement afterwards. chip/placement_fidelity.py reads the DEF the build writes and says whether any did",
+    "entries": 512,
+    "held_equal_to_rendering_by": "P13",
+    "render": "gen_placement_cfg.py --emit-fallback",
+    "sha256": "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7",
+    "status": "PLACED",
+    "step": "Odb.ManualGlobalPlacement",
+    "step_position": 33,
+    "why": "the only mechanism left. FIRM at step 17 stops OpenROAD cutting the cell's row (ODB-0386), and Arm A shares 37 rows with the Arm B macro block; runs 72, 73 and 74"
+  },
+  "retired": {
+    "chosen_on": "2026-09-06",
     "file": "src/placement.cfg",
+    "file_read_by_build": false,
+    "file_still_emitted": true,
+    "id": "MACRO_PLACEMENT_CFG",
+    "retired_on": "2026-09-08",
     "status": "FIRM",
     "step": "Odb.ManualMacroPlacement",
     "step_position": 17,
-    "why": "the only mechanism in this flow that fixes a cell so detailed placement cannot move it"
+    "why_chosen": "the only mechanism in this flow that fixes a cell so detailed placement cannot move it",
+    "why_retired": "odb::cutRows at OpenROAD dcf3613 leaves any row holding a fixed standard cell uncut, so the rows through the macro block ran whole and the endcaps landed inside u_rob4, u_rob8 and u_rob12"
   }
 }

@@ -238,6 +238,7 @@
         "gen_armc.py",
         "gen_e2_rtl.py",
         "gen_placement_cfg.py",
+        "placement_fidelity.py",
         "verify_phaseE.py",
         "preregister.py",
         "release_manifest.py",

@@ -117,10 +117,10 @@
     "G2_AMENDMENT.json": "11cc93943c9a03e7c4c5415ec2706b54fadec57c4ac3181a208b28e44a85235e",
     "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
     "G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
-    "G3_RUNBOOK.json": "a9c27b45d1bfa67d7c7685b4ae4bdce6e703a221f6fc0c32685f680ca0371cc6",
-    "G3_RUNBOOK_CHECK.json": "38aa31cd454c93938222f42781582d40133c7b2208b9d072b27544e878a83736",
+    "G3_RUNBOOK.json": "7bd985865b841d5a980fdf3e4d68d44eb59eaf2539832ff4587fef66b58a3ef0",
+    "G3_RUNBOOK_CHECK.json": "47028af918e5601d7a70621ebb0d03ffbe05b7190e810c181bea619553558709",
     "OBSERVABILITY.json": "c3a6799bdbc74d0acafc71013f6f6c40db6c22b183486f56c565329264710c5a",
-    "PLACEMENT_CFG.json": "a1523ac5a5a4a5a4461e3c2adef7569779b84ff866d81fb0d46229e8f9d2ad69",
+    "PLACEMENT_CFG.json": "a1052c5a91158ca49ebbef58ce6948bd271963bb186f85d43e4a9849d01c6b3d",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
     "RELEASE_MANIFEST.json": null,
     "RTL_LINT.json": "bd1abe521020a7b16d6089a1a0800a1704a06ec0224c02f187a7fa0f6642f291",
@@ -138,11 +138,12 @@
     "g3_runbook.py": "9b4900847660f640bdd1b012c72f5f12860c276d8a78ec207a8b03ab1f17bf03",
     "gen_armc.py": "a3488eb3d1f99f6ccf07d9151312449a7a7d48ac2dff5ff268bca6c9dff44ebd",
     "gen_e2_rtl.py": "5ffea24ff8d2e2fd196c409e0269c8ce631a0b4d08993be946b5408a79244a34",
-    "gen_placement_cfg.py": "4ec085c8808116964870be1bb5150f33f4894fc2268c55c9e7e156c2773e8da5",
+    "gen_placement_cfg.py": "f2b1b194faa5533e03cf43da7babee28e677a4bf87caf1e6bf583acaee1fcc2f",
     "hash_stability.py": "c17f93363c945c8e2e57e76b9e5614a0a7bcb4ed71f3e6687ad0d260186c72a2",
     "lint_rtl.py": "e649c5b1ee098193931d100094e1ddb21a1f1324011f240ae698c874e7ea003e",
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
-    "placement.cfg": "e26b1b1f51554c9ec1081635e885d45282004c31fd5b5e990abbb846c7d990e6",
+    "placement.cfg": "d8ca427015a626723ea9bc047a9266a8e1eaa065ed922394327cc10227cbec7c",
+    "placement_fidelity.py": "a447f7843b437b49c2fb0ad4161f5754e505b176f98bc7cdd55b16c3eec28d53",
     "preregister.py": "d983ccbce12077ebec4d1a782d464226898c9add12f38fe4687307bc1bad83cc",
     "release_manifest.py": "8d09459aaa0d09d7db518b0493129c2582e7b4cdbb03357bb7603f574b3a26c6",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
@@ -154,7 +155,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 119,
+  "gate_commands": 121,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {
@@ -183,7 +184,7 @@
     },
     "G3_RUNBOOK_CHECK.json": {
       "producer": "g3_runbook.py",
-      "sha256": "38aa31cd454c93938222f42781582d40133c7b2208b9d072b27544e878a83736",
+      "sha256": "47028af918e5601d7a70621ebb0d03ffbe05b7190e810c181bea619553558709",
       "sources": {}
     },
     "OBSERVABILITY.json": {
@@ -193,7 +194,7 @@
     },
     "PLACEMENT_CFG.json": {
       "producer": "gen_placement_cfg.py",
-      "sha256": "a1523ac5a5a4a5a4461e3c2adef7569779b84ff866d81fb0d46229e8f9d2ad69",
+      "sha256": "a1052c5a91158ca49ebbef58ce6948bd271963bb186f85d43e4a9849d01c6b3d",
       "sources": {}
     },
     "RELEASE_MANIFEST.json": {
@@ -249,7 +250,7 @@
     },
     "placement.cfg": {
       "producer": "gen_placement_cfg.py",
-      "sha256": "e26b1b1f51554c9ec1081635e885d45282004c31fd5b5e990abbb846c7d990e6",
+      "sha256": "d8ca427015a626723ea9bc047a9266a8e1eaa065ed922394327cc10227cbec7c",
       "sources": {}
     },
     "ro_armc.v": {

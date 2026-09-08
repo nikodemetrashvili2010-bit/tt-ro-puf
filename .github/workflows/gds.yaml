@@ -118,6 +118,8 @@ jobs:
           python3 chip/gen_placement_cfg.py --json /tmp/placement_cfg.json --emit /tmp/pl
           diff /tmp/placement_cfg.json chip/PLACEMENT_CFG.json
           diff /tmp/pl/placement.cfg chip/placement.cfg
+          python3 chip/placement_fidelity.py --selftest
+          python3 chip/placement_fidelity.py --strict --def dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def
           diff chip/placement.cfg dualarm/src/placement.cfg
           python3 chip/gen_e2_rtl.py --selftest
           python3 chip/gen_e2_rtl.py --emit /tmp/e2 --csv /tmp/e2/plan.csv
@@ -167,6 +169,18 @@ jobs:
       - name: Why the build failed
         if: failure()
         run: python3 chip/ci_failure_report.py --run-dir runs/wokwi --annotate
+
+      # Since 8 September the 512 Arm A cells go in at step 33 as PLACED,
+      # because FIRM at step 17 stops OpenROAD cutting their rows (run 74,
+      # docs/phaseG_run74.md). PLACED means detailed placement may move
+      # them and the flow only says so in a log nobody can read from here.
+      # So on a build that finished, read the DEF it wrote and put the
+      # answer in an annotation. Never fails the job: a moved cell is a
+      # result, and the gate-level test and precheck behind this job are
+      # worth having either way.
+      - name: Did Arm A stay where it was put
+        if: success()
+        run: python3 chip/placement_fidelity.py --def "runs/wokwi/final/def/*.def" --annotate
 
   precheck:
     needs: gds
