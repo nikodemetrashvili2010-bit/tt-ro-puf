@@ -29,6 +29,10 @@ Checks, which run on real input as well as in the selftest:
   R05  a log too big to read whole is read from its end and said to be
   R06  the annotation fits inside GitHub's per-annotation limit
   R07  the annotation and the summary name the same step
+  R08  when the failing log names its own diagnosis above the error line,
+       the quote carries that line too
+  R09  when the failing step reported changing the design, the quote
+       carries the counts
 
 Which step to name took three goes. Sorting the directory names puts
 44-openroad-detailedrouting behind 9-checker-netlistassignstatements, so the
@@ -47,6 +51,29 @@ A selection rule is tested by asserting what it selects. Asking a check to
 catch a wrong selection means writing the selection twice and comparing it
 with itself, which is how the first R03 came to pass on every fixture,
 including the ones planted to break it.
+
+R08 and the lead-in exist because of run 73 on 7 September. The annotation
+worked, and all it said was
+
+    [ERROR DPL-0033] detailed placement checks failed.
+
+which names the step and nothing else. OpenROAD lists what it found and
+then stops, so the line that says which of the six placement checks failed,
+and the lines naming the instances, were sitting directly above the one line
+that got quoted. A tool's last line is where it gives up, not where it says
+why. So the quote now carries the lines above the first error as well, and
+separately the warning-marked lines above it, because when the list in
+between runs to hundreds of instances the diagnosis is pushed out of the
+lead-in window. R08 is the check, and it looks for that line itself rather
+than trusting the selector.
+
+R09 is the other half of the same day. Step 32 is repair_design, which
+resizes gates and inserts buffers before it legalizes, and it says how many
+of each it did. Those lines decide whether the step changed the cells that
+were pinned or only worked around them, and they sit above everything the
+placement check prints, which is further from the error than any lead-in
+worth carrying. So they get their own sweep. A count is the cheapest fact a
+log gives you and it was being thrown away.
 
 R05 exists because the first version of read_text read the first two
 megabytes of a log. Detailed routing writes tens of megabytes and puts the
@@ -116,6 +143,35 @@ ERROR_RX = [
 # Absolute runner paths are noise, they differ every run, and they eat the
 # annotation budget. /home/runner/work/tt-ro-puf/tt-ro-puf/runs/... becomes
 # runs/... and nothing is lost.
+WARN_RX = [
+    re.compile(r"^\s*\[WARNING"),
+    re.compile(r"^\s*WARNING[: ]"),
+    re.compile(r"^%Warning"),
+]
+
+# A line where a step says it changed something, which is a verb and a
+# number on the same line. The number is what makes it a report rather
+# than an announcement of intent, and the verbs are the ones the tools in
+# this flow use: OpenROAD's resizer writes "Inserted 18 buffers in 12
+# nets" and "Resized 42 instances", the legalizer writes "Mirrored 578
+# instances".
+CHANGE_RX = re.compile(
+    r"\b(resiz|upsiz|downsiz|insert|remov|repair|replac|swap|buffer"
+    r"|mirror|legaliz|clon)\w*", re.I)
+DIGIT_RX = re.compile(r"\d")
+
+# How many lines above the first error to carry, how many warning-marked
+# and change-marked lines to sweep out of what sits above it, and what
+# marks a gap between two runs of quoted lines. The three counts are read
+# at call time and not bound as defaults, so the selftest can turn a
+# sweep off and prove its check is able to fail. They are small because
+# the annotation limit is 3600 characters and a trimmed annotation eats
+# its own middle, which is exactly where a sweep lands.
+LEAD_IN = 12
+WARN_KEEP = 6
+CHANGE_KEEP = 6
+ELISION = "[...]"
+
 RUNNER_PATH_RX = re.compile(r"/home/runner/work/[^/]+/[^/]+/")
 
 
@@ -219,24 +275,93 @@ def tail(text, n):
     return lines[-n:] if len(lines) > n else lines
 
 
-def error_lines(text, keep=12):
-    """Lines that look like the reason, with the last one kept if none do."""
+def error_indices(text, keep=12):
+    """Indices of the lines that look like the reason, last `keep` of them.
+
+    A traceback's last line is the useful one and it is already matched, so
+    the indices deduplicate themselves: one line contributes once however
+    many patterns it matches.
+    """
     hits = []
-    lines = text.splitlines()
-    for i, line in enumerate(lines):
+    for i, line in enumerate(text.splitlines()):
         for rx in ERROR_RX:
             if rx.search(line):
-                hits.append((i, line))
+                hits.append(i)
                 break
-    # A traceback's last line is the useful one and it is already matched.
-    # Deduplicate by index, keep the last `keep` of them.
-    seen, out = set(), []
-    for i, line in hits:
-        if i in seen:
-            continue
-        seen.add(i)
-        out.append(line)
-    return out[-keep:]
+    return hits[-keep:]
+
+
+def error_lines(text, keep=12):
+    """Lines that look like the reason."""
+    lines = text.splitlines()
+    return [lines[i] for i in error_indices(text, keep)]
+
+
+def warn_indices(text, before, keep=None):
+    """Warning-marked lines above `before`, last `keep` of them."""
+    if keep is None:
+        keep = WARN_KEEP
+    hits = []
+    for i, line in enumerate(text.splitlines()):
+        if i >= before:
+            break
+        for rx in WARN_RX:
+            if rx.search(line):
+                hits.append(i)
+                break
+    return hits[-keep:] if keep else []
+
+
+def change_indices(text, before, keep=None):
+    """Lines above `before` where the step says what it changed."""
+    if keep is None:
+        keep = CHANGE_KEEP
+    hits = []
+    for i, line in enumerate(text.splitlines()):
+        if i >= before:
+            break
+        if CHANGE_RX.search(line) and DIGIT_RX.search(line):
+            hits.append(i)
+    return hits[-keep:] if keep else []
+
+
+def quote_indices(text, keep=12, lead=None, warns=None, changes=None):
+    """Which lines of a step log to quote, as indices into it.
+
+    Four sources: the lines that match an error marker, the non-blank
+    lines immediately above the first of those, the warning-marked lines
+    above it, and the lines where the step said what it changed. The last
+    two are not the second with a bigger window - check_placement can list
+    several hundred instances between its verdict and the error, and
+    repair_design's counts are above all of that, so widening the window
+    far enough to reach either would spend the whole annotation on
+    instance names.
+    """
+    if lead is None:
+        lead = LEAD_IN
+    lines = text.splitlines()
+    errs = error_indices(text, keep)
+    if not errs:
+        return []
+    first = errs[0]
+    idx = set(errs)
+    idx.update(i for i in range(max(0, first - lead), first)
+               if lines[i].strip())
+    idx.update(warn_indices(text, first, warns))
+    idx.update(change_indices(text, first, changes))
+    return sorted(idx)
+
+
+def lines_at(text, idx):
+    """The chosen lines, with a marker wherever a run of them was skipped."""
+    lines = text.splitlines()
+    out, prev = [], None
+    for i in idx:
+        if prev is not None and i != prev + 1:
+            out.append(ELISION)
+        out.append(lines[i])
+        prev = i
+    return out
 
 
 def clean(line):
@@ -323,7 +448,7 @@ def collect(run_dir):
         body, cut = read_text(path)
         if cut:
             rep["truncated"].append("%s/%s" % (reported["name"], name))
-        picked = error_lines(body)
+        picked = lines_at(body, quote_indices(body))
         if not picked:
             picked = tail(body, 20)
         if picked:
@@ -377,8 +502,11 @@ def body_lines(rep):
         out.append("flow: " + ", ".join(
             "%s %s" % (k, v) for k, v in sorted(rep["flow"].items())))
     if rep["steps"]:
-        out.append("steps with output: %d of %d entered, last entered %s"
-                   % (rep["completed"], len(rep["steps"]), rep["entered"]))
+        # "31 of 32 entered" was the old wording and it reads as though
+        # 31 steps were entered. It meant 31 of the 32 that were entered
+        # finished, which is the opposite end of the sentence.
+        out.append("steps: %d entered, %d of them finished, last entered %s"
+                   % (len(rep["steps"]), rep["completed"], rep["entered"]))
     if rep["empty_note"]:
         out.append(rep["empty_note"])
     for label, lines, cut in rep["quotes"]:
@@ -505,8 +633,27 @@ def run_checks(rep, run_dir):
                 for _, p, _ in step_logs(s):
                     allowed.add(os.path.abspath(p))
     stray = [p for p in rep["sources"] if os.path.abspath(p) not in allowed]
-    res.add("R04", "every quoted line comes from that step or error.log",
-            not stray, "stray %s" % ", ".join(stray) if stray else "none")
+
+    # The paths were the whole of R04 until the quote stopped being a
+    # contiguous tail. Once lines are chosen out of the middle of a file
+    # and a marker is put between them, "it came from an allowed file" is
+    # no longer the same claim as "it is a line of that file", so check
+    # the lines as well.
+    off = []
+    for (lbl, lines, _), path in zip(rep["quotes"], rep["sources"]):
+        try:
+            body, _ = read_text(path)
+        except OSError:
+            off.append("%s: could not be re-read" % lbl)
+            continue
+        pool = set(clean(l) for l in body.splitlines())
+        for line in lines:
+            if line != ELISION and line not in pool:
+                off.append("%s: %r" % (lbl, line[:60]))
+    res.add("R04", "every quoted line is a line of that step's log or of "
+            "error.log",
+            not stray and not off,
+            ", ".join(["stray %s" % p for p in stray] + off) or "none")
 
     # Independent of what collect recorded: ask the filesystem which of the
     # quoted files is bigger than the read limit, and require the report to
@@ -537,6 +684,44 @@ def run_checks(rep, run_dir):
     res.add("R07", "annotation and summary name the same step",
             head in ann and head in summ,
             "headline %r" % head)
+
+    # Independent of what quote_indices chose: go back to the step log and
+    # look for the two things a step says about itself above the point it
+    # stopped. R08 wants the last warning-marked line, which is where
+    # OpenROAD names the check that failed. R09 wants the last line where
+    # the step said what it changed. Both are searched for here rather
+    # than read off the selector, because a check that asks the selector
+    # what it selected is the selector written twice.
+    def carried(finder):
+        for (lbl, lines, _), path in zip(rep["quotes"], rep["sources"]):
+            if os.path.basename(path) == "error.log":
+                continue
+            try:
+                body, _ = read_text(path)
+            except OSError:
+                continue
+            errs = error_indices(body)
+            if not errs:
+                continue
+            above = finder(body, errs[0])
+            if not above:
+                continue
+            line = clean(body.splitlines()[above[-1]])
+            return lbl, line, line in lines
+        return "", None, True
+
+    where, want, held = carried(lambda b, e: warn_indices(b, e, keep=1))
+    res.add("R08", "the quote carries the log's own diagnosis above the "
+            "error line",
+            held,
+            "no warning line above the error, nothing to carry"
+            if want is None else "%s: %r" % (where, want[:70]))
+
+    where, want, held = carried(lambda b, e: change_indices(b, e, keep=1))
+    res.add("R09", "the quote carries what the step reported changing",
+            held,
+            "the step reported changing nothing, nothing to carry"
+            if want is None else "%s: %r" % (where, want[:70]))
     return res
 
 
@@ -561,9 +746,26 @@ child process exited abnormally
 """
 
 
+DPL_DIAGNOSIS = (
+    "[INFO RSZ-0027] Found 41 slew violations.\n"
+    "[INFO RSZ-0028] Found 6 capacitance violations.\n"
+    "[INFO RSZ-0030] Inserted 18 buffers in 12 nets.\n"
+    "[INFO RSZ-0031] Resized 42 instances.\n"
+    "[INFO DPL-0001] Placement Analysis\n"
+    "[WARNING DPL-0005] Overlap check failed (12).\n"
+    + "".join("  u_puf.u_core.g_ro_bank[%d].u_ro.g_inv[%d].u_inv overlaps "
+              "u_puf.u_core.g_ro_bank[%d].u_ro.g_inv[%d].u_inv\n"
+              % (i // 32, i % 32, i // 32, (i % 32) + 1)
+              for i in range(200))
+    + "[ERROR DPL-0033] detailed placement checks failed.\n"
+      "Error: repair_design.tcl, 68 DPL-0033\n"
+)
+
+
 def build_fixture(tmp, lexical_trap=False, empty_tail=False,
                   no_step_log=False, no_error_lines=False,
-                  long_lines=False, big_log=False, all_completed=False):
+                  long_lines=False, big_log=False, all_completed=False,
+                  distant_diagnosis=False):
     """A run directory shaped like a real one.
 
     Nine steps, the last of which died. Each variant plants one way of
@@ -606,6 +808,8 @@ def build_fixture(tmp, lexical_trap=False, empty_tail=False,
             text = REAL_ERROR + "".join(
                 "[ERROR PAD-%04d] %s\n" % (i, "pad " * 120)
                 for i in range(12))
+        if distant_diagnosis:
+            text = DPL_DIAGNOSIS
         if big_log:
             filler = "[INFO] routing net %d of very many\n"
             text = ("".join(filler % i
@@ -754,6 +958,47 @@ def selftest():
                 % ("TAP-0001" in quoted, cut,
                    ", ".join(res.failed()) or "nothing"))
             ok = False
+
+        # The bug R08 was written for, and it is run 73's annotation:
+        # the error line alone. The diagnosis is two hundred instance
+        # lines above it, far outside the lead-in, so the warning sweep
+        # is the only thing that can reach it. As with R06 the fault
+        # turns the mechanism off, because with it on nothing can miss.
+        global WARN_KEEP, CHANGE_KEEP
+        fresh(tmp)
+        run = build_fixture(tmp, distant_diagnosis=True)
+        rep = collect(run)
+        res = run_checks(rep, run)
+        ann = render_annotation(rep)
+        hw, hc = WARN_KEEP, CHANGE_KEEP
+        WARN_KEEP, CHANGE_KEEP = 0, 0
+        try:
+            blind = run_checks(collect(run), run)
+        finally:
+            WARN_KEEP, CHANGE_KEEP = hw, hc
+        if res.failed():
+            bad("distant diagnosis: fails %s" % ", ".join(res.failed()))
+            ok = False
+        elif "DPL-0005" not in ann:
+            bad("distant diagnosis: the annotation does not carry the "
+                "line that says which check failed")
+            ok = False
+        elif "RSZ-0031" not in ann:
+            bad("distant diagnosis: the annotation does not carry what "
+                "the step reported changing")
+            ok = False
+        elif "DPL-0033" not in ann:
+            bad("distant diagnosis: the annotation lost the error line")
+            ok = False
+        elif sorted(blind.failed()) != ["R08", "R09"]:
+            bad("distant diagnosis: with both sweeps off, R08 and R09 "
+                "should be the checks that fail, and %s did"
+                % (", ".join(blind.failed()) or "nothing"))
+            ok = False
+        else:
+            print("  ok    R08 R09  a diagnosis and a resize count two "
+                  "hundred lines above the error are both quoted, and "
+                  "both are missed when the sweeps are off")
 
         for want, label, kwargs in FAULTS:
             fresh(tmp)

@@ -128,7 +128,7 @@
     "archive_baseline.py": "9eb190ca15832fd47d9ab1822a63c7a7b7f15cf7aab33664102ab01fa769bc94",
     "armc_cost.py": "f0216485e8f0cbd8e635a9779ed2725668e1fd11b9d24290e2f3ca968c4a71b9",
     "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
-    "ci_failure_report.py": "d90219ca0c877ca5d8ebcca0a00ba05f031f93e00b9be92a1727f148453293ac",
+    "ci_failure_report.py": "cbd5e9cff522132b561abf498e561f752238e9657b0618d721a014a915da07d5",
     "e2_acceptance.csv": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
     "e2_ro_puf.v": "657a6166031eaa5059a881b4cfc81d578882af1c21af336906da23f589fe1214",
     "e2_ro_puf_core.v": "f3457e72a7f4651cae8658abf77aa40c25a9ce2ac2e2750ff73bac6ef4938ac2",
