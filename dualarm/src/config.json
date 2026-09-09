@@ -28,6 +28,7 @@
     "dir::ro_macro_hard_bb.v"
   ],
   "PL_OPTIMIZE_MIRRORING": false,
+  "PL_SOFT_OBSTRUCTIONS": [[247.48, 70.72, 307.74, 171.36]],
   "MANUAL_GLOBAL_PLACEMENTS": {
     "u_puf.u_core.g_ro_bank[0].u_ro.g_inv[10].u_inv": {"location": [276.0, 106.08], "orientation": "N"},
     "u_puf.u_core.g_ro_bank[0].u_ro.g_inv[11].u_inv": {"location": [274.62, 106.08], "orientation": "N"},

@@ -20,7 +20,7 @@ VVP      ?= vvp
 GTKWAVE  ?= gtkwave
 IFLAGS   ?= -g2012
 
-CORE_RTL := src/ro_macro_sim.v src/ro_puf_core.v
+CORE_RTL := src/ro_macro_sim.v src/ro_armc_sim.v src/ro_puf_core.v
 PUF_RTL  := $(CORE_RTL) src/ro_puf.v test/ro_macro_hard_sim.v
 TOP_RTL  := $(PUF_RTL) src/tt_um_ro_puf.v
 

@@ -467,6 +467,36 @@ def cfg_rows(design, config_path=CONFIG_PATH):
     return rows, config
 
 
+def soft_obstruction(design):
+    """The one rectangle global placement is kept out of, in microns.
+
+    Run 75 on 8 September placed Arm A at step 33 and detailed placement
+    moved 448 of the 512 cells, because global placement had already put
+    other cells on those sites. PL_SOFT_OBSTRUCTIONS is a blockage the
+    initial placer honours and legalization ignores (gpl placerBase.cpp
+    line 1264 blocks every blockage's sites; dpl Grid.cpp line 194 and
+    dbToOpendp.cpp line 163 skip soft ones, all at the revision the flow
+    pins), so with Arm A's footprint soft-blocked the sites are empty when
+    step 33 arrives and step 34 has nothing to move.
+
+    The rectangle is every pinned cell's footprint, edges on the site and
+    row grid: left of the leftmost cell, right of the rightmost cell's
+    far edge, bottom of the lowest row, top of the highest. Widths come
+    from tile_budget.recover_widths, abutment in the frozen DEF, the same
+    place T06 gets them.
+
+    Derived from the DEF's own cells and not from the emitted rows, so a
+    fault in what is emitted (P05's) does not move the box as well."""
+    widths, _ = tb.recover_widths(design)
+    arma = arm_a_cells(design)
+    units = design.units
+    x0 = min(c.x for c in arma)
+    y0 = min(c.y for c in arma)
+    x1 = max(c.x + widths[c.master] for c in arma)
+    y1 = max(c.y for c in arma) + design.row_height
+    return [dec(v) / units for v in (x0, y0, x1, y1)]
+
+
 def render_cfg(rows):
     """The MACRO_PLACEMENT_CFG format: instance, x, y, orientation, one per
     line, whitespace separated, # starts a comment.
@@ -748,6 +778,29 @@ def run_checks(design, surface, rows, config, tcl_text, regions,
            % (len(want) - len([n for n in drift if n in want]), len(want),
               len(drift), "wired" if cfg_wired else "absent", mirror))
 
+    # -- P14 ---------------------------------------------------------------
+    # The soft obstruction in config.json is the derived one: a single
+    # rectangle, equal to the footprint to the micron, with every pinned
+    # cell inside it. A box typed by hand, or one that stopped covering a
+    # cell after a coordinate changed, is the intruder problem back.
+    box = soft_obstruction(design)
+    have_box = config.get("PL_SOFT_OBSTRUCTIONS") or []
+    one = len(have_box) == 1 and len(have_box[0]) == 4
+    same = one and [decimal.Decimal(str(v)) for v in have_box[0]] == box
+    outside = []
+    if one:
+        bx0, by0, bx1, by1 = [decimal.Decimal(str(v)) * design.units
+                              for v in have_box[0]]
+        for c in arm_a_cells(design):
+            if not (bx0 <= c.x < bx1 and by0 <= c.y < by1):
+                outside.append(c.inst)
+    ok = one and same and not outside
+    ck.add("P14", "config.json soft-blocks exactly Arm A's footprint for "
+           "global placement", ok,
+           "%d rectangle(s); derived %s; %s; %d pinned cells outside it"
+           % (len(have_box), [dec_str(v) for v in box],
+              "matches" if same else "differs", len(outside)))
+
     return ck
 
 
@@ -894,6 +947,8 @@ def sync_fallback_into_config(b):
     b["config_raw"]["MANUAL_GLOBAL_PLACEMENTS"] = json.loads(
         b["fallback"])["MANUAL_GLOBAL_PLACEMENTS"]
     b["config_raw"]["PL_OPTIMIZE_MIRRORING"] = False
+    b["config_raw"]["PL_SOFT_OBSTRUCTIONS"] = [
+        [float(v) for v in soft_obstruction(b["design"])]]
     b["config_raw"].pop("MACRO_PLACEMENT_CFG", None)
     b["config"] = json.loads(json.dumps(b["config_raw"]),
                              parse_float=decimal.Decimal)
@@ -1015,6 +1070,15 @@ def f13_mirroring_is_left_on(b):
     b["config"]["PL_OPTIMIZE_MIRRORING"] = True
 
 
+def f14_soft_obstruction_missing(b):
+    del b["config"]["PL_SOFT_OBSTRUCTIONS"]
+
+
+def f14_soft_obstruction_stops_short(b):
+    box = b["config"]["PL_SOFT_OBSTRUCTIONS"][0]
+    box[2] = box[2] - decimal.Decimal(STEP) / 1000   # one site short
+
+
 FAULTS = [
     ("P01", f01_drop_a_pinned_file,
      "one of the files pinned at both tags is missing"),
@@ -1046,6 +1110,10 @@ FAULTS = [
      "MACRO_PLACEMENT_CFG comes back and step 17 would pin Arm A again"),
     ("P13", f13_mirroring_is_left_on,
      "PL_OPTIMIZE_MIRRORING is on and dpl.tcl may flip an orientation"),
+    ("P14", f14_soft_obstruction_missing,
+     "no soft obstruction, so global placement fills Arm A's sites"),
+    ("P14", f14_soft_obstruction_stops_short,
+     "the soft obstruction stops one site short of the rightmost cell"),
 ]
 
 
@@ -1181,7 +1249,16 @@ def main():
                 "step_position": 33,
                 "status": "PLACED",
                 "config_key": "MANUAL_GLOBAL_PLACEMENTS",
-                "also": {"PL_OPTIMIZE_MIRRORING": False},
+                "also": {
+                    "PL_OPTIMIZE_MIRRORING": False,
+                    "PL_SOFT_OBSTRUCTIONS": [
+                        [dec_str(v) for v in soft_obstruction(design)]],
+                    "why_soft": "run 75 moved 448 of 512 at step 34 "
+                                "because global placement had filled the "
+                                "sites; a soft blockage keeps gpl out and "
+                                "is ignored by dpl, so step 33 lands on "
+                                "empty sites. Held to the footprint by P14",
+                },
                 "why": "the only mechanism left. FIRM at step 17 stops "
                        "OpenROAD cutting the cell's row (ODB-0386), and "
                        "Arm A shares 37 rows with the Arm B macro block; "

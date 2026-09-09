@@ -120,7 +120,7 @@
     "G3_RUNBOOK.json": "7bd985865b841d5a980fdf3e4d68d44eb59eaf2539832ff4587fef66b58a3ef0",
     "G3_RUNBOOK_CHECK.json": "47028af918e5601d7a70621ebb0d03ffbe05b7190e810c181bea619553558709",
     "OBSERVABILITY.json": "c3a6799bdbc74d0acafc71013f6f6c40db6c22b183486f56c565329264710c5a",
-    "PLACEMENT_CFG.json": "a1052c5a91158ca49ebbef58ce6948bd271963bb186f85d43e4a9849d01c6b3d",
+    "PLACEMENT_CFG.json": "a7fcd3b036d746cebae1d56a80220fa55f03842a032f979d3a7ed5129886eaae",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
     "RELEASE_MANIFEST.json": null,
     "RTL_LINT.json": "bd1abe521020a7b16d6089a1a0800a1704a06ec0224c02f187a7fa0f6642f291",
@@ -138,7 +138,7 @@
     "g3_runbook.py": "9b4900847660f640bdd1b012c72f5f12860c276d8a78ec207a8b03ab1f17bf03",
     "gen_armc.py": "a3488eb3d1f99f6ccf07d9151312449a7a7d48ac2dff5ff268bca6c9dff44ebd",
     "gen_e2_rtl.py": "5ffea24ff8d2e2fd196c409e0269c8ce631a0b4d08993be946b5408a79244a34",
-    "gen_placement_cfg.py": "f2b1b194faa5533e03cf43da7babee28e677a4bf87caf1e6bf583acaee1fcc2f",
+    "gen_placement_cfg.py": "ff91baf360be8caa7e6f32a37a9c111d976de0d99b94611e79f3907c1feaf2de",
     "hash_stability.py": "c17f93363c945c8e2e57e76b9e5614a0a7bcb4ed71f3e6687ad0d260186c72a2",
     "lint_rtl.py": "e649c5b1ee098193931d100094e1ddb21a1f1324011f240ae698c874e7ea003e",
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
@@ -194,7 +194,7 @@
     },
     "PLACEMENT_CFG.json": {
       "producer": "gen_placement_cfg.py",
-      "sha256": "a1052c5a91158ca49ebbef58ce6948bd271963bb186f85d43e4a9849d01c6b3d",
+      "sha256": "a7fcd3b036d746cebae1d56a80220fa55f03842a032f979d3a7ed5129886eaae",
       "sources": {}
     },
     "RELEASE_MANIFEST.json": {

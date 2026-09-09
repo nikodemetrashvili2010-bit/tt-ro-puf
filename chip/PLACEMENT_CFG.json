@@ -94,6 +94,12 @@
       "id": "P13",
       "name": "config.json carries the rendering at step 33, not the cfg file at step 17, and mirroring is off",
       "pass": true
+    },
+    {
+      "detail": "1 rectangle(s); derived ['247.48', '70.72', '307.74', '171.36']; matches; 0 pinned cells outside it",
+      "id": "P14",
+      "name": "config.json soft-blocks exactly Arm A's footprint for global placement",
+      "pass": true
     }
   ],
   "emitted": {
@@ -115,14 +121,23 @@
   },
   "inputs": {
     "armc_place_tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
-    "config": "ac69fc61ea63de85c21fe56daf807e3d48e6c29d9dc6df97e4bf0ccb2a54e0c1",
+    "config": "eabd8dbc95725d81b583e804f8a4ea77e811541561711dba9e2c5a03648133ff",
     "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
     "regions": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
     "surface": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa"
   },
   "mechanism": {
     "also": {
-      "PL_OPTIMIZE_MIRRORING": false
+      "PL_OPTIMIZE_MIRRORING": false,
+      "PL_SOFT_OBSTRUCTIONS": [
+        [
+          "247.48",
+          "70.72",
+          "307.74",
+          "171.36"
+        ]
+      ],
+      "why_soft": "run 75 moved 448 of 512 at step 34 because global placement had filled the sites; a soft blockage keeps gpl out and is ignored by dpl, so step 33 lands on empty sites. Held to the footprint by P14"
     },
     "chosen": "MANUAL_GLOBAL_PLACEMENTS",
     "chosen_on": "2026-09-08",

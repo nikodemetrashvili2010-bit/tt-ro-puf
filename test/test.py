@@ -179,7 +179,16 @@ async def wait_for_result(
             # signal on every cycle, or the pin is decoration.
             if ((status >> 5) & 1) != int(window_high):
                 bad_active_samples.append((elapsed, status, int(window_high)))
+        else:
+            # Gate level. The internal window is not visible in a flat
+            # netlist, and without it every macro-enable sample below was
+            # expected to be 0, which is what failed the first gate-level
+            # run on 8 September while the netlist was driving exactly the
+            # right pin. The window is on uio[5] for this reason, and the
+            # RTL branch above proves the pin tracks it every cycle.
+            window_high = ((status >> 5) & 1) == 1
 
+        if en_window is not None:
             # During an in-flight restart, ignore the tail of the aborted
             # window. Count only after the required low gap and the next rise.
             if require_rearm and not new_window_started:
