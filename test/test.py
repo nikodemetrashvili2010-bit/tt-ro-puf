@@ -54,6 +54,22 @@ GL = os.environ.get("GATES") == "yes"
 ARMS = (1,) if GL else (0, 1, 2)
 PROTOCOL_ARM = 1 if GL else 0
 
+# How long after an asynchronous event to look at the pins. The gate-level
+# flop model carries UNIT_DELAY, which the makefile sets to #1, one
+# nanosecond at the models' timescale, and the deselect path is two flops
+# deep: ena clears the reset synchronizer, and the synchronizer clears the
+# core. So a probe one nanosecond after ena falls reads the pins from before
+# it fell, and that is what failed run 76 on 9 September, uio_out 0x20 where
+# 0 was expected, with the six other tests green at gate level for the first
+# time. Built from the real cell models and measured: ena falls, the gated
+# reset follows at +0, project_rst_n at +1 ns, uio[5] at +2 ns. The probe
+# has to land after 2 ns and before the next rising edge at +10, because ena
+# is dropped on a falling edge and reading after an edge would prove nothing
+# about a stopped clock. A quarter clock is 5 ns, the middle of that window.
+# Combinational cells have no delay in either view, the delay buffer on ena
+# included, so nothing else on the path moves.
+ASYNC_SETTLE_NS = CLK_NS // 4
+
 
 def budget_us(measurements):
     """Simulated-time ceiling for a test that takes this many measurements.
@@ -417,9 +433,11 @@ async def test_deselect_shutdown(dut):
         assert int(en_window.value) == 1
     await FallingEdge(dut.clk)
     dut.ena.value = 0
-    await Timer(1, unit="ns")
+    await Timer(ASYNC_SETTLE_NS, unit="ns")
     # The shutdown path must not wait for a clock edge; this protects a
-    # deselected project whose clock has been stopped.
+    # deselected project whose clock has been stopped. ena fell on the
+    # falling edge, so the pins are read in the low half of the clock, before
+    # any rising edge could have done the work.
     assert int(dut.uio_out.value) == 0
     assert int(dut.uo_out.value) == 0
     _, armb_en = rtl_handles(dut)
@@ -434,12 +452,15 @@ async def test_deselect_shutdown(dut):
         else None
     )
     if project_rst_n is not None:
+        # Release takes two clocks by design. Each look waits the same
+        # settle time as above, past the gate-level flop delay and well
+        # inside the cycle.
         assert int(project_rst_n.value) == 0
         await ClockCycles(dut.clk, 1)
-        await Timer(1, unit="ns")
+        await Timer(ASYNC_SETTLE_NS, unit="ns")
         assert int(project_rst_n.value) == 0
         await ClockCycles(dut.clk, 1)
-        await Timer(1, unit="ns")
+        await Timer(ASYNC_SETTLE_NS, unit="ns")
         assert int(project_rst_n.value) == 1
     await ClockCycles(dut.clk, 5)
     assert await measure(dut, PROTOCOL_ARM, 0) > 0

@@ -227,7 +227,12 @@ jobs:
             echo "test dir: $(ls test 2>&1 | tr '\n' ' ')"
             if [ -f test/results.xml ]; then
               echo "results.xml:"
-              grep -o 'failure[^>]*' test/results.xml | head -5
+              # The testcase tag is the line above each failure, and it is
+              # the line that says which test. Run 76 came back with one
+              # failure and no name, and the name had to be worked out from
+              # which asserts compare uio_out with zero.
+              grep -o '<testcase name="[^"]*"\|<failure[^>]*' test/results.xml \
+                | grep -B1 '<failure' | head -12
             else
               echo "no results.xml, so the tests did not get as far as running"
             fi

@@ -38,6 +38,21 @@ of it, so it has to pass 512 of 512, and it is run in the gate for that
 reason: if the checker and the intent ever disagree on the source, the
 gate goes red before a build is spent finding out.
 
+Since 9 September it also says what else is inside the soft obstruction
+config.json draws round Arm A. Run 76 was the first build with the box
+and it came back 507 of 512, five cells shoved sideways or into the next
+row by something that was not there at global placement, because global
+placement cannot put anything in the box and the five moves were 3 and 4
+sites wide. Whatever it was arrived later, buffers from a repair step or
+from the clock tree are the candidates, and the annotation gave no way to
+tell. So the report now lists every instance standing in the box that is
+not an Arm A cell, with its master and its DEF SOURCE, and counts the tap
+cells and fillers separately because those belong there. It is a report,
+not a check: the two-arm build had 79 logic cells in the same box, that
+was the placer's own doing, and the frozen control has to keep passing.
+Inside means the instance origin is inside; a cell straddling the left or
+bottom edge is missed, and that is accepted for a diagnostic.
+
 DEF names are escaped per bracket, g_ro_bank\\[0\\], and config.json names
 are not. That is LibreLane's own escape_verilog_name and the same rule
 gen_placement_cfg.py's P08 round-trips.
@@ -64,9 +79,15 @@ CONFIG = os.path.join(ROOT, "dualarm", "src", "config.json")
 FROZEN_DEF = os.path.join(ROOT, "dualarm", "build_current",
                           "tt_um_nikodemetrashvili20_ro_puf.def")
 KEY = "MANUAL_GLOBAL_PLACEMENTS"
+BOX_KEY = "PL_SOFT_OBSTRUCTIONS"
 RING_RX = re.compile(r"^u_puf\.u_core\.g_ro_bank\[(\d+)\]\.u_ro\.")
 RINGS, CELLS_PER_RING = 16, 32
 ANNOTATION_LIMIT = 3600
+# Masters that are supposed to be in the box: the tap grid was there in
+# the frozen DEF and the coordinates were chosen round it, and fillers go
+# everywhere at the end.
+TAP_RX = re.compile(r"__tap")
+FILL_RX = re.compile(r"__(fill|decap)_")
 
 
 def escape(name):
@@ -97,11 +118,27 @@ def read_intent(config_path):
     return out
 
 
+def read_box(config_path):
+    """The first soft obstruction in config.json as (x0, y0, x1, y1) in
+    dbu, or None when the config draws none. Decimal, as read_intent."""
+    from decimal import Decimal
+    with io.open(config_path, "r", encoding="utf-8") as fh:
+        cfg = json.load(fh, parse_float=Decimal)
+    boxes = cfg.get(BOX_KEY) or []
+    if not boxes:
+        return None
+    return tuple(int(Decimal(v) * 1000) for v in boxes[0])
+
+
 def read_def(path):
-    """COMPONENTS of a DEF, as {name: (status, x, y, orient)}.
+    """COMPONENTS of a DEF, as {name: (status, x, y, orient, master,
+    source)}.
 
     An entry can wrap onto several lines and ends at a semicolon, so lines
     are joined until one does. An UNPLACED component has no coordinate.
+    SOURCE is the DEF's word for who added an instance, DIST on the taps
+    and fillers here, and the netlist's own cells carry none. It is kept
+    so the box report can print it next to anything it finds.
     """
     comps = {}
     incomp = False
@@ -124,23 +161,27 @@ def read_def(path):
                 continue
             head = entry.split()
             name = head[1]
+            master = head[2] if len(head) > 2 else ""
+            src = re.search(r"\+ SOURCE (\w+)", entry)
+            source = src.group(1) if src else ""
             m = re.search(r"\+ (PLACED|FIXED|COVER|FIRM|LOCKED)\s*"
                           r"\( (-?\d+) (-?\d+) \) (\w+)", entry)
             if m:
                 comps[name] = (m.group(1), int(m.group(2)), int(m.group(3)),
-                               m.group(4))
+                               m.group(4), master, source)
             else:
-                comps[name] = ("UNPLACED", None, None, None)
+                comps[name] = ("UNPLACED", None, None, None, master, source)
     return comps
 
 
 # ----------------------------------------------------------------- compare
 
 
-def compare(intent, comps):
+def compare(intent, comps, box=None):
     rep = {"intended": len(intent), "found": 0, "in_place": 0,
            "missing": [], "moved": [], "rotated": [], "unplaced": [],
-           "max_disp_dbu": 0}
+           "max_disp_dbu": 0, "box": box,
+           "in_box": {"taps": 0, "fillers": 0, "other": []}}
     for name in sorted(intent):
         x, y, o = intent[name]
         c = comps.get(escape(name))
@@ -148,7 +189,7 @@ def compare(intent, comps):
             rep["missing"].append(name)
             continue
         rep["found"] += 1
-        st, cx, cy, co = c
+        st, cx, cy, co = c[:4]
         if st == "UNPLACED":
             rep["unplaced"].append(name)
             continue
@@ -163,7 +204,32 @@ def compare(intent, comps):
             ok = False
         if ok:
             rep["in_place"] += 1
+    if box is not None:
+        rep["in_box"] = box_contents(intent, comps, box)
     return rep
+
+
+def box_contents(intent, comps, box):
+    """Who else is standing in the box. Taps and fillers are counted,
+    everything else is listed with master, SOURCE and origin, bottom row
+    first and left to right within a row."""
+    x0, y0, x1, y1 = box
+    ours = set(escape(n) for n in intent)
+    out = {"taps": 0, "fillers": 0, "other": []}
+    for name, c in comps.items():
+        st, cx, cy, co, master, source = c
+        if st == "UNPLACED" or name in ours:
+            continue
+        if not (x0 <= cx < x1 and y0 <= cy < y1):
+            continue
+        if TAP_RX.search(master):
+            out["taps"] += 1
+        elif FILL_RX.search(master):
+            out["fillers"] += 1
+        else:
+            out["other"].append((name, master, source or "-", cx, cy))
+    out["other"].sort(key=lambda t: (t[4], t[3]))
+    return out
 
 
 class Results(object):
@@ -218,17 +284,28 @@ def run_checks(intent, rep):
 # ------------------------------------------------------------------ report
 
 
+def box_tail(rep):
+    """The box's share of the headline, empty when there is no box."""
+    if rep.get("box") is None:
+        return ""
+    other = rep["in_box"]["other"]
+    if not other:
+        return ", nothing else in the box but taps and fillers"
+    return ", %d other cell%s in the box" % (len(other),
+                                            "" if len(other) == 1 else "s")
+
+
 def headline(rep):
     if rep["intended"] == 0:
         return "config.json places nothing through %s" % KEY
     if rep["in_place"] == rep["intended"]:
-        return ("Arm A: %d of %d at their coordinate and orientation"
-                % (rep["in_place"], rep["intended"]))
+        return ("Arm A: %d of %d at their coordinate and orientation%s"
+                % (rep["in_place"], rep["intended"], box_tail(rep)))
     return ("Arm A: %d of %d in place, %d moved (max %.3f um), "
-            "%d rotated, %d missing, %d unplaced"
+            "%d rotated, %d missing, %d unplaced%s"
             % (rep["in_place"], rep["intended"], len(rep["moved"]),
                rep["max_disp_dbu"] / 1000.0, len(rep["rotated"]),
-               len(rep["missing"]), len(rep["unplaced"])))
+               len(rep["missing"]), len(rep["unplaced"]), box_tail(rep)))
 
 
 def body_lines(rep, limit=12):
@@ -246,6 +323,20 @@ def body_lines(rep, limit=12):
          + len(rep["unplaced"]))
     if n > len(out):
         out.append("  ... and %d more" % (n - len(out)))
+    if rep.get("box") is not None:
+        ib = rep["in_box"]
+        x0, y0, x1, y1 = rep["box"]
+        out.append("  box %d,%d to %d,%d holds %d taps, %d fillers and %d "
+                   "other cells"
+                   % (x0, y0, x1, y1, ib["taps"], ib["fillers"],
+                      len(ib["other"])))
+        for name, master, source, cx, cy in ib["other"][:limit]:
+            out.append("  in box  %s  %s  SOURCE %s  at %d,%d"
+                       % (name, master.replace("sky130_fd_sc_hd__", ""),
+                          source, cx, cy))
+        if len(ib["other"]) > limit:
+            out.append("  ... and %d more in the box"
+                       % (len(ib["other"]) - limit))
     return out
 
 
@@ -281,11 +372,26 @@ def fixture_intent():
     return full
 
 
+def fixture_box(intent):
+    """The box gen_placement_cfg.py would draw round the fixture: cell
+    origins, plus one inv_1 width and one row height."""
+    xs = [v[0] for v in intent.values()]
+    ys = [v[1] for v in intent.values()]
+    return (min(xs), min(ys), max(xs) + 1380, max(ys) + 2720)
+
+
 def fixture_def(intent, move=None, rotate=None, drop=None, unplace=None,
-                extra=True):
+                extra=True, in_box=()):
+    """in_box is a list of (name, master, source, x, y) to stand inside
+    the box, the way a tap, a filler or a buffer the flow added would."""
     lines = ["VERSION 5.8 ;", "DESIGN fixture ;",
              "UNITS DISTANCE MICRONS 1000 ;",
-             "COMPONENTS %d ;" % (len(intent) + (1 if extra else 0))]
+             "COMPONENTS %d ;" % (len(intent) + (1 if extra else 0)
+                                  + len(in_box))]
+    for name, master, source, x, y in in_box:
+        src = " + SOURCE %s" % source if source else ""
+        lines.append("    - %s %s%s + PLACED ( %d %d ) N ;"
+                     % (name, master, src, x, y))
     for name in sorted(intent):
         x, y, o = intent[name]
         if name == drop:
@@ -327,11 +433,13 @@ def selftest():
     def bad(msg):
         print("  FAIL  %s" % msg)
 
+    box = fixture_box(intent)
+
     def run(text):
         p = os.path.join(tmp, "x.def")
         with io.open(p, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(text)
-        rep = compare(intent, read_def(p))
+        rep = compare(intent, read_def(p), box)
         return rep, run_checks(intent, rep)
 
     try:
@@ -348,6 +456,41 @@ def selftest():
         ann = render_annotation(rep)
         if not ann.startswith("::notice"):
             bad("clean fixture should annotate as a notice")
+            ok = False
+        if rep["in_box"]["other"] or "nothing else in the box" not in ann:
+            bad("clean fixture: the stray instance outside the box was "
+                "reported as inside it")
+            ok = False
+
+        # The box report. A tap and a filler inside are counted and not
+        # named; a buffer inside is named with its master and SOURCE, and
+        # a cell just past the box's right edge is not inside. None of it
+        # is a check, so F01 to F05 stay green.
+        x0, y0, x1, y1 = box
+        guests = [("TAP_1", "sky130_fd_sc_hd__tapvpwrvgnd_1", "DIST",
+                   x0 + 4600, y0),
+                  ("FILLER_1", "sky130_fd_sc_hd__fill_2", "DIST",
+                   x0 + 9200, y0 + 2720),
+                  ("rebuffer1", "sky130_fd_sc_hd__buf_2", "TIMING",
+                   x0 + 13800, y0 + 5440),
+                  ("_777_", "sky130_fd_sc_hd__and3_2", "", x1, y0)]
+        rep, res = run(fixture_def(intent, in_box=guests))
+        ib = rep["in_box"]
+        named = [(n, m, s) for n, m, s, _, _ in ib["other"]]
+        want = [("rebuffer1", "sky130_fd_sc_hd__buf_2", "TIMING")]
+        if (ib["taps"], ib["fillers"], named) != (1, 1, want):
+            bad("box report: got %d taps, %d fillers, %s"
+                % (ib["taps"], ib["fillers"], named))
+            ok = False
+        elif res.failed():
+            bad("box report tripped %s" % ", ".join(res.failed()))
+            ok = False
+        else:
+            print("  ok    box  a tap and a filler counted, a buf_2 named "
+                  "with SOURCE TIMING, a cell on the far edge left out")
+        line = [l for l in body_lines(rep) if l.startswith("  in box")]
+        if len(line) != 1 or "buf_2" not in line[0] or "TIMING" not in line[0]:
+            bad("box report line: %s" % line)
             ok = False
 
         for want, label, kw in FAULTS:
@@ -411,7 +554,7 @@ def main():
             print("::error title=Arm A placement::no DEF at %s" % a.def_path)
         return 1 if a.strict else 0
     intent = read_intent(a.config)
-    rep = compare(intent, read_def(paths[0]))
+    rep = compare(intent, read_def(paths[0]), read_box(a.config))
     res = run_checks(intent, rep)
     print(headline(rep))
     for line in body_lines(rep):
