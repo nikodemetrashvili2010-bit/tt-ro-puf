@@ -84,6 +84,11 @@ def budget_us(measurements):
     return round(measurements * (WINDOW + 64) * CLK_NS / 1000 * 2 + 20)
 
 
+def budget_cycles_us(cycles):
+    """budget_us for a run of some other length, in reference clocks."""
+    return round((cycles + 64) * CLK_NS / 1000 * 2 + 20)
+
+
 def uio_word(win_sel=WIN_SEL, rd_ver=False):
     """What the board drives in. Only uio[3:1] are read by the chip."""
     return ((win_sel & 3) << 1) | (int(bool(rd_ver)) << 3)
@@ -464,3 +469,121 @@ async def test_deselect_shutdown(dut):
         assert int(project_rst_n.value) == 1
     await ClockCycles(dut.clk, 5)
     assert await measure(dut, PROTOCOL_ARM, 0) > 0
+
+
+# The four tests below are here rather than in test_e2.py because this is
+# the file the gate-level job runs. Until 10 September nothing had ever
+# selected a window other than 256, read a version byte, set the overflow
+# flag or picked a dead slot on the real netlist; the E.2 table does all of
+# that in RTL and all of it on Arm A, which gate level cannot enable. These
+# use PROTOCOL_ARM, so they land on Arm B at gate level, and they compare
+# windows to each other rather than to a model, so the absolute count gate
+# level gives is not assumed.
+
+
+@cocotb.test(timeout_time=budget_cycles_us(256 + 512 + 2048),
+             timeout_unit="us")
+async def test_window_select_scales_the_count(dut):
+    """uio[2:1] picks 512 and 2048, and the count scales with the window."""
+    await setup(dut)
+    short = await measure(dut, PROTOCOL_ARM, 4)
+    for sel, ratio in ((1, 2), (2, 8)):
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = uio_word(win_sel=sel)
+        await ClockCycles(dut.clk, 3)
+        await pulse_start(dut, PROTOCOL_ARM, 4)
+        en_window, _ = rtl_handles(dut)
+        # wait_for_result has WINDOW baked into its cycle budget, so wait
+        # for done here and audit only what a longer window changes.
+        saw_low = False
+        for elapsed in range(WINDOWS[sel] + 64):
+            await RisingEdge(dut.clk)
+            await ReadOnly()
+            done = int(dut.uio_out.value) & 1
+            if not done:
+                saw_low = True
+            if saw_low and done:
+                break
+        else:
+            raise AssertionError("done timeout on window select %d" % sel)
+        assert elapsed >= WINDOWS[sel] - 4, (
+            "window %d finished after %d clocks" % (WINDOWS[sel], elapsed))
+        long_ = await read_count(dut, PROTOCOL_ARM, 4)
+        dut._log.info("window %d count=%d against %d on 256",
+                      WINDOWS[sel], long_, short)
+        # One count of boundary at each end of the window, times the ratio.
+        assert abs(long_ - ratio * short) <= 2 * ratio + 2, (
+            sel, short, long_)
+        assert not (int(dut.uio_out.value) >> 4) & 1, (
+            "overflow on a safe window")
+    await FallingEdge(dut.clk)
+    dut.uio_in.value = uio_word()
+
+
+@cocotb.test(timeout_time=budget_cycles_us(16384 + 256 + 64),
+             timeout_unit="us")
+async def test_overflow_window_sets_a_sticky_flag(dut):
+    """16384 cycles wraps the counter; uio[4] sets, survives a safe run,
+    and only reset clears it."""
+    await setup(dut)
+    await FallingEdge(dut.clk)
+    dut.uio_in.value = uio_word(win_sel=3)
+    await ClockCycles(dut.clk, 3)
+    await pulse_start(dut, PROTOCOL_ARM, 0)
+    saw_low = False
+    for _ in range(WINDOWS[3] + 64):
+        await RisingEdge(dut.clk)
+        await ReadOnly()
+        done = int(dut.uio_out.value) & 1
+        if not done:
+            saw_low = True
+        if saw_low and done:
+            break
+    else:
+        raise AssertionError("done timeout on the overflow window")
+    assert (int(dut.uio_out.value) >> 4) & 1, "16384 cycles did not wrap"
+    await FallingEdge(dut.clk)
+    dut.uio_in.value = uio_word()
+    await ClockCycles(dut.clk, 3)
+    await measure(dut, PROTOCOL_ARM, 0)
+    assert (int(dut.uio_out.value) >> 4) & 1, (
+        "a safe window cleared a flag only reset may clear")
+    await FallingEdge(dut.clk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 4)
+    dut.rst_n.value = 1
+    dut.ui_in.value = 0
+    await ClockCycles(dut.clk, 5)
+    await ReadOnly()
+    assert not (int(dut.uio_out.value) >> 4) & 1, "reset did not clear it"
+
+
+@cocotb.test(timeout_time=budget_us(1), timeout_unit="us")
+async def test_version_bytes_read_back(dut):
+    """uio[3] swaps the count port for protocol 2 and build 0x1A, and
+    swapping back returns the stored count untouched."""
+    await setup(dut)
+    count = await measure(dut, PROTOCOL_ARM, 9)
+    for high, want in ((False, 2), (True, 0x1A)):
+        await FallingEdge(dut.clk)
+        dut.uio_in.value = uio_word(rd_ver=True)
+        dut.ui_in.value = ui_word(PROTOCOL_ARM, 9, high_byte=high)
+        await ClockCycles(dut.clk, 3)
+        await ReadOnly()
+        assert int(dut.uo_out.value) == want, (
+            "version byte %d read %#x" % (high, int(dut.uo_out.value)))
+    await FallingEdge(dut.clk)
+    dut.uio_in.value = uio_word()
+    await ClockCycles(dut.clk, 3)
+    assert await read_count(dut, PROTOCOL_ARM, 9) == count
+
+
+@cocotb.test(timeout_time=budget_us(1), timeout_unit="us")
+async def test_dead_slot_finishes_with_zero(dut):
+    """Two arm bits name four arms and there are three. Slot 48 has no
+    oscillator: done still rises, the count is zero, no macro enables."""
+    await setup(dut)
+    count = await measure(dut, 3, 0)
+    assert count == 0, "a slot with no oscillator counted %d" % count
+    assert not (int(dut.uio_out.value) >> 4) & 1
+

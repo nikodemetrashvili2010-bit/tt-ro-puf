@@ -143,7 +143,7 @@
     "lint_rtl.py": "e649c5b1ee098193931d100094e1ddb21a1f1324011f240ae698c874e7ea003e",
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
     "placement.cfg": "d8ca427015a626723ea9bc047a9266a8e1eaa065ed922394327cc10227cbec7c",
-    "placement_fidelity.py": "d8b6f4e82da33c65fa7138759f417a5b4485a5124c2b0a16cf07971df1316946",
+    "placement_fidelity.py": "b4b3298ef6e70f2c63b26b10332cd1a9a3acf31e7586c570543a426805c917dc",
     "preregister.py": "d983ccbce12077ebec4d1a782d464226898c9add12f38fe4687307bc1bad83cc",
     "release_manifest.py": "8d09459aaa0d09d7db518b0493129c2582e7b4cdbb03357bb7603f574b3a26c6",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
@@ -155,7 +155,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 121,
+  "gate_commands": 122,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {

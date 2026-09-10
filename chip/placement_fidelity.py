@@ -29,6 +29,15 @@ Checks:
   F03  every one carries its orientation
   F04  none is UNPLACED
   F05  the intent has every Arm A ring cell and nothing else
+  F06  every one is still the cell the frozen DEF had there
+
+F06 arrived on 10 September, after working out which nets cross the box:
+each ring's en input and its out tap, 32 nets, nothing else. Both are
+longer now that the box has pushed their other ends out, and the flow's
+answer to a longer wire is to resize the driver. A u_buf resized from
+buf_1 to buf_2 keeps its origin, so F02 and F03 call it in place, and
+the arm is no longer the one that was extracted. The masters come from
+the frozen DEF, the same file the coordinates came from.
 
 F05 is the guard against the intent itself: 16 rings of 32 cells, named as
 the RTL names them, and no macro, no Arm C cell, nothing hand-added.
@@ -130,6 +139,18 @@ def read_box(config_path):
     return tuple(int(Decimal(v) * 1000) for v in boxes[0])
 
 
+def read_masters(def_path, intent):
+    """{name: master} for the intent's cells as the frozen DEF has them,
+    keyed the unescaped way the intent is."""
+    comps = read_def(def_path)
+    out = {}
+    for name in intent:
+        c = comps.get(escape(name))
+        if c is not None:
+            out[name] = c[4]
+    return out
+
+
 def read_def(path):
     """COMPONENTS of a DEF, as {name: (status, x, y, orient, master,
     source)}.
@@ -177,10 +198,10 @@ def read_def(path):
 # ----------------------------------------------------------------- compare
 
 
-def compare(intent, comps, box=None):
+def compare(intent, comps, box=None, masters=None):
     rep = {"intended": len(intent), "found": 0, "in_place": 0,
            "missing": [], "moved": [], "rotated": [], "unplaced": [],
-           "max_disp_dbu": 0, "box": box,
+           "retyped": [], "max_disp_dbu": 0, "box": box,
            "in_box": {"taps": 0, "fillers": 0, "other": []}}
     for name in sorted(intent):
         x, y, o = intent[name]
@@ -201,6 +222,9 @@ def compare(intent, comps, box=None):
             ok = False
         if co != o:
             rep["rotated"].append((name, o, co))
+            ok = False
+        if masters and name in masters and c[4] != masters[name]:
+            rep["retyped"].append((name, masters[name], c[4]))
             ok = False
         if ok:
             rep["in_place"] += 1
@@ -278,6 +302,10 @@ def run_checks(intent, rep):
             shape_ok,
             "%d rings, %s cells each, %d stray"
             % (len(per), sorted(set(per.values())) or "-", len(stray)))
+    res.add("F06", "every one is still the cell the frozen DEF had there",
+            not rep["retyped"],
+            "%d retyped" % len(rep["retyped"]) if rep["retyped"]
+            else "none retyped")
     return res
 
 
@@ -299,13 +327,14 @@ def headline(rep):
     if rep["intended"] == 0:
         return "config.json places nothing through %s" % KEY
     if rep["in_place"] == rep["intended"]:
-        return ("Arm A: %d of %d at their coordinate and orientation%s"
+        return ("Arm A: %d of %d at their coordinate, orientation and cell%s"
                 % (rep["in_place"], rep["intended"], box_tail(rep)))
     return ("Arm A: %d of %d in place, %d moved (max %.3f um), "
-            "%d rotated, %d missing, %d unplaced%s"
+            "%d rotated, %d retyped, %d missing, %d unplaced%s"
             % (rep["in_place"], rep["intended"], len(rep["moved"]),
                rep["max_disp_dbu"] / 1000.0, len(rep["rotated"]),
-               len(rep["missing"]), len(rep["unplaced"]), box_tail(rep)))
+               len(rep["retyped"]), len(rep["missing"]),
+               len(rep["unplaced"]), box_tail(rep)))
 
 
 def body_lines(rep, limit=12):
@@ -315,12 +344,16 @@ def body_lines(rep, limit=12):
                    % (name, x, y, cx, cy, d / 1000.0))
     for name, o, co in rep["rotated"][:limit]:
         out.append("  rotated %s  %s -> %s" % (name, o, co))
+    for name, want, got in rep["retyped"][:limit]:
+        out.append("  retyped %s  %s -> %s"
+                   % (name, want.replace("sky130_fd_sc_hd__", ""),
+                      got.replace("sky130_fd_sc_hd__", "")))
     for name in rep["missing"][:limit]:
         out.append("  missing %s" % name)
     for name in rep["unplaced"][:limit]:
         out.append("  unplaced %s" % name)
-    n = (len(rep["moved"]) + len(rep["rotated"]) + len(rep["missing"])
-         + len(rep["unplaced"]))
+    n = (len(rep["moved"]) + len(rep["rotated"]) + len(rep["retyped"])
+         + len(rep["missing"]) + len(rep["unplaced"]))
     if n > len(out):
         out.append("  ... and %d more" % (n - len(out)))
     if rep.get("box") is not None:
@@ -381,7 +414,7 @@ def fixture_box(intent):
 
 
 def fixture_def(intent, move=None, rotate=None, drop=None, unplace=None,
-                extra=True, in_box=()):
+                extra=True, in_box=(), retype=None):
     """in_box is a list of (name, master, source, x, y) to stand inside
     the box, the way a tap, a filler or a buffer the flow added would."""
     lines = ["VERSION 5.8 ;", "DESIGN fixture ;",
@@ -403,8 +436,10 @@ def fixture_def(intent, move=None, rotate=None, drop=None, unplace=None,
             x += 460
         if name == rotate:
             o = "FN" if o == "N" else "S"
+        master = "sky130_fd_sc_hd__inv_2" if name == retype \
+            else "sky130_fd_sc_hd__inv_1"
         # wrap one entry to prove the joiner works
-        lines.append("    - %s sky130_fd_sc_hd__inv_1" % escape(name))
+        lines.append("    - %s %s" % (escape(name), master))
         lines.append("      + PLACED ( %d %d ) %s ;" % (x, y, o))
     if extra:
         lines.append("    - _999_ sky130_fd_sc_hd__buf_1 + PLACED "
@@ -418,6 +453,7 @@ FAULTS = (
     ("F02", "a cell one site to the right", dict(move=0)),
     ("F03", "a cell mirrored", dict(rotate=0)),
     ("F04", "a cell the flow never placed", dict(unplace=0)),
+    ("F06", "a cell resized in place, inv_1 to inv_2", dict(retype=0)),
 )
 
 
@@ -439,7 +475,8 @@ def selftest():
         p = os.path.join(tmp, "x.def")
         with io.open(p, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(text)
-        rep = compare(intent, read_def(p), box)
+        masters = {n: "sky130_fd_sc_hd__inv_1" for n in intent}
+        rep = compare(intent, read_def(p), box, masters)
         return rep, run_checks(intent, rep)
 
     try:
@@ -554,7 +591,9 @@ def main():
             print("::error title=Arm A placement::no DEF at %s" % a.def_path)
         return 1 if a.strict else 0
     intent = read_intent(a.config)
-    rep = compare(intent, read_def(paths[0]), read_box(a.config))
+    masters = read_masters(FROZEN_DEF, intent) if os.path.exists(
+        FROZEN_DEF) else None
+    rep = compare(intent, read_def(paths[0]), read_box(a.config), masters)
     res = run_checks(intent, rep)
     print(headline(rep))
     for line in body_lines(rep):
