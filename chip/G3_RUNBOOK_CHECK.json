@@ -210,10 +210,12 @@
         "chip/armc_place.tcl",
         "chip/placement.cfg"
       ],
-      "stop": "the build log does not say 528 instances were placed, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
+      "stop": "the build log does not say 512 Arm A cells were set FIRM at step 21, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
       "title": "pin Arm A. The Arm C regions have no mechanism in this flow",
       "writes": [
+        "dualarm/src/arma_place.tcl",
         "dualarm/src/config.json",
+        "dualarm/src/pdn_hook.tcl",
         "dualarm/src/placement.cfg"
       ]
     },
@@ -223,7 +225,10 @@
       "irreversible": false,
       "reads": [
         "dualarm/info.yaml",
-        "dualarm/src/config.json"
+        "dualarm/src/arma_place.tcl",
+        "dualarm/src/config.json",
+        "dualarm/src/pdn_cfg.tcl",
+        "dualarm/src/pdn_hook.tcl"
       ],
       "stop": "DRC, LVS, antenna or timing is not clean, or the run needs a fifth tile, which G.2 already decided against and which would make the whole area argument moot",
       "title": "the OpenLane run to GDS",

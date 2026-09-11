@@ -92,11 +92,19 @@ build's rings are intact, which is the first time that has been shown
 rather than assumed, and the SPICE and extraction numbers built on that
 netlist stand.
 
-Arm C rings live under `g_armc[N].u_ro` and number their inverters from
-zero where Arm A numbers from one. The walk does not care, which is the
-point of walking. `--arms AC` expects both; the frozen netlist is run
+Arm C rings live under `g_armc[N].u_roc` and number their inverters
+from zero where Arm A numbers from one. The walk does not care, which is
+the point of walking. `--arms AC` expects both; the frozen netlist is run
 with `A` and a three-arm netlist run with `AC` fails if Arm C is missing,
 rather than passing on an empty list.
+
+The first version of the file had that prefix as `u_ro`, the same as Arm
+A. Nothing in it could have said so: the fixture is built from the same
+constant, and the only real netlist on disk has no Arm C. It would have
+reported all sixteen Arm C rings missing under the title RING BROKEN, on
+the first run that carried it. It was caught because run 77's box report
+happened to print an Arm C instance name. The selftest now reads both
+instance names out of `ro_puf_core.v` and fails if the constants drift.
 
 ## Where it runs now
 
@@ -135,6 +143,66 @@ place", and the arm is no longer the one that was extracted. F06 now
 compares each cell's master against the frozen DEF, the file the
 coordinates came from. Frozen control 512 of 512; a `u_buf` resized to
 `buf_2` in a copy of it reads 511 of 512, one retyped, named.
+
+## Run 77 named them, and it was not the resizer
+
+Nikoloz pushed `run 76` while the shell was down. Its gds run, number
+77, is green through precheck, `gl_test` is green at 7 of 7 for the
+first time, and the box report came back with eleven foreign cells,
+against 93 in the two-arm build:
+
+    box 247480,70720 to 307740,171360 holds 74 taps, 1160 fillers
+      and 11 other cells
+    g_armc[13].u_roc.g_inv[2].u_inv  inv_1      at 307280,70720
+    _334_              and3_2                    at 292560,111520
+    _681_              dfrtp_2                   at 307280,114240
+    _684_              dfrtp_2                   at 306360,136000
+    _461_              a221o_2                   at 251160,155040
+    fanout54           clkdlybuf4s25_1  TIMING   at 253920,157760
+    clkbuf_4_10_0_clk  clkbuf_8         TIMING   at 266340,157760
+    clkload1           clkbuf_4         TIMING   at 274620,160480
+    clkbuf_4_11_0_clk  clkbuf_8         TIMING   at 274620,163200
+    _691_              dfrtp_2                   at 306360,163200
+    _338_              and3_2                    at 266340,168640
+
+Two of those did all five moves. `_334_` stands at 292560,111520, which
+is where ring 9's `g_inv[26]` was; that inverter went down a row into
+ring 7's row, and ring 7's three went sideways and down to make room.
+`clkbuf_4_10_0_clk` stands at 266340,157760, which is where ring 14's
+`g_inv[11]` was.
+
+So the section above, which reasoned its way to the resizer and the
+thirty-two crossing nets, was wrong about the cause.
+
+`_334_` is not a resizer cell. It is a netlist gate, one of the ring
+enable decoders, and it is inside the box because the soft obstruction
+is a density penalty to global placement and not a wall. A decoder whose
+one output goes to a ring NAND inside the box is pulled there by that
+wire hard enough to sit in the box anyway.
+
+Legalization then ignores the soft box, hands the decoder the ring cell's
+site, and moves the ring cell. Three flops spilled the same way, and the
+clock tree put its buffers where the flops were.
+
+Eleven is much better than 93, and it is not zero.
+
+The dont-touch regex would have changed nothing. The rule not to pull a
+lever before the run names the cause was right by exactly this much.
+
+F06 did not run on 77; that checker is in the next commit. So whether
+anything was retyped is still open.
+
+## What would hold it
+
+A hard obstruction, `PL_OBSTRUCTIONS`, that covers the box except the
+sites Arm A's own cells and the tap cells stand on. Global placement
+treats hard and soft the same, but legalization respects a hard one:
+every site in the box is then either blocked or already holding an Arm A
+cell, so a decoder that global placement left inside has to go to the
+nearest free site outside, and so does a clock buffer. That is the next
+change, and it wants two things checked at source before it is written:
+how LibreLane 3.0.5 turns the variable into blockages, and what fill
+insertion does with blocked sites. Not built today.
 
 ## Four pin functions the netlist had never run
 

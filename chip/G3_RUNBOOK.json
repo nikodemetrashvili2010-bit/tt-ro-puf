@@ -50,6 +50,7 @@
     "dualarm/src/ro_puf.v",
     "dualarm/src/tt_um_ro_puf.v",
     "dualarm/src/config.json",
+    "dualarm/src/pdn_cfg.tcl",
     "dualarm/info.yaml"
   ],
 
@@ -164,11 +165,12 @@
       "id": "place-regions",
       "title": "pin Arm A. The Arm C regions have no mechanism in this flow",
       "reads": ["chip/FLOW_SURFACE.json", "chip/ARMC_REGIONS.json", "chip/placement.cfg", "chip/armc_place.tcl"],
-      "writes": ["dualarm/src/placement.cfg", "dualarm/src/config.json"],
-      "stop": "the build log does not say 528 instances were placed, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
+      "writes": ["dualarm/src/placement.cfg", "dualarm/src/config.json", "dualarm/src/arma_place.tcl", "dualarm/src/pdn_hook.tcl"],
+      "stop": "the build log does not say 512 Arm A cells were set FIRM at step 21, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
       "notes": [
         "REVISED 2026-09-06, and the paragraph this replaces read: reads chip/armc_place.tcl, writes dualarm/build_armc/place.log, stop if any place_cell is rejected. Both halves of that assumed an interface the flow does not have. LibreLane 3.0.5 has no fence, region or cell group variable, and none of its four Tcl hooks is read by a placement step, so chip/armc_place.tcl cannot be sourced at all and its 512 place_cell lines have nowhere to go. chip/FLOW_SURFACE.json is that flow surface, taken from its own run record.",
         "What replaces it: MACRO_PLACEMENT_CFG, read by Odb.ManualMacroPlacement at step 17, which sets FIRM. chip/gen_placement_cfg.py emits src/placement.cfg with the 512 Arm A cells and, because that step reads MACRO_PLACEMENT_CFG instead of MACROS rather than as well as it, the sixteen hardened macros too. 528 lines. The declared fallback if tap and endcap insertion cannot work around a FIRM Arm A is MANUAL_GLOBAL_PLACEMENTS at step 33, which sets PLACED rather than FIRM.",
+        "REVISED 2026-09-11, twice over, because this note was not updated on 8 September when it should have been. MACRO_PLACEMENT_CFG at step 17 died on run 74: odb::cutRows leaves any row holding a fixed standard cell uncut, so the rows through the macro block ran whole and the endcaps landed inside three macros. The declared fallback, MANUAL_GLOBAL_PLACEMENTS at step 33, ran on runs 75 to 77: PLACED, and legalization moved 448 of 512 without the soft box and five of 512 with it; run 77 named an and3_2 decoder and a clock tree buffer standing on two of the sites. What replaces both: PDN_CFG now names src/pdn_hook.tcl, the one Tcl file the flow sources after the rows are cut and before any placement step, and it sources the untouched PDN recipe src/pdn_cfg.tcl and then src/arma_place.tcl, which sets the 512 cells FIRM at step 21. gen_placement_cfg.py renders it and P15 holds it to the frozen DEF; MANUAL_GLOBAL_PLACEMENTS is out of config.json because step 33 would set PLACED again, and P13 keeps it out. The stop rule above is reworded to match. docs/phaseG_run74.md, docs/phaseG_run77.md.",
         "The Arm C half is not done and is not a matter for this runbook. Without a region constraint, sixteen Arm C rings are sixteen rings handed to the same unconstrained placer that produced Arm A, which is Arm A treatment under a second name, and placing them by hand instead would satisfy G.2s build criterion by making it measure nothing. That is a G.2 question. See docs/phaseG_g3_step7.md."
       ],
       "irreversible": false,
@@ -177,7 +179,7 @@
     {
       "id": "harden",
       "title": "the OpenLane run to GDS",
-      "reads": ["dualarm/src/config.json", "dualarm/info.yaml"],
+      "reads": ["dualarm/src/config.json", "dualarm/src/pdn_hook.tcl", "dualarm/src/pdn_cfg.tcl", "dualarm/src/arma_place.tcl", "dualarm/info.yaml"],
       "writes": [
         "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def",
         "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds",

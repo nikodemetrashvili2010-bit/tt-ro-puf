@@ -36,8 +36,14 @@ Per ring:
   T06  exactly one tap, u_buf, a buf_1, on a loop net
 
 Arm A rings live under u_puf.u_core.g_ro_bank[N].u_ro and Arm C rings
-under u_puf.u_core.g_armc[N].u_ro. Arm B is a sealed hardened macro and is
-checked by the physical flow, not here. --arms says which to expect: the
+under u_puf.u_core.g_armc[N].u_roc. That last name was wrong in the first
+version of this file, u_ro for both, and nothing here could have said so:
+the fixture is built from the same constant, and the only real netlist on
+disk has no Arm C. Run 76's box report happened to print an Arm C instance
+name and that is how it was caught. So the selftest now reads the two
+instance names out of ro_puf_core.v and fails if the constants drift from
+the RTL. Arm B is a sealed hardened macro and is checked by the physical
+flow, not here. --arms says which to expect: the
 frozen two-arm netlist has no Arm C and is run with A; the three-arm build
 is run with AC and a missing Arm C fails T01.
 
@@ -65,7 +71,8 @@ DEFAULT_NL = os.path.join(
 
 N_INV = 30
 ARMS = {"A": ("Arm A", "u_puf.u_core.g_ro_bank[%d].u_ro."),
-        "C": ("Arm C", "u_puf.u_core.g_armc[%d].u_ro.")}
+        "C": ("Arm C", "u_puf.u_core.g_armc[%d].u_roc.")}
+CORE_RTL = os.path.join(PROJ, "dualarm", "src", "ro_puf_core.v")
 OUT_PINS = ("X", "Y", "Q", "Q_N", "out")
 INST_RX = re.compile(r"^\s*(sky130_fd_sc_hd__\w+|ro_macro_hard)\s+(\\?\S+)"
                      r"\s*\((.*?)\);", re.M | re.S)
@@ -377,6 +384,32 @@ def selftest():
             if not annotation(rep, ("A", "C")).startswith("::error"):
                 print("  FAIL  %s should annotate as an error" % want)
                 ok = False
+        # The names in ARMS against the RTL that makes them. This is the
+        # control that would have caught u_ro versus u_roc.
+        rtl_ok = True
+        if os.path.exists(CORE_RTL):
+            with io.open(CORE_RTL, "r", encoding="utf-8",
+                         errors="replace") as fh:
+                rtl = fh.read()
+            for key, (label, fmt) in sorted(ARMS.items()):
+                block, inst = re.match(r"u_puf\.u_core\.(\w+)\[%d\]\.(\w+)\.$",
+                                       fmt).groups()
+                # the parameter list nests parentheses, #(.IDX(i)), so
+                # match to the end of the line rather than to the first )
+                pat = (r"begin\s*:\s*" + block + r"\b[\s\S]{0,400}?\bro_\w+\s*"
+                       r"#\([^\n]*?\)\s*" + inst + r"\s*\(")
+                if re.search(pat, rtl):
+                    print("  ok    %s is %s[N].%s in ro_puf_core.v"
+                          % (label, block, inst))
+                else:
+                    print("  FAIL  %s: ro_puf_core.v has no %s[N].%s"
+                          % (label, block, inst))
+                    rtl_ok = False
+        else:
+            print("  FAIL  ro_puf_core.v not found, names unchecked")
+            rtl_ok = False
+        ok = ok and rtl_ok
+
         # The real-input control: the frozen two-arm netlist, Arm A only.
         if os.path.exists(DEFAULT_NL):
             rep = check_netlist(DEFAULT_NL, ("A",), 16)

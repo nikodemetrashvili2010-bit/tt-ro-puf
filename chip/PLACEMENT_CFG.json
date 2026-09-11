@@ -6,7 +6,7 @@
     "docs/phaseG_g3_step7.md."
   ],
   "_hashes_not_in_this_tree": {
-    "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7": "the MANUAL_GLOBAL_PLACEMENTS rendering. Its content is in dualarm/src/config.json since 8 September, held there by P13, but it is not committed as a file of its own. chip/hash_stability.py H06 requires this to be true."
+    "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7": "the MANUAL_GLOBAL_PLACEMENTS rendering, the mechanism retired on 11 September. It sat in dualarm/src/config.json from 8 to 11 September and is in no file now; P13 fails if it comes back. chip/hash_stability.py H06 requires this to be true."
   },
   "arm_c": {
     "blocked_by": "LibreLane exposes no fence, region or cell-group constraint. There is no supported way to tell this flow that sixteen groups of standard cells must each stay inside a rectangle.",
@@ -90,9 +90,9 @@
       "pass": true
     },
     {
-      "detail": "512 of 512 entries agree, 0 drift; MACRO_PLACEMENT_CFG absent; PL_OPTIMIZE_MIRRORING False",
+      "detail": "MANUAL_GLOBAL_PLACEMENTS absent; MACRO_PLACEMENT_CFG absent; PL_OPTIMIZE_MIRRORING False; PDN_CFG 'dir::pdn_hook.tcl'",
       "id": "P13",
-      "name": "config.json carries the rendering at step 33, not the cfg file at step 17, and mirroring is off",
+      "name": "config.json places nothing at step 17 or 33, keeps mirroring off, and hands the flow the PDN file",
       "pass": true
     },
     {
@@ -100,15 +100,33 @@
       "id": "P14",
       "name": "config.json soft-blocks exactly Arm A's footprint for global placement",
       "pass": true
+    },
+    {
+      "detail": "512 wanted, 512 in the hook, 0 missing, 0 extra, 0 moved, 0 unparsed lines, status FIRM, guard 512",
+      "id": "P15",
+      "name": "the hook fixes every Arm A cell FIRM at the frozen DEF's coordinate and orientation, and nothing else",
+      "pass": true
+    },
+    {
+      "detail": "2 live line(s); recipe sourced; hook sourced",
+      "id": "P16",
+      "name": "the PDN wrapper sources the recipe and then the hook, relative to itself, and nothing else",
+      "pass": true
     }
   ],
   "emitted": {
     "arm_a_cells": 512,
     "arm_c_cells": 0,
+    "hook": {
+      "arm_a_cells": 512,
+      "on_disk_matches_def": true,
+      "path": "dualarm/src/arma_place.tcl",
+      "sha256": "a20f0020b1bfba65d9d43a1d4722ddac574572f978ee9ec067dba012e65dc823"
+    },
     "lines": 528,
     "macros": 16,
     "path": "dualarm/src/placement.cfg",
-    "sha256": "d8ca427015a626723ea9bc047a9266a8e1eaa065ed922394327cc10227cbec7c"
+    "sha256": "92ec928f3d8a313242275524aefa750b12ea874c32a265b89900a9c2f7977d11"
   },
   "flow": {
     "name": "LibreLane",
@@ -121,8 +139,10 @@
   },
   "inputs": {
     "armc_place_tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
-    "config": "eabd8dbc95725d81b583e804f8a4ea77e811541561711dba9e2c5a03648133ff",
+    "config": "31cef254f424645f3e3774bd63ca305387f2e6e1cc1046eb5e76d9219568f763",
     "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+    "pdn_cfg_tcl": "8570b0402cb1c2a39e06987d444be3bbdaad6b38f8680ab78a3804783c0ae2ad",
+    "pdn_hook_tcl": "bc69f62365fa0b8d22d092f6b27967a05016eb649364b250a4b84a24d8571cac",
     "regions": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
     "surface": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa"
   },
@@ -137,32 +157,57 @@
           "171.36"
         ]
       ],
-      "why_soft": "run 75 moved 448 of 512 at step 34 because global placement had filled the sites; a soft blockage keeps gpl out and is ignored by dpl, so step 33 lands on empty sites. Held to the footprint by P14"
+      "why_soft": "kept from 9 September, one change at a time: with Arm A fixed it only keeps global placement's cells out of the gaps between the rings. Whether to drop it is an open question, not a decision. Held to the footprint by P14"
     },
-    "chosen": "MANUAL_GLOBAL_PLACEMENTS",
-    "chosen_on": "2026-09-08",
-    "config_key": "MANUAL_GLOBAL_PLACEMENTS",
-    "cost": "PLACED is not FIRM, so detailed placement may move a cell and only reports the displacement afterwards. chip/placement_fidelity.py reads the DEF the build writes and says whether any did",
+    "chosen": "the PDN hook",
+    "chosen_on": "2026-09-11",
+    "config_kept_clear_by": "P13",
+    "config_key": "PDN_CFG",
+    "config_value": "dir::pdn_hook.tcl",
+    "cost": "FIRM stops the placer and not the resizer; an upsized cell with no room overlaps a fixed neighbour and check_placement refuses that, so the build dies at step 32 and names it rather than moving anything. F06 in chip/placement_fidelity.py watches the quiet case. And the placement now rides on the PDN file, which a reader of config.json alone cannot see; P13 and P16 are the two ends of that wire",
     "entries": 512,
-    "held_equal_to_rendering_by": "P13",
-    "render": "gen_placement_cfg.py --emit-fallback",
-    "sha256": "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7",
-    "status": "PLACED",
-    "step": "Odb.ManualGlobalPlacement",
-    "step_position": 33,
-    "why": "the only mechanism left. FIRM at step 17 stops OpenROAD cutting the cell's row (ODB-0386), and Arm A shares 37 rows with the Arm B macro block; runs 72, 73 and 74"
-  },
-  "retired": {
-    "chosen_on": "2026-09-06",
-    "file": "src/placement.cfg",
-    "file_read_by_build": false,
-    "file_still_emitted": true,
-    "id": "MACRO_PLACEMENT_CFG",
-    "retired_on": "2026-09-08",
+    "file": "src/arma_place.tcl",
+    "held_to_the_def_by": "P15",
+    "pdn_recipe": "src/pdn_cfg.tcl",
+    "pdn_recipe_untouched": "held equal to array/pdn_cfg.tcl by sim/verify_macro_provenance.py",
+    "render": "gen_placement_cfg.py --emit DIR",
+    "sha256": "a20f0020b1bfba65d9d43a1d4722ddac574572f978ee9ec067dba012e65dc823",
+    "sourced_by": "src/pdn_hook.tcl",
     "status": "FIRM",
-    "step": "Odb.ManualMacroPlacement",
-    "step_position": 17,
-    "why_chosen": "the only mechanism in this flow that fixes a cell so detailed placement cannot move it",
-    "why_retired": "odb::cutRows at OpenROAD dcf3613 leaves any row holding a fixed standard cell uncut, so the rows through the macro block ran whole and the endcaps landed inside u_rob4, u_rob8 and u_rob12"
-  }
+    "step": "OpenROAD.GeneratePDN",
+    "step_position": 21,
+    "why": "step 21 is after the rows are cut (18) and the taps and endcaps are in (19), and before every placement step, and the flow writes the ODB it leaves behind. FIRM there has neither FIRM at 17's fault (ODB-0386, run 74) nor PLACED at 33's (legalization moved five cells, run 77)",
+    "wired_by": "P16",
+    "wrapper_lines": [
+      "source [file join [file dirname [info script]] pdn_cfg.tcl]",
+      "source [file join [file dirname [info script]] arma_place.tcl]"
+    ]
+  },
+  "retired": [
+    {
+      "chosen_on": "2026-09-06",
+      "file": "src/placement.cfg",
+      "file_read_by_build": false,
+      "file_still_emitted": true,
+      "id": "MACRO_PLACEMENT_CFG",
+      "retired_on": "2026-09-08",
+      "status": "FIRM",
+      "step": "Odb.ManualMacroPlacement",
+      "step_position": 17,
+      "why_chosen": "the only mechanism in this flow that fixes a cell so detailed placement cannot move it",
+      "why_retired": "odb::cutRows at OpenROAD dcf3613 leaves any row holding a fixed standard cell uncut, so the rows through the macro block ran whole and the endcaps landed inside u_rob4, u_rob8 and u_rob12"
+    },
+    {
+      "chosen_on": "2026-09-08",
+      "id": "MANUAL_GLOBAL_PLACEMENTS",
+      "in_tree": false,
+      "retired_on": "2026-09-11",
+      "sha256": "6601eea6269a19a2b63c9a07edfadea4e2d263d4e5dbea9556e78b9ba07090e7",
+      "status": "PLACED",
+      "step": "Odb.ManualGlobalPlacement",
+      "step_position": 33,
+      "why_chosen": "the only mechanism left once FIRM at step 17 was out",
+      "why_retired": "PLACED is moved by legalization when anything else wants the site. Run 76 held 507 of 512 under the soft box; run 77 named the two cells on the other five, an and3_2 decoder global placement left in the box and a clock tree buffer, neither of which a soft box or a dont-touch rule reaches"
+    }
+  ]
 }

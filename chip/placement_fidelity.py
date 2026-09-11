@@ -66,6 +66,21 @@ DEF names are escaped per bracket, g_ro_bank\\[0\\], and config.json names
 are not. That is LibreLane's own escape_verilog_name and the same rule
 gen_placement_cfg.py's P08 round-trips.
 
+Since 11 September the intent is not in config.json at all. Run 77 named
+what moved the five: an enable decoder global placement left inside the
+soft box and a clock tree buffer, both handed an inverter's site by
+legalization, which a PLACED cell cannot refuse. So the 512 cells are now
+set FIRM at step 21 by src/arma_place.tcl, sourced from src/pdn_hook.tcl,
+the wrapper PDN_CFG now names, and MANUAL_GLOBAL_PLACEMENTS is gone from
+config.json (it would set them PLACED again at step 33). This reads the
+hook file instead: DEF-spelled names with the backslashes, coordinates
+already in dbu, OpenDB orientations mapped back to the LEF ones the DEF
+carries. What it checks
+did not change: whether each cell is where it was told to be. With FIRM
+the honest expectation is 512 of 512, and a moved cell now means the
+flow overrode a fixed placement, which is a different and louder finding
+than legalization doing its job. The box is still read from config.json.
+
     python3 chip/placement_fidelity.py --selftest
     python3 chip/placement_fidelity.py \\
         --def dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def
@@ -85,10 +100,20 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 CONFIG = os.path.join(ROOT, "dualarm", "src", "config.json")
+HOOK = os.path.join(ROOT, "dualarm", "src", "arma_place.tcl")
 FROZEN_DEF = os.path.join(ROOT, "dualarm", "build_current",
                           "tt_um_nikodemetrashvili20_ro_puf.def")
-KEY = "MANUAL_GLOBAL_PLACEMENTS"
+KEY = "src/arma_place.tcl"
 BOX_KEY = "PL_SOFT_OBSTRUCTIONS"
+# One placement line of the hook: a braced DEF-spelled name, x and y in
+# dbu, an OpenDB orientation. Anything else that starts with arma_fix is
+# a line the flow would choke on, and is reported rather than skipped.
+HOOK_LINE_RX = re.compile(r"^arma_fix \{([^{}\s]+)\} (\d+) (\d+) "
+                          r"(R0|R90|R180|R270|MY|MYR90|MX|MXR90)$")
+# OpenDB orientation back to the LEF name the DEF carries. The inverse of
+# the table placers.py and gen_placement_cfg.py use.
+OA2LEF = {"R0": "N", "R180": "S", "R90": "W", "R270": "E",
+          "MY": "FN", "MX": "FS", "MXR90": "FW", "MYR90": "FE"}
 RING_RX = re.compile(r"^u_puf\.u_core\.g_ro_bank\[(\d+)\]\.u_ro\.")
 RINGS, CELLS_PER_RING = 16, 32
 ANNOTATION_LIMIT = 3600
@@ -107,23 +132,30 @@ def escape(name):
 # ------------------------------------------------------------------ inputs
 
 
-def read_intent(config_path):
-    """The placements config.json asks for, as {name: (x_dbu, y_dbu, orient)}.
+def read_intent(hook_path):
+    """The placements the hook asks for, as {name: (x_dbu, y_dbu, orient)},
+    keyed the unescaped way and with the LEF orientation, which is how
+    the rest of this file has compared them since 8 September.
 
-    Microns to dbu by Decimal, the way LibreLane's reader does it, so
-    261.28 comes out 261280 and not 261279. That trap was checked on 8
-    September and does not fire, because the flow parses config floats
-    as Decimal end to end; this mirrors it rather than assuming it.
+    Until 11 September this read MANUAL_GLOBAL_PLACEMENTS out of
+    config.json, microns to dbu by Decimal the way LibreLane's reader
+    does it. The hook carries dbu already, so nothing is multiplied. A
+    placement line that does not parse raises, because the flow's own
+    reading of it would be an error at step 21 and this should not be
+    quieter than the flow.
     """
-    from decimal import Decimal
-    with io.open(config_path, "r", encoding="utf-8") as fh:
-        cfg = json.load(fh, parse_float=Decimal)
-    body = cfg.get(KEY) or {}
     out = {}
-    for name, info in body.items():
-        x, y = info["location"]
-        out[name] = (int(Decimal(x) * 1000), int(Decimal(y) * 1000),
-                     str(info["orientation"]))
+    with io.open(hook_path, "r", encoding="utf-8") as fh:
+        for n, line in enumerate(fh, 1):
+            line = line.rstrip("\n")
+            if not line.startswith("arma_fix "):
+                continue
+            m = HOOK_LINE_RX.match(line)
+            if not m:
+                raise ValueError("%s line %d does not parse: %s"
+                                 % (hook_path, n, line))
+            name, x, y, orient = m.groups()
+            out[name.replace("\\", "")] = (int(x), int(y), OA2LEF[orient])
     return out
 
 
@@ -270,7 +302,7 @@ class Results(object):
 
 def run_checks(intent, rep):
     res = Results()
-    res.add("F01", "every instance config.json places is in the DEF",
+    res.add("F01", "every instance the hook places is in the DEF",
             not rep["missing"],
             "%d missing" % len(rep["missing"]) if rep["missing"]
             else "%d of %d found" % (rep["found"], rep["intended"]))
@@ -325,7 +357,7 @@ def box_tail(rep):
 
 def headline(rep):
     if rep["intended"] == 0:
-        return "config.json places nothing through %s" % KEY
+        return "%s places nothing" % KEY
     if rep["in_place"] == rep["intended"]:
         return ("Arm A: %d of %d at their coordinate, orientation and cell%s"
                 % (rep["in_place"], rep["intended"], box_tail(rep)))
@@ -480,6 +512,44 @@ def selftest():
         return rep, run_checks(intent, rep)
 
     try:
+        # The hook parser: a fixture hook of three cells, then one bad
+        # line. The names go in escaped and come out plain, the
+        # orientations go in as OpenDB names and come out as LEF ones,
+        # and a line the flow could not read is an error here too.
+        hp = os.path.join(tmp, "hook.tcl")
+        good = ["# header", "proc arma_fix {name x y orient} {}",
+                "set ::arma_fixed 0",
+                "arma_fix {u_puf.u_core.g_ro_bank\\[0\\].u_ro.u_nand} "
+                "247480 70720 R0",
+                "arma_fix {u_puf.u_core.g_ro_bank\\[1\\].u_ro.g_inv\\[2\\]"
+                ".u_inv} 250240 73440 MX",
+                "arma_fix {u_puf.u_core.g_ro_bank\\[1\\].u_ro.u_buf} "
+                "251620 73440 R0",
+                "if { $::arma_fixed != 3 } { error no }"]
+        with io.open(hp, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("\n".join(good) + "\n")
+        got = read_intent(hp)
+        want = {"u_puf.u_core.g_ro_bank[0].u_ro.u_nand": (247480, 70720, "N"),
+                "u_puf.u_core.g_ro_bank[1].u_ro.g_inv[2].u_inv":
+                    (250240, 73440, "FS"),
+                "u_puf.u_core.g_ro_bank[1].u_ro.u_buf": (251620, 73440, "N")}
+        if got != want:
+            bad("hook parser: got %r" % (got,))
+            ok = False
+        else:
+            print("  ok    hook 3 lines read back unescaped, dbu, LEF "
+                  "orientation")
+        with io.open(hp, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("\n".join(good[:4]) + "\n"
+                     "arma_fix {u_puf.u_core.g_ro_bank\\[1\\].u_ro.u_buf} "
+                     "251620 73440 N\n")
+        try:
+            read_intent(hp)
+            bad("hook parser accepted a LEF orientation")
+            ok = False
+        except ValueError:
+            print("  ok    hook a line with a LEF orientation is refused")
+
         rep, res = run(fixture_def(intent))
         if res.failed() or rep["in_place"] != len(intent):
             bad("clean fixture: failed %s, %d of %d in place"
@@ -573,7 +643,10 @@ def main():
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--def", dest="def_path", default=None,
                     help="the DEF to check; a glob is accepted")
-    ap.add_argument("--config", default=CONFIG)
+    ap.add_argument("--config", default=CONFIG,
+                    help="config.json, read for the soft obstruction")
+    ap.add_argument("--hook", default=HOOK,
+                    help="the arma_place.tcl the build sourced")
     ap.add_argument("--annotate", action="store_true",
                     help="emit a ::notice:: or ::error:: workflow command")
     ap.add_argument("--strict", action="store_true",
@@ -590,7 +663,7 @@ def main():
         if a.annotate:
             print("::error title=Arm A placement::no DEF at %s" % a.def_path)
         return 1 if a.strict else 0
-    intent = read_intent(a.config)
+    intent = read_intent(a.hook)
     masters = read_masters(FROZEN_DEF, intent) if os.path.exists(
         FROZEN_DEF) else None
     rep = compare(intent, read_def(paths[0]), read_box(a.config), masters)

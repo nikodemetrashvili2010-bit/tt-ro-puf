@@ -70,6 +70,40 @@ and says whether the cells stayed. `src/placement.cfg` is still emitted
 and diffed as the record of the geometry; nothing reads it. See
 docs/phaseG_run74.md.
 
+The fallback held 507 of 512 on 9 September, and run 77 on the 10th
+named what took the other five: `_334_`, an and3_2 ring-enable decoder,
+standing on ring 9's inv[26], and `clkbuf_4_10_0_clk`, a clock tree
+buffer, on ring 14's inv[11]. The soft obstruction is a density penalty
+to global placement and nothing at all to legalization, so a cell the
+wires pull hard enough sits in the box anyway, and the legalizer, which
+places by area, hands it the inverter's site. A hard obstruction would
+not do either: `FP_OBSTRUCTIONS` is the only one this flow has, it is
+created before `initialize_floorplan`, and `InitFloorplan::makeRows`
+ends by cutting every row round every blockage, so the rows Arm A stands
+in would be fragmented and endcapped at every fragment. Read at the
+pinned sources on 11 September.
+
+What is left is the hook. `PDN_CFG` is a Tcl file the flow sources
+inside OpenROAD at `OpenROAD.GeneratePDN`, step 21: after the rows are
+cut (18) and the taps and endcaps are in (19), before any placement
+step, and the step writes the ODB it leaves behind. This design already
+owns that file, for its met4-only macro grid. So since 11 September
+`PDN_CFG` points at `src/pdn_hook.tcl`, two lines: source the PDN recipe
+`src/pdn_cfg.tcl`, which stays exactly the borrowed recipe
+`sim/verify_macro_provenance.py` holds it to, then source
+`src/arma_place.tcl`, which this script renders: the 512 cells at their
+DEF coordinates, FIRM. FIRM at 21 has none of FIRM at 17's problem, the
+rows are already cut, and none of PLACED at 33's, nothing later in the
+flow moves a fixed cell. `MANUAL_GLOBAL_PLACEMENTS` has to be out of
+config.json for it, because placers.py sets PLACED unconditionally at
+step 33 and would demote the lot. P13 keeps config.json clear and
+pointed at the wrapper, P15 holds the hook to the DEF, P16 holds the
+wrapper to its two lines, and the gate diffs the hook against a fresh
+rendering. What FIRM does not stop is the resizer, same as run 73 read
+it; an upsized cell with no room overlaps a fixed neighbour and
+check_placement refuses that, so the build dies at step 32 and says
+which cell. See docs/phaseG_run77.md.
+
 Usage:
     python3 gen_placement_cfg.py --selftest
     python3 gen_placement_cfg.py
@@ -78,7 +112,8 @@ Usage:
     python3 gen_placement_cfg.py --refresh-surface
 
 The archived answers are `PLACEMENT_CFG.json` beside this file and
-`src/placement.cfg` under `dualarm/`. CI regenerates both and diffs.
+`src/placement.cfg` and `src/arma_place.tcl` under `dualarm/`. CI
+regenerates all three and diffs.
 """
 
 import argparse
@@ -108,6 +143,42 @@ RUN_DIR = os.path.join(ROOT, "gds_build", "runs", "wokwi")
 CFG_NAME = "placement.cfg"
 CFG_DEST = os.path.join(ROOT, "dualarm", "src", CFG_NAME)
 JSON_DEST = os.path.join(HERE, "PLACEMENT_CFG.json")
+
+# The hook, since 11 September. The file PDN_CFG names is the one Tcl
+# file this flow sources after the rows are cut and before anything is
+# placed. It is a two-line wrapper: the PDN recipe, which stays the
+# borrowed recipe sim/verify_macro_provenance.py holds it to, and then
+# this one, which sets the 512 cells FIRM.
+HOOK_NAME = "arma_place.tcl"
+HOOK_DEST = os.path.join(ROOT, "dualarm", "src", HOOK_NAME)
+PDN_RECIPE_NAME = "pdn_cfg.tcl"
+PDN_RECIPE_DEST = os.path.join(ROOT, "dualarm", "src", PDN_RECIPE_NAME)
+WRAPPER_NAME = "pdn_hook.tcl"
+WRAPPER_DEST = os.path.join(ROOT, "dualarm", "src", WRAPPER_NAME)
+PDN_CFG_KEY = "PDN_CFG"
+PDN_CFG_VALUE = "dir::" + WRAPPER_NAME
+HOOK_STATUS = "FIRM"
+HOOK_STEP = "OpenROAD.GeneratePDN"
+HOOK_STEP_POSITION = 21
+
+
+def source_line(name):
+    """The wrapper's lines. Relative to the file being sourced, not to
+    the working directory: the flow resolves dir:: to an absolute path
+    and sources that, and [info script] is that path while it runs."""
+    return "source [file join [file dirname [info script]] %s]" % name
+
+
+WRAPPER_LINES = (source_line(PDN_RECIPE_NAME), source_line(HOOK_NAME))
+# LEF orientation to the OpenDB name. The Tcl binding for dbOrientType
+# (src/odb/src/swig/tcl/dbenums.i at the pinned OpenROAD, typemap(in))
+# takes exactly the eight OpenDB names and raises "Unknown orientation"
+# on anything else, so a LEF name in the hook kills the build at step
+# 21. The same table placers.py uses, copied from the values.
+LEF2OA = {"N": "R0", "S": "R180", "W": "R90", "E": "R270",
+          "FN": "MY", "FS": "MX", "FW": "MXR90", "FE": "MYR90"}
+HOOK_LINE_RE = re.compile(r"^arma_fix \{([^{}\s]+)\} (\d+) (\d+) "
+                          r"(R0|R90|R180|R270|MY|MYR90|MX|MXR90)$")
 
 # The eight LEF orientations placers.py can translate. Anything else and
 # lef_rot_to_oa_rot asserts, which kills the build at step 17 rather than
@@ -513,10 +584,12 @@ def render_cfg(rows):
         "#",
         "# Not read by the build since 8 September 2026: pinning a standard",
         "# cell FIRM before the rows are cut stops OpenROAD cutting its row",
-        "# (ODB-0386), so the 512 Arm A cells go in through",
-        "# MANUAL_GLOBAL_PLACEMENTS in config.json at step 33 instead, and",
-        "# P13 holds that block equal to this file's Arm A lines. This file",
-        "# stays as the record of the geometry. See docs/phaseG_run74.md.",
+        "# (ODB-0386). From 8 to 11 September the 512 Arm A cells went in",
+        "# through MANUAL_GLOBAL_PLACEMENTS at step 33, PLACED, and the",
+        "# legalizer moved five of them. Since 11 September they go in FIRM",
+        "# at step 21 through src/arma_place.tcl, sourced by src/pdn_cfg.tcl,",
+        "# and P15 holds that file to the frozen DEF. This file stays as the",
+        "# record of the geometry. See docs/phaseG_run74.md and run77.",
         "#",
         "# Sixteen hardened Arm B macros and 512 Arm A standard cells, all",
         "# placed FIRM before the rows are cut. The macros are here because",
@@ -560,6 +633,102 @@ def render_fallback(rows):
     return json.dumps(doc, indent=2) + "\n"
 
 
+def render_hook(rows):
+    """src/arma_place.tcl: the 512 Arm A cells set FIRM inside OpenROAD at
+    the PDN step, one proc call per cell.
+
+    Coordinates in database units straight off the DEF, so nothing is
+    multiplied. Names as the DEF spells them, a backslash before each
+    bracket, which is what the ODB holds; braced so Tcl passes them
+    through untouched. Orientations as OpenDB names. The proc refuses a
+    name it cannot find and a cell that is already fixed, and the file
+    ends by refusing any count but the full one, so a partial placement
+    cannot pass as a quiet success in a log nobody reads."""
+    arma = [r for r in rows if r["kind"] == "arm_a"]
+    out = [
+        "# SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili",
+        "# SPDX-License-Identifier: Apache-2.0",
+        "#",
+        "# Arm A, fixed. Generated by chip/gen_placement_cfg.py, do not edit.",
+        "#",
+        "# Sourced by src/pdn_hook.tcl, inside OpenROAD, at",
+        "# OpenROAD.GeneratePDN, step 21: the one user Tcl the flow runs",
+        "# after the rows are cut (18) and the taps and endcaps are in (19),",
+        "# and before any placement step. FIRM at step 17 stops the rows",
+        "# being cut (ODB-0386, run 74); PLACED at step 33 is moved by",
+        "# legalization when anything else wants the site (runs 76 and 77).",
+        "# Set here, FIRM survives every step that follows: global placement",
+        "# treats a fixed cell as an obstacle, detailed placement never moves",
+        "# one, and the ODB this step writes carries the status forward.",
+        "#",
+        "# Coordinates in database units, straight from the frozen two-arm",
+        "# DEF. Names as the DEF spells them, a backslash before each",
+        "# bracket, braced so Tcl passes them through untouched.",
+        "# Orientations as OpenDB names, R0 for N and MX for FS: the Tcl",
+        "# binding takes exactly those eight names and errors on a LEF one,",
+        "# so the LEF names never appear here.",
+        "#",
+        "# See docs/phaseG_run77.md.",
+        "",
+        "proc arma_fix {name x y orient} {",
+        "    set block [ord::get_db_block]",
+        "    set inst [$block findInst $name]",
+        "    if { $inst == \"NULL\" } {",
+        "        error \"arma_place: no instance $name\"",
+        "    }",
+        "    if { [$inst isFixed] } {",
+        "        error \"arma_place: $name is already fixed\"",
+        "    }",
+        "    $inst setOrient $orient",
+        "    $inst setLocation $x $y",
+        "    $inst setPlacementStatus %s" % HOOK_STATUS,
+        "    incr ::arma_fixed",
+        "}",
+        "",
+        "set ::arma_fixed 0",
+    ]
+    for r in arma:
+        out.append("arma_fix {%s} %d %d %s"
+                   % (re_escape_brackets(r["inst"]), r["x_dbu"], r["y_dbu"],
+                      LEF2OA.get(r["orient"], r["orient"])))
+    out += [
+        "",
+        "if { $::arma_fixed != %d } {" % len(arma),
+        "    error \"arma_place: fixed $::arma_fixed of %d\"" % len(arma),
+        "}",
+        "puts \"\\[INFO\\] arma_place: $::arma_fixed Arm A cells set %s\""
+        % HOOK_STATUS,
+        "",
+    ]
+    return "\n".join(out)
+
+
+def parse_hook(text):
+    """What the hook file on disk asks for, read back without render_hook:
+    {DEF-spelled name: (x_dbu, y_dbu, oa_orient)}, the status the proc
+    sets, the count the file refuses to finish without, and every line
+    that looks like a placement but does not parse."""
+    entries = collections.OrderedDict()
+    bad = []
+    for line in text.splitlines():
+        if not line.startswith("arma_fix "):
+            continue
+        m = HOOK_LINE_RE.match(line)
+        if not m:
+            bad.append(line)
+            continue
+        name, x, y, orient = m.groups()
+        if name in entries:
+            bad.append(line)
+            continue
+        entries[name] = (int(x), int(y), orient)
+    sm = re.search(r"setPlacementStatus (\w+)", text)
+    status = sm.group(1) if sm else None
+    cm = re.search(r"\$::arma_fixed != (\d+)", text)
+    guard = int(cm.group(1)) if cm else None
+    return entries, status, guard, bad
+
+
 # ---------------------------------------------------------------------------
 # Checks
 # ---------------------------------------------------------------------------
@@ -592,7 +761,8 @@ def row_for(design, cell):
 
 
 def run_checks(design, surface, rows, config, tcl_text, regions,
-               fallback_text, fallback_again, on_fixture=False):
+               fallback_text, fallback_again, hook_text="", pdn_text="",
+               on_fixture=False):
     ck = Checks()
     units = design.units
 
@@ -752,31 +922,28 @@ def run_checks(design, surface, rows, config, tcl_text, regions,
            % (len(fallback_text), fallback_text == fallback_again))
 
     # -- P13 ---------------------------------------------------------------
-    # Since 8 September config.json carries the rendering itself, because
-    # step 33 takes a dict and not a file. So the block in config.json has
-    # to be this rendering and not a hand edit of it, the cfg file must not
-    # be wired in beside it (step 17 would pin Arm A again and the rows
-    # would stop being cut again), and mirroring has to be off or dpl.tcl
-    # flips the orientations the frozen DEF fixed.
-    want = json.loads(fallback_text, parse_float=decimal.Decimal)
-    want = want.get("MANUAL_GLOBAL_PLACEMENTS", {})
-    have = config.get("MANUAL_GLOBAL_PLACEMENTS") or {}
-
-    def loc(entry):
-        return [decimal.Decimal(str(v)) for v in entry["location"]]
-    drift = sorted(n for n in set(want) | set(have)
-                   if n not in want or n not in have
-                   or loc(want[n]) != loc(have[n])
-                   or want[n]["orientation"] != have[n]["orientation"])
+    # From 8 to 11 September config.json carried the rendering itself,
+    # under MANUAL_GLOBAL_PLACEMENTS, and this check held it equal. Since
+    # 11 September the placement is the hook's and config.json has to
+    # stay clear of both older mechanisms: MANUAL_GLOBAL_PLACEMENTS at
+    # step 33 sets PLACED unconditionally (placers.py) and would demote
+    # the FIRM the hook set at 21; MACRO_PLACEMENT_CFG at step 17 would
+    # pin before the rows are cut. Mirroring has to stay off or dpl.tcl
+    # flips the orientations the frozen DEF fixed, and PDN_CFG has to
+    # point at the file that sources the hook or nothing sources it.
+    mgp = config.get("MANUAL_GLOBAL_PLACEMENTS") is not None
     cfg_wired = "MACRO_PLACEMENT_CFG" in config
     mirror = config.get("PL_OPTIMIZE_MIRRORING")
-    ok = not drift and not cfg_wired and mirror is False
-    ck.add("P13", "config.json carries the rendering at step 33, not the "
-           "cfg file at step 17, and mirroring is off", ok,
-           "%d of %d entries agree, %d drift; MACRO_PLACEMENT_CFG %s; "
-           "PL_OPTIMIZE_MIRRORING %r"
-           % (len(want) - len([n for n in drift if n in want]), len(want),
-              len(drift), "wired" if cfg_wired else "absent", mirror))
+    pdn = config.get(PDN_CFG_KEY)
+    ok = (not mgp and not cfg_wired and mirror is False
+          and pdn == PDN_CFG_VALUE)
+    ck.add("P13", "config.json places nothing at step 17 or 33, keeps "
+           "mirroring off, and hands the flow the PDN file", ok,
+           "MANUAL_GLOBAL_PLACEMENTS %s; MACRO_PLACEMENT_CFG %s; "
+           "PL_OPTIMIZE_MIRRORING %r; %s %r"
+           % ("present" if mgp else "absent",
+              "wired" if cfg_wired else "absent", mirror,
+              PDN_CFG_KEY, pdn))
 
     # -- P14 ---------------------------------------------------------------
     # The soft obstruction in config.json is the derived one: a single
@@ -800,6 +967,48 @@ def run_checks(design, surface, rows, config, tcl_text, regions,
            "%d rectangle(s); derived %s; %s; %d pinned cells outside it"
            % (len(have_box), [dec_str(v) for v in box],
               "matches" if same else "differs", len(outside)))
+
+    # -- P15 ---------------------------------------------------------------
+    # The hook file on disk against the frozen DEF, read back by its own
+    # parser and not by the renderer: every Arm A cell once, spelled as
+    # the DEF spells it, at the DEF's coordinate in database units, with
+    # the DEF's orientation under its OpenDB name; nothing else placed;
+    # the proc sets FIRM; the guard at the end wants all of them. An
+    # orientation the flow cannot translate is P07's and is not judged
+    # here, or one fault would trip two checks.
+    entries, status, guard, badlines = parse_hook(hook_text)
+    want = {}
+    for c in arma:
+        want[c.inst] = (c.x, c.y, LEF2OA.get(c.orient, c.orient))
+    missing = sorted(n for n in want if n not in entries)
+    extra = sorted(n for n in entries if n not in want)
+    moved = sorted(n for n in want if n in entries
+                   and entries[n] != want[n])
+    ok = (not missing and not extra and not moved and not badlines
+          and status == HOOK_STATUS and guard == len(want)
+          and len(want) > 0)
+    ck.add("P15", "the hook fixes every Arm A cell FIRM at the frozen "
+           "DEF's coordinate and orientation, and nothing else",
+           ok, "%d wanted, %d in the hook, %d missing, %d extra, %d "
+           "moved, %d unparsed lines, status %s, guard %s"
+           % (len(want), len(entries), len(missing), len(extra),
+              len(moved), len(badlines), status, guard))
+
+    # -- P16 ---------------------------------------------------------------
+    # The wrapper PDN_CFG names is exactly two live lines, the PDN recipe
+    # and then the hook, each by the path of the file being sourced rather
+    # than the working directory, because the flow sources the PDN file
+    # by absolute path from wherever it happens to be running. Anything
+    # else live in it is a directive the borrowed recipe does not carry,
+    # and the recipe itself is held equal to array/pdn_cfg.tcl elsewhere.
+    live = tuple(l.strip() for l in pdn_text.splitlines()
+                 if l.strip() and not l.strip().startswith("#"))
+    ok = live == WRAPPER_LINES
+    ck.add("P16", "the PDN wrapper sources the recipe and then the hook, "
+           "relative to itself, and nothing else",
+           ok, "%d live line(s); recipe %s; hook %s"
+           % (len(live), "sourced" if WRAPPER_LINES[0] in live else "NOT",
+              "sourced" if WRAPPER_LINES[1] in live else "NOT"))
 
     return ck
 
@@ -876,6 +1085,11 @@ FIXTURE_SURFACE = {
 FIXTURE_TCL = ("# generated\nplace_cell -inst_name {u_x} "
                "-origin {1.0 2.0} -orient N -status FIRM\n")
 
+FIXTURE_WRAPPER = ("# fixture wrapper\n"
+                   "# " + WRAPPER_LINES[1] + " is not the real line\n"
+                   + WRAPPER_LINES[0] + "\n"
+                   + WRAPPER_LINES[1] + "\n")
+
 W = 1380          # the one cell width the fixture uses
 STEP = 460        # site
 RH = 2720         # row height
@@ -934,21 +1148,24 @@ def fixture_bundle(config=None):
     b = {"design": design, "surface": surface, "rows": rows,
          "config": loaded, "config_raw": cfg,
          "tcl": FIXTURE_TCL, "regions": regions,
-         "fallback": fb, "fallback_again": fb}
+         "fallback": fb, "fallback_again": fb,
+         "hook": render_hook(rows), "pdn_cfg": FIXTURE_WRAPPER}
     sync_fallback_into_config(b)
     return b
 
 
 def sync_fallback_into_config(b):
-    """The fixture's config.json carries the rendering, the way the real
-    one has since 8 September, so P13 has something to hold it to. Called
-    after every rebuild as well, or a design-side fault would move a cell,
-    re-render, and read as config drift on top of its own check."""
-    b["config_raw"]["MANUAL_GLOBAL_PLACEMENTS"] = json.loads(
-        b["fallback"])["MANUAL_GLOBAL_PLACEMENTS"]
+    """The fixture's config.json in the shape the real one has: the box,
+    mirroring off, the PDN file wired, and neither of the two retired
+    placement keys. From 8 to 11 September this put the fallback
+    rendering into the config for P13 to hold; now P13 wants it absent.
+    Called after every rebuild as well, so a design-side fault that moves
+    a cell and re-renders does not also read as a config fault."""
+    b["config_raw"].pop("MANUAL_GLOBAL_PLACEMENTS", None)
     b["config_raw"]["PL_OPTIMIZE_MIRRORING"] = False
     b["config_raw"]["PL_SOFT_OBSTRUCTIONS"] = [
         [float(v) for v in soft_obstruction(b["design"])]]
+    b["config_raw"][PDN_CFG_KEY] = PDN_CFG_VALUE
     b["config_raw"].pop("MACRO_PLACEMENT_CFG", None)
     b["config"] = json.loads(json.dumps(b["config_raw"]),
                              parse_float=decimal.Decimal)
@@ -957,7 +1174,8 @@ def sync_fallback_into_config(b):
 def check_bundle(b):
     return run_checks(b["design"], b["surface"], b["rows"], b["config"],
                       b["tcl"], b["regions"], b["fallback"],
-                      b["fallback_again"], on_fixture=True)
+                      b["fallback_again"], b["hook"], b["pdn_cfg"],
+                      on_fixture=True)
 
 
 def _arm_a_row(b, index=1):
@@ -980,6 +1198,7 @@ def rebuild(b):
         os.unlink(path)
     b["fallback"] = render_fallback(b["rows"])
     b["fallback_again"] = b["fallback"]
+    b["hook"] = render_hook(b["rows"])
     sync_fallback_into_config(b)
 
 
@@ -1057,9 +1276,12 @@ def f12_the_fallback_does_not_regenerate(b):
     b["fallback_again"] = b["fallback"].replace("location", "loc", 1)
 
 
-def f13_config_drifts_from_the_rendering(b):
-    name = sorted(b["config"]["MANUAL_GLOBAL_PLACEMENTS"])[0]
-    b["config"]["MANUAL_GLOBAL_PLACEMENTS"][name]["location"][0] += 1
+def f13_manual_global_placements_left_in(b):
+    """The retired rendering back in config.json, exactly as it was from
+    8 to 11 September. Step 33 would set every cell PLACED again."""
+    b["config"]["MANUAL_GLOBAL_PLACEMENTS"] = json.loads(
+        b["fallback"], parse_float=decimal.Decimal)[
+        "MANUAL_GLOBAL_PLACEMENTS"]
 
 
 def f13_the_cfg_file_is_wired_in_again(b):
@@ -1068,6 +1290,53 @@ def f13_the_cfg_file_is_wired_in_again(b):
 
 def f13_mirroring_is_left_on(b):
     b["config"]["PL_OPTIMIZE_MIRRORING"] = True
+
+
+def f13_pdn_cfg_not_handed_to_the_flow(b):
+    del b["config"][PDN_CFG_KEY]
+
+
+def _first_hook_line(b):
+    return [l for l in b["hook"].splitlines() if l.startswith("arma_fix ")][0]
+
+
+def f15_a_hook_coordinate_moves(b):
+    line = _first_hook_line(b)
+    parts = line.split(" ")
+    parts[2] = str(int(parts[2]) + STEP)
+    b["hook"] = b["hook"].replace(line, " ".join(parts), 1)
+
+
+def f15_a_hook_name_escaped_the_netlist_way(b):
+    """One leading backslash for the whole identifier, which is the
+    netlist's spelling and not the ODB's; findInst would return NULL."""
+    line = _first_hook_line(b)
+    name = line.split("{")[1].split("}")[0]
+    b["hook"] = b["hook"].replace("{" + name + "}",
+                                  "{\\" + unescape(name) + "}", 1)
+
+
+def f15_the_hook_sets_placed(b):
+    b["hook"] = b["hook"].replace("setPlacementStatus " + HOOK_STATUS,
+                                  "setPlacementStatus PLACED", 1)
+
+
+def f15_a_lef_orientation_in_the_hook(b):
+    line = _first_hook_line(b)
+    b["hook"] = b["hook"].replace(line, line.rsplit(" ", 1)[0] + " N", 1)
+
+
+def f16_the_wrapper_does_not_source_the_hook(b):
+    b["pdn_cfg"] = b["pdn_cfg"].replace("\n" + WRAPPER_LINES[1] + "\n",
+                                        "\n# " + WRAPPER_LINES[1] + "\n")
+
+
+def f16_the_wrapper_drops_the_recipe(b):
+    b["pdn_cfg"] = b["pdn_cfg"].replace(WRAPPER_LINES[0] + "\n", "", 1)
+
+
+def f16_a_directive_creeps_into_the_wrapper(b):
+    b["pdn_cfg"] += "add_pdn_stripe -grid g -layer met1\n"
 
 
 def f14_soft_obstruction_missing(b):
@@ -1104,16 +1373,32 @@ FAULTS = [
      "Arm C gets placed after all, without a decision"),
     ("P12", f12_the_fallback_does_not_regenerate,
      "the fallback rendering is not reproducible"),
-    ("P13", f13_config_drifts_from_the_rendering,
-     "a coordinate in config.json is not the one the generator renders"),
+    ("P13", f13_manual_global_placements_left_in,
+     "MANUAL_GLOBAL_PLACEMENTS is back and step 33 would demote FIRM"),
     ("P13", f13_the_cfg_file_is_wired_in_again,
      "MACRO_PLACEMENT_CFG comes back and step 17 would pin Arm A again"),
     ("P13", f13_mirroring_is_left_on,
      "PL_OPTIMIZE_MIRRORING is on and dpl.tcl may flip an orientation"),
+    ("P13", f13_pdn_cfg_not_handed_to_the_flow,
+     "PDN_CFG is unset, so the flow's default PDN file runs and no hook"),
     ("P14", f14_soft_obstruction_missing,
      "no soft obstruction, so global placement fills Arm A's sites"),
     ("P14", f14_soft_obstruction_stops_short,
      "the soft obstruction stops one site short of the rightmost cell"),
+    ("P15", f15_a_hook_coordinate_moves,
+     "a hook line puts a cell one site from its DEF coordinate"),
+    ("P15", f15_a_hook_name_escaped_the_netlist_way,
+     "a hook line spells a name the netlist's way, not the ODB's"),
+    ("P15", f15_the_hook_sets_placed,
+     "the hook sets PLACED, which legalization is free to move"),
+    ("P15", f15_a_lef_orientation_in_the_hook,
+     "a hook line carries N, which the Tcl binding refuses at step 21"),
+    ("P16", f16_the_wrapper_does_not_source_the_hook,
+     "the wrapper has the hook line only as a comment"),
+    ("P16", f16_the_wrapper_drops_the_recipe,
+     "the wrapper sources the hook and not the PDN recipe"),
+    ("P16", f16_a_directive_creeps_into_the_wrapper,
+     "a PDN directive is added to the wrapper instead of the recipe"),
 ]
 
 
@@ -1160,7 +1445,14 @@ def load():
         tcl = fh.read()
     with io.open(REGIONS_PATH, encoding="utf-8") as fh:
         regions = json.load(fh).get("regions", [])
-    return design, surface, rows, config, tcl, regions
+    hook = pdn = ""
+    if os.path.exists(HOOK_DEST):
+        with io.open(HOOK_DEST, encoding="utf-8") as fh:
+            hook = fh.read()
+    if os.path.exists(WRAPPER_DEST):
+        with io.open(WRAPPER_DEST, encoding="utf-8") as fh:
+            pdn = fh.read()
+    return design, surface, rows, config, tcl, regions, hook, pdn
 
 
 def main():
@@ -1182,20 +1474,22 @@ def main():
                             fresh["variable_count"], fresh["step_count"]))
         return 0
 
-    design, surface, rows, config, tcl, regions = load()
+    design, surface, rows, config, tcl, regions, hook, pdn = load()
     fallback = render_fallback(rows)
     res = run_checks(design, surface, rows, config, tcl, regions,
-                     fallback, render_fallback(rows))
+                     fallback, render_fallback(rows), hook, pdn)
     cfg_text = render_cfg(rows)
+    hook_text = render_hook(rows)
 
     macros = [r for r in rows if r["kind"] == "macro"]
     arma = [r for r in rows if r["kind"] == "arm_a"]
     print("placement.cfg for %s %s"
           % (surface["flow"]["name"], surface["flow"]["version_in_ci"]))
-    print("  mechanism  MACRO_PLACEMENT_CFG, Odb.ManualMacroPlacement, "
-          "step 17, FIRM")
-    print("  fallback   MANUAL_GLOBAL_PLACEMENTS, Odb.ManualGlobalPlacement,"
-          " step 33, PLACED")
+    print("  mechanism  %s sourced from %s, %s, step %d, %s"
+          % (HOOK_NAME, WRAPPER_NAME, HOOK_STEP, HOOK_STEP_POSITION,
+             HOOK_STATUS))
+    print("  retired    MACRO_PLACEMENT_CFG, step 17, FIRM (run 74); "
+          "MANUAL_GLOBAL_PLACEMENTS, step 33, PLACED (run 77)")
     print("  lines      %d macros + %d Arm A cells + %d Arm C cells = %d"
           % (len(macros), len(arma), 0, len(rows)))
     print("  region     %s"
@@ -1218,6 +1512,10 @@ def main():
         with io.open(dest, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(cfg_text)
         print("  wrote %s" % dest)
+        dest = os.path.join(a.emit, HOOK_NAME)
+        with io.open(dest, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(hook_text)
+        print("  wrote %s" % dest)
 
     if a.emit_fallback:
         with io.open(a.emit_fallback, "w", encoding="utf-8",
@@ -1235,61 +1533,103 @@ def main():
             ],
             "_hashes_not_in_this_tree": {
                 sha256_text(fallback):
-                    "the MANUAL_GLOBAL_PLACEMENTS rendering. Its content "
-                    "is in dualarm/src/config.json since 8 September, held "
-                    "there by P13, but it is not committed as a file of its "
-                    "own. chip/hash_stability.py H06 requires this to be "
-                    "true.",
+                    "the MANUAL_GLOBAL_PLACEMENTS rendering, the mechanism "
+                    "retired on 11 September. It sat in "
+                    "dualarm/src/config.json from 8 to 11 September and is "
+                    "in no file now; P13 fails if it comes back. "
+                    "chip/hash_stability.py H06 requires this to be true.",
             },
             "flow": surface["flow"],
             "mechanism": {
-                "chosen": "MANUAL_GLOBAL_PLACEMENTS",
-                "chosen_on": "2026-09-08",
-                "step": "Odb.ManualGlobalPlacement",
-                "step_position": 33,
-                "status": "PLACED",
-                "config_key": "MANUAL_GLOBAL_PLACEMENTS",
+                "chosen": "the PDN hook",
+                "chosen_on": "2026-09-11",
+                "step": HOOK_STEP,
+                "step_position": HOOK_STEP_POSITION,
+                "status": HOOK_STATUS,
+                "file": "src/" + HOOK_NAME,
+                "sourced_by": "src/" + WRAPPER_NAME,
+                "wrapper_lines": list(WRAPPER_LINES),
+                "pdn_recipe": "src/" + PDN_RECIPE_NAME,
+                "pdn_recipe_untouched": "held equal to array/pdn_cfg.tcl "
+                                        "by sim/verify_macro_provenance.py",
+                "config_key": PDN_CFG_KEY,
+                "config_value": PDN_CFG_VALUE,
                 "also": {
                     "PL_OPTIMIZE_MIRRORING": False,
                     "PL_SOFT_OBSTRUCTIONS": [
                         [dec_str(v) for v in soft_obstruction(design)]],
-                    "why_soft": "run 75 moved 448 of 512 at step 34 "
-                                "because global placement had filled the "
-                                "sites; a soft blockage keeps gpl out and "
-                                "is ignored by dpl, so step 33 lands on "
-                                "empty sites. Held to the footprint by P14",
+                    "why_soft": "kept from 9 September, one change at a "
+                                "time: with Arm A fixed it only keeps "
+                                "global placement's cells out of the gaps "
+                                "between the rings. Whether to drop it is "
+                                "an open question, not a decision. Held to "
+                                "the footprint by P14",
                 },
-                "why": "the only mechanism left. FIRM at step 17 stops "
-                       "OpenROAD cutting the cell's row (ODB-0386), and "
-                       "Arm A shares 37 rows with the Arm B macro block; "
-                       "runs 72, 73 and 74",
-                "cost": "PLACED is not FIRM, so detailed placement may "
-                        "move a cell and only reports the displacement "
-                        "afterwards. chip/placement_fidelity.py reads the "
-                        "DEF the build writes and says whether any did",
-                "held_equal_to_rendering_by": "P13",
-                "render": "gen_placement_cfg.py --emit-fallback",
-                "sha256": sha256_text(fallback),
+                "why": "step 21 is after the rows are cut (18) and the "
+                       "taps and endcaps are in (19), and before every "
+                       "placement step, and the flow writes the ODB it "
+                       "leaves behind. FIRM there has neither FIRM at "
+                       "17's fault (ODB-0386, run 74) nor PLACED at 33's "
+                       "(legalization moved five cells, run 77)",
+                "cost": "FIRM stops the placer and not the resizer; an "
+                        "upsized cell with no room overlaps a fixed "
+                        "neighbour and check_placement refuses that, so "
+                        "the build dies at step 32 and names it rather "
+                        "than moving anything. F06 in "
+                        "chip/placement_fidelity.py watches the quiet "
+                        "case. And the placement now rides on the PDN "
+                        "file, which a reader of config.json alone "
+                        "cannot see; P13 and P16 are the two ends of "
+                        "that wire",
+                "held_to_the_def_by": "P15",
+                "wired_by": "P16",
+                "config_kept_clear_by": "P13",
+                "render": "gen_placement_cfg.py --emit DIR",
+                "sha256": sha256_text(hook_text),
                 "entries": len(arma),
             },
-            "retired": {
-                "id": "MACRO_PLACEMENT_CFG",
-                "step": "Odb.ManualMacroPlacement",
-                "step_position": 17,
-                "status": "FIRM",
-                "chosen_on": "2026-09-06",
-                "retired_on": "2026-09-08",
-                "file": "src/" + CFG_NAME,
-                "why_chosen": "the only mechanism in this flow that fixes "
-                              "a cell so detailed placement cannot move it",
-                "why_retired": "odb::cutRows at OpenROAD dcf3613 leaves "
-                               "any row holding a fixed standard cell "
-                               "uncut, so the rows through the macro block "
-                               "ran whole and the endcaps landed inside "
-                               "u_rob4, u_rob8 and u_rob12",
-                "file_still_emitted": True,
-                "file_read_by_build": False,
-            },
+            "retired": [
+                {
+                    "id": "MACRO_PLACEMENT_CFG",
+                    "step": "Odb.ManualMacroPlacement",
+                    "step_position": 17,
+                    "status": "FIRM",
+                    "chosen_on": "2026-09-06",
+                    "retired_on": "2026-09-08",
+                    "file": "src/" + CFG_NAME,
+                    "why_chosen": "the only mechanism in this flow that "
+                                  "fixes a cell so detailed placement "
+                                  "cannot move it",
+                    "why_retired": "odb::cutRows at OpenROAD dcf3613 "
+                                   "leaves any row holding a fixed "
+                                   "standard cell uncut, so the rows "
+                                   "through the macro block ran whole and "
+                                   "the endcaps landed inside u_rob4, "
+                                   "u_rob8 and u_rob12",
+                    "file_still_emitted": True,
+                    "file_read_by_build": False,
+                },
+                {
+                    "id": "MANUAL_GLOBAL_PLACEMENTS",
+                    "step": "Odb.ManualGlobalPlacement",
+                    "step_position": 33,
+                    "status": "PLACED",
+                    "chosen_on": "2026-09-08",
+                    "retired_on": "2026-09-11",
+                    "why_chosen": "the only mechanism left once FIRM at "
+                                  "step 17 was out",
+                    "why_retired": "PLACED is moved by legalization when "
+                                   "anything else wants the site. Run 76 "
+                                   "held 507 of 512 under the soft box; "
+                                   "run 77 named the two cells on the "
+                                   "other five, an and3_2 decoder global "
+                                   "placement left in the box and a clock "
+                                   "tree buffer, neither of which a soft "
+                                   "box or a dont-touch rule reaches",
+                    "sha256": sha256_text(fallback),
+                    "in_tree": False,
+                },
+            ],
             "emitted": {
                 "path": "dualarm/src/" + CFG_NAME,
                 "sha256": sha256_text(cfg_text),
@@ -1297,6 +1637,14 @@ def main():
                 "macros": len(macros),
                 "arm_a_cells": len(arma),
                 "arm_c_cells": 0,
+                "hook": {
+                    "path": "dualarm/src/" + HOOK_NAME,
+                    "sha256": sha256_text(hook_text),
+                    "arm_a_cells": len(arma),
+                    "on_disk_matches_def": not [
+                        r for r in res.rows
+                        if r["id"] == "P15" and not r["pass"]],
+                },
             },
             "arm_c": {
                 "regions_on_record": len(regions),
@@ -1314,6 +1662,8 @@ def main():
                 "surface": sha256_file(SURFACE_PATH),
                 "regions": sha256_file(REGIONS_PATH),
                 "armc_place_tcl": sha256_file(TCL_PATH),
+                "pdn_cfg_tcl": sha256_file(PDN_RECIPE_DEST),
+                "pdn_hook_tcl": sha256_file(WRAPPER_DEST),
             },
             "checks": res.rows,
         }
