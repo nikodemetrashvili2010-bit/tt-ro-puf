@@ -36,6 +36,7 @@ jobs:
           python3 sim/spice/gono/verify_macro.py
           python3 sim/spice/gono/verify_dualarm.py
           python3 sim/spice/gono/verify_provenance.py
+          python3 sim/spice/gono/verify_ring_topology.py --selftest
           python3 sim/spice/gono/verify_ring_topology.py
           python3 sim/spice/gono/verify_build_bundle.py
           python3 sim/spice/gono/verify_noise.py
@@ -118,6 +119,7 @@ jobs:
           python3 chip/gen_placement_cfg.py --json /tmp/placement_cfg.json --emit /tmp/pl
           diff /tmp/placement_cfg.json chip/PLACEMENT_CFG.json
           diff /tmp/pl/placement.cfg chip/placement.cfg
+          diff /tmp/pl/arma_place.tcl dualarm/src/arma_place.tcl
           python3 chip/placement_fidelity.py --selftest
           python3 chip/placement_fidelity.py --strict --def dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def
           diff chip/placement.cfg dualarm/src/placement.cfg
@@ -170,17 +172,30 @@ jobs:
         if: failure()
         run: python3 chip/ci_failure_report.py --run-dir runs/wokwi --annotate
 
-      # Since 8 September the 512 Arm A cells go in at step 33 as PLACED,
-      # because FIRM at step 17 stops OpenROAD cutting their rows (run 74,
-      # docs/phaseG_run74.md). PLACED means detailed placement may move
-      # them and the flow only says so in a log nobody can read from here.
-      # So on a build that finished, read the DEF it wrote and put the
-      # answer in an annotation. Never fails the job: a moved cell is a
-      # result, and the gate-level test and precheck behind this job are
-      # worth having either way.
+      # From 8 to 11 September the 512 Arm A cells went in at step 33 as
+      # PLACED, because FIRM at step 17 stops OpenROAD cutting their rows
+      # (run 74, docs/phaseG_run74.md), and legalization moved five of
+      # them (run 77, docs/phaseG_run77.md). Since 11 September they are
+      # set FIRM at step 21 from src/pdn_hook.tcl, and the flow only says
+      # what it did with that in a log nobody can read from here. So on a
+      # build that finished, read the DEF it wrote and put the answer in
+      # an annotation. Never fails the job: a moved cell is a result, and
+      # the gate-level test and precheck behind this job are worth having
+      # either way.
       - name: Did Arm A stay where it was put
         if: success()
         run: python3 chip/placement_fidelity.py --def "runs/wokwi/final/def/*.def" --annotate
+
+      # Gate-level simulation never enables an Arm A or Arm C ring, they are
+      # zero-delay loops in the functional models, so a buffer the flow
+      # spliced into one would reach silicon unseen. This walks every loop
+      # in the netlist the GDS was cut from and says so on the run page.
+      # Same arrangement as the step above: it reports, it does not fail the
+      # job. Until 10 September the only ring check read the two-arm netlist
+      # and, it turned out, would have passed a broken ring anyway.
+      - name: Are the rings still rings
+        if: success()
+        run: python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist "runs/wokwi/final/nl/*.nl.v" --annotate
 
   precheck:
     needs: gds
