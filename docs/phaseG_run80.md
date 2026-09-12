@@ -301,9 +301,14 @@ emits no Arm C line and P11 still fails if one appears, and that stays
 true until a layout is chosen. The gate gains three commands, 126, and
 `ARMC_TEMPLATE.json` is regenerated and diffed like the other records.
 
-The script is 1132 lines, 359 of them fixture and selftest. That is an
-eighth over the thousand-line yardstick for a day, and it was one
-sitting. The rest of the day's diff is 58 lines across seven files.
+The script is 1169 lines, 363 of them fixture and selftest. That is a
+sixth over the thousand-line yardstick for a day, and it was one
+sitting. The rest of the day's diff is 98 lines across seven files.
+
+Those four numbers were 1132, 359, an eighth and 58 an hour ago, written
+before the last section of this writeup existed, and they were wrong by
+the time it did. Re-derived rather than left, which is the rule, and the
+rule caught its own author.
 
 ## The choice, made
 
