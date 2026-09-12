@@ -369,7 +369,10 @@ def headline(rep):
                len(rep["unplaced"]), box_tail(rep)))
 
 
-def body_lines(rep, limit=12):
+BOX_LIMIT = 40     # run 80 had 24 in the box and the old limit named 12
+
+
+def body_lines(rep, limit=12, box_limit=BOX_LIMIT):
     out = []
     for name, x, y, cx, cy, d in rep["moved"][:limit]:
         out.append("  moved   %s  %d,%d -> %d,%d  (%.3f um)"
@@ -395,13 +398,13 @@ def body_lines(rep, limit=12):
                    "other cells"
                    % (x0, y0, x1, y1, ib["taps"], ib["fillers"],
                       len(ib["other"])))
-        for name, master, source, cx, cy in ib["other"][:limit]:
+        for name, master, source, cx, cy in ib["other"][:box_limit]:
             out.append("  in box  %s  %s  SOURCE %s  at %d,%d"
                        % (name, master.replace("sky130_fd_sc_hd__", ""),
                           source, cx, cy))
-        if len(ib["other"]) > limit:
+        if len(ib["other"]) > box_limit:
             out.append("  ... and %d more in the box"
-                       % (len(ib["other"]) - limit))
+                       % (len(ib["other"]) - box_limit))
     return out
 
 

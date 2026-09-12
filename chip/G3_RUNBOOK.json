@@ -245,7 +245,8 @@
         "preregister.py",
         "release_manifest.py",
         "g3_runbook.py",
-        "lint_rtl.py"
+        "lint_rtl.py",
+        "armc_template.py"
       ],
       "regenerates": [
         "TILE_BUDGET.json",
@@ -264,7 +265,8 @@
         "e2_ro_puf.v",
         "e2_tt_um_ro_puf.v",
         "e2_tb_plan.csv",
-        "RTL_LINT.json"
+        "RTL_LINT.json",
+        "ARMC_TEMPLATE.json"
       ],
       "expected_failures": [
         {

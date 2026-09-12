@@ -77,6 +77,7 @@ PRODUCERS = {
     "OBSERVABILITY.json": "observability_spec.py",
     "e2_acceptance.csv": "observability_spec.py",
     "ARMC_REGIONS.json": "gen_armc.py",
+    "ARMC_TEMPLATE.json": "armc_template.py",
     "PLACEMENT_CFG.json": "gen_placement_cfg.py",
     "placement.cfg": "gen_placement_cfg.py",
     "armc_place.tcl": "gen_armc.py",

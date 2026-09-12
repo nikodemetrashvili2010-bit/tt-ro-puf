@@ -1,0 +1,1507 @@
+{
+ "_comment": [
+  "The hand-placed Arm C, scored against the frozen G.2 rule",
+  "and laid out as a template that a FIRM placement at step 21",
+  "can replay. Written by chip/armc_template.py from the frozen",
+  "two-arm DEF. Nothing in the build reads this file. The two",
+  "layouts are candidates and neither is chosen; see",
+  "docs/phaseG_run80.md for what the choice turns on."
+ ],
+ "arm_a": {
+  "box_um": [
+   247.48,
+   70.72,
+   307.74,
+   171.36
+  ],
+  "cells": 512,
+  "centroid_um": [
+   273.189,
+   114.341
+  ],
+  "rows": 37
+ },
+ "checks": [
+  {
+   "detail": "sha256 c4e3d3049d0e",
+   "id": "T01",
+   "name": "the criteria file is the one that was frozen",
+   "pass": true
+  },
+  {
+   "detail": "6 constraints",
+   "id": "T02",
+   "name": "every hard constraint names a field the option carries and an operator this script implements",
+   "pass": true
+  },
+  {
+   "detail": "8 cells a row at 3 sites is 24, 27 available",
+   "id": "T03",
+   "name": "a ring's cells fit in the sites between the two reserved tap sites, four rows tall",
+   "pass": true
+  },
+  {
+   "detail": "region 56 sites, tap pitch 56",
+   "id": "T04",
+   "name": "a region is exactly one tap pitch wide, so every single-phase row inside it holds one tap",
+   "pass": true
+  },
+  {
+   "detail": "strip 2, band 6, modulo 28 sites",
+   "id": "T05",
+   "name": "every row's taps sit on one phase, and every row of one kind on the same one",
+   "pass": true
+  },
+  {
+   "detail": "512 cells, 419 taps, 486 endcap sites",
+   "id": "T06",
+   "name": "no Arm A cell stands on a tap or an endcap",
+   "pass": true
+  },
+  {
+   "detail": "16 of 16, from 21 packed strip slots outside the box",
+   "id": "T07",
+   "name": "the column layout found all sixteen beside Arm A",
+   "pass": true
+  },
+  {
+   "detail": "band_high 4 of 4, band_low 4 of 4, strip 8 of 8",
+   "id": "T08",
+   "name": "the quota sums to the ring count and every part found its share",
+   "pass": true
+  },
+  {
+   "detail": "32 regions",
+   "id": "T09",
+   "name": "every chosen region sees its taps on the reserved sites and nowhere else, or sees none",
+   "pass": true
+  },
+  {
+   "detail": "H1 ok, H2 ok, H3 ok, H4 ok, H5 ok, H6 ok",
+   "id": "T10",
+   "name": "the hand-placed option clears every hard constraint",
+   "pass": true
+  },
+  {
+   "detail": "cells 247.48, 70.72, 307.74, 171.36, config 247.48, 70.72, 307.74, 171.36",
+   "id": "T11",
+   "name": "the soft box in config.json is the Arm A cells' box",
+   "pass": true
+  },
+  {
+   "detail": "buf_1 1380, decap_3 1380, inv_1 1380, nand2_1 1380",
+   "id": "T12",
+   "name": "every master this script sizes packs to one width",
+   "pass": true
+  },
+  {
+   "detail": "512 cells, masters buf_1, inv_1, nand2_1",
+   "id": "T13",
+   "name": "the DEF holds the recorded number of Arm A cells and they are the ring's three masters",
+   "pass": true
+  },
+  {
+   "detail": "column, 16 regions",
+   "id": "T14",
+   "name": "the layout the build is to use names one of the two",
+   "pass": true
+  },
+  {
+   "detail": "widths 188, 716 sites",
+   "id": "T15",
+   "name": "the rows come in exactly two widths, band and strip",
+   "pass": true
+  }
+ ],
+ "chosen_layout": "column",
+ "chosen_layout_decided": "2026-09-12, after the freeze, not part of the G.2 rule. See G2_AMENDMENT.json.",
+ "gate": "G.2 amendment",
+ "layouts": {
+  "column": {
+   "bbox_um": [
+    253.46,
+    27.2,
+    330.74,
+    206.72
+   ],
+   "by_where": {
+    "strip": 16
+   },
+   "centroid_offset_from_arm_a_um": [
+    15.691,
+    2.619
+   ],
+   "centroid_um": [
+    288.88,
+    116.96
+   ],
+   "chosen": true,
+   "count": 16,
+   "inside_arm_a_box": 0,
+   "max_dist_to_arm_a_um": 88.972,
+   "regions": [
+    {
+     "dist_to_arm_a_um": 60.331,
+     "index": 0,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 48.96,
+     "y1_um": 59.84
+    },
+    {
+     "dist_to_arm_a_um": 62.853,
+     "index": 1,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 48.96,
+     "y1_um": 59.84
+    },
+    {
+     "dist_to_arm_a_um": 65.538,
+     "index": 2,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 174.08,
+     "y1_um": 184.96
+    },
+    {
+     "dist_to_arm_a_um": 67.867,
+     "index": 3,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 174.08,
+     "y1_um": 184.96
+    },
+    {
+     "dist_to_arm_a_um": 71.151,
+     "index": 4,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 38.08,
+     "y1_um": 48.96
+    },
+    {
+     "dist_to_arm_a_um": 73.302,
+     "index": 5,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 38.08,
+     "y1_um": 48.96
+    },
+    {
+     "dist_to_arm_a_um": 74.756,
+     "index": 6,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 304.98,
+     "x1_um": 330.74,
+     "y0_um": 48.96,
+     "y1_um": 59.84
+    },
+    {
+     "dist_to_arm_a_um": 76.367,
+     "index": 7,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 184.96,
+     "y1_um": 195.84
+    },
+    {
+     "dist_to_arm_a_um": 78.375,
+     "index": 8,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 184.96,
+     "y1_um": 195.84
+    },
+    {
+     "dist_to_arm_a_um": 79.018,
+     "index": 9,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 304.98,
+     "x1_um": 330.74,
+     "y0_um": 174.08,
+     "y1_um": 184.96
+    },
+    {
+     "dist_to_arm_a_um": 81.987,
+     "index": 10,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 27.2,
+     "y1_um": 38.08
+    },
+    {
+     "dist_to_arm_a_um": 83.732,
+     "index": 11,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 304.98,
+     "x1_um": 330.74,
+     "y0_um": 38.08,
+     "y1_um": 48.96
+    },
+    {
+     "dist_to_arm_a_um": 83.861,
+     "index": 12,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 27.2,
+     "y1_um": 38.08
+    },
+    {
+     "dist_to_arm_a_um": 87.208,
+     "index": 13,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 195.84,
+     "y1_um": 206.72
+    },
+    {
+     "dist_to_arm_a_um": 88.207,
+     "index": 14,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 304.98,
+     "x1_um": 330.74,
+     "y0_um": 184.96,
+     "y1_um": 195.84
+    },
+    {
+     "dist_to_arm_a_um": 88.972,
+     "index": 15,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 195.84,
+     "y1_um": 206.72
+    }
+   ],
+   "span_pct_of_die": [
+    23.1,
+    79.5
+   ],
+   "span_um": [
+    77.28,
+    179.52
+   ],
+   "what": "all sixteen in the strip beside Arm A, nearest its centroid first, none inside its box"
+  },
+  "three_part": {
+   "bbox_um": [
+    10.58,
+    5.44,
+    330.74,
+    217.6
+   ],
+   "by_where": {
+    "band_high": 4,
+    "band_low": 4,
+    "strip": 8
+   },
+   "centroid_offset_from_arm_a_um": [
+    -49.399,
+    -8.601
+   ],
+   "centroid_um": [
+    223.79,
+    105.74
+   ],
+   "chosen": false,
+   "count": 16,
+   "inside_arm_a_box": 0,
+   "max_dist_to_arm_a_um": 270.312,
+   "regions": [
+    {
+     "dist_to_arm_a_um": 60.331,
+     "index": 0,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 48.96,
+     "y1_um": 59.84
+    },
+    {
+     "dist_to_arm_a_um": 62.853,
+     "index": 1,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 48.96,
+     "y1_um": 59.84
+    },
+    {
+     "dist_to_arm_a_um": 65.538,
+     "index": 2,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 174.08,
+     "y1_um": 184.96
+    },
+    {
+     "dist_to_arm_a_um": 67.867,
+     "index": 3,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 174.08,
+     "y1_um": 184.96
+    },
+    {
+     "dist_to_arm_a_um": 71.151,
+     "index": 4,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 38.08,
+     "y1_um": 48.96
+    },
+    {
+     "dist_to_arm_a_um": 73.302,
+     "index": 5,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 279.22,
+     "x1_um": 304.98,
+     "y0_um": 38.08,
+     "y1_um": 48.96
+    },
+    {
+     "dist_to_arm_a_um": 74.756,
+     "index": 6,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 304.98,
+     "x1_um": 330.74,
+     "y0_um": 48.96,
+     "y1_um": 59.84
+    },
+    {
+     "dist_to_arm_a_um": 76.367,
+     "index": 7,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "strip",
+     "x0_um": 253.46,
+     "x1_um": 279.22,
+     "y0_um": 184.96,
+     "y1_um": 195.84
+    },
+    {
+     "dist_to_arm_a_um": 270.312,
+     "index": 8,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11,
+       39
+      ]
+     ],
+     "where": "band_low",
+     "x0_um": 10.58,
+     "x1_um": 36.34,
+     "y0_um": 5.44,
+     "y1_um": 16.32
+    },
+    {
+     "dist_to_arm_a_um": 179.504,
+     "index": 9,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11,
+       39
+      ]
+     ],
+     "where": "band_low",
+     "x0_um": 113.62,
+     "x1_um": 139.38,
+     "y0_um": 5.44,
+     "y1_um": 16.32
+    },
+    {
+     "dist_to_arm_a_um": 124.586,
+     "index": 10,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11,
+       39
+      ]
+     ],
+     "where": "band_low",
+     "x0_um": 190.9,
+     "x1_um": 216.66,
+     "y0_um": 5.44,
+     "y1_um": 16.32
+    },
+    {
+     "dist_to_arm_a_um": 108.79,
+     "index": 11,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11,
+       39
+      ]
+     ],
+     "where": "band_low",
+     "x0_um": 293.94,
+     "x1_um": 319.7,
+     "y0_um": 5.44,
+     "y1_um": 16.32
+    },
+    {
+     "dist_to_arm_a_um": 268.203,
+     "index": 12,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       11,
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "band_high",
+     "x0_um": 10.58,
+     "x1_um": 36.34,
+     "y0_um": 206.72,
+     "y1_um": 217.6
+    },
+    {
+     "dist_to_arm_a_um": 176.313,
+     "index": 13,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       11,
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "band_high",
+     "x0_um": 113.62,
+     "x1_um": 139.38,
+     "y0_um": 206.72,
+     "y1_um": 217.6
+    },
+    {
+     "dist_to_arm_a_um": 119.942,
+     "index": 14,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       11,
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "band_high",
+     "x0_um": 190.9,
+     "x1_um": 216.66,
+     "y0_um": 206.72,
+     "y1_um": 217.6
+    },
+    {
+     "dist_to_arm_a_um": 103.439,
+     "index": 15,
+     "inside_arm_a_box": false,
+     "tap_offsets": [
+      [
+       11,
+       39
+      ],
+      [
+       11
+      ],
+      [
+       39
+      ],
+      [
+       11
+      ]
+     ],
+     "where": "band_high",
+     "x0_um": 293.94,
+     "x1_um": 319.7,
+     "y0_um": 206.72,
+     "y1_um": 217.6
+    }
+   ],
+   "span_pct_of_die": [
+    95.6,
+    94.0
+   ],
+   "span_um": [
+    320.16,
+    212.16
+   ],
+   "what": "gen_armc.py's split, eight in the strip and four in each band, re-sited so one template fits"
+  }
+ },
+ "recorded_regions": {
+  "distinct_tap_patterns": 14,
+  "file": "ARMC_REGIONS.json",
+  "first_row_orients": {
+   "FS": 12,
+   "N": 4
+  },
+  "one_template_fits_all": false,
+  "overlap_arm_a_box": 8,
+  "per_region": [
+   {
+    "first_row_orient": "FS",
+    "index": 0,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      8
+     ],
+     [
+      36
+     ],
+     [
+      8
+     ],
+     [
+      36
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 1,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      0
+     ],
+     [
+      28
+     ],
+     [
+      0
+     ],
+     [
+      28
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 2,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      49
+     ],
+     [
+      21
+     ],
+     [
+      49
+     ],
+     [
+      21
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 3,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      2
+     ],
+     [
+      30
+     ],
+     [
+      2
+     ],
+     [
+      30
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 4,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      49
+     ],
+     [
+      21
+     ],
+     [
+      49
+     ],
+     [
+      21
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 5,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      46
+     ],
+     [
+      18
+     ],
+     [
+      46
+     ],
+     [
+      18
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 6,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      0
+     ],
+     [
+      28
+     ],
+     [
+      0
+     ],
+     [
+      28
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 7,
+    "overlaps_arm_a_box": true,
+    "tap_offsets": [
+     [
+      54
+     ],
+     [
+      26
+     ],
+     [
+      54
+     ],
+     [
+      26
+     ]
+    ],
+    "where": "strip"
+   },
+   {
+    "first_row_orient": "N",
+    "index": 8,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      28
+     ],
+     [],
+     [
+      28
+     ],
+     []
+    ],
+    "where": "band_low"
+   },
+   {
+    "first_row_orient": "N",
+    "index": 9,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      20,
+      48
+     ],
+     [
+      48
+     ],
+     [
+      20
+     ],
+     [
+      48
+     ]
+    ],
+    "where": "band_low"
+   },
+   {
+    "first_row_orient": "N",
+    "index": 10,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      14,
+      42
+     ],
+     [
+      42
+     ],
+     [
+      14
+     ],
+     [
+      42
+     ]
+    ],
+    "where": "band_low"
+   },
+   {
+    "first_row_orient": "N",
+    "index": 11,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      6,
+      34
+     ],
+     [
+      34
+     ],
+     [
+      6
+     ],
+     [
+      34
+     ]
+    ],
+    "where": "band_low"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 12,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      28
+     ],
+     [
+      28
+     ],
+     [],
+     [
+      28
+     ]
+    ],
+    "where": "band_high"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 13,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      20,
+      48
+     ],
+     [
+      20
+     ],
+     [
+      48
+     ],
+     [
+      20
+     ]
+    ],
+    "where": "band_high"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 14,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      14,
+      42
+     ],
+     [
+      14
+     ],
+     [
+      42
+     ],
+     [
+      14
+     ]
+    ],
+    "where": "band_high"
+   },
+   {
+    "first_row_orient": "FS",
+    "index": 15,
+    "overlaps_arm_a_box": false,
+    "tap_offsets": [
+     [
+      6,
+      34
+     ],
+     [
+      6
+     ],
+     [
+      34
+     ],
+     [
+      6
+     ]
+    ],
+    "where": "band_high"
+   }
+  ]
+ },
+ "score": {
+  "area": {
+   "added_decode_um2": 221.751,
+   "free_area_um2": 17272.816,
+   "region_um2": 280.2688,
+   "regions_um2": 4484.301,
+   "total_um2": 4706.052
+  },
+  "build_days_basis": "One day to extend gen_placement_cfg.py so it emits the 512 Arm C lines into the same hook from the chosen layout, with the checker and the ring walk reading both arms. One build. Two days held back because the order of the 32 cells inside the template is a default nothing has checked against a routed ring, and a congested or badly ordered template costs a rebuild. Arm A's hook took one day on 11 September and held on its first run, but its coordinates came from a build that had already routed.",
+  "build_days_is_an_estimate": true,
+  "decode_rows_agree": true,
+  "fields": {
+   "build_days": 4,
+   "existing_oscillators": 32,
+   "extra_input_pins": 1,
+   "new_oscillators": 16,
+   "pct_of_free": 27.25,
+   "tiles_required": 4
+  },
+  "hard": [
+   {
+    "field": "pct_of_free",
+    "id": "H1",
+    "margin": 47.75,
+    "name": "fits the free row area with a quarter of it still in reserve",
+    "op": "<=",
+    "pass": true,
+    "threshold": 75.0,
+    "value": 27.25
+   },
+   {
+    "field": "tiles_required",
+    "id": "H2",
+    "margin": 0,
+    "name": "needs no tile beyond the 2x2 already committed",
+    "op": "<=",
+    "pass": true,
+    "threshold": 4,
+    "value": 4
+   },
+   {
+    "field": "existing_oscillators",
+    "id": "H3",
+    "margin": null,
+    "name": "leaves both existing arms at sixteen oscillators each",
+    "op": "==",
+    "pass": true,
+    "threshold": 32,
+    "value": 32
+   },
+   {
+    "field": "new_oscillators",
+    "id": "H4",
+    "margin": 8,
+    "name": "gives the new arm at least eight independent oscillators",
+    "op": ">=",
+    "pass": true,
+    "threshold": 8,
+    "value": 16
+   },
+   {
+    "field": "extra_input_pins",
+    "id": "H5",
+    "margin": 0,
+    "name": "costs at most one new input pin",
+    "op": "<=",
+    "pass": true,
+    "threshold": 1,
+    "value": 1
+   },
+   {
+    "field": "build_days",
+    "id": "H6",
+    "margin": 1,
+    "name": "builds in at most five working days",
+    "op": "<=",
+    "pass": true,
+    "threshold": 5,
+    "value": 4
+   }
+  ],
+  "option": "Arm C, 16 rings, one hand-placed template",
+  "survives": true
+ },
+ "slots": {
+  "groups": [
+   {
+    "kind": "band",
+    "y0_um": 5.44
+   },
+   {
+    "kind": "strip",
+    "y0_um": 16.32
+   },
+   {
+    "kind": "strip",
+    "y0_um": 27.2
+   },
+   {
+    "kind": "strip",
+    "y0_um": 38.08
+   },
+   {
+    "kind": "strip",
+    "y0_um": 48.96
+   },
+   {
+    "kind": "strip",
+    "y0_um": 65.28
+   },
+   {
+    "kind": "strip",
+    "y0_um": 76.16
+   },
+   {
+    "kind": "strip",
+    "y0_um": 87.04
+   },
+   {
+    "kind": "strip",
+    "y0_um": 97.92
+   },
+   {
+    "kind": "strip",
+    "y0_um": 108.8
+   },
+   {
+    "kind": "strip",
+    "y0_um": 119.68
+   },
+   {
+    "kind": "strip",
+    "y0_um": 130.56
+   },
+   {
+    "kind": "strip",
+    "y0_um": 141.44
+   },
+   {
+    "kind": "strip",
+    "y0_um": 152.32
+   },
+   {
+    "kind": "strip",
+    "y0_um": 163.2
+   },
+   {
+    "kind": "strip",
+    "y0_um": 174.08
+   },
+   {
+    "kind": "strip",
+    "y0_um": 184.96
+   },
+   {
+    "kind": "strip",
+    "y0_um": 195.84
+   },
+   {
+    "kind": "band",
+    "y0_um": 206.72
+   }
+  ],
+  "reserved_offset": 11,
+  "templates": {
+   "band_high": 12,
+   "band_low": 12,
+   "strip": 21,
+   "strip_inside_box": 12
+  },
+  "windows_before_packing": {
+   "band_high": 23,
+   "band_low": 23,
+   "strip": 50
+  }
+ },
+ "source": {
+  "cost": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+  "criteria": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
+  "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+  "regions": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194"
+ },
+ "tap_phase": {
+  "band_residue": 6,
+  "half_pitch_sites": 28,
+  "strip_residue": 2
+ },
+ "template": {
+  "area_um2": 280.2688,
+  "cell_sites": 3,
+  "cell_sites_from_to": [
+   12,
+   35
+  ],
+  "cells_per_row": 8,
+  "first_row_orient": "FS",
+  "height_um": 10.88,
+  "order": "serpentine: the enable NAND then inverters 0 to 6 left to right on the first row, 7 to 14 right to left on the second, 15 to 22 left to right, 23 to 29 and the output buffer right to left. Default, open until the build.",
+  "reserve_chosen_for": "33 strip templates fit at this offset, the most of any",
+  "reserved_tap_sites": [
+   11,
+   39
+  ],
+  "rows": 4,
+  "sites": 56,
+  "tap_pitch_sites": 56,
+  "width_um": 25.76
+ }
+}

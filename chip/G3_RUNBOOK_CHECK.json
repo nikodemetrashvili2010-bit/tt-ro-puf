@@ -41,7 +41,7 @@
       "pass": true
     },
     {
-      "detail": "16 of 16 scripts",
+      "detail": "17 of 17 scripts",
       "id": "B07",
       "name": "the re-run step covers every script the gate runs",
       "pass": true
@@ -71,7 +71,7 @@
       "pass": true
     },
     {
-      "detail": "17 artefacts",
+      "detail": "18 artefacts",
       "id": "B11",
       "name": "every artefact the manifest attributes to a producer is regenerated after the build",
       "pass": true

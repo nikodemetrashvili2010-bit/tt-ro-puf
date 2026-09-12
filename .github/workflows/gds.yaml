@@ -115,6 +115,9 @@ jobs:
           diff /tmp/armc_regions.json chip/ARMC_REGIONS.json
           diff /tmp/armc/armc_place.tcl chip/armc_place.tcl
           diff /tmp/armc/ro_armc.v chip/ro_armc.v
+          python3 chip/armc_template.py --selftest
+          python3 chip/armc_template.py --json /tmp/armc_template.json
+          diff /tmp/armc_template.json chip/ARMC_TEMPLATE.json
           python3 chip/gen_placement_cfg.py --selftest
           python3 chip/gen_placement_cfg.py --json /tmp/placement_cfg.json --emit /tmp/pl
           diff /tmp/placement_cfg.json chip/PLACEMENT_CFG.json
