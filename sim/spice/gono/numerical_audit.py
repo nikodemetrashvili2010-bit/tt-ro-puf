@@ -135,8 +135,8 @@ def col_spread(cols):
     This is what makes the normal equations dangerous: X'X multiplies these
     together, so a design whose columns differ by 10^k in length hands the solve
     a matrix spanning 10^2k. It is not the condition number and is not claimed
-    to be one; it is the part of the conditioning that comes from scaling, and
-    it is the part that a stdlib script can compute honestly."""
+    to be one; it is the part of the conditioning that comes from scaling,
+    which is the part a stdlib script can compute exactly."""
     X = design(cols, range(NRO))
     norms = [math.sqrt(sum(row[j] ** 2 for row in X)) for j in range(len(X[0]))]
     return max(norms) / min(norms)

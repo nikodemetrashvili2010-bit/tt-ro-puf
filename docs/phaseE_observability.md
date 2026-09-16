@@ -125,12 +125,12 @@ register whose value must equal a hash of the netlist it lives in cannot be
 computed.
 
 The rule that follows for the collector: refuse to record data whose protocol
-byte it does not know, rather than guessing the format.
+byte it does not know, instead of guessing the format.
 
 ## Free pins are checked, not assumed
 
-The check that took the longest to get right is the dullest one, and it was
-wrong twice.
+The check that took the longest to get right is the dullest one. It took
+three versions.
 
 A pin is not free because its name is missing from the netlist, and it is not
 busy because its name is present. `uio_out[7:1]` all appear, and every one of
@@ -163,7 +163,7 @@ fails on a fast die and passes on a broken one. A test that says "the count
 at 512 cycles is twice the count at 256, to within one percent" holds on
 every die and breaks on every gating bug.
 
-The three worth naming:
+The three that carry it:
 
 - the sticky flag survives the next measurement, so a collector that reads it
   after a batch still learns that something in the batch wrapped;

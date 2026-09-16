@@ -1,13 +1,13 @@
 # Monte Carlo mismatch-sensitivity study
 
 This is a first-order model study, not a silicon entropy characterization.
-The first version of this run taught me a fact I did not expect: sky130's
-mismatch parameters are global .param statements, so ngspice draws ONE value
-per run shared by every transistor of a model. My first 16-oscillator deck gave
-16 identical frequencies per virtual chip (within-chip sigma exactly 0.000),
-and an extreme process draw crashed the loop at run 17 of 30. Both symptoms
-are explained in the current version, and the global-draw fact was checked
-against the PDK source (`__mismatch.corner.spice`).
+
+sky130's mismatch parameters are global .param statements, so ngspice draws ONE
+value per run shared by every transistor of a model. The first 16-oscillator
+deck here gave 16 identical frequencies per virtual chip (within-chip sigma
+exactly 0.000), and an extreme process draw crashed the loop at run 17 of 30.
+Both symptoms are explained in the current version, and the global-draw fact
+was checked against the PDK source (`__mismatch.corner.spice`).
 
 ## How it works
 
@@ -35,7 +35,7 @@ per-device sampling and ultimately multi-die/multi-condition measurements.
     python3 ../run_ngspice.py mc_matched.spice --log mc_out.txt
     python3 analyze_mc.py mc_out.txt
 
-## Assumptions to state in the paper
+## Assumptions this study rests on
 
 - Equal per-stage sensitivities and independent per-device draws are assumed,
   so sqrt(31) is explicitly a first-order propagation estimate.

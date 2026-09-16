@@ -1,7 +1,7 @@
 # Run 77: the two cells that moved Arm A, and the hook that fixes it
 
-10 September, commit `440d15b`, the run 76 follow-up that Nikoloz pushed
-himself while the shell was down. Written up on the 11th.
+10 September, commit `440d15b`, the run 76 follow-up. Written up on the
+11th.
 
     archived-evidence   green   1m 25s
     gds                 green   4m 55s
@@ -207,9 +207,9 @@ back, and its selftest reads a three-line fixture hook and refuses a
 line with a LEF orientation. The frozen DEF still passes 512 of 512
 through the new reader.
 
-With FIRM the honest expectation on the next build is 512 of 512, and a moved
-cell now means the flow overrode a fixed placement, which is a louder finding
-than a legalizer doing its job.
+With FIRM the next build should read 512 of 512. A moved cell would now
+mean the flow overrode a fixed placement, which is a different thing
+from a legalizer doing its job.
 
 The hook ran under Tcl 8.6 against a mock block that records every call:
 512 names, 512 distinct, backslashes intact, R0 and MX and nothing else,
@@ -231,7 +231,7 @@ FIRM stops the placer and not the resizer. That is unchanged from run
 73's reading of `Resizer.cc`. An upsized Arm A cell has no room to grow
 into, so it would overlap a fixed neighbour, and `check_placement`
 refuses that: the build dies at step 32 and the failure reporter names
-the cell. Loud is right.
+the cell.
 
 F06 is for the quiet case, a cell retyped in
 place with room to spare, and `RSZ_DONT_TOUCH_RX` stays the lever if
@@ -240,8 +240,7 @@ either happens. Neither has yet.
 The placement now rides on the PDN file, and a reader of `config.json`
 alone cannot see it. `PLACEMENT_CFG.json` records the mechanism, the
 wrapper's two lines and the step, and P13 and P16 are the two ends of
-the wire. It still belongs in the paper's methods as a sentence, not a
-footnote.
+the wire. The paper's methods section needs a sentence on it.
 
 The same hook is how a hand-placed Arm C would go in, one file and one
 proc, without a soft box of its own. That does not decide Arm C; H1 to

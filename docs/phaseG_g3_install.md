@@ -5,7 +5,7 @@ design is archived, the three-arm design is installed in `dualarm/src/`,
 `info.yaml` and the datasheet describe it, the RTL lints and elaborates, the
 old protocol regression passes against it, and the twenty-one row E.2
 acceptance table passes. Nothing has been hardened. Steps 7 to 12 need
-OpenLane and machine time and are the next chip session.
+OpenLane and machine time, so they wait for the next build day.
 
 ## Step 1, and what the archive turned out to be for
 
@@ -31,9 +31,9 @@ So the generator reads `dualarm/build_2arm_frozen/dualarm_src/` when
 `dualarm/src` already carries `g_armc`, and the gate keeps every command it
 had. What the diffs point at changed: they used to compare a regeneration
 against the drafts under `chip/`, and now they compare it against the files
-installed in `dualarm/src/`. That is a stronger sentence. It says the design
-going to the chip is exactly what transforming the recorded two-arm design
-produces, and CI says it again on every run.
+installed in `dualarm/src/`. So the design going to the chip is exactly what
+transforming the recorded two-arm design produces, and CI says it again on
+every run.
 
 `G3_RUNBOOK.json` step 2 carries the revision and the paragraph it replaces.
 The runbook was deliberately not frozen on a hash, and this is the case it
@@ -49,8 +49,8 @@ That is the same shape as `RELEASE_MANIFEST.json` recording its own hash on
 hash may appear outside the manifest's two tables, and a file recording its
 own sum is exactly a hash that belongs to neither.
 
-I got A05 wrong twice before that. The first version looked for the
-manifest's own hash inside the manifest, which cannot fire: append a hash and
+A05 took three tries. The first version looked for the manifest's own hash
+inside the manifest, which cannot fire: append a hash and
 the text changes, so the hash you appended is no longer the hash of the text.
 The second version required every hash in the file to belong to an archived
 copy or a recorded raw input, which does fire, and also fires on A04's fault
@@ -151,8 +151,8 @@ different designs. There is one design now. The live set gained `ro_armc.v`,
 which means R08, the check that Arm C is the Arm A ring node for node, stops
 reporting `n/a` and starts running on what is going to the chip.
 
-Ten of ten in the session container, E01 and E02 included, with the ten
-planted faults isolated. Yosys 0.33 reads the same set, resolves the
+Ten of ten in a clean checkout, E01 and E02 included, with the ten planted
+faults isolated. Yosys 0.33 reads the same set, resolves the
 hierarchy and passes `check -assert` with no warnings, which is not in the
 gate but is worth having, since iverilog elaborating is a weaker claim than a
 synthesiser accepting it. `dualarm/build_armc/lint.log` has the run.
@@ -187,9 +187,10 @@ rather than from a restatement of it. Each test looks its own row up by id
 and fails on the lookup if the row is gone. 21 of 21 pass, 4.7 ms of
 simulated time in 53 seconds. `dualarm/build_armc/sim_e2.log` has the run.
 
-The rows worth naming: the 16384-cycle window sets the sticky flag on a
-design where a safe window never does (E2-11 against E2-13, and E2-13 is 144
-measurements, every safe window on every one of the 48 oscillators); the flag
+The rows that carry the argument: the 16384-cycle window sets the sticky
+flag on a design where a safe window never does (E2-11 against E2-13, and
+E2-13 is 144 measurements, every safe window on every one of the 48
+oscillators); the flag
 survives the next measurement and dies on reset (E2-12, E2-02); doubling and
 octupling the window multiplies the count by the same factor to within one
 percent (E2-09, E2-10); and all three arms answer (E2-19, E2-20, E2-21).

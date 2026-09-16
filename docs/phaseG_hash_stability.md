@@ -36,8 +36,8 @@ Both are written down at the end.
 ## Reproducing it
 
 The failure does not happen on this machine and it does not happen in the
-local clone. It happens in a checkout. So: clone the repository into the
-session container, install iverilog the way the workflow does, pull the
+local clone. It happens in a fresh checkout. So: clone the repository
+somewhere clean, install iverilog the way the workflow does, pull the
 `archived-evidence` command list out of `.github/workflows/gds.yaml` and run
 all 109 of them in a loop that reports every line instead of stopping at the
 first red one.
@@ -81,13 +81,13 @@ file whose hash any artefact records is LF on disk already.
 > byte would hash one way here and another way in a checkout, and every hash
 > below would be wrong in CI and right on this machine.
 
-That is the same paragraph, one week later, about a different file. The
-archive got the rule and the tile budget did not.
+Same paragraph, one week later, about a different file. The archive got
+that rule applied to it and the tile budget did not.
 
 ## Why nothing here disagreed
 
-This is the part worth keeping. The gate is run in two places before a push:
-the working tree and the local clone. Both sit on the same disk and both hold
+The gate is run in two places before a push: the working tree and the local
+clone. Both sit on the same disk and both hold
 the same CRLF file, so both recompute the same wrong number and both agree
 with the artefact. The only machine that sees the LF copy is the one nobody
 was reading.
@@ -202,8 +202,8 @@ docstring rather than left as something a reader has to work out.
 `spef_census.py --verify-archive` is what holds that side.
 
 H05 reads `.gitignore` as plain names and directory names only. Five patterns
-in the working tree and five in the clone use wildcards, and the script prints
-them rather than pretending it judged them.
+in the working tree and five in the clone use wildcards, and the script
+prints those out instead of judging them.
 
 **Nothing in the repository reads the CI verdict.** That is the actual failure
 here and no script inside the repository can fix it, because the verdict is on

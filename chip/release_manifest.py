@@ -80,6 +80,7 @@ PRODUCERS = {
     "ARMC_TEMPLATE.json": "armc_template.py",
     "PLACEMENT_CFG.json": "gen_placement_cfg.py",
     "placement.cfg": "gen_placement_cfg.py",
+    "ARMC_FIX.json": "gen_armc_fix.py",
     "armc_place.tcl": "gen_armc.py",
     "ro_armc.v": "gen_armc.py",
     "e2_ro_puf_core.v": "gen_e2_rtl.py",
@@ -100,7 +101,7 @@ AUTHORED = {"G3_RUNBOOK.json": "g3_runbook.py",
             "G2_AMENDMENT.json": "g2_decision.py"}
 # G2_AMENDMENT.json is written by hand and nothing regenerates it. It records
 # the SHA-256 of the two files it amends, so hash_stability.py H02 is what
-# holds it honest: if G2_CRITERIA.json or G2_DECISION.json is ever edited,
+# holds it to them: if G2_CRITERIA.json or G2_DECISION.json is ever edited,
 # the amendment's recorded hash stops resolving to a file in this tree and
 # the gate says so. No separate freeze check is needed for that reason.
 # FLOW_SURFACE.json is here rather than under PRODUCERS because CI cannot

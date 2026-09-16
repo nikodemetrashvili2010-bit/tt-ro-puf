@@ -53,21 +53,21 @@ Fifteen configurations went through it. Twelve survived.
 | both, 16 mean + 16 rungs | 7310.3 | 42.32% | 4 | 1 | 6 | out on H6 |
 | both, 16 loose + 16 rungs | 8942.1 | 51.77% | 4 | 1 | 6 | out on H6 |
 
-Building both is on the table because the plan's instruction not to force
-both into a compromised floorplan is a judgement, and a judgement is
-something the frozen rule should get to answer rather than something to
-assert. It answered. The reason is not area, which is the interesting part:
-even the loosest pairing takes 51.77 percent of the free row area and clears
-H1 with room to spare. It fails on schedule. Two builds is six working days
-against a limit of five, and that limit exists because the chip path is 17 to
-23 days against a shuttle opening in September, with G.3's full re-run of the
-evidence suite behind it.
+Building both is on the table because the plan's instruction not to force both
+into a compromised floorplan is a judgement, and a judgement is something the
+frozen rule should get to answer rather than something to assert.
+
+It answered. The reason is not area, which is the interesting part: even the
+loosest pairing takes 51.77 percent of the free row area and clears H1 with
+room to spare. It fails on schedule. Two builds is six working days against a
+limit of five, and that limit exists because the chip path is 17 to 23 days
+against a shuttle opening in September, with G.3's full re-run of the evidence
+suite behind it.
 
 ## A check that fired, and was wrong
 
 The gate has a check, `G10`, whose first version required some real option to
-be rejected. A rule that passes everything put to it is decorative and that
-seemed worth testing for.
+be rejected. A rule that passes everything put to it has not been tested.
 
 It failed on the first real run. All twelve of the single-arm configurations
 survive, because the die has enough spare room that nothing on the table
@@ -82,7 +82,7 @@ reject it. The rule is proved to have teeth without any real option having to
 fail. The same shape as the scrambled control at the end of
 `verify_predictability.py`.
 
-The line that replaced it is worth keeping in view: on this die the hard
+The line that replaced it says the thing that matters: on this die the hard
 constraints do not discriminate between the single-arm options at all. The
 decision is entirely on the preference order.
 
@@ -91,16 +91,17 @@ decision is entirely on the preference order.
 The rule's preference order puts research value first, and no script should
 score that, so this is the part a reader can disagree with.
 
-**Arm C answers the question the paper exists to ask.** The hypothesis is
-that an automated open flow leaks the layout into the frequency pattern in a
-way a hardened macro does not. Arm A and Arm B already test that, and the
-result they can give is a comparison of two treatments. What they cannot say
-is whether the leakage is inherent to automated placement or merely to
-*unconstrained* automated placement. Arm C is the treatment that separates
-those, and it is the one a reader who builds open silicon actually wants: if
-constraints suppress the leakage, the countermeasure is free and available
-today in the flow everyone already runs. If they do not, the hard macro is
-necessary and that is a stronger statement than anything two arms can
+**Arm C answers the question the paper exists to ask.** The hypothesis is that
+an automated open flow leaks the layout into the frequency pattern in a way a
+hardened macro does not. Arm A and Arm B already test that, and the result they
+can give is a comparison of two treatments.
+
+What they cannot say is whether the leakage is inherent to automated placement
+or merely to *unconstrained* automated placement. Arm C is the treatment that
+separates those, and it is the one a reader who builds open silicon actually
+wants: if constraints suppress the leakage, the countermeasure is free and
+available today in the flow everyone already runs. If they do not, the hard
+macro is necessary and that is a stronger statement than anything two arms can
 support.
 
 **The ladder answers a different question, and a smaller one.** A causal
@@ -115,14 +116,14 @@ ladder is 2594.0 um2 against Arm C's 4716.2 at mean density, a difference of
 would still be spare either way. Two build days against four. Neither
 difference buys back a weaker result.
 
-**The risk is the real argument for the ladder and it is a real argument.**
-The open flow has no supported way to force sixteen identical placements.
-That is the point of the experiment and it is also the thing that might not
-work, which is why the criteria file records Arm C's delivery risk as high
-and the ladder's as low before either was scored. A treatment that cannot be
-built is worth nothing, and an experiment that is discovered to be
-unbuildable in October, with a shuttle closing, is worse than one that was
-never attempted.
+**Risk is what the ladder has going for it.** The open flow has no supported
+way to force sixteen identical placements. That is the point of the experiment
+and it is also the thing that might not work, which is why the criteria file
+records Arm C's delivery risk as high and the ladder's as low before either was
+scored.
+
+Finding out in October, with a shuttle closing, that the treatment cannot be
+built costs the arm and the fallback both.
 
 That risk is handled by a deadline and a fallback rather than by picking the
 safer option now.
@@ -170,9 +171,11 @@ this decision. Being wrong about three quarters of it would.
 ## For the purchase
 
 Tiles: **unchanged at four**. Nothing on the table needs a fifth, and the
-loosest option that fits leaves 63 percent of the free row area. The
-purchase question that is still open is the one in
+loosest option that fits leaves 63 percent of the free row area. The purchase
+question that is still open is the one in
 `docs/outreach/email_2_matt_tiles.md`: whether the free-tile coupon carries
-over to 26d or is tied to a shuttle, which decides whether three tiles or
-four have to be paid for. Chase that before buying. The subsidised PCB is
-gated by nothing and should be bought the day 26d opens.
+over to 26d or is tied to a shuttle, which decides whether three tiles or four
+have to be paid for.
+
+Chase that before buying. The subsidised PCB is gated by nothing and should be
+bought the day 26d opens.

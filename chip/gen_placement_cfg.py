@@ -12,8 +12,11 @@ region differs between flow versions and that script had run none of them.
 actually uses.
 
 I went and looked at that flow. It is LibreLane, 3.0.3 in the run directory
-on this disk and 3.0.5 in CI, and the four files that decide every placement
-question are byte identical between those two tags. It has no fence, no
+on this disk and 3.0.5 in CI when this was written, and the four files that
+decide every placement question are byte identical between those two tags.
+CI moved to 3.0.14 with the shuttle tag on 16 September; the same files are
+still identical and what did change is in `chip/FLOW_SURFACE.json` under
+`ci_version_change`, which P01 reads. It has no fence, no
 region and no cell-group constraint, and none of its four Tcl hooks is read
 by a placement step. So there is no line to fill in, and the 512 `place_cell`
 lines above it have nowhere to be sourced from either. The whole file is
@@ -33,14 +36,16 @@ file therefore carries all sixteen of them as well, at the coordinates
 `config.json` already gives, and a check here fails if any of them is
 dropped or moved.
 
-It emits no Arm C line at all, and says so rather than quietly placing them.
-Arm C without a region constraint is standard cells handed to an
-unconstrained placer, which is Arm A's treatment, not a third one. Placing
-every Arm C cell by hand would satisfy G.2's build criterion trivially and
-would also make it measure nothing. That is a decision about the experiment
-and it belongs in G.2, not in a generator. `PLACEMENT_CFG.json` records the
-missing capability by name so the decision is taken with the reason in front
-of it.
+It emits no Arm C line at all. Arm C without a region constraint is
+standard cells handed to an unconstrained placer, which is Arm A's
+treatment, not a third one, and the region constraint turned out not to
+exist in this flow; `PLACEMENT_CFG.json` records that dead end by name.
+Since 16 September Arm C has its own hook, `src/armc_fix.tcl`, rendered
+by `chip/gen_armc_fix.py` from the scored template and sourced by the
+wrapper after this script's Arm A hook. That file is checked there (K01
+to K12), not here; what this script holds is that no Arm C line leaks
+into the Arm A hook and that the wrapper sources the three files in
+order.
 
 What this does not check is the interaction with the two steps that follow.
 `Odb.ManualMacroPlacement` runs at step 17, before `OpenROAD.CutRows` and
@@ -52,9 +57,9 @@ fallback if it does not is `MANUAL_GLOBAL_PLACEMENTS`, which runs at step 33
 after global placement and sets PLACED rather than FIRM. This script renders
 that fallback too and records its hash without committing it.
 
-The build said no, on 8 September, and not where the paragraph above put
-the risk. Runs 72, 73 and 74 all died at step 32 with three Arm B macros
-overlapping endcap cells. The reason is in OpenROAD's own cutRows at the
+The build said no, on 8 September, and not for the reason expected above.
+Runs 72, 73 and 74 all died at step 32 with three Arm B macros overlapping
+endcap cells. The reason is in OpenROAD's own cutRows at the
 revision the flow pins: a row that holds any fixed standard cell is never
 cut, whatever macro crosses it (ODB-0386, "contains N placed instances and
 will not be cut"). Arm A shares 37 rows with the macro block, those rows
@@ -88,17 +93,18 @@ inside OpenROAD at `OpenROAD.GeneratePDN`, step 21: after the rows are
 cut (18) and the taps and endcaps are in (19), before any placement
 step, and the step writes the ODB it leaves behind. This design already
 owns that file, for its met4-only macro grid. So since 11 September
-`PDN_CFG` points at `src/pdn_hook.tcl`, two lines: source the PDN recipe
+`PDN_CFG` points at `src/pdn_hook.tcl`: source the PDN recipe
 `src/pdn_cfg.tcl`, which stays exactly the borrowed recipe
 `sim/verify_macro_provenance.py` holds it to, then source
 `src/arma_place.tcl`, which this script renders: the 512 cells at their
-DEF coordinates, FIRM. FIRM at 21 has none of FIRM at 17's problem, the
+DEF coordinates, FIRM. A third line, `src/armc_fix.tcl`, went in on 16
+September for Arm C. FIRM at 21 has none of FIRM at 17's problem, the
 rows are already cut, and none of PLACED at 33's, nothing later in the
 flow moves a fixed cell. `MANUAL_GLOBAL_PLACEMENTS` has to be out of
 config.json for it, because placers.py sets PLACED unconditionally at
 step 33 and would demote the lot. P13 keeps config.json clear and
 pointed at the wrapper, P15 holds the hook to the DEF, P16 holds the
-wrapper to its two lines, and the gate diffs the hook against a fresh
+wrapper to its three lines, and the gate diffs the hook against a fresh
 rendering. What FIRM does not stop is the resizer, same as run 73 read
 it; an upsized cell with no room overlaps a fixed neighbour and
 check_placement refuses that, so the build dies at step 32 and says
@@ -146,11 +152,13 @@ JSON_DEST = os.path.join(HERE, "PLACEMENT_CFG.json")
 
 # The hook, since 11 September. The file PDN_CFG names is the one Tcl
 # file this flow sources after the rows are cut and before anything is
-# placed. It is a two-line wrapper: the PDN recipe, which stays the
-# borrowed recipe sim/verify_macro_provenance.py holds it to, and then
-# this one, which sets the 512 cells FIRM.
+# placed. It is a wrapper of three source lines: the PDN recipe, which
+# stays the borrowed recipe sim/verify_macro_provenance.py holds it to,
+# then this one, which sets Arm A's 512 cells FIRM, and since 16
+# September Arm C's, which chip/gen_armc_fix.py renders and checks.
 HOOK_NAME = "arma_place.tcl"
 HOOK_DEST = os.path.join(ROOT, "dualarm", "src", HOOK_NAME)
+ARMC_HOOK_NAME = "armc_fix.tcl"
 PDN_RECIPE_NAME = "pdn_cfg.tcl"
 PDN_RECIPE_DEST = os.path.join(ROOT, "dualarm", "src", PDN_RECIPE_NAME)
 WRAPPER_NAME = "pdn_hook.tcl"
@@ -169,7 +177,8 @@ def source_line(name):
     return "source [file join [file dirname [info script]] %s]" % name
 
 
-WRAPPER_LINES = (source_line(PDN_RECIPE_NAME), source_line(HOOK_NAME))
+WRAPPER_LINES = (source_line(PDN_RECIPE_NAME), source_line(HOOK_NAME),
+                 source_line(ARMC_HOOK_NAME))
 # LEF orientation to the OpenDB name. The Tcl binding for dbOrientType
 # (src/odb/src/swig/tcl/dbenums.i at the pinned OpenROAD, typemap(in))
 # takes exactly the eight OpenDB names and raises "Unknown orientation"
@@ -774,17 +783,48 @@ def run_checks(design, surface, rows, config, tcl_text, regions,
             "librelane/scripts/odbpy/placers.py")
     have_all = all(f in files for f in need)
     tags = same.get("tags") or []
+    # Since 2026-09-16 CI hardens on a newer LibreLane than the one the
+    # two-tag record was made for. When the surface carries a
+    # ci_version_change block it has to name the version CI actually
+    # runs, hold the three files that place a cell identical across the
+    # move, and give every file that did change a hash at each end and a
+    # reason read from the diff. A version bump nobody looked at is what
+    # this refuses.
+    change = surface.get("ci_version_change") or {}
+    moved = bool(change)
+    change_ok = True
+    if moved:
+        ident = change.get("identical") or {}
+        differs = change.get("differs") or {}
+        keep = ("librelane/scripts/odbpy/placers.py",
+                "librelane/flows/classic.py",
+                "librelane/scripts/odbpy/reader.py")
+        change_ok = (change.get("to") == flow.get("version_in_ci")
+                     and change.get("from") in tags
+                     and all(len(ident.get(f, "")) == 64 for f in keep)
+                     and bool(differs)
+                     and all(len(v.get(change.get("from"), "")) == 64
+                             and len(v.get(change.get("to"), "")) == 64
+                             and (v.get("diff") or "").strip()
+                             for v in differs.values()))
     ok = (flow.get("name") == "LibreLane"
           and flow.get("version_on_disk")
           and flow.get("version_in_ci")
           and len(tags) == 2
           and have_all
-          and all(len(files[f]) == 64 for f in need))
-    ck.add("P01", "the flow is named, both versions are pinned, and the "
-           "files that decide placement hash the same at each",
-           ok, "%s %s on disk, %s in CI, %d files pinned at %d tags"
+          and all(len(files[f]) == 64 for f in need)
+          and (moved or flow.get("version_in_ci") in tags)
+          and change_ok)
+    ck.add("P01", "the flow is named, both versions are pinned, the files "
+           "that decide placement hash the same at each, and a CI version "
+           "move is recorded file by file",
+           ok, "%s %s on disk, %s in CI, %d files pinned at %d tags%s"
            % (flow.get("name"), flow.get("version_on_disk"),
-              flow.get("version_in_ci"), len(files), len(tags)))
+              flow.get("version_in_ci"), len(files), len(tags),
+              (", CI moved %s to %s: %d identical, %d differ with reasons"
+               % (change.get("from"), change.get("to"),
+                  len(change.get("identical") or {}),
+                  len(change.get("differs") or {}))) if moved else ""))
 
     # -- P02 ---------------------------------------------------------------
     hits = area_variable_hits(surface)
@@ -910,10 +950,10 @@ def run_checks(design, surface, rows, config, tcl_text, regions,
     ok = (not armc_emitted
           and len(regions) == 16
           and "region" in named.lower())
-    ck.add("P11", "no Arm C line is emitted and the capability that would "
-           "be needed is named", ok,
-           "%d Arm C lines, %d regions on record, conclusion recorded: %s"
-           % (len(armc_emitted), len(regions), bool(named)))
+    ck.add("P11", "no Arm C line is emitted here, Arm C being "
+           "armc_fix.tcl's, and the region dead end is still on record",
+           ok, "%d Arm C lines, %d regions on record, conclusion recorded: "
+           "%s" % (len(armc_emitted), len(regions), bool(named)))
 
     # -- P12 ---------------------------------------------------------------
     ok = fallback_text == fallback_again and fallback_text.strip() != ""
@@ -995,20 +1035,23 @@ def run_checks(design, surface, rows, config, tcl_text, regions,
               len(moved), len(badlines), status, guard))
 
     # -- P16 ---------------------------------------------------------------
-    # The wrapper PDN_CFG names is exactly two live lines, the PDN recipe
-    # and then the hook, each by the path of the file being sourced rather
-    # than the working directory, because the flow sources the PDN file
-    # by absolute path from wherever it happens to be running. Anything
-    # else live in it is a directive the borrowed recipe does not carry,
-    # and the recipe itself is held equal to array/pdn_cfg.tcl elsewhere.
+    # The wrapper PDN_CFG names is exactly three live lines in this order:
+    # the PDN recipe, the Arm A hook, the Arm C hook, each by the path of
+    # the file being sourced rather than the working directory, because
+    # the flow sources the PDN file by absolute path from wherever it
+    # happens to be running. Anything else live in it is a directive the
+    # borrowed recipe does not carry, and the recipe itself is held equal
+    # to array/pdn_cfg.tcl elsewhere. gen_armc_fix.py's K10 reads the
+    # same three lines from its side.
     live = tuple(l.strip() for l in pdn_text.splitlines()
                  if l.strip() and not l.strip().startswith("#"))
     ok = live == WRAPPER_LINES
-    ck.add("P16", "the PDN wrapper sources the recipe and then the hook, "
-           "relative to itself, and nothing else",
-           ok, "%d live line(s); recipe %s; hook %s"
+    ck.add("P16", "the PDN wrapper sources the recipe, the Arm A hook and "
+           "then the Arm C hook, relative to itself, and nothing else",
+           ok, "%d live line(s); recipe %s; Arm A %s; Arm C %s"
            % (len(live), "sourced" if WRAPPER_LINES[0] in live else "NOT",
-              "sourced" if WRAPPER_LINES[1] in live else "NOT"))
+              "sourced" if WRAPPER_LINES[1] in live else "NOT",
+              "sourced" if WRAPPER_LINES[2] in live else "NOT"))
 
     return ck
 
@@ -1056,7 +1099,7 @@ FIXTURE_CONFIG = {
 
 FIXTURE_SURFACE = {
     "flow": {"name": "LibreLane", "version_on_disk": "3.0.3",
-             "version_in_ci": "3.0.5", "pdk": "sky130A"},
+             "version_in_ci": "3.0.14", "pdk": "sky130A"},
     "identical_across_versions": {
         "tags": ["3.0.3", "3.0.5"],
         "files": {
@@ -1064,6 +1107,18 @@ FIXTURE_SURFACE = {
             "librelane/steps/openroad.py": "1" * 64,
             "librelane/scripts/odbpy/placers.py": "2" * 64,
             "librelane/flows/classic.py": "3" * 64,
+        },
+    },
+    "ci_version_change": {
+        "from": "3.0.5", "to": "3.0.14",
+        "identical": {
+            "librelane/scripts/odbpy/placers.py": "2" * 64,
+            "librelane/flows/classic.py": "3" * 64,
+            "librelane/scripts/odbpy/reader.py": "4" * 64,
+        },
+        "differs": {
+            "librelane/steps/odb.py": {"3.0.5": "0" * 64, "3.0.14": "5" * 64,
+                                       "diff": "two PAD_LIBS lines"},
         },
     },
     "variables": ["IO_EXCLUDE_PIN_REGION", "MACROS", "MACRO_PLACEMENT_CFG",
@@ -1088,7 +1143,8 @@ FIXTURE_TCL = ("# generated\nplace_cell -inst_name {u_x} "
 FIXTURE_WRAPPER = ("# fixture wrapper\n"
                    "# " + WRAPPER_LINES[1] + " is not the real line\n"
                    + WRAPPER_LINES[0] + "\n"
-                   + WRAPPER_LINES[1] + "\n")
+                   + WRAPPER_LINES[1] + "\n"
+                   + WRAPPER_LINES[2] + "\n")
 
 W = 1380          # the one cell width the fixture uses
 STEP = 460        # site
@@ -1205,6 +1261,15 @@ def rebuild(b):
 def f01_drop_a_pinned_file(b):
     del b["surface"]["identical_across_versions"]["files"][
         "librelane/scripts/odbpy/placers.py"]
+
+
+def f01_a_changed_file_has_no_reason(b):
+    b["surface"]["ci_version_change"]["differs"][
+        "librelane/steps/odb.py"]["diff"] = ""
+
+
+def f01_ci_runs_a_version_the_record_does_not_name(b):
+    b["surface"]["flow"]["version_in_ci"] = "3.0.15"
 
 
 def f02_a_region_variable_appears(b):
@@ -1339,6 +1404,16 @@ def f16_a_directive_creeps_into_the_wrapper(b):
     b["pdn_cfg"] += "add_pdn_stripe -grid g -layer met1\n"
 
 
+def f16_the_wrapper_drops_arm_c(b):
+    b["pdn_cfg"] = b["pdn_cfg"].replace(WRAPPER_LINES[2] + "\n", "", 1)
+
+
+def f16_the_arms_are_sourced_in_the_wrong_order(b):
+    b["pdn_cfg"] = b["pdn_cfg"].replace(
+        WRAPPER_LINES[1] + "\n" + WRAPPER_LINES[2] + "\n",
+        WRAPPER_LINES[2] + "\n" + WRAPPER_LINES[1] + "\n", 1)
+
+
 def f14_soft_obstruction_missing(b):
     del b["config"]["PL_SOFT_OBSTRUCTIONS"]
 
@@ -1351,6 +1426,10 @@ def f14_soft_obstruction_stops_short(b):
 FAULTS = [
     ("P01", f01_drop_a_pinned_file,
      "one of the files pinned at both tags is missing"),
+    ("P01", f01_a_changed_file_has_no_reason,
+     "a file that changed across the CI version move has no reason"),
+    ("P01", f01_ci_runs_a_version_the_record_does_not_name,
+     "CI hardens on a version the move record does not name"),
     ("P02", f02_a_region_variable_appears,
      "a variable that could fence a cell shows up in a later flow"),
     ("P03", f03_a_tcl_hook_reaches_placement,
@@ -1399,6 +1478,10 @@ FAULTS = [
      "the wrapper sources the hook and not the PDN recipe"),
     ("P16", f16_a_directive_creeps_into_the_wrapper,
      "a PDN directive is added to the wrapper instead of the recipe"),
+    ("P16", f16_the_wrapper_drops_arm_c,
+     "the wrapper drops the Arm C line"),
+    ("P16", f16_the_arms_are_sourced_in_the_wrong_order,
+     "the wrapper sources Arm C before Arm A"),
 ]
 
 
@@ -1654,7 +1737,10 @@ def main():
                 "what_an_unconstrained_arm_c_would_be": "sixteen rings "
                     "handed to the same unconstrained placer that produced "
                     "Arm A, which is Arm A's treatment under a second name",
-                "decision_belongs_to": "G.2",
+                "placed_by": "src/" + ARMC_HOOK_NAME + ", rendered from "
+                    "the scored template by chip/gen_armc_fix.py and "
+                    "sourced by the wrapper after the Arm A hook, since "
+                    "2026-09-16; its record is chip/ARMC_FIX.json",
             },
             "inputs": {
                 "def": sha256_file(DEF_PATH),

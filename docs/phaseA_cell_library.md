@@ -17,9 +17,9 @@ for the same module by name:
                           extraction/cell_library.py when that module is
                           split out."
 
-So the shape of the day was written down before it started. What was not
-written down is the reason it had stayed queued, and I found that in the
-first twenty minutes.
+That note is the whole of why this module exists. What it does not say is
+why the split had stayed queued, which turned out to be a bigger reason than
+pin direction.
 
 ## The library did not cover this project's own chip
 
@@ -34,15 +34,14 @@ The 43 views cover 35 of them. Sixteen are missing:
     nor3     o21a    o21ai o22a           o31a   o31ai or3b  or4b
 
 That is why `armc_cost.py` still had a hand-typed table. There was nothing to
-derive from. Moving the parser without fixing that would have moved the
-problem into a new file and left the note in place.
-
-I did not reopen `library_sources.json`. Its counts are quoted in two
-finished tasks and 20 August is a record of what A.4 was allowed to read.
-The sixteen went into `extraction/library_sources_design.json` instead, from
-the same repository at the same commit `ac7fb61f`, pinned the same way, with
-URL, bytes and SHA-256 each. Two manifests, one library, and L07 fails if
-they ever declare the same cell.
+derive from. Moving the parser without fixing that would have moved the problem
+into a new file and left the note in place. I did not reopen
+`library_sources.json`. Its counts are quoted in two finished tasks and 20
+August is a record of what A.4 was allowed to read. The sixteen went into
+`extraction/library_sources_design.json` instead, from the same repository at
+the same commit `ac7fb61f`, pinned the same way, with URL, bytes and SHA-256
+each. Two manifests, one library, and L07 fails if they ever declare the same
+cell.
 
 ## The bug the wider library exposed
 
@@ -70,22 +69,22 @@ and 0 failed.
 Which UDPs hold state is read off the library rather than remembered. Four
 distinct UDPs appear across all 59 views, two flip flops and two muxes, and
 `is_state_udp` raises on one matching neither rule instead of defaulting.
-Defaulting to False in particular would fuse a design's whole clocked side
-into a single feedback region, so it is the direction that must not be
-guessed.
-
-The check that caught it, once the concepts were separated, is L04, and it is
-A.1's own marker table doing the work: `mux2` matches none of `__df`,
-`__sdf`, `__edf`, `__dl`, `__sedf`, `__sdl`, so a derivation calling it
-sequential contradicts the table and L04 says so.
+Defaulting to False in particular would fuse a design's whole clocked side into
+a single feedback region, so it is the direction that must not be guessed. The
+check that caught it, once the concepts were separated, is L04, and it is A.1's
+own marker table doing the work: `mux2` matches none of `__df`, `__sdf`,
+`__edf`, `__dl`, `__sedf`, `__sdl`, so a derivation calling it sequential
+contradicts the table and L04 says so.
 
 ## The artefact, and why there is one
 
 `extraction/inputs/` is gitignored and never mirrored, so nothing in CI can
-read a cell view. But `armc_cost.py` and `lint_rtl.py` both run in the gate
-and both need the library. So the module emits `extraction/CELL_LIBRARY.json`
-here, 59 cells with their pins, supplies, opaque and sequential outputs and
-every arc class, and that file is committed.
+read a cell view.
+
+But `armc_cost.py` and `lint_rtl.py` both run in the gate and both need the
+library. So the module emits `extraction/CELL_LIBRARY.json` here, 59 cells with
+their pins, supplies, opaque and sequential outputs and every arc class, and
+that file is committed.
 
 Eight checks. `--emit` runs them against the views, `--verify-archive` runs
 them against the committed file, and the two differ in exactly one place:
@@ -93,10 +92,10 @@ them against the committed file, and the two differ in exactly one place:
   L01  with the views, every declared view is the declared bytes; without
        them, every archived cell is one a manifest declares
 
-That is the same narrower guarantee `spef_census.py --verify-archive` gives,
-and it is worth saying plainly what it is and is not. In CI this is not a
-re-derivation from the published bytes. It is the statement that a recorded
-number cannot change without the gate going red.
+That is the same narrower guarantee `spef_census.py --verify-archive` gives.
+
+In CI this is not a re-derivation from the published bytes. It is the statement
+that a recorded number cannot change without the gate going red.
 
 L08 is the one the split was for: the archive has to cover every master this
 project's own netlist uses. It reads 51 masters, 0 uncovered. The netlist it
@@ -124,20 +123,18 @@ deliberate: a stub is scaffolding, and what would be wrong is silently
 calling a known output an input.
 
 E01 and E02 both pass with directions in place, so the design has no
-direction mismatch and the lint is strictly stronger than it was. I would
-have preferred it to find something.
+direction mismatch and the lint is stronger than it was. It found nothing on
+this design.
 
-## Lengths, honestly
+## Lengths
 
 `ring_topology.py` went from 1641 lines to 1243. `cell_library.py` is 1004.
+So the total went up by about 600 lines.
 
-So the total went up by about 600 lines, and `ring_topology.py` is still 24
-percent over the thousand-line day yardstick rather than 64 percent over.
-Both of those are worth saying rather than quoting the first number on its
-own. The 600 are the two-manifest handling, the archive, eight checks and a
+The 600 are the two-manifest handling, the archive, eight checks and a
 fixture with its own faults, none of which existed before; what came out of
 `ring_topology.py` is the part that was never about loop finding. What is
-still over in that file is the loop finder and its reporting, and splitting
-those further would be splitting for the number rather than for a reason.
+left in that file is the loop finder and its reporting, and splitting those
+further would be splitting for the sake of it.
 
 The gate is 119 commands now, up from 117.

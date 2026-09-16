@@ -4,11 +4,11 @@
 """When the gds job fails, say why somewhere a signed-out reader can see it.
 
 Run 72 on 6 September failed inside the gds job after 2 minutes 41 seconds
-and I could not find out why. The flow's own account of the failure lives in
+with no readable reason. The flow's own account of the failure lives in
 runs/wokwi/ on a runner that is deleted when the job ends. What survives is
 the GDS_logs artifact, which needs an API token, and the job log, which needs
-a signed-in session. So the one thing I needed was the one thing behind a
-login, and a build I cannot read the failure of is a build I cannot fix.
+a signed-in session. Both are behind a login, so the failure of a public
+build is not public.
 
 Three things are readable on a public run page with no account at all: the
 job names, their durations, and the annotations. Annotations are the only one

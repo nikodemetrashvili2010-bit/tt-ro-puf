@@ -12,7 +12,7 @@
 #   20/68/116/164 (pitch 48). The macro block ends at x=243.22; the remaining
 #   core area to x=332.12 holds Arm A and integration standard cells.
 #
-# POWER (the PSM-0069 lesson from the standalone array):
+# POWER (what PSM-0069 on the standalone array came down to):
 #   The macro's power pins are two vertical met4 straps: VPWR centerline at
 #   x = 21.84 inside the macro, VGND at 25.14 (ro_macro_hard.lef). Parallel
 #   met4 can only connect by DIRECT OVERLAP, so the block's met4 stripes must

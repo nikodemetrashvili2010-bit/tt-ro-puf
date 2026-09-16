@@ -14,7 +14,7 @@ A GDS exists, and it has DRC, LVS, antenna and TinyTapeout's own precheck
 behind it. Everything functional said about this chip before that evening
 was said about the two-arm build.
 
-Then the three red ones, which are three different stories.
+Then the three red ones. They have nothing to do with each other.
 
 ## Arm A: 64 of 512 in place
 
@@ -74,23 +74,22 @@ pinned cell's footprint from the frozen DEF, widths by abutment through
 
     [247.48, 70.72, 307.74, 171.36]
 
-which is the leftmost cell's left edge, the lowest row's bottom, the
-rightmost cell's far edge and the top of row 61, all on the site and row
-grid. P14 holds `config.json` to it and fails if a pinned cell is outside
-it; the planted faults are a missing box and one that stops a site short.
-It is 6161 um2 of a 75600 um2 die, and about 68 percent of it is empty
-even with Arm A in it, which global placement now cannot use. At 28
-percent standard-cell utilization that costs nothing that matters.
+which is the leftmost cell's left edge, the lowest row's bottom, the rightmost
+cell's far edge and the top of row 61, all on the site and row grid. P14 holds
+`config.json` to it and fails if a pinned cell is outside it; the planted
+faults are a missing box and one that stops a site short.
 
-What it does not guarantee: a cell that step 32's own legalizer pushed
-into the region under local pressure, or a buffer the resizer inserted
-near an Arm A net, is still there when Arm A arrives. The checker counts
-those. The expectation is a number near 512, not a promise of it, and the
-next run says which.
+It is 6161 um2 of a 75600 um2 die, and about 68 percent of it is empty even
+with Arm A in it, which global placement now cannot use. At 28 percent
+standard-cell utilization that costs nothing that matters.
 
-Arm C's eight strip regions overlap this box. They are not placed today.
-When they are, they and this box will have to be reconciled, and that is
-one more reason Arm C's placement waits.
+What it does not guarantee: a cell that step 32's own legalizer pushed into the
+region under local pressure, or a buffer the resizer inserted near an Arm A
+net, is still there when Arm A arrives. The checker counts those. The expected
+count is near 512 rather than exactly 512, and the next run says where it
+lands. Arm C's eight strip regions overlap this box. They are not placed today.
+When they are, they and this box will have to be reconciled, and that is one
+more reason Arm C's placement waits.
 
 ## gl_test ran for the first time, and the failure is the test's
 
@@ -112,19 +111,19 @@ always 0. Meanwhile `hard_macro_enable_handles` does find `u_rob0..15.en`,
 because the macros survive synthesis, and it was reading the enables the
 netlist really drives. RTL passed 7 of 7 because there the handle is real.
 
-The fix is the pin E.2 put on `uio[5]` for exactly this. In gate-level
-mode `window_high` now comes from it. The RTL branch already checks, on
-every cycle, that the pin equals the internal signal, so the two modes
-audit the same thing through different windows.
+The fix is the pin E.2 put on `uio[5]` for exactly this. In gate-level mode
+`window_high` now comes from it. The RTL branch already checks, on every cycle,
+that the pin equals the internal signal, so the two modes audit the same thing
+through different windows. Checked three ways here before committing. RTL, 7 of
+7. RTL again with `rtl_handles` forced to return nothing, which is the
+netlist's condition, 7 of 7 through the pin path with the sixteen macro pins
+observed.
 
-Checked three ways here before committing. RTL, 7 of 7. RTL again with
-`rtl_handles` forced to return nothing, which is the netlist's condition,
-7 of 7 through the pin path with the sixteen macro pins observed. And that
-same blind run with the expectation deliberately pointed at the neighbour
-macro fails with `observed 1, expected 2` on the first four samples, which
-is the shape of the CI failure with the sign flipped, and the proof the
-check is live rather than vacuous. The netlist itself is not run here,
-there is no PDK in the container; the next gl_test is what runs it.
+And that same blind run with the expectation deliberately pointed at the
+neighbour macro fails with `observed 1, expected 2` on the first four samples,
+which is the shape of the CI failure with the sign flipped, and the proof the
+check is live rather than vacuous. The netlist itself is not run here, there is
+no PDK in the container; the next gl_test is what runs it.
 
 ## The test workflow had been red since 4 September
 
@@ -132,36 +131,36 @@ there is no PDK in the container; the next gl_test is what runs it.
 
     src/ro_puf_core.v:100: error: Unknown module type: ro_armc
 
-The root `Makefile`'s `CORE_RTL` never learned about `src/ro_armc_sim.v`,
-which `0b586aa` "install rtl" made necessary. Five pushes since, and the
-summariser I read the run list through reports every run as passed, so
-nobody saw it. One line fixes the compile.
+The root `Makefile`'s `CORE_RTL` never learned about `src/ro_armc_sim.v`, which
+`0b586aa` "install rtl" made necessary.
 
-Behind it, two of the three hand-written testbenches in `tb/` were for a
-chip that no longer exists. `tb_ro_puf_core.v` had eight oscillators, a
-three-bit selector and four Arm B models; it failed with 1206 errors the
-moment it compiled. `tb_tt_um_ro_puf.v` expected a fixed thousand-cycle
-window and two arms, which is the wrapper before E.2, and failed with 33.
-`tb_ro_puf.v` still passed.
+Five pushes since, and the run list reports every run as passed, so nobody saw
+it. One line fixes the compile.
 
-Both are rewritten for the chip as it is. The core testbench drives all 48
-slots at the fabricated size, sixteen `ro_macro_hard` models on the Arm B
-ports the way the top level hangs the real macros, and insists on the
-shape the sim models give the counts: Arm A falling with index, Arm B all
-equal, Arm C falling with index and faster than Arm A at the same index,
-which is how the two models differ. Every cycle of every run it checks the
-`active` output against the window and the Arm B enables against one-hot,
-and at the end it selects a slot no oscillator fills and requires done to
-rise with zero, which is the tied-low slots doing what the core's comment
-says they do. The wrapper testbench drives E.2's pin map: `uio_oe` 0x31,
-the version bytes through the count port, all 48 slots on the 256 window,
-`uio[5]` against the internal window on every cycle, and then window
-select 1, which has to double the count to within the one-count boundary
-the settle handshake absorbs. It did: 3413 against twice 1706.
+Behind it, two of the three hand-written testbenches in `tb/` were for a chip
+that no longer exists. `tb_ro_puf_core.v` had eight oscillators, a three-bit
+selector and four Arm B models; it failed with 1206 errors the moment it
+compiled. `tb_tt_um_ro_puf.v` expected a fixed thousand-cycle window and two
+arms, which is the wrapper before E.2, and failed with 33. `tb_ro_puf.v` still
+passed. Both are rewritten for the chip as it is. The core testbench drives all
+48 slots at the fabricated size, sixteen `ro_macro_hard` models on the Arm B
+ports the way the top level hangs the real macros, and insists on the shape the
+sim models give the counts:
 
-Each was pointed at the wrong macro on purpose once and failed by
-thousands, then pointed back. `make check` is three passes, and the
-firmware's 18 unit tests pass beside it.
+Arm A falling with index, Arm B all equal, Arm C falling with index and faster
+than Arm A at the same index, which is how the two models differ. Every cycle
+of every run it checks the `active` output against the window and the Arm B
+enables against one-hot, and at the end it selects a slot no oscillator fills
+and requires done to rise with zero, which is the tied-low slots doing what the
+core's comment says they do.
+
+The wrapper testbench drives E.2's pin map: `uio_oe` 0x31, the version bytes
+through the count port, all 48 slots on the 256 window, `uio[5]` against the
+internal window on every cycle, and then window select 1, which has to double
+the count to within the one-count boundary the settle handshake absorbs. It
+did: 3413 against twice 1706. Each was pointed at the wrong macro on purpose
+once and failed by thousands, then pointed back. `make check` is three passes,
+and the firmware's 18 unit tests pass beside it.
 
 ## Where that leaves the chip
 

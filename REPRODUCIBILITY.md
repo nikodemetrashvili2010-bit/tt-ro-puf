@@ -42,16 +42,19 @@ needs a fresh SPICE run against your own PDK install.
 Worth knowing which is which. The corner sweep, the sixteen Arm B instances,
 the selector sweep, the supply sweep and the macro RC comparison all have their
 raw simulator output in the repository, so those verifiers really do re-derive
-from logs. Three do not: the sixteen-ring distributed-RC comparison
-(`rc_validation.csv`), the counter-boundary flop sweep, and the seven boundary
-sweeps through the selector (`boundary_validation_*.csv`). For those three the
-CSV is the primary record and a verifier can only check that the CSV is
-self-consistent. Rerunning them is the only way to check them, and the decks
-regenerate deterministically so that is possible. The provenance check
-binds the archived source and evidence blobs to a reachable historical
-commit. The bundle check is narrower and asks one question: did the DEF,
-netlist, SPEF and metrics in an archived build folder come from the same flow
-run. It says nothing about whether that run was any good.
+from logs.
+
+Three do not: the sixteen-ring distributed-RC comparison (`rc_validation.csv`),
+the counter-boundary flop sweep, and the seven boundary sweeps through the
+selector (`boundary_validation_*.csv`). For those three the CSV is the primary
+record and a verifier can only check that the CSV is self-consistent.
+
+Rerunning them is the only way to check them, and the decks regenerate
+deterministically so that is possible. The provenance check binds the archived
+source and evidence blobs to a reachable historical commit. The bundle check is
+narrower and asks one question: did the DEF, netlist, SPEF and metrics in an
+archived build folder come from the same flow run. It says nothing about
+whether that run was any good.
 
 Figures regenerate with the pinned packages in `requirements-analysis.txt`:
 
@@ -103,14 +106,15 @@ python3 sim/spice/run_ngspice.py \
 
 `run_ngspice.py` replaces only the SKY130 model-library and standard-cell
 include paths, in a temporary copy of the deck; it never mutates the tracked
-deck. The generators use the same environment variables and fail when the
-model files are missing. `gen_dualarm_decks.py` needs all Arm A ring nets in
-the SPEF and placement centroids for all 16 oscillators in a matching DEF
-from the same final run. Its defaults point at the coherent
-`dualarm/build_current/` bundle; the older `dualarm/build_debug/` snapshot is
-a mixed-stage checkpoint that the generator rejects if given. Keep regenerated
-files outside the evidence directories and inspect `git diff` before accepting
-any regenerated data.
+deck. The generators use the same environment variables and fail when the model
+files are missing. `gen_dualarm_decks.py` needs all Arm A ring nets in the SPEF
+and placement centroids for all 16 oscillators in a matching DEF from the same
+final run.
+
+Its defaults point at the coherent `dualarm/build_current/` bundle; the older
+`dualarm/build_debug/` snapshot is a mixed-stage checkpoint that the generator
+rejects if given. Keep regenerated files outside the evidence directories and
+inspect `git diff` before accepting any regenerated data.
 
 The verifiers accept `--ctrl`, `--par`, `--log-5p`, `--log-1p`, `--csv`,
 `--spef`, and related path options (see `--help`), so a fresh run can be
@@ -134,16 +138,14 @@ they double as a check on the environment: they should come back matching the
 `lumped_MHz` column of `sim/spice/gono/rc_validation.csv`, which holds the
 frequencies from the corrected run.
 
-The fast-corner selector sweep behind item 2 of `docs/hardware_todo.md` did have
-no archived logs, and this paragraph still said so four days after it stopped
-being true. The sweep was archived on 2026-08-07 and this was corrected on the
-11th. `sim/spice/gono/mux/` holds 192 files: a deck, a console log and a reduced
+The fast-corner selector sweep behind item 2 of `docs/hardware_todo.md` had no
+archived logs until 2026-08-07, and this section was four days late saying so.
+`sim/spice/gono/mux/` holds 192 files: a deck, a console log and a reduced
 waveform for each of the 32 decks and 32 blocked controls. CI regenerates
 `mux_validation.csv` from that folder and diffs it byte for byte against the
 committed copy, and `verify_mux_archive.py` checks the archive for what
 archiving gets wrong: a CSV row with no run behind it, a log filed under the
-wrong oscillator, a missing control. Line 38 above has had this right the whole
-time and this paragraph contradicted it.
+wrong oscillator, a missing control.
 
 So the commands below are no longer the only way to get these numbers back. They
 are still the way to get them from a fresh simulator rather than from my logs,
@@ -161,12 +163,14 @@ committed `mux_validation.csv` exactly, since both come from the same routed
 netlist. If they do not, the build in `dualarm/build_current/` is not the one the
 csv was made from.
 
-That csv changed shape on 2026-08-02. It used to carry a single `narrowest_ps`
-column, which mixed high levels and low levels together and was the source of the
-error described in item 2 of `docs/hardware_todo.md`. It now carries the rise
-delay, the fall delay and the two polarities separately. The rise delays are
-unchanged from the earlier run, to the picosecond, so an older clone can be
-checked against a newer one on that column.
+That csv changed shape on 2026-08-02.
+
+It used to carry a single `narrowest_ps` column, which mixed high levels and
+low levels together and was the source of the error described in item 2 of
+`docs/hardware_todo.md`. It now carries the rise delay, the fall delay and the
+two polarities separately. The rise delays are unchanged from the earlier run,
+to the picosecond, so an older clone can be checked against a newer one on that
+column.
 
 The boundary sweeps behind item 1 have no archived logs either. Each takes about
 eight minutes:
@@ -209,7 +213,7 @@ known:
 - cocotb: `2.0.1`; pytest: `8.4.2`; matplotlib: `3.10.8`.
 
 APT packages, the base-image digest, transitive Python dependencies, the
-SKY130 PDK, and the `ttsky26c` GitHub Action tag are not immutably locked by
+SKY130 PDK, and the `ttsky26d` GitHub Action tag are not immutably locked by
 the historical repository. For a publishable rerun, record `python
 --version`, `ngspice --version`, `iverilog -V`, the container image digest,
 the PDK commit, the source commit, and the resolved action SHAs.
@@ -237,28 +241,24 @@ the short answer to "which one is current":
 ## How this repository gets updated, and what went wrong with it
 
 I do not work inside this repository. I work in a folder on my own disk and
-copy it across with a script before every commit. That is worth stating,
-because the script had a real defect and an outside reviewer found the symptom
-before I found the cause.
-
-It copied and it never pruned. Files I deleted in the working folder stayed
-here for good, and the reviewer read four of them as current: a positions CSV
-full of `nan`, two experimental configuration files, and a mangled author name.
-None of the four existed on my side. He was reading things I thought I had
-deleted months ago.
+copy it across with a script before every commit. That script had a defect, and
+an outside reviewer hit the symptom before I found the cause. It copied and it
+never pruned. Files I deleted in the working folder stayed here for good, and
+the reviewer read four of them as current: a positions CSV full of `nan`, two
+experimental configuration files, and a mangled author name. None of the four
+existed on my side. He was reading things I thought I had deleted months ago.
 
 The script now keeps every copy rule in one table and reads the same table
 backwards, so it can ask where any file here came from. If a file has no source
-in my working folder it stops and prints the list rather than committing. It
-also runs `git diff --no-index src dualarm/src`, the comparison TinyTapeout's
-own workflow runs, and refuses if those two trees disagree. That check would
-have caught the older bug directly: the prune list deleted one experimental
-config from `src/` and left its twin under `dualarm/src/`, which is why the
-stock test workflow has been red.
+in my working folder it stops and prints the list rather than committing.
 
-The script itself stays on my machine because it is written around absolute
-paths on my disk. Its checks are tested against a throwaway pair of trees
-rather than against this repository.
+It also runs `git diff --no-index src dualarm/src`, the comparison
+TinyTapeout's own workflow runs, and refuses if those two trees disagree. That
+check would have caught the older bug directly: the prune list deleted one
+experimental config from `src/` and left its twin under `dualarm/src/`, which
+is why the stock test workflow has been red. The script itself stays on my
+machine because it is written around absolute paths on my disk. Its checks are
+tested against a throwaway pair of trees rather than against this repository.
 
 ## Freezing the final release
 
@@ -267,12 +267,13 @@ release. See the note in `sim/spice/gono/verify_provenance.py` for what that
 check does and does not cover. Before I order silicon I will cut one tagged
 release where everything lines up: source commit, TinyTapeout config, the macro
 and top GDS, the DEF and SPEF, the metrics, the DRC/LVS/XOR reports, the deck
-generators, the raw logs, and the paper numbers. The same tag records the parts
-that can still move today. That means the resolved SHAs behind
-`actions/checkout` and `TinyTapeout/tt-gds-action`, the SKY130 PDK commit, the
-LibreLane and OpenROAD revisions, the container image digest, `pip freeze`, and
-the tool versions listed above. After that the tag is the artifact, not a
-branch that keeps moving.
+generators, the raw logs, and the paper numbers.
+
+The same tag records the parts that can still move today. That means the
+resolved SHAs behind `actions/checkout` and `TinyTapeout/tt-gds-action`, the
+SKY130 PDK commit, the LibreLane and OpenROAD revisions, the container image
+digest, `pip freeze`, and the tool versions listed above. After that the tag is
+the artifact, not a branch that keeps moving.
 
 ## Physical evidence
 

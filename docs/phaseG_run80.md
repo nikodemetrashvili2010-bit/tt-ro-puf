@@ -1,7 +1,7 @@
 # Run 80: Arm A holds, and where Arm C could go
 
-12 September, commit `74b89e0`, pushed by Nikoloz at eight minutes past
-midnight. The first build with the hook.
+12 September, commit `74b89e0`, pushed at eight minutes past midnight.
+First build with the hook.
 
     archived-evidence   green   1m 01s
     gds                 green   4m 26s
@@ -18,8 +18,8 @@ minute with everything after the gate skipped.
 
 Run 80 had the workflow file. The gate passed 123 of 123.
 
-`viewer` is still Pages. That is one click in the repository settings and
-it is Nikoloz's.
+`viewer` is still Pages. One click in the repository settings, and it
+has not been made yet.
 
 ## The annotations
 
@@ -72,15 +72,13 @@ filler count went from 1160 to 1140 to make room.
 
 More cells in the box, not fewer. I think the reason is plain.
 
-On run 77 the Arm A cells floated through global placement and were set
-down at their coordinates afterwards, so nothing was attached to those
-sites while the placer worked. Now they are fixed before global
-placement starts. Every enable decoder has one wire into a ring NAND
-that is already at its final site, and every output mux has one wire
-out of a ring buffer that is too.
-
-The soft box is a density penalty. A short wire to a fixed cell beats
-it, so more of the decode logic settles against the rings than before.
+On run 77 the Arm A cells floated through global placement and were set down at
+their coordinates afterwards, so nothing was attached to those sites while the
+placer worked. Now they are fixed before global placement starts. Every enable
+decoder has one wire into a ring NAND that is already at its final site, and
+every output mux has one wire out of a ring buffer that is too. The soft box is
+a density penalty. A short wire to a fixed cell beats it, so more of the decode
+logic settles against the rings than before.
 
 Where it settled matters. Ten of the twelve named stand on the box's
 right edge, x from 303600 to 307280 against an edge at 307740, or on its
@@ -116,9 +114,11 @@ and said the choice hung on one question: does the flow accept 512
 standard cells placed FIRM. It expected the answer to come from
 `MACRO_PLACEMENT_CFG` at step 17.
 
-Run 74 said no to that route. Run 80 says yes to a different one, the
-PDN hook at step 21. The amendment now carries a `resolution` block
-dated today that says so and leaves everything above it as written.
+Run 74 said no to that route.
+
+Run 80 says yes to a different one, the PDN hook at step 21. The amendment now
+carries a `resolution` block dated today that says so and leaves everything
+above it as written.
 
 It also said the option had to be scored against H1 to H6 before it was
 built, because the same sixteen rings of 32 cells were scored on 27
@@ -145,24 +145,24 @@ I first wrote three and changed it to four before the day ended. Three
 was Arm A's day plus a spare, and Arm A's coordinates came out of a
 build that had already routed. Arm C's do not: the order of the 32 cells
 inside the template is a default nothing has checked, and a template that
-routes badly costs a rebuild. Four is the honest number and it still
-clears H6, by a day instead of two.
+routes badly costs a rebuild. Four is the number that goes in the record
+and it still clears H6, by a day instead of two.
 
 ## The taps
 
-The second half of the script is the part nobody had to think about
-before, because nobody was placing Arm C by hand before.
+The second half of the script is the part nobody had to think about before,
+because nobody was placing Arm C by hand before. `gen_armc.py` drew sixteen
+regions on 30 August for a placer that would put 32 cells inside each one and
+work round whatever else was there. Its docstring says so: filler, decap, taps
+and the control logic are all re-placed by the rebuild, so they constrain the
+total area and not the position of anything. For a region constraint that was
+right.
 
-`gen_armc.py` drew sixteen regions on 30 August for a placer that would
-put 32 cells inside each one and work round whatever else was there. Its
-docstring says so: filler, decap, taps and the control logic are all
-re-placed by the rebuild, so they constrain the total area and not the
-position of anything. For a region constraint that was right.
+A template placed FIRM at step 21 is different.
 
-A template placed FIRM at step 21 is different. The well taps go in at
-step 19, one per row every 56 sites, and they are fixed. A template cell
-set down on a tap site is an overlap, and the legalizer refuses it the
-way run 73 died, DPL-0033 at step 32.
+The well taps go in at step 19, one per row every 56 sites, and they are fixed.
+A template cell set down on a tap site is an overlap, and the legalizer refuses
+it the way run 73 died, DPL-0033 at step 32.
 
 So the template has to hold its tap sites free. And for one template to
 serve sixteen regions, every region has to see its taps at the same
@@ -193,10 +193,12 @@ The template holds sites 11 and 39 of its 56 free in every row, which
 covers both phases and the boundary rows, and packs the eight cells a
 row needs into sites 12 to 35 between them.
 
-Eleven is not arbitrary. Three templates fit side by side in the strip's
-182 usable sites only if the first starts within its first fifteen. The
-tap phase fixes where a template may start modulo 28. Together those
-put the reserved offset between 11 and 25, and the smallest wins.
+Eleven is not arbitrary.
+
+Three templates fit side by side in the strip's 182 usable sites only if the
+first starts within its first fifteen. The tap phase fixes where a template may
+start modulo 28. Together those put the reserved offset between 11 and 25, and
+the smallest wins.
 
 I had worked that range out by hand as 12 to 25 before the script said
 11. The hand count was one site short at the far end of the row. The
@@ -236,13 +238,11 @@ putting all of Arm C somewhere else aliases the treatment with die
 position, and splitting Arm C puts that contrast inside one arm where it
 can be measured.
 
-The design audit of the 8th, finding 2, argued the other way. M4 is Arm
-C's spread over Arm A's. A gradient sampled across the whole die by one
-arm and across one block by the other inflates that ratio, and a ratio
-not below one reports a null.
-
-Both are right about something. The column removes the width confound
-and most of the height one, not all of it, since Arm A spans 100 um of
+The design audit of the 8th, finding 2, argued the other way. M4 is Arm C's
+spread over Arm A's. A gradient sampled across the whole die by one arm and
+across one block by the other inflates that ratio, and a ratio not below one
+reports a null. Both are right about something. The column removes the width
+confound and most of the height one, not all of it, since Arm A spans 100 um of
 height and the column spans 180.
 
 ## What was checked, and what was not
@@ -266,24 +266,21 @@ And T09 first required a tap in every row of a region. The recorded
 regions showed that is false at a row's edge, where the first tap can
 be 56 sites in.
 
-T14, added last, first asked whether the chosen layout found all sixteen
-and fired alongside T07 on the same fixture, because the chosen layout is
-the column and T07 already owns the column's count. It asks only whether
-the name resolves to a layout now. That is the rule about a new check
-reaching into what an old one owns, and it has been broken once before,
-by P15 yesterday.
-
-The numbers above were re-derived with throwaway code that imports
-nothing from the script: a byte array per row instead of sets, its own
-group walk, its own packing. Phases 2 and 6, 33 templates and 21 outside
-the box, the column's six row groups and three x positions, 64 template
-rows each seeing one tap at 11 or 39, fourteen patterns and eight
-overlaps, 27.25 percent. All agree.
+T14, added last, first asked whether the chosen layout found all sixteen and
+fired alongside T07 on the same fixture, because the chosen layout is the
+column and T07 already owns the column's count. It asks only whether the name
+resolves to a layout now. P15 did the same thing yesterday, a new check
+reaching into ground an old one already held. The numbers above were re-derived
+with throwaway code that imports nothing from the script: a byte array per row
+instead of sets, its own group walk, its own packing. Phases 2 and 6, 33
+templates and 21 outside the box, the column's six row groups and three x
+positions, 64 template rows each seeing one tap at 11 or 39, fourteen patterns
+and eight overlaps, 27.25 percent. All agree.
 
 The first version of that code matched no taps at all. Its regex did
 not allow for `+ SOURCE DIST` before `+ FIXED`, and it printed zero bad
-rows over an empty set. That is the vacuous pass the house rule is
-about. It was caught because the phase table printed empty.
+rows over an empty set, so it passed over nothing at all. It was caught
+because the phase table printed empty.
 
 Not checked: whether the three-arm build puts its taps where the two-arm
 DEF has them outside the 37 rows Arm A stands in. The die, the rows and
@@ -292,44 +289,45 @@ those 37 rows, where 74 taps and 512 fixed cells share the box with no
 overlap. The other 44 rows are an assumption until a build with Arm C in
 it says otherwise.
 
-Not checked either: routing. The template fixes placement and leaves
-routing free by design. Whether sixteen identical placements route to
-sixteen similar wire loads is the experiment, not a precondition of it.
+Not checked either: routing.
 
-Nothing in the build reads any of this. `gen_placement_cfg.py` still
-emits no Arm C line and P11 still fails if one appears, and that stays
-true until a layout is chosen. The gate gains three commands, 126, and
-`ARMC_TEMPLATE.json` is regenerated and diffed like the other records.
+The template fixes placement and leaves routing free by design. Whether sixteen
+identical placements route to sixteen similar wire loads is the experiment, not
+a precondition of it.
 
-The script is 1169 lines, 363 of them fixture and selftest. That is a
-sixth over the thousand-line yardstick for a day, and it was one
-sitting. The rest of the day's diff is 98 lines across seven files.
+Nothing in the build reads any of this.
 
-Those four numbers were 1132, 359, an eighth and 58 an hour ago, written
-before the last section of this writeup existed, and they were wrong by
-the time it did. Re-derived rather than left, which is the rule, and the
-rule caught its own author.
+`gen_placement_cfg.py` still emits no Arm C line and P11 still fails if one
+appears, and that stays true until a layout is chosen. The gate gains three
+commands, 126, and `ARMC_TEMPLATE.json` is regenerated and diffed like the
+other records.
+
+The script is 1169 lines, 363 of them fixture and selftest. The rest of
+the day's diff is 98 lines across seven files.
+
+Those three numbers read 1132, 359 and 58 an hour ago, before the last
+section of this writeup existed, and were stale by the time it did.
+Re-derived rather than left.
 
 ## The choice, made
 
-The section above was written to hand Nikoloz the layout decision with
-the argument laid out on both sides, because where an arm sits on the
-die is a research-design question and this project's rule is that those
-are his. He read it and handed it back: choose the best option yourself.
+The section above lays the argument out on both sides, because where an
+arm sits on the die is a research-design question and not a build
+detail.
 
 So, the column, and the reasoning in one paragraph.
 
-M4 is the metric this arm exists to move, Arm C's frequency spread over
-Arm A's, and a ratio not below 1 reports a null. Supply drop and
-temperature are gradients that repeat on every die. The three-part
-layout samples them across 96 percent of the die's width while Arm A
-sits in a block spanning 23 percent, and that difference inflates Arm
-C's spread on its own, before any treatment effect. It biases the
-measurement toward the null. Sixteen rings is not enough sample to spend
-on a confound that runs against the hypothesis when the alternative
-removes it. The column puts both arms in the same strip, on the same
-rows, in the same corner of the power grid, so a gradient moves the two
-together.
+M4 is the metric this arm exists to move, Arm C's frequency spread over Arm
+A's, and a ratio not below 1 reports a null. Supply drop and temperature are
+gradients that repeat on every die. The three-part layout samples them across
+96 percent of the die's width while Arm A sits in a block spanning 23 percent,
+and that difference inflates Arm C's spread on its own, before any treatment
+effect.
+
+It biases the measurement toward the null. Sixteen rings is not enough sample
+to spend on a confound that runs against the hypothesis when the alternative
+removes it. The column puts both arms in the same strip, on the same rows, in
+the same corner of the power grid, so a gradient moves the two together.
 
 What that gives up is real and is recorded: `gen_armc.py`'s argument was
 that spreading Arm C puts the position contrast inside one arm where it
@@ -349,9 +347,9 @@ not being able to say which change caused whatever moves. It gets its
 own run or it stays.
 
 All three are in `chip/G2_AMENDMENT.json` under `resolution`, dated
-today, attributed to a session deciding under delegation, and marked as
-what they are: choices made after the freeze, with the numbers in hand,
-carrying none of the weight of the rule that was frozen on 27 August.
+today and marked as what they are: choices made after the freeze, with
+the numbers in hand, carrying none of the weight of the rule that was
+frozen on 27 August.
 The generator names the layout in one constant and a check fails if that
 constant stops matching a layout that exists.
 

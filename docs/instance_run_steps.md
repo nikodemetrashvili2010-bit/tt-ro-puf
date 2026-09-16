@@ -107,9 +107,8 @@ All of this is WSL. Nothing here is PowerShell.
 
 That is the volare PDK, not the ciel one LibreLane uses. The ciel tree at
 `~/ttsetup/pdk` has no `libs.tech/ngspice`, so every deck generator in this
-project points at `/home/pc/pdks` instead. I got this wrong once and the
-generator stopped with a missing-file error, which is the right way for it to
-fail.
+project points at `/home/pc/pdks` instead. Pointed at the wrong one, the
+generator stops with a missing-file error rather than running on nothing.
 
     export PDK=sky130A
 

@@ -12,8 +12,9 @@ owed. This pays it.
 
 It cannot change the per-instance comparison. All sixteen Arm B copies share one
 GDS and therefore one internal extraction, so whatever this shifts, it shifts
-all sixteen by the same amount. What it changes is the single number, and the
-honesty of comparing it against an Arm A number derived a different way.
+all sixteen by the same amount. What it changes is the single number, and
+whether that number can be set beside an Arm A number derived a different
+way.
 
 Two decks, differing only in the parasitic model:
 
@@ -166,9 +167,9 @@ def model_lines(cn: dict, need_pdk: bool) -> list[str]:
     """The two lines that point at the PDK, or a marked placeholder.
 
     Writing a runnable deck needs PDK_ROOT. Accounting for the SPEF and checking
-    the topology do not, and this project's rule is that a stranger with a clone
-    and no PDK can still re-derive the numbers, so --report and --selftest fall
-    back rather than refusing. The placeholder is deliberately not a valid path,
+    the topology do not, and the numbers here have to be re-derivable from a
+    clone with no PDK installed, so --report and --selftest fall back rather
+    than refusing. The placeholder is deliberately not a valid path,
     so a deck written this way cannot quietly be simulated against nothing.
     """
     try:

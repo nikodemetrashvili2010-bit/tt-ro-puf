@@ -16,7 +16,7 @@ carried what the step did before it stopped:
       u_rob8  (ro_macro_hard) overlaps PHY_EDGE_ROW_56_Left_44 (decap_3)
     [ERROR DPL-0033] detailed placement checks failed.
 
-## Wrong twice, and the second one was mine this morning
+## Two diagnoses, both dead
 
 Step 7 blamed tap insertion. Run 73 killed that: steps 18 and 19 finished.
 
@@ -26,37 +26,39 @@ says the resizer inserted 69 buffers and resized nothing. There is no
 "Resized N instances" line because there were none. The chain was sound
 and the thing at the end of it did not happen. Had that config line gone
 in yesterday it would have changed nothing, and the next run would have
-been read as "the resize fix did not work" instead of as what it is.
+read as "the resize fix did not work" instead of as what it is.
 
-The pinned Arm A cells are not in the report. Three Arm B macros overlap
-three endcap cells. That is the fact, and it is not one either of the
-previous two days would have guessed.
+The pinned Arm A cells are not in the report.
+
+Three Arm B macros overlap three endcap cells. That is the fact, and it is not
+one either of the previous two days would have guessed.
 
 ## What the three names say
 
-`PHY_EDGE_ROW_38_Left_26` is an endcap on a row named `ROW_38`. In the
-frozen two-arm DEF the same row's endcaps are `PHY_EDGE_ROW_38_5_Left_15`
-and `_Right_112`, on a row named `ROW_38_5`: the fifth fragment after
-`cut_rows` cut the original around the four macros, at x 245640 and
-330740, either end of the piece to the right of the macro block. Tapcell
-names an endcap after the row it sits on, so a name with no fragment
-suffix is a row that was never cut. Row 38 ran whole in run 74, from the
-core edge at 2760 through u_rob4 at 3220, and its Left endcap, 1380 dbu of
-decap_3, went in at 2760 and overlapped the macro by 920.
+`PHY_EDGE_ROW_38_Left_26` is an endcap on a row named `ROW_38`. In the frozen
+two-arm DEF the same row's endcaps are `PHY_EDGE_ROW_38_5_Left_15` and
+`_Right_112`, on a row named `ROW_38_5`: the fifth fragment after `cut_rows`
+cut the original around the four macros, at x 245640 and 330740, either end of
+the piece to the right of the macro block.
 
-Which macros, and which rows, is the tell. Each leftmost macro spans about
-fifteen rows; the pinned Arm A cells sit in rows 25 to 61:
+Tapcell names an endcap after the row it sits on, so a name with no fragment
+suffix is a row that was never cut. Row 38 ran whole in run 74, from the core
+edge at 2760 through u_rob4 at 3220, and its Left endcap, 1380 dbu of decap_3,
+went in at 2760 and overlapped the macro by 920. Which macros, and which rows,
+is the tell. Each leftmost macro spans about fifteen rows; the pinned Arm A
+cells sit in rows 25 to 61:
 
     u_rob0   rows  6..21   shares no row with Arm A    no overlap
     u_rob4   rows 24..38   shares 25..38               overlap in row 38
     u_rob8   rows 41..56   shares 41..56               overlap in row 56
     u_rob12  rows 59..73   shares 59..61               overlap in row 61
 
-The one macro that shares no row with Arm A is clean. The reported row is
-the top shared row in each band, which is `check_placement` naming one
-partner per failing cell and the last one it found. Every uncut row
-through a leftmost macro has an endcap in it; three cells are reported
-because three macros are involved.
+The one macro that shares no row with Arm A is clean.
+
+The reported row is the top shared row in each band, which is `check_placement`
+naming one partner per failing cell and the last one it found. Every uncut row
+through a leftmost macro has an endcap in it; three cells are reported because
+three macros are involved.
 
 ## The line, at the revision the flow builds
 
@@ -137,25 +139,26 @@ the largest displacement if not. It does not fail the job. A moved cell is
 a result about the mechanism, and `gl_test` and `precheck` sit behind this
 job and have never once run on the three-arm design.
 
-## A trap that did not fire, kept because the next reader will worry too
+## A conversion that would have bitten and does not
 
-`placers.py`'s step 33 code does `int(x * db_units_per_micron)`, no
-rounding. Twenty-one of the 512 coordinates would lose a dbu that way,
-261.28 landing at 261279. It does not happen: LibreLane parses every
-config float as `Decimal` (`config/config.py` line 568, `Instance.location`
-is `Tuple[Decimal, Decimal]` at `variable.py` 98 and 218), and
-`Decimal("261.28") * 1000` is exactly 261280. The fidelity checker
-converts the same way rather than assuming it.
+`placers.py`'s step 33 code does `int(x * db_units_per_micron)`, no rounding.
+
+Twenty-one of the 512 coordinates would lose a dbu that way, 261.28 landing at
+261279. It does not happen: LibreLane parses every config float as `Decimal`
+(`config/config.py` line 568, `Instance.location` is `Tuple[Decimal, Decimal]`
+at `variable.py` 98 and 218), and `Decimal("261.28") * 1000` is exactly 261280.
+The fidelity checker does the conversion the same way and checks the result.
 
 ## What is not known
 
 Whether step 34 moves anything. The run answers that, and the answer is
 either a green build with a notice, or a green build with a list of names.
 
-Arm C inherits all of this. Five hundred and twelve more cells pinned in
-rows the macro block spans would hit ODB-0386 the same way. They go in
-through step 33 too, or not at all, and that is a decision about the
-experiment and not a generator's.
+Arm C inherits all of this.
+
+Five hundred and twelve more cells pinned in rows the macro block spans would
+hit ODB-0386 the same way. They go in through step 33 too, or not at all, and
+that is a decision about the experiment and not a generator's.
 
 ## Gate
 

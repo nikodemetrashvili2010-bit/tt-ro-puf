@@ -18,10 +18,12 @@ ro_macro_hard.nom.spef` records OpenROAD, from The OpenROAD Project, at commit
 than a release number, so parasitic extraction, placement and routing for this
 macro are pinned to one revision of one tool.
 
-The same header dates the run to 14:48:58 on Monday 22 June 2026. The Magic
-layout in `mag/ro_macro_hard.mag` carries a Unix timestamp of 1782139740, which
-is 14:49:00 UTC on the same day. Two files written by two different programs,
-two seconds apart, so the date is corroborated rather than asserted.
+The same header dates the run to 14:48:58 on Monday 22 June 2026.
+
+The Magic layout in `mag/ro_macro_hard.mag` carries a Unix timestamp of
+1782139740, which is 14:49:00 UTC on the same day. Two files written by two
+different programs, two seconds apart, so the date is corroborated rather than
+asserted.
 
 That Magic file also records the technology as `sky130A`, which is the process
 name but not a version of it.
@@ -45,7 +47,7 @@ much in its own `commit_id.json`; this one did not.
 
 ## What that costs
 
-Less than it looks, and I want to be exact about why rather than wave it away.
+Less than it looks. Exactly what it costs:
 
 The macro's physical views, the GDS, the LEF, the netlist and the SPEF, are all
 in the repository. Every pre-silicon number about Arm B is derived from those
@@ -55,22 +57,22 @@ commit.
 
 What is lost is the ability to rebuild the macro and get the same GDS. Somebody
 repeating the work would have to accept the archived views as given, or rebuild
-with a stated PDK version and show their result matches.
+with a stated PDK version and show their result matches. The integrated
+top-level build has a `commit_id.json` and this macro does not, so the top
+level is better documented. Until 2026-08-11 this file claimed that
+`commit_id.json` recorded a PDK commit and that the chip as submitted was
+therefore reproducible. Neither half was true.
 
-The integrated top-level build has a `commit_id.json` and this macro does not,
-so the top level is better documented. Until 2026-08-11 this paragraph said it
-recorded its PDK commit and that the chip as submitted was therefore
-reproducible. Neither half was true. The file holds four fields, the Tiny
-Tapeout app commit, this repository, the design commit, and a workflow URL that
-is null because the build ran locally, and no PDK version appears in any of
-them. The difference between the two levels is a build I can identify against
-one I cannot. It is not a reproducible build against an irreproducible one, and
-`sim/verify_macro_provenance.py` now reads the file and asserts both halves of
-that so the sentence cannot drift back.
+The file holds four fields, the Tiny Tapeout app commit, this repository, the
+design commit, and a workflow URL that is null because the build ran locally,
+and no PDK version appears in any of them. The difference between the two
+levels is a build I can identify against one I cannot. It is not a reproducible
+build against an irreproducible one, and `sim/verify_macro_provenance.py` now
+reads the file and asserts both halves of that so the sentence cannot drift
+back.
 
 ## Not fixable after the fact
 
-I could guess the PDK version from the date, since 22 June 2026 narrows it. I am
-not going to. A guessed commit in a provenance file is worse than an admitted
-gap, because the next reader cannot tell which entries were read off a file and
-which were reconstructed.
+The date, 22 June 2026, narrows the PDK version down, but a guessed commit in a
+provenance file leaves the next reader unable to tell which entries were read
+off a file and which were reconstructed. So it stays an open field.

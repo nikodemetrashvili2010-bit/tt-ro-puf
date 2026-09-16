@@ -34,8 +34,8 @@ between-position differences can be separated.
 ## Set the CONFIG block, and measure rather than label
 
 Edit the CONFIG block at the top of `measure_puf.py` for each run. A label like
-`room_1v8` is a nominal setting, not a measurement, so fill in what you
-actually measured:
+`room_1v8` records the setting you dialled in, not what the part saw, so fill
+in what you actually measured:
 
 - `CHIP_ID` and `CONDITION` (kept out of one human label; they are separate
   CSV columns and metadata fields);

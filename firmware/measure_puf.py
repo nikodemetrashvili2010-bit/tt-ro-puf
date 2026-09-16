@@ -9,8 +9,8 @@
 #
 # Fill in the CONFIG block below for each run. The chip id, the measured supply
 # voltage, and the measured temperature are not guessed by the script: a label
-# like "room_1v8" is a nominal setting, not a measurement, so record what you
-# actually measured.
+# like "room_1v8" records the setting you dialled in, not what the part saw,
+# so record what you actually measured.
 #
 # Chip protocol (from tt_um_ro_puf.v):
 #   ui[0] start (hold high for at least three clk cycles),
@@ -25,7 +25,7 @@
 # 256, 512, 2048 and 16384 rather than a fixed 1000. The counter is 16 bit,
 # ceiling 65535. 2048 at 50 MHz is 41 us and reads about 23400 for the
 # fastest nominal ring, which is where this script sits. 16384 exists to
-# make the counter wrap on purpose and is not a measurement setting.
+# make the counter wrap on purpose, so it is a test window and not a data one.
 #
 # Overflow is no longer something to be careful about. uio[4] latches when
 # the counter wraps and stays latched until reset, so a wrapped count is
@@ -48,8 +48,8 @@ from ttboard.demoboard import DemoBoard
 
 # ---- CONFIG: set these per run ------------------------------------------
 CHIP_ID    = "chip01"        # stable anonymous id for this physical die
-CONDITION  = "room_1v8"      # nominal condition label (not a measurement)
-SHUTTLE    = "ttsky26c"      # shuttle the die came from
+CONDITION  = "room_1v8"      # nominal condition label, the dialled setting
+SHUTTLE    = "ttsky26d"      # shuttle the die came from
 BOARD_REV  = "unknown"       # demo board / devkit revision
 SITE       = "unknown"       # operator or measurement site id
 CLK_HZ     = 50_000_000      # requested project clock

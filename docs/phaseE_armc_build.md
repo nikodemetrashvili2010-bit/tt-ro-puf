@@ -25,19 +25,20 @@ either. The experiment is about uniformity. The density is held.
 
 **Arm A has to be pinned, all 512 cells.**
 
-This is the part I did not expect to have to write down. E.1's own rule is to
-preserve the existing two-arm result rather than sacrifice it for a third
-sample. A rebuild re-places every standard cell in the design. So unless Arm
+E.1's own rule is to preserve the existing two-arm result rather than
+sacrifice it for a third sample, and a rebuild re-places every standard cell
+in the design. So unless Arm
 A's cells are fixed at the coordinates they already have, the Arm A on the
 26d die is not the Arm A the paper measured, and the two-arm result is a
 claim about a build that no longer exists.
 
-Pinning it is legitimate rather than a fudge. Arm A's treatment is "these
-cells were placed by an unconstrained flow", and that stays true of a
-placement replayed from the run that produced it. What it is not is a fresh
-draw from the unconstrained placer, and anybody reading a variance claim
-about Arm A should know that the sixteen rings are one sample, placed once,
-and not sixteen independent trials of the placer.
+Pinning it is legitimate rather than a fudge.
+
+Arm A's treatment is "these cells were placed by an unconstrained flow", and
+that stays true of a placement replayed from the run that produced it. What it
+is not is a fresh draw from the unconstrained placer, and anybody reading a
+variance claim about Arm A should know that the sixteen rings are one sample,
+placed once, and not sixteen independent trials of the placer.
 
 The consequence for this script is that **Arm A's cells, and nothing else,
 block where Arm C can go**. Filler, decap, taps and all 563 control cells are
@@ -101,12 +102,10 @@ Say that plainly rather than shipping a file that looks complete.
 `chip/ro_armc.v` is Arm C's ring: an enable NAND and 30 inverters, the same
 circuit as `src/ro_macro.v`, under its own module name so synthesis cannot
 share cells between the arms, with `keep` attributes so the optimiser cannot
-collapse a stage.
-
-The select arithmetic the third arm forces is checked here rather than
-emitted: 48 oscillators need 6 select bits, two of them the arm, four the
-index. That is one more input pin than today and it is `ui[7]`, which E.1b
-established is genuinely unconnected and E.2 then routed around.
+collapse a stage. The select arithmetic the third arm forces is checked here
+rather than emitted: 48 oscillators need 6 select bits, two of them the arm,
+four the index. That is one more input pin than today and it is `ui[7]`, which
+E.1b established is genuinely unconnected and E.2 then routed around.
 
 None of this has been simulated. It is structure, checked as structure. The
 lint, the gate-level tests and the acceptance table from E.2 all run in the

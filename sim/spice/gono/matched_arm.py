@@ -44,9 +44,8 @@ Four things get asked of that data:
                              predictable_bits.py computes them for Arm A, with
                              the measured deltas in place of the assumed zero.
 
-The honest reading of the answer is in the verdict at the end. The short version
-is that the fourth number is the one that matters and the first three explain
-why it comes out where it does.
+The verdict at the end carries the answer. The fourth number is the one that
+matters and the first three explain why it comes out where it does.
 
 Run: python3 matched_arm.py
      python3 matched_arm.py --selftest    (planted faults, no logs needed)

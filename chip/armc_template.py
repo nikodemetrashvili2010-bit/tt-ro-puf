@@ -29,8 +29,11 @@ way gen_armc.py split them, because chip/G2_AMENDMENT.json and
 docs/phaseG_design_audit.md pull in opposite directions on that. The
 column is chosen, by CHOSEN_LAYOUT below, and the grounds are in the
 amendment rather than here because the decision is a G.2 matter and not
-a geometric one. Nothing here is read by the build.
-gen_placement_cfg.py still emits no Arm C line.
+a geometric one. gen_placement_cfg.py still emits no Arm C line. Since
+16 September chip/gen_armc_fix.py reads the chosen layout out of
+ARMC_TEMPLATE.json and renders src/armc_fix.tcl from it, so the build
+reads this file at one remove; the order of the cells inside the grid
+is decided there, not here.
 
 Usage:
     python3 armc_template.py --selftest
@@ -80,13 +83,16 @@ BUILD_DAYS_BASIS = (
     "nothing has checked against a routed ring, and a congested or "
     "badly ordered template costs a rebuild. Arm A's hook took one day "
     "on 11 September and held on its first run, but its coordinates came "
-    "from a build that had already routed.")
+    "from a build that had already routed. Spent 16 September: the "
+    "generator is chip/gen_armc_fix.py rather than an extension of "
+    "gen_placement_cfg.py, it took the day, and the cell order was "
+    "chosen against Arm A as built rather than left at the default. "
+    "The two days held back stay held until a build has run with it.")
 
-# Which of the two layouts the build should use. Chosen 2026-09-12, the
-# same day both were enumerated, by the session at Nikoloz's explicit
-# delegation ("you choose best choice"). It is NOT part of the frozen
-# G.2 rule and must never be cited as preregistered; the reasoning and
-# what it costs are in chip/G2_AMENDMENT.json under resolution, and in
+# Which of the two layouts the build should use. Picked 2026-09-12, the
+# same day both were enumerated. It is NOT part of the frozen G.2 rule
+# and must never be cited as preregistered; the reasoning and what it
+# costs are in chip/G2_AMENDMENT.json under resolution, and in
 # docs/phaseG_run80.md.
 CHOSEN_LAYOUT = "column"
 
@@ -688,9 +694,13 @@ def run(def_path=DEF, criteria_path=CRITERIA, cost_path=COST,
             "The hand-placed Arm C, scored against the frozen G.2 rule",
             "and laid out as a template that a FIRM placement at step 21",
             "can replay. Written by chip/armc_template.py from the frozen",
-            "two-arm DEF. Nothing in the build reads this file. The two",
-            "layouts are candidates and neither is chosen; see",
-            "docs/phaseG_run80.md for what the choice turns on.",
+            "two-arm DEF. Of the two layouts the column is chosen, by",
+            "CHOSEN_LAYOUT in the script since 12 September, and the",
+            "choice is not part of the frozen rule; docs/phaseG_run80.md",
+            "has what it turned on. Since 16 September",
+            "chip/gen_armc_fix.py reads the chosen layout out of this",
+            "file and renders src/armc_fix.tcl, so the build reads it",
+            "at one remove.",
         ],
         "gate": "G.2 amendment",
         "source": {"def": sha256_file(def_path),
@@ -715,8 +725,11 @@ def run(def_path=DEF, criteria_path=CRITERIA, cost_path=COST,
             "order": "serpentine: the enable NAND then inverters 0 to 6 "
                      "left to right on the first row, 7 to 14 right to "
                      "left on the second, 15 to 22 left to right, 23 to "
-                     "29 and the output buffer right to left. Default, "
-                     "open until the build.",
+                     "29 and the output buffer right to left. Default. "
+                     "Decided 2026-09-16 in chip/gen_armc_fix.py: the "
+                     "serpentine stays and the buffer moves to the "
+                     "slot after inverter 14, the one it taps, so it "
+                     "sits one row above it.",
         },
         "tap_phase": {"half_pitch_sites": half,
                       "strip_residue": phase_by_kind.get("strip"),

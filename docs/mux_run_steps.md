@@ -51,7 +51,7 @@ selector in between, and its shortest pulse was 175 ps. Through the worst path's
 25%, that arrives as roughly 131 ps. Each half is checked and the combination is
 not. Repeat the item 1 phase sweep through path B15 next. That is the worst one.
 
-## Two mistakes worth keeping
+## Two mistakes in the tooling
 
 The first version of the generator hardcoded sky130 pin order from memory. Now it
 reads every port order from the PDK's own subckt lines and stops if a cell or pin
@@ -59,9 +59,9 @@ is missing, so a wrong order cannot build a quiet, wrong deck.
 
 The first version of the analyzer failed on A00 and was wrong to. It compared
 totals over a fixed window, so the last ring edge had no time to cross the
-selector before the transient ended and got counted as lost. Same lesson as item
-6, a pass condition that quietly assumed the window lined up with the period. It
-matches each edge to its partner now.
+selector before the transient ended and got counted as lost. Same shape as item
+6: a pass condition that assumed the window lined up with the period. It matches
+each edge to its partner now.
 
 ## Push it
 

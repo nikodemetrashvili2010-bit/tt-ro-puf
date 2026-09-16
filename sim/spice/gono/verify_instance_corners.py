@@ -209,11 +209,11 @@ def run(logdir, csvpath):
     # This started out as three t-tests, one per corner, copied from the tt
     # verifier. ff failed it: t = 2.40 against a 2.145 critical value, so the
     # correlation there is nominally significant at 14 degrees of freedom. I
-    # had already told myself the wandering sign settled the question, and it
-    # does not. What settles it is size, not significance. The output route
-    # sits outside the oscillator loop by construction, so the honest test is
-    # how much frequency the correlation would account for if you took it at
-    # face value, expressed in the only unit the chip has, one counter count.
+    # The wandering sign does not settle that on its own. What settles it is
+    # size, not significance. The output route sits outside the oscillator
+    # loop by construction, so the test is how much frequency the correlation
+    # would account for taken at face value, expressed in the only unit the
+    # chip has, one counter count.
     for c in ("ss", "tt", "ff"):
         d = D[c]
         n = NRO

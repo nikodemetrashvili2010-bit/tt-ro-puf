@@ -9,16 +9,16 @@ have not happened.
 ## What item D asks
 
 The corner table in `SIGNOFF.md` and in section 5.4 of the paper is Arm A. I
-relabelled it on 08-08 so it stops claiming to be the whole chip, and added a row
-saying plainly that Arm B has no corner sweep. That is honest but it is thin. Arm
-B is half the experiment, and what exists for it at corners is one instance,
+relabelled it on 08-08 so it stops claiming to be the whole chip, and added a
+row saying plainly that Arm B has no corner sweep. The label is right and the
+coverage is still thin. Arm B is half the experiment, and what exists for it at corners is one instance,
 B15, at ss and tt, plus the sixteen nominal per-instance runs from item 8.
 
 So this is the last piece of new evidence on the open list. Run all sixteen Arm B
 instances at the slow and fast corners, with their real enable and output routes,
 and the corner table covers both arms.
 
-## The estimate was wrong and I want to say why
+## Where the day and a half went
 
 I put item D at one and a half days, half of it writing a new generator, because
 `gen_dualarm_decks.py` is Arm A only and says so in its sixth line. That is true
@@ -29,9 +29,8 @@ has taken a `--corner` argument since the day it was written. So has
 corners.
 
 I estimated from the file I had been staring at rather than the file that does
-the work. The lesson is the same one from 08-07, when I summarised a corner row
-without opening the generator behind it. Before estimating the cost of building
-something, open the thing that would build it.
+the work. Same as 08-07, when I summarised a corner row without opening the
+generator behind it.
 
 What is actually left is two simulator runs and the writing. Call it half a day
 of mine plus a few hours of machine time.
@@ -59,20 +58,23 @@ the parasitic logs.
 ## Two things I fixed on the way
 
 The Arm A spread the report compared against was one number, 5.84%, the
-distributed-RC result from item 7 at tt. Reading an ss run against a tt number is
-sloppy, so it is a table now. There is no distributed Arm A run at ss or ff, so
-those two entries come from the lumped corner decks, 5.459% and 5.559%. Both are
-smaller than 5.84, which means the corner comparisons are the stricter ones, not
-the easier ones. Worth knowing on its own: Arm A's spread barely moves with
-corner. 5.534, 5.459, 5.559 across tt, ss and ff. Layout dispersion is a property
-of the layout, which is what you would hope, and now I can show it.
+distributed-RC result from item 7 at tt. Reading an ss run against a tt number
+is sloppy, so it is a table now. There is no distributed Arm A run at ss or ff,
+so those two entries come from the lumped corner decks, 5.459% and 5.559%.
+
+Both are smaller than 5.84, which means the corner comparisons are the stricter
+ones, not the easier ones. Worth knowing on its own: Arm A's spread barely
+moves with corner. 5.534, 5.459, 5.559 across tt, ss and ff.
+
+Layout dispersion is a property of the layout, which is what you would hope,
+and now I can show it.
 
 The analyzer computed one period as `tp / 20`, twenty being how many periods a
 full run measures over. A smoke run measures over five. On a smoke log that made
 the period come out four times too short and could fail a deck that is fine. It
 reads the period from the frequency the deck itself computed now, which is right
-for both. I checked this the only way worth checking: I put the old line back in
-a scratch copy, and the new test case fails on it.
+for both. To check it, I put the old line back in a scratch copy and the new
+test case fails on it.
 
 The generator has a `--tstop-ns` argument now, and it refuses a window too short
 to hold the last edge it measures. This matters at ss, where the default window
@@ -82,14 +84,17 @@ log, and the report reads the ring as dead. At ss that mistake costs hours.
 
 ## What I expect, written down before the run
 
-The control ring. Both corners should land within half a percent of the archived
-Arm A control, which is 323.1405 MHz at ss and 987.9480 at ff. The deck steps at
-1 ps and those archived runs stepped at 5 ps, and at tt that difference read
-+0.171%. A fixed timestep is a smaller slice of a longer period, so the shift
-should be smallest at ss and largest at ff. Taking it as a square law gives
-+0.044% at ss and +0.414% at ff, so 323.28 and 992.04 MHz. The sign is the
-prediction I care about. If either corner comes back below its archived value,
-the timestep story is wrong and I want to know that.
+The control ring. Both corners should land within half a percent of the
+archived Arm A control, which is 323.1405 MHz at ss and 987.9480 at ff. The
+deck steps at 1 ps and those archived runs stepped at 5 ps, and at tt that
+difference read +0.171%.
+
+A fixed timestep is a smaller slice of a longer period, so the shift should be
+smallest at ss and largest at ff. Taking it as a square law gives +0.044% at ss
+and +0.414% at ff, so 323.28 and 992.04 MHz.
+
+The sign is the prediction I care about. If either corner comes back below its
+archived value, the timestep story is wrong and I want to know that.
 
 The reference ring. Arm B's loaded-to-control ratio is 0.8990 at tt. Arm A's own
 ratio moved +0.26% at ss and -0.21% at ff, so scaling by that gives 291.4 MHz at
@@ -109,8 +114,8 @@ Route delay and receiver slew should scale with the period. From tt's 0.1 to
 2.9 ps. Receiver edges from 62.6 to 318.2 ps should become 123 to 624 at ss and
 40 to 204 at ff.
 
-One more, and this one is a trap I am setting for myself. At tt the correlation
-between output route capacitance and frequency came out -0.160. On sixteen points
+One more, declared before the run so it can go against me. At tt the
+correlation between output route capacitance and frequency came out -0.160. On sixteen points
 that is nothing, and I have been treating it as nothing. If it is really nothing,
 its sign should wander between corners. If it keeps its sign at both and grows at
 ss where the delays are larger, then it is a real effect I dismissed, and the
@@ -120,12 +125,11 @@ at tt, is geometry and should stay above +0.99 everywhere.
 ## The commands
 
 All of this is WSL Ubuntu, not PowerShell. Do the exports first, in the same
-window, or the generator will stop and tell you `PDK_ROOT` is not set.
-
-The path below is the one every run on this machine has used, including the tt
-run of these same decks in `instance_run_steps.md`. I first wrote `$HOME/.volare`
-here from memory and it does not exist. If it ever moves, find it with
-`find /home/pc -maxdepth 6 -name sky130.lib.spice` and set `PDK_ROOT` to the
+window, or the generator will stop and tell you `PDK_ROOT` is not set. The path
+below is the one every run on this machine has used, including the tt run of
+these same decks in `instance_run_steps.md`. I first wrote `$HOME/.volare` here
+from memory and it does not exist. If it ever moves, find it with `find
+/home/pc -maxdepth 6 -name sky130.lib.spice` and set `PDK_ROOT` to the
 directory two levels above `libs.tech`.
 
 Step 1. Open WSL and set the environment.
@@ -145,9 +149,11 @@ Step 4. The analyzer's own selftest, also offline. Fourteen planted faults.
 
     python3 analyze_instance.py --selftest
 
-Step 5. Now the slow corner, and start with the smoke deck. It measures over five
-periods instead of twenty in a 60 ns window, so it finishes quickly and tells you
-whether every ring starts at 1.6 volts and 100 degrees.
+Step 5.
+
+Now the slow corner, and start with the smoke deck. It measures over five
+periods instead of twenty in a 60 ns window, so it finishes quickly and tells
+you whether every ring starts at 1.6 volts and 100 degrees.
 
     python3 gen_instance_decks.py --corner ss --smoke --output-dir /tmp/inst
 
@@ -201,7 +207,7 @@ frequencies.
 
 Do not copy anything into the repository yet. The logs go in
 `sim/spice/gono/armbcorner/` and get reduced first, the same way the selector
-sweep did, but I want to see the numbers before deciding what is worth keeping.
+sweep did, and what goes in gets decided once the numbers are in front of me.
 
 If a ring is missing from the report, send me the log anyway. A missing ring at
 ss means the window was short, and the fix is one number.

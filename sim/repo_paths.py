@@ -9,8 +9,8 @@ working-folder path runs here and crashes in CI, where only the published layout
 exists. That is the same working-tree against clone divergence that cost a week
 in August, arriving from the other direction.
 
-I wrote this after nearly shipping two checkers with the working-folder paths
-baked in. Neither could ever have gone green in the action.
+Two checkers went out with the working-folder paths baked in and neither could
+ever have gone green in the action. This exists so that cannot recur.
 
 Every path below is given in working-folder form. `resolve` returns whichever of
 the two layouts is actually on disk.

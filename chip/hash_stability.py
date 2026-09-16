@@ -37,8 +37,9 @@ a binary file with its carriage returns stripped are the same property seen
 twice, they resolve through different indexes and they want different fixes,
 so the check names which of the two it found instead of splitting in half.
 
-What "binary" means here is git's, not mine, and the first version of this
-script got it wrong. A NUL in the first 8000 bytes is only half the rule: git
+What "binary" means here is git's definition, not mine. The first version of
+this script used half of it. A NUL in the first 8000 bytes is half the rule:
+git
 also refuses the conversion on a file carrying a carriage return that no line
 feed follows, because stripping CRLF out of something that uses bare CR as a
 separator would eat data. `sim/spice/gono/ctrl2.txt` and `par2.txt` are ngspice

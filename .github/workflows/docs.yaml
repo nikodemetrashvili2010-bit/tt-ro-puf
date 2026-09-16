@@ -41,4 +41,4 @@ jobs:
 
       - name: Build docs
         if: github.event_name != 'pull_request'
-        uses: TinyTapeout/tt-gds-action/docs@ttsky26c
+        uses: TinyTapeout/tt-gds-action/docs@ttsky26d

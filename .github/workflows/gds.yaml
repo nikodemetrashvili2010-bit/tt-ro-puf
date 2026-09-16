@@ -126,6 +126,10 @@ jobs:
           python3 chip/placement_fidelity.py --selftest
           python3 chip/placement_fidelity.py --strict --def dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def
           diff chip/placement.cfg dualarm/src/placement.cfg
+          python3 chip/gen_armc_fix.py --selftest
+          python3 chip/gen_armc_fix.py --json /tmp/armc_fix.json --emit /tmp/afx
+          diff /tmp/armc_fix.json chip/ARMC_FIX.json
+          diff /tmp/afx/armc_fix.tcl dualarm/src/armc_fix.tcl
           python3 chip/gen_e2_rtl.py --selftest
           python3 chip/gen_e2_rtl.py --emit /tmp/e2 --csv /tmp/e2/plan.csv
           diff /tmp/e2/e2_ro_puf_core.v chip/e2_ro_puf_core.v
@@ -161,8 +165,13 @@ jobs:
         with:
           submodules: recursive
 
+      # ttsky26d since 16 September, the shuttle this goes to. At that tag
+      # the action's librelane-version defaults to 3.0.14 instead of the
+      # 3.0.5 that built run 80. chip/FLOW_SURFACE.json records what the
+      # two versions differ in: nothing that places a cell, and the same
+      # OpenROAD, yosys and PDK pins at both.
       - name: Build GDS
-        uses: TinyTapeout/tt-gds-action@ttsky26c
+        uses: TinyTapeout/tt-gds-action@ttsky26d
         with:
           pdk: sky130A
 
@@ -189,6 +198,15 @@ jobs:
         if: success()
         run: python3 chip/placement_fidelity.py --def "runs/wokwi/final/def/*.def" --annotate
 
+      # Arm C, since 16 September, goes in the same way from the third
+      # line of src/pdn_hook.tcl, src/armc_fix.tcl, at coordinates the
+      # scored template gives rather than a frozen DEF. Nothing has built
+      # with it yet, so this is the first place the answer appears. Same
+      # arrangement again: an annotation, never a failed job.
+      - name: Did Arm C stay where it was put
+        if: success()
+        run: python3 chip/gen_armc_fix.py --verify-def "runs/wokwi/final/def/*.def" --annotate
+
       # Gate-level simulation never enables an Arm A or Arm C ring, they are
       # zero-delay loops in the functional models, so a buffer the flow
       # spliced into one would reach silicon unseen. This walks every loop
@@ -205,7 +223,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Run Tiny Tapeout Precheck
-        uses: TinyTapeout/tt-gds-action/precheck@ttsky26c
+        uses: TinyTapeout/tt-gds-action/precheck@ttsky26d
 
   gl_test:
     needs: gds
@@ -225,7 +243,7 @@ jobs:
           submodules: recursive
 
       - name: GL test
-        uses: TinyTapeout/tt-gds-action/gl_test@ttsky26c
+        uses: TinyTapeout/tt-gds-action/gl_test@ttsky26d
 
       # This job has exited 2 in about forty seconds on run 65 and again on
       # run 71, two weeks apart, and both times the reason was in a log
@@ -277,4 +295,4 @@ jobs:
       pages: write      # to deploy to Pages
       id-token: write   # to verify the deployment originates from an appropriate source
     steps:
-      - uses: TinyTapeout/tt-gds-action/viewer@ttsky26c
+      - uses: TinyTapeout/tt-gds-action/viewer@ttsky26d

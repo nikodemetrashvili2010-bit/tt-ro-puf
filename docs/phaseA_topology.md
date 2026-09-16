@@ -15,7 +15,6 @@ again. What it does is settle three things A.1 asserted or skipped.
 A.1 decided which pin of a cell is an output from a table of nine pin names it
 wrote by hand, and which cells hold state from six substrings of a cell name.
 Both were plausible and neither was checked against the library they describe.
-
 A.1 never asked whether a cycle oscillates. A combinational loop with an even
 number of inversions is a latch. Counting loops and calling them rings works
 here because these loops happen to be odd, and "happen to be" is the part that
@@ -42,16 +41,15 @@ Nothing in that paragraph reads a name. Nets and instances are opaque keys, and
 the only thing the script knows about a cell is what its published model says.
 The supply pin names are not hardcoded either: they are the union of the
 `supply0` and `supply1` declarations across the library, which comes out as
-VPWR, VGND, VPB, VNB.
+VPWR, VGND, VPB, VNB. All three attacker tiers in the plan grant the public PDK
+and cell library, so this is an input rather than something recovered. The 43
+views are pinned by URL and SHA-256 in `extraction/library_sources.json`, every
+URL on a 40- character commit, and each file is hashed before it is parsed.
 
-All three attacker tiers in the plan grant the public PDK and cell library, so
-this is an input rather than something recovered. The 43 views are pinned by
-URL and SHA-256 in `extraction/library_sources.json`, every URL on a 40-
-character commit, and each file is hashed before it is parsed. They are pinned
-in their own file rather than added to `INPUT_MANIFEST.json`, because that
-manifest records target selection on 16 August and reopening it four days later
-to add inputs would make it a worse record of exactly the thing it exists to
-record.
+They are pinned in their own file rather than added to `INPUT_MANIFEST.json`,
+because that manifest records target selection on 16 August and reopening it
+four days later to add inputs would make it a worse record of exactly the thing
+it exists to record.
 
 ## What came back
 
@@ -128,14 +126,15 @@ Nothing downstream moves. No ring on either design runs through a delay gate,
 so treating them as sequential removed arcs that were not on a loop, and both
 ring counts stand. I am leaving `RING_CENSUS.json` as A.1 wrote it and
 recording the correction here and in the plan, rather than editing an archive
-to make an old number look like it was always right.
+to make an old number look like it was always right. The direction matters and
+the script now checks the one that can cost a ring. A cell wrongly called
+sequential only deletes arcs, so it can lose a loop and never invent one. A
+cell that holds state and is missed would fuse a design's whole clocked side
+into one enormous feedback region.
 
-The direction matters and the script now checks the one that can cost a ring.
-A cell wrongly called sequential only deletes arcs, so it can lose a loop and
-never invent one. A cell that holds state and is missed would fuse a design's
-whole clocked side into one enormous feedback region. The check is that every
-cell the library says holds state is one A.1's markers would have caught; the
-other direction is reported as a note, because on this library it is not empty.
+The check is that every cell the library says holds state is one A.1's markers
+would have caught; the other direction is reported as a note, because on this
+library it is not empty.
 
 ## The control the whole thing rests on
 
@@ -171,10 +170,12 @@ Two of them pass for a reason worth stating. No loop runs through a cell that
 holds state cannot fail on these designs, because a sequential output carries
 no arc at all, so a loop cannot contain one; it would fail on a cell with both
 a sequential and a combinational output, which this library does not have and
-the fixture does. No loop runs through a non-monotone input is different. The
-second target really does have 12 binate arcs, from five `xor2_1` and one
-`xnor2_1`, and the check passes because none of them is on a loop. The first
-target has none, so on that one it is the vacuous case.
+the fixture does.
+
+No loop runs through a non-monotone input is different. The second target
+really does have 12 binate arcs, from five `xor2_1` and one `xnor2_1`, and the
+check passes because none of them is on a loop. The first target has none, so
+on that one it is the vacuous case.
 
 ## The selftest
 
@@ -218,10 +219,11 @@ living between the archived files with no input present. Each loop count
 against the ring census, each logic-cell count against both the GDS and the
 SPEF census, each netlist hash against the input manifest and the ring census,
 each composition against the shapes A.1 recorded, each family placement against
-its own loop count, and every library hash against the declaration. Five
-planted faults confirm it catches an edited loop count, a swapped view hash, an
-edited path-net count, a recorded failure and a URL off a commit, and a
-control confirms a clean archive still verifies.
+its own loop count, and every library hash against the declaration.
+
+Five planted faults confirm it catches an edited loop count, a swapped view
+hash, an edited path-net count, a recorded failure and a URL off a commit, and
+a control confirms a clean archive still verifies.
 
 That is not re-derivation from raw bytes and it should not be read as one. It
 is the narrower guarantee: no number in this file can change unless a pinned
@@ -233,27 +235,27 @@ This is A.4's ring half and not its comparison half. The plan's row asks for
 "RO/mux/counter recognition", and what is here recognises rings, their enables
 and their exits. Which challenge selects which pair of rings is not recovered,
 and the counters are visible only as families of names that touch no loop. That
-is the next piece of A.4 and it is the piece A.6 actually needs.
+is the next piece of A.4 and it is the piece A.6 actually needs. The recovery
+is Tier 1 and Tier 2 work: it reads the published netlist, which this platform
+publishes for every project. Tier 3, where the attacker refuses the netlist as
+well and starts from GDS geometry, still needs the connectivity extraction A.3
+was priced for, and nothing today makes that cheaper.
 
-The recovery is Tier 1 and Tier 2 work: it reads the published netlist, which
-this platform publishes for every project. Tier 3, where the attacker refuses
-the netlist as well and starts from GDS geometry, still needs the connectivity
-extraction A.3 was priced for, and nothing today makes that cheaper.
+Two smaller limits.
 
-Two smaller limits. The truth-table method is exact for cells of this width and
-would need a different tool past eight inputs, which is checked rather than
-assumed. And the loop parity says a loop oscillates, not how fast: no
-capacitance, no resistance and no geometry is read anywhere in this script, and
-the frequency question is A.5's.
+The truth-table method is exact for cells of this width and would need a
+different tool past eight inputs, which is checked rather than assumed. And the
+loop parity says a loop oscillates, not how fast: no capacitance, no resistance
+and no geometry is read anywhere in this script, and the frequency question is
+A.5's.
 
 One naming note, because the repository now has two files with topology in the
 name and they are unrelated. `sim/spice/gono/verify_ring_topology.py` asserts
 that this project's own Arm A rings survived place and route intact. This one
 recovers somebody else's rings from their published netlist.
 
-One process note. At 1641 lines this is over the thousand-line day yardstick by
-about a third, and the overrun is real rather than accounting: the script
-carries a cell-library parser and evaluator that the earlier Phase A scripts
-did without because they hardcoded what it derives. Splitting that half into
-`extraction/cell_library.py`, which A.5 will want anyway, is the first job
-tomorrow.
+One note on the script itself.
+
+At 1641 lines it carries a cell-library parser and evaluator that the earlier
+Phase A scripts did without, because those hardcoded what this one derives.
+That half belongs in `extraction/cell_library.py`, which A.5 wants anyway.

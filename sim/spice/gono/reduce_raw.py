@@ -15,8 +15,7 @@ the samples in the middle of a high or a low change no answer. Dropping them is
 lossless for this analysis, and that claim is not an argument, it is something
 --verify checks deck by deck.
 
-Three things have to survive or every number moves, and each one is a way I
-could have got this wrong:
+Three things have to survive or every number moves:
 
   the two samples bracketing every crossing, for all three signals, since those
   are the only samples the interpolation reads;

@@ -2,9 +2,9 @@
 
 `chip/verify_phaseE.py`. Written 2026-08-29.
 
-The house rule is that every number appearing in prose has to be
-re-derivable by a script that does not share code with the one that produced
-it. `verify_predictability.py` exists for that and writes its own SPEF parser
+Every number appearing in prose has to be re-derivable by a script that does
+not share code with the one that produced it. `verify_predictability.py`
+exists for that and writes its own SPEF parser
 and its own least-squares solver rather than importing the ones under test.
 This is the same job for the four days above it.
 
@@ -60,11 +60,10 @@ looked at the clock net's routing syntax at all. The DEF grammar allows
 `TAPER`, `TAPERRULE <rule>` and `STYLE <n>` there, all three are now
 accepted, and the selftest has a case with one of each.
 
-It is worth saying what would have happened without the second parser. The
-number 25342.2 um would have gone into `docs/phaseE_armc_cost.md`, it would
-have been correct, and nobody would have known that a plausible-looking
-parser gets it wrong by 0.14 percent. The next script to read that file would
-have made the same mistake with nothing to catch it.
+Without the second parser, 25342.2 um would have gone into
+`docs/phaseE_armc_cost.md` and been correct, and the 0.14 percent error in a
+plausible-looking parser would have stayed hidden. The next script to read
+that file would have made the same mistake with nothing to catch it.
 
 ## The two controls
 
@@ -101,8 +100,8 @@ Ten cases on inputs small enough to check by hand: a four-component DEF, a
 two-segment net, a net whose only entry is a via, a net under a non-default
 rule, a two-entry SPEF name map, and the scrambler doing what it claims.
 
-Two of them exist because the verifier got the answer wrong first. The
-overlap case plants two cells on top of each other and requires the interval
+Two of them exist because the verifier itself was wrong first. The overlap
+case plants two cells on top of each other and requires the interval
 merge to report the overlap rather than double-count the area. The
 non-default-rule case is the TAPER bug above, kept so it cannot come back.
 
@@ -125,14 +124,14 @@ failed diff rather than an unnoticed drift.
 file's SHA-256 to match in every place it is recorded and can see: the
 script, the writeup and `PLAN_TO_DECEMBER.md`. CI only sees the first two,
 because the plan is not mirrored, and the check says so on its own output
-rather than quietly counting two out of three as agreement.
+instead of counting two out of three as agreement.
 
 ## What it does not cover, added 2026-08-31
 
 This was written on the 29th and it re-derives the first four days. Five more
-days landed after it and they do not have the same treatment, so the house
-rule at the top of this page holds for part of the commit and not all of it.
-Saying which part is the whole point of having the rule.
+days landed after it and they do not have the same treatment, so the rule at
+the top of this page holds for part of the commit and not all of it. Which
+part is below.
 
 Covered: the tile budget, the Arm C cost model, the G.2 decision and the E.2
 window table. Twenty checks against code that imports none of the four.

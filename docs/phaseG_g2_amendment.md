@@ -12,7 +12,7 @@ equalization constraints. The load ladder was the declared fallback.
 On 6 September, step 7 read the flow's own sources and found that LibreLane
 has no region, no fence and no cell group among its 413 variables, and that
 none of the four variables taking a Tcl file is read by a placement step. The
-chosen treatment has no implementation here. Not a hard one. None.
+chosen treatment has no implementation in this flow at all.
 
 The criteria file saw it coming and said so in writing:
 
@@ -46,15 +46,15 @@ line and its P11 fails if one turns up, which is that door held shut.
 
 ## What was decided, and what it costs
 
-Nikoloz decided on 7 September: keep the third arm, take the stronger
-result, do not downgrade the project. So it is the hand placed arm.
+Decided on 7 September: keep the third arm, take the stronger result, do
+not downgrade the project. So it is the hand placed arm.
 
-The honest version of that option is not the one on G.2's list. Placement
-fixed by hand and routing left free is a different experiment: it sits
-between Arm A, where placement and routing are both free, and Arm B, where
-both are fixed inside one hardened macro. Three points on what has been a two
-point line, and the thing it isolates is routing as the remaining source of
-ring to ring difference. I would want that experiment. It is worth building.
+That option is not the one on G.2's list. Placement fixed by hand and
+routing left free is a different experiment: it sits between Arm A, where
+placement and routing are both free, and Arm B, where both are fixed inside
+one hardened macro. Three points on what has been a two point line, and the
+thing it isolates is routing as the remaining source of ring to ring
+difference.
 
 It is also not the experiment G.2 scored, and swapping one in because the
 first turned out unbuildable is exactly the move that freezing a decision
@@ -69,7 +69,7 @@ open automated flow can suppress layout leakage with constraints, or whether
 it needs a hard macro. Hand placing answers that in the negative by
 construction, because the flow has no constraint to hold. That is a real
 finding about open flows and it belongs in the paper as one, but it is a
-finding about the tooling and not a measurement on silicon, and the arm no
+finding about the tooling rather than a silicon result, and the arm no
 longer tests it.
 
 ## What is not amended
@@ -89,9 +89,9 @@ Run 72 is the first and only evidence about whether this flow accepts
 standard cells pinned FIRM at step 17, and run 72's `gds` job failed. Its
 reason is not yet readable; see `docs/phaseG_run72.md`.
 
-So this amendment is contingent, and I would rather say that than write it
-as settled. If pinning standard cells FIRM is what broke run 72, then hand
-placing Arm C is unavailable for the same reason the original Arm C was, and
-the choice collapses to the ladder or to two arms. The next push carries
+So this amendment is contingent and is written that way, not as settled.
+If pinning standard cells FIRM is what broke run 72, then hand placing Arm C
+is unavailable for the same reason the original Arm C was, and the choice
+collapses to the ladder or to two arms. The next push carries
 `chip/ci_failure_report.py` and will say which. Deciding before it reports
-would be guessing twice about the same thing.
+means deciding the same thing twice.

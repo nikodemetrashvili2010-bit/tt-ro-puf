@@ -13,12 +13,12 @@
     {
       "action": "TinyTapeout/tt-gds-action",
       "pinned_to_commit": false,
-      "ref": "ttsky26c"
+      "ref": "ttsky26d"
     },
     {
       "action": "TinyTapeout/tt-gds-action/precheck",
       "pinned_to_commit": false,
-      "ref": "ttsky26c"
+      "ref": "ttsky26d"
     },
     {
       "action": "actions/checkout",
@@ -28,12 +28,12 @@
     {
       "action": "TinyTapeout/tt-gds-action/gl_test",
       "pinned_to_commit": false,
-      "ref": "ttsky26c"
+      "ref": "ttsky26d"
     },
     {
       "action": "TinyTapeout/tt-gds-action/viewer",
       "pinned_to_commit": false,
-      "ref": "ttsky26c"
+      "ref": "ttsky26d"
     }
   ],
   "checks": [
@@ -80,7 +80,7 @@
       "pass": true
     },
     {
-      "detail": "cost, criteria, def, macro_lef, metrics, netlist, positions, regions, spef",
+      "detail": "cost, criteria, def, macro_lef, metrics, netlist, positions, regions, rtl, spef, template",
       "id": "S08",
       "name": "at least one artefact records where the build came from",
       "pass": true
@@ -112,52 +112,54 @@
   ],
   "chip_files": {
     "ARMC_COST.json": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
+    "ARMC_FIX.json": "3da1b34d0e78586cd1578e53cb3c2701c216f5e25565c6fe05ca61833abeeefe",
     "ARMC_REGIONS.json": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
-    "ARMC_TEMPLATE.json": "0c27ec6cb69de87164af3d048f160e118fdcdd22d8539715a56b01a591eacdb9",
-    "FLOW_SURFACE.json": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa",
-    "G2_AMENDMENT.json": "7f27cde28203320dd9d4803703bceba2ec8ff95a1876dc79c6997ff49a71ef78",
+    "ARMC_TEMPLATE.json": "ec1d57a709785ccca1f0f13a8f40dd234146dc84bdbb3918522a8ee350b9a675",
+    "FLOW_SURFACE.json": "b94d11a128df5750a6aca14a760414e64c628e8dabf63e960a10547d53e64f9c",
+    "G2_AMENDMENT.json": "ed67bb2e63bb59388af79309a8102ba70ba5e835e2d5d6e141231ea34dd407b4",
     "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
     "G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
-    "G3_RUNBOOK.json": "b50d7c0898b349f38328340d293f4dff49a6d44d7fb4d2b4778136130cc3ec4f",
-    "G3_RUNBOOK_CHECK.json": "7c69caa36ab7087ab915a0e0b301b4b5bd00ad5262c873f86b584399d9bf623e",
+    "G3_RUNBOOK.json": "50ae2bb2183be13a7cf0b5c8e9c16e8b90af6b085568fe0076b2e27822cf61bd",
+    "G3_RUNBOOK_CHECK.json": "6dfd8fcecbe8d5b2c69e9f5a62edcf509c59051787a6b99e6ea42ad47db02017",
     "OBSERVABILITY.json": "c3a6799bdbc74d0acafc71013f6f6c40db6c22b183486f56c565329264710c5a",
-    "PLACEMENT_CFG.json": "255d35ed08a25a4208c22e60fabd5df69961d54f356583425e6c27484e40b8dc",
+    "PLACEMENT_CFG.json": "78fdb3054468de87a82d35207decd0ac0b0fadf33f9658dd2c693e51bd09fc28",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
     "RELEASE_MANIFEST.json": null,
     "RTL_LINT.json": "bd1abe521020a7b16d6089a1a0800a1704a06ec0224c02f187a7fa0f6642f291",
     "TILE_BUDGET.json": "36462dcd58b13a770be0a49a03f848dd427963896b4071b8f31ba45c5c4e4ce2",
-    "archive_baseline.py": "9eb190ca15832fd47d9ab1822a63c7a7b7f15cf7aab33664102ab01fa769bc94",
+    "archive_baseline.py": "af09ad4e79920f98562da3a79333e1fa7f5598213b9bd6b7cc046f1979b6ba48",
     "armc_cost.py": "f0216485e8f0cbd8e635a9779ed2725668e1fd11b9d24290e2f3ca968c4a71b9",
     "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
-    "armc_template.py": "2103e27a775eb0486c77997918022ba5d68779db547df49d1605c8b27199575d",
-    "ci_failure_report.py": "cbd5e9cff522132b561abf498e561f752238e9657b0618d721a014a915da07d5",
+    "armc_template.py": "064c90a977f1f82036cd31dd6193ecce988a56013629b582ec447b123790a110",
+    "ci_failure_report.py": "9936fbb271f76ea982c4b97e006f2eded861c4a9e42b16b393cb1f5541eb2029",
     "e2_acceptance.csv": "aaf19aee01f3dd4d27e2ee285a56fb5bc080c8efb3d9f21c4ea8b8702917562a",
     "e2_ro_puf.v": "657a6166031eaa5059a881b4cfc81d578882af1c21af336906da23f589fe1214",
     "e2_ro_puf_core.v": "f3457e72a7f4651cae8658abf77aa40c25a9ce2ac2e2750ff73bac6ef4938ac2",
     "e2_tb_plan.csv": "3c1813a9dd4f39241666c47ed22aa1f29d881a05aa460d84e137b7a2c511492d",
     "e2_tt_um_ro_puf.v": "842101a30b45d44a85471474aaa7853a2a1cf229d43a292b3012e4b5739214d2",
-    "g2_decision.py": "f72696e424ab1cb34e40a45391c1c35665e76edd958935c67f9ae7cce4279fe4",
-    "g3_runbook.py": "9b4900847660f640bdd1b012c72f5f12860c276d8a78ec207a8b03ab1f17bf03",
+    "g2_decision.py": "35d73e7c8fe182526bb80d7e7591a9124fb1890474a4544e05fc7b3181716a75",
+    "g3_runbook.py": "d778fcb9b90b842c5c6ee90901a15bd1082cedbfd3c059809b9763b09a54ad98",
     "gen_armc.py": "a3488eb3d1f99f6ccf07d9151312449a7a7d48ac2dff5ff268bca6c9dff44ebd",
-    "gen_e2_rtl.py": "5ffea24ff8d2e2fd196c409e0269c8ce631a0b4d08993be946b5408a79244a34",
-    "gen_placement_cfg.py": "cf7aa2998135ba4a3ce6c5106ca794701652258eac556d40812be61d93cb1b28",
-    "hash_stability.py": "c17f93363c945c8e2e57e76b9e5614a0a7bcb4ed71f3e6687ad0d260186c72a2",
-    "lint_rtl.py": "e649c5b1ee098193931d100094e1ddb21a1f1324011f240ae698c874e7ea003e",
+    "gen_armc_fix.py": "fd33ea78c431f30dc497c4ea0626cd31b19556ed69eb0e0d1e5ed5e4653c6963",
+    "gen_e2_rtl.py": "2ba6ee627ccf619f710059f23c8ee730abb8f66e58120ee8ea75e123e9788a7c",
+    "gen_placement_cfg.py": "6079b49ed3f44bf289aa56db48090259c63fd307038016c262ee212873bca5d9",
+    "hash_stability.py": "23552684393f163b11e0a48bcfec8e02a256947555924ad1416d62a09c66718d",
+    "lint_rtl.py": "a0dbe0a4cad766a80d5d6c63c8ca0a8a581bbf75e13fcd35a12d673fb05df90d",
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
     "placement.cfg": "92ec928f3d8a313242275524aefa750b12ea874c32a265b89900a9c2f7977d11",
-    "placement_fidelity.py": "41beed482f0ca586f4c5aef2c50fb55bfc0e65bb854e09afb23db586e124c906",
+    "placement_fidelity.py": "e4a8c3434c9c79d0d16b4711381278f8a8a7f12249f4fd8d1f4a5b88ef951e39",
     "preregister.py": "d983ccbce12077ebec4d1a782d464226898c9add12f38fe4687307bc1bad83cc",
-    "release_manifest.py": "1ae374af4656c699dff4000f75abaecb29e4e79c0ab6f4aaa00d494ec0b8aab6",
+    "release_manifest.py": "9c35424764549e654d02715c82062c7a396a8d0123ed19569cc8e5bc3a68ff1e",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
     "tile_budget.py": "edaf919b06d0b269462a8894714dd24e70990f6e282328c14a3f84700acf7943",
-    "verify_phaseE.py": "1f6d0b123a43495b84dc1cc69216309b96c44609655bccf48b310977bfb43f32"
+    "verify_phaseE.py": "ab534ad6e62fbdc4e5694f7f8283e2c3dfd1eec4d466fea871b38034cf94b33a"
   },
   "frozen": {
     "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 126,
+  "gate_commands": 130,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {
@@ -171,6 +173,15 @@
         "spef": "1015bcff163d9f3610b882aed3001f9128dd01919e1892b00436553be6795795"
       }
     },
+    "ARMC_FIX.json": {
+      "producer": "gen_armc_fix.py",
+      "sha256": "3da1b34d0e78586cd1578e53cb3c2701c216f5e25565c6fe05ca61833abeeefe",
+      "sources": {
+        "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
+        "rtl": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
+        "template": "ec1d57a709785ccca1f0f13a8f40dd234146dc84bdbb3918522a8ee350b9a675"
+      }
+    },
     "ARMC_REGIONS.json": {
       "producer": "gen_armc.py",
       "sha256": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
@@ -181,7 +192,7 @@
     },
     "ARMC_TEMPLATE.json": {
       "producer": "armc_template.py",
-      "sha256": "0c27ec6cb69de87164af3d048f160e118fdcdd22d8539715a56b01a591eacdb9",
+      "sha256": "ec1d57a709785ccca1f0f13a8f40dd234146dc84bdbb3918522a8ee350b9a675",
       "sources": {
         "cost": "5091666424ba8e51f7e41f3dba3406a147d6e8c99c65b3b40dd4b0ed7b753556",
         "criteria": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
@@ -196,7 +207,7 @@
     },
     "G3_RUNBOOK_CHECK.json": {
       "producer": "g3_runbook.py",
-      "sha256": "7c69caa36ab7087ab915a0e0b301b4b5bd00ad5262c873f86b584399d9bf623e",
+      "sha256": "6dfd8fcecbe8d5b2c69e9f5a62edcf509c59051787a6b99e6ea42ad47db02017",
       "sources": {}
     },
     "OBSERVABILITY.json": {
@@ -206,7 +217,7 @@
     },
     "PLACEMENT_CFG.json": {
       "producer": "gen_placement_cfg.py",
-      "sha256": "255d35ed08a25a4208c22e60fabd5df69961d54f356583425e6c27484e40b8dc",
+      "sha256": "78fdb3054468de87a82d35207decd0ac0b0fadf33f9658dd2c693e51bd09fc28",
       "sources": {}
     },
     "RELEASE_MANIFEST.json": {

@@ -25,8 +25,8 @@ them together. They are uncoupled here (ideal shared supply, no coupling
 elements carried over), so this matches the one-at-a-time hardware protocol
 under this reduced model. Each SPEF *D_NET total is represented
 by one capacitor to ground. Distributed resistance, explicit coupling topology,
-PVT variation, mismatch, and noise are outside this experiment. This is a
-pre-silicon nominal prediction, not a measurement of fabricated silicon.
+PVT variation, mismatch, and noise are outside this experiment. What comes out
+is a pre-silicon nominal prediction; no fabricated silicon is involved.
 
 Outputs (in `--output-dir`, which defaults to this script's directory):
 dualarm_ctrl.spice, dualarm_par.spice, dualarm_positions.csv

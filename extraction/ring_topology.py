@@ -57,7 +57,7 @@ SCHEMA = "phaseA-ring-topology/1"
 # table, the view parser, the truth table evaluator, the Library, the
 # fixture library and the fetcher - lives there now, unchanged apart from
 # the opaque/sequential split described in that module. Three scripts
-# wanted it and this one was 1641 lines, a third over the day yardstick.
+# wanted it and this file had reached 1641 lines carrying it alone.
 from cell_library import (          # noqa: F401  (re-exported for callers)
     A1_OUT_PINS, A1_SEQ_MARKERS, BIN, CONSTANTS, Cell, CellError, FIX,
     FIX_VIEWS, FIX_VIEW_TEXT, LIBDIR, LIBRARY_FAULTS, MAX_CELL_INPUTS, NEG,

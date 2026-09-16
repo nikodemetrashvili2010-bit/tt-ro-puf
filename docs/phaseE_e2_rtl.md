@@ -6,15 +6,18 @@ thrown away and rebuilt 2026-09-02.
 
 The first version of this script wrote the three modules from scratch out of
 the pin spec. It read `OBSERVABILITY.json`, `ARMC_REGIONS.json` and the
-acceptance table, and nothing else. In particular it never read the RTL it
-was replacing, and that turned out to be the whole problem. What it produced
-did not parse; it put the AND gate back on the counter clock that July
-removed; it published the ripple counter before it had settled; it dropped
-both clock-domain synchronizers; and it instantiated none of the sixteen Arm
-B macros. Every one of those is something the live design had learned since
-June, and every one of them was simply absent, because nothing in the
-generator had ever looked at it. `chip/lint_rtl.py` found all five on
-1 September, ten days after the fact.
+acceptance table, and nothing else. In particular it never read the RTL it was
+replacing, and that turned out to be the whole problem.
+
+What it produced did not parse; it put the AND gate back on the counter clock
+that July removed; it published the ripple counter before it had settled; it
+dropped both clock-domain synchronizers; and it instantiated none of the
+sixteen Arm B macros.
+
+Every one of those is something the live design had learned since June, and
+every one of them was simply absent, because nothing in the generator had ever
+looked at it. `chip/lint_rtl.py` found all five on 1 September, ten days after
+the fact.
 
 So this version does not write RTL at all. It reads the three live files out
 of `dualarm/src/` and applies a list of named edits to them.
@@ -22,10 +25,12 @@ of `dualarm/src/` and applies a list of named edits to them.
 **Partly simulated now, and say which part.** The rings themselves cannot run
 in an event simulator, so the acceptance suite is still G.3's job. What did
 run, on 2 September, is the counter, the sticky flag, the readout and the arm
-decode, with the three ring modules swapped for behavioural oscillators and
-the window driven from the pins. That covers E2-02, E2-09 through E2-13 and
-E2-16/17. It does not cover anything about frequency, placement or the real
-loop, and structure is still not behaviour.
+decode, with the three ring modules swapped for behavioural oscillators and the
+window driven from the pins.
+
+That covers E2-02, E2-09 through E2-13 and E2-16/17. It does not cover anything
+about frequency, placement or the real loop, and structure is still not
+behaviour.
 
 ## An edit, and why an anchor has a count
 
@@ -33,8 +38,10 @@ Each edit carries an id, a sentence saying what it is for, the exact text it
 replaces, the text it replaces it with, and the number of times that text is
 allowed to appear. If an anchor is missing, or appears a different number of
 times, the script stops and names the edit and the file, and no edit in that
-file is applied. Half a set of edits leaves RTL that is neither the live
-design nor the intended one, which is worse than either.
+file is applied.
+
+Half a set of edits leaves RTL that is neither the live design nor the intended
+one, which is worse than either.
 
 That is the whole design. When somebody changes `ro_puf_core.v` next month,
 this fails loudly instead of quietly reproducing the June version of it.
@@ -71,16 +78,16 @@ knows the line is load-bearing can see it.
 ## The overflow flag, which took two goes
 
 The first version hung the flag straight off `tff_clk[16]`, the carry out of
-the top bit, set only and cleared by reset. That reads well and it is wrong
-twice over.
+the top bit, set only and cleared by reset. It reads well and it fails for
+two separate reasons.
 
-The counter is cleared at the start of every measurement by `cnt_rst_n`. If
-the previous run finished with bit 15 set, clearing it drives that bit from
-one to zero, which is a rising edge on `tff_clk[16]` and looks exactly like a
-wrap. A 2048 cycle window at the fast corner counts about 36400, so bit 15 is
-set and the false trigger is not a corner case, it is most runs on a fast die.
-E2-13 says a safe window never sets the flag and it would have failed on
-silicon.
+The counter is cleared at the start of every measurement by `cnt_rst_n`. If the
+previous run finished with bit 15 set, clearing it drives that bit from one to
+zero, which is a rising edge on `tff_clk[16]` and looks exactly like a wrap.
+
+A 2048 cycle window at the fast corner counts about 36400, so bit 15 is set and
+the false trigger is not a corner case, it is most runs on a fast die. E2-13
+says a safe window never sets the flag and it would have failed on silicon.
 
 The second problem is the opposite one. Making it a seventeenth toggle bit
 fixes the reset edge but toggles on every wrap, and the overflow window wraps
@@ -88,12 +95,14 @@ once at the slow corner and four times at the fast one. Four wraps read back
 as no wrap at all. E2-11 says the flag is high on every die and every corner.
 
 What is there now is a set-only flop in the ring domain, cleared with the
-counter by `cnt_rst_n`, whose D is tied high so no data edge can catch it.
-It rides into the xclk domain as bit 16 of the counter sampler, through the
-same two `async_reg` stages and the same three-equal-samples rule as the
-count, and the sticky part is one line in the settle branch that sets
-`overflow` and is cleared only by `rst_n`. So the flag survives the next
-measurement, which is E2-12, and a reset clears it, which is E2-02.
+counter by `cnt_rst_n`, whose D is tied high so no data edge can catch it. It
+rides into the xclk domain as bit 16 of the counter sampler, through the same
+two `async_reg` stages and the same three-equal-samples rule as the count, and
+the sticky part is one line in the settle branch that sets `overflow` and is
+cleared only by `rst_n`.
+
+So the flag survives the next measurement, which is E2-12, and a reset clears
+it, which is E2-02.
 
 ## The stimulus comes from the acceptance table
 
@@ -106,11 +115,12 @@ the one that breaks on silicon.
 
 ## Sixteen checks, one control, sixteen faults
 
-The control is the one worth describing. Run the checks over the live design
-with no edits applied at all, and R03, R04, R05, R06, R08, R09 and R10 have
-to fail, because those are the checks that are about E.2 and Arm C and the
-live design is neither. A check that passes on the design it was written to
-reject is decorative, which is the lesson `G10` in the G.2 rule taught.
+The control is the part to describe. Run the checks over the live design with
+no edits applied at all, and R03, R04, R05, R06, R08, R09 and R10 have to fail,
+because those are the checks that are about E.2 and Arm C and the live design
+is neither. A check that passes on the design it was written to reject has not
+been tested, which is what `G10` in the G.2 rule is for.
+
 The rest pass, which is the other half of the same control: the preservation
 checks say nothing bad about an untouched source tree.
 
@@ -170,8 +180,7 @@ straight off the carry and cleared by reset alone, reads 0 after the first
 2048 run and **1 after the second**, from nothing but the counter clear, and
 stays set forever: E2-13 dead. The toggle-bit version reads **0 after the
 16384 window**, because four wraps toggle back to where they started: E2-11
-dead. Neither of those was an argument I had to be talked out of; they are
-both a line of output.
+dead. Both are a line of output rather than an argument.
 
 ## Where it stands
 

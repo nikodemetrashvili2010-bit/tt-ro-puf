@@ -13,7 +13,7 @@ reads as though nobody thought about it. One that names the field and leaves it
 empty says the build did not record it, which is the true state.
 
 Two things this cannot know, both marked TODO in the output, because they live
-in the GitHub run and not in any file here: the SHA that `@ttsky26c` resolved to
+in the GitHub run and not in any file here: the SHA that `@ttsky26d` resolved to
 on the day, and the LibreLane version the action used. Read them off the run log
 of the build that produced the shipped GDS and paste them in.
 
@@ -97,7 +97,7 @@ def main():
         w("    extraction written     %s" % spef_field(spef, "DATE"))
     w("    PDK version            not recorded by this build; the workflow asks")
     w("                           for sky130A, which names the process only")
-    w("    tt-gds-action           TODO paste the SHA that @ttsky26c resolved to")
+    w("    tt-gds-action           TODO paste the SHA that @ttsky26d resolved to")
     w("    LibreLane version       TODO read it off the run log")
     w("")
 

@@ -10,17 +10,17 @@
   },
   "arm_c": {
     "blocked_by": "LibreLane exposes no fence, region or cell-group constraint. There is no supported way to tell this flow that sixteen groups of standard cells must each stay inside a rectangle.",
-    "decision_belongs_to": "G.2",
     "emitted": 0,
+    "placed_by": "src/armc_fix.tcl, rendered from the scored template by chip/gen_armc_fix.py and sourced by the wrapper after the Arm A hook, since 2026-09-16; its record is chip/ARMC_FIX.json",
     "regions_on_record": 16,
     "regions_source": "chip/ARMC_REGIONS.json",
     "what_an_unconstrained_arm_c_would_be": "sixteen rings handed to the same unconstrained placer that produced Arm A, which is Arm A's treatment under a second name"
   },
   "checks": [
     {
-      "detail": "LibreLane 3.0.3 on disk, 3.0.5 in CI, 5 files pinned at 2 tags",
+      "detail": "LibreLane 3.0.3 on disk, 3.0.14 in CI, 5 files pinned at 2 tags, CI moved 3.0.5 to 3.0.14: 9 identical, 5 differ with reasons",
       "id": "P01",
-      "name": "the flow is named, both versions are pinned, and the files that decide placement hash the same at each",
+      "name": "the flow is named, both versions are pinned, the files that decide placement hash the same at each, and a CI version move is recorded file by file",
       "pass": true
     },
     {
@@ -80,7 +80,7 @@
     {
       "detail": "0 Arm C lines, 16 regions on record, conclusion recorded: True",
       "id": "P11",
-      "name": "no Arm C line is emitted and the capability that would be needed is named",
+      "name": "no Arm C line is emitted here, Arm C being armc_fix.tcl's, and the region dead end is still on record",
       "pass": true
     },
     {
@@ -108,9 +108,9 @@
       "pass": true
     },
     {
-      "detail": "2 live line(s); recipe sourced; hook sourced",
+      "detail": "3 live line(s); recipe sourced; Arm A sourced; Arm C sourced",
       "id": "P16",
-      "name": "the PDN wrapper sources the recipe and then the hook, relative to itself, and nothing else",
+      "name": "the PDN wrapper sources the recipe, the Arm A hook and then the Arm C hook, relative to itself, and nothing else",
       "pass": true
     }
   ],
@@ -133,18 +133,18 @@
     "pdk": "sky130A",
     "pdk_source": "open_pdks",
     "pdk_version": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71",
-    "version_in_ci": "3.0.5",
-    "version_in_ci_source": "TinyTapeout/tt-gds-action@ttsky26c action.yml, input librelane-version, default value",
+    "version_in_ci": "3.0.14",
+    "version_in_ci_source": "TinyTapeout/tt-gds-action@ttsky26d action.yml, input librelane-version, default value; 3.0.5 at @ttsky26c until 2026-09-16",
     "version_on_disk": "3.0.3"
   },
   "inputs": {
     "armc_place_tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
     "config": "31cef254f424645f3e3774bd63ca305387f2e6e1cc1046eb5e76d9219568f763",
     "def": "e3b7f99f5d6ec05ba8c9e202401a10c8c0332d0e20c6c13afc5421b240466bd7",
-    "pdn_cfg_tcl": "8570b0402cb1c2a39e06987d444be3bbdaad6b38f8680ab78a3804783c0ae2ad",
-    "pdn_hook_tcl": "bc69f62365fa0b8d22d092f6b27967a05016eb649364b250a4b84a24d8571cac",
+    "pdn_cfg_tcl": "92b55f6e2c3520839b0221f5230cc858d7f85c4e6bda559476e34d936e223215",
+    "pdn_hook_tcl": "70e37f6504148072acf77e74b5842619a019714458082af0b4574d19af3d57ca",
     "regions": "2073177f068441a6e12a3d58fb14a3c46a5200f530422a9bc89c7be31e851194",
-    "surface": "bdf03e67f0eeb31c95ea725957085b381fad22437c7379e5743989acd7b76aaa"
+    "surface": "b94d11a128df5750a6aca14a760414e64c628e8dabf63e960a10547d53e64f9c"
   },
   "mechanism": {
     "also": {
@@ -180,7 +180,8 @@
     "wired_by": "P16",
     "wrapper_lines": [
       "source [file join [file dirname [info script]] pdn_cfg.tcl]",
-      "source [file join [file dirname [info script]] arma_place.tcl]"
+      "source [file join [file dirname [info script]] arma_place.tcl]",
+      "source [file join [file dirname [info script]] armc_fix.tcl]"
     ]
   },
   "retired": [

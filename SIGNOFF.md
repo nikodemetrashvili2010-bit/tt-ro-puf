@@ -3,20 +3,23 @@
 What has been run against the design, and what came back. This is my own
 checking. It is not a foundry signoff.
 
-Every row below points at a folder of archived flow output. Those folders are now
-checked by `sim/spice/gono/verify_build_bundle.py`, which rejects a bundle whose
-DEF, netlist, SPEF and metrics did not come from one run. I wrote it after
-finding a stale metrics file in `dualarm/build_current`. Its checks were real and
-clean, but they belonged to the build before the counter-gating change, and that
-build had 123 fewer instances than the layout I am submitting. Two of the warning
-counts quoted below came from it and were wrong: max slew was 171 across corners
-when the real build has 140, and max capacitance was 3 when the real build has
-none.
+Every row below points at a folder of archived flow output. Those folders are
+now checked by `sim/spice/gono/verify_build_bundle.py`, which rejects a bundle
+whose DEF, netlist, SPEF and metrics did not come from one run. It exists
+because `dualarm/build_current` was carrying a stale metrics file. Its checks
+were real and clean, but they belonged to the build before the counter-gating
+change, and that build had 123 fewer instances than the layout I am submitting.
 
-The repair was to rebuild from the current source. That run returned a DEF and a
-gate-level netlist byte for byte identical to the archived ones, so the flow
-reproduces this layout exactly. GDS and SPEF differ only in the creation date
-each carries inside it, and both kept the same length.
+Two of the warning counts quoted below came from it and were wrong: max slew
+was 171 across corners when the real build has 140, and max capacitance was 3
+when the real build has none.
+
+The repair was to rebuild from the current source.
+
+That run returned a DEF and a gate-level netlist byte for byte identical to the
+archived ones, so the flow reproduces this layout exactly. GDS and SPEF differ
+only in the creation date each carries inside it, and both kept the same
+length.
 
 | Item | Status | Evidence | Blocks tapeout? |
 |---|---|---|---|
@@ -46,11 +49,13 @@ each carries inside it, and both kept the same length.
 current source with KLayout DRC and XOR switched on next to Magic, LVS, antenna
 and the power grid, all zero. It places 6477 instances, of which 1496 are
 standard cells and 16 are the Arm B macro, and the rest are fill, decap, well
-taps and antenna diodes. The go/no-go analysis in `sim/spice/gono/` reads this
-folder's SPEF, and the render in the README comes from it. The run also wrote
-`commit_id.json`, which pins the Tiny Tapeout tooling it used. The commit hash in
-that file belongs to my local build clone, not to this repository, so treat it as
-a note to myself rather than a link.
+taps and antenna diodes.
+
+The go/no-go analysis in `sim/spice/gono/` reads this folder's SPEF, and the
+render in the README comes from it. The run also wrote `commit_id.json`, which
+pins the Tiny Tapeout tooling it used. The commit hash in that file belongs to
+my local build clone, not to this repository, so treat it as a note to myself
+rather than a link.
 
 The same run carries the warning classes that a free-running ring and a
 black-boxed macro always raise under conventional static timing analysis: 461
@@ -60,20 +65,24 @@ them critical, and 25 unannotated timing nets per corner. Max capacitance is
 clean.
 
 Those are now triaged rather than only counted, in `docs/warning_triage.md`.
-The nine disconnected pins are `ui_in[7]` and `uio_in[7:0]`, every one an unused
-chip input and not one an internal net. The max-fanout violation is
-`clknet_0_clk` at 16 against a limit of 10, the clock-tree root, which CTS built
-and the resizer's fanout repair never looked at. The two floating nets are
-`VPWR` and `VGND`, which is why the count is 2 in all six archived builds from
-226 instances to 7319. The max-slew violations are zero at every fast corner
-view and rise as the corner slows, and none of them is on a ring net: the 496
-Arm A ring nets carry 0.107 to 1.838 fF against 81.24 fF on the heaviest net in
-the design. `sim/spice/gono/triage_warnings.py` re-derives all of it from the
-DEF, the SPEF and the netlist, fails if any derived number disagrees with
-`metrics.json`, and passes 14 of 14 here and 13 of 13 on an unrelated earlier
-build that returns different answers. Still owed are the names of the 140
-slew-violating pins and of the 461 lint warnings, both of which need files from
-the local run directory rather than the archived bundle.
+
+The nine disconnected pins are `ui_in[7]` and `uio_in[7:0]`, every one an
+unused chip input and not one an internal net. The max-fanout violation is
+`clknet_0_clk` at 16 against a limit of 10, the clock-tree root, which CTS
+built and the resizer's fanout repair never looked at.
+
+The two floating nets are `VPWR` and `VGND`, which is why the count is 2 in all
+six archived builds from 226 instances to 7319. The max-slew violations are
+zero at every fast corner view and rise as the corner slows, and none of them
+is on a ring net: the 496 Arm A ring nets carry 0.107 to 1.838 fF against 81.24
+fF on the heaviest net in the design.
+
+`sim/spice/gono/triage_warnings.py` re-derives all of it from the DEF, the SPEF
+and the netlist, fails if any derived number disagrees with `metrics.json`, and
+passes 14 of 14 here and 13 of 13 on an unrelated earlier build that returns
+different answers. Still owed are the names of the 140 slew-violating pins and
+of the 461 lint warnings, both of which need files from the local run directory
+rather than the archived bundle.
 
 The transitive tool versions are not pinned; the environment is described in
 REPRODUCIBILITY.
@@ -92,62 +101,69 @@ come from different checkpoints, so it is not a bundle and is not treated as one
 **dualarm/build_debug/** is an older snapshot kept for contrast, and the bundle
 check shows why it cannot be quoted. Its DEF is a pre-fill checkpoint with 1320
 components while its netlist and metrics both describe a finished 7319-instance
-build, and 51 clock-tree nets in its SPEF do not exist in that DEF at all. It
-also predates KLayout DRC and XOR being enabled. The 5.4% dispersion derived from
-it stays in the paper as a prior run, not as a result of this design.
+build, and 51 clock-tree nets in its SPEF do not exist in that DEF at all.
+
+It also predates KLayout DRC and XOR being enabled. The 5.4% dispersion derived
+from it stays in the paper as a prior run, not as a result of this design.
 
 ## What is left
 
 In the order I care about them.
 
-The gap the selector left is closed, and then some. The boundary sweep runs with
-the real selector cells in the path, on B15 which is the deepest and slowest, on
-A05 which adds the least width, and on B00 which turned out to be the strict one,
-plus B15 again at tt and at ss. That is 252 phases over seven sweeps and every
-one of them resolved the flop to a clean rail. The chain behaves as a filter:
-below a threshold at the tap it passes nothing at all, above it a full pulse, and
-the threshold sits between nine and eleven percent of the ring period at every
-corner measured.
+The gap the selector left is closed, and then some. The boundary sweep runs
+with the real selector cells in the path, on B15 which is the deepest and
+slowest, on A05 which adds the least width, and on B00 which turned out to be
+the strict one, plus B15 again at tt and at ss.
+
+That is 252 phases over seven sweeps and every one of them resolved the flop to
+a clean rail. The chain behaves as a filter: below a threshold at the tap it
+passes nothing at all, above it a full pulse, and the threshold sits between
+nine and eleven percent of the ring period at every corner measured.
 
 One number in an earlier version of this file was wrong. It said the narrowest
-clock the flop ever saw was 144 ps. Right at its own threshold B00 hands the flop
-80 ps, because at the boundary the chain squeezes the last pulse instead of
-lengthening it, which is the one place item 2's corrected result stops applying.
-80 ps clears what the library characterizes for that flop at that corner, 77.5 ps
-at ff_n40C_1v95, by 2.5 ps. Characterized, and marginal. The slow corners are not
-close, 484 ps against 169.8 at tt and 810 ps against 353.8 at ss.
+clock the flop ever saw was 144 ps. Right at its own threshold B00 hands the
+flop 80 ps, because at the boundary the chain squeezes the last pulse instead
+of lengthening it, which is the one place item 2's corrected result stops
+applying. 80 ps clears what the library characterizes for that flop at that
+corner, 77.5 ps at ff_n40C_1v95, by 2.5 ps.
 
-Getting there meant correcting item 2, and that correction is the part I would
-want a reader to see. Its headline, that the selector shortens levels by up to
-25%, came from comparing the narrowest level at the tap against the narrowest at
-sel_ro, and those are opposite polarities. No path shortens a high level. Every
-one lengthens it. `docs/hardware_todo.md` has the full account.
+Characterized, and marginal. The slow corners are not close, 484 ps against
+169.8 at tt and 810 ps against 353.8 at ss.
+
+Getting there meant correcting item 2.
+
+Its headline, that the selector shortens levels by up to 25%, came from
+comparing the narrowest level at the tap against the narrowest at sel_ro, and
+those are opposite polarities. No path shortens a high level. Every one
+lengthens it. `docs/hardware_todo.md` has the full account.
 
 Item 8 answered its own question. The sixteen Arm B copies carrying their real
 routes spread 0.0025 percent, which is 0.57 of one counter count, so the chip
-cannot tell them apart even in principle. Running the same decks at the slow and
-fast corners on 2026-08-10 made that stronger rather than weaker: 0.0001 percent
-at ss and 0.0009 percent at ff, both tighter than tt. That is the last piece of
-new evidence the open list carried, and it is what lets the corner table cover
-both arms instead of one. Item 5 closed the supply confound the
-same week, with the arms differing by 0.0348 percent at the resistances the
-layout actually has. The warning triage is done and none of the six classes
-turned out to be a defect, though it did cost me one wrong explanation that a
-control build caught. The Arm B macro's distributed re-extraction is done too,
-which was the last owed simulation: 566.05 MHz against 570.62 lumped, so both
-arms are finally quoted from the same parasitic model.
+cannot tell them apart even in principle.
+
+Running the same decks at the slow and fast corners on 2026-08-10 made that
+stronger rather than weaker: 0.0001 percent at ss and 0.0009 percent at ff,
+both tighter than tt. That is the last piece of new evidence the open list
+carried, and it is what lets the corner table cover both arms instead of one.
+
+Item 5 closed the supply confound the same week, with the arms differing by
+0.0348 percent at the resistances the layout actually has. The warning triage
+is done and none of the six classes turned out to be a defect, though it did
+cost me one wrong explanation that a control build caught. The Arm B macro's
+distributed re-extraction is done too, which was the last owed simulation:
+566.05 MHz against 570.62 lumped, so both arms are finally quoted from the same
+parasitic model.
 
 What is left is not simulation at all. It is the decision on item 10, where the
-honest default is to change nothing, and the freeze.
+default is to change nothing, and the freeze.
 
 Second, some sweep results still have no run behind them in the repository. The
 selector sweep was the first to be fixed and it is now archived in
 `sim/spice/gono/mux/`, alongside the supply sweep, the per-instance run and the
 macro RC comparison. What is left is the distributed-RC comparison over the
 sixteen Arm A rings, the boundary flop sweep, and the seven boundary sweeps
-through the selector. Each leaves a csv behind, so a stranger with a clone can
-read the numbers, but those three cannot yet be recomputed without rerunning
-ngspice.
+through the selector. Each leaves a csv behind, so the numbers can be read from
+a clone, but those three cannot yet be recomputed without rerunning ngspice.
 
 Archiving turned out not to be the mechanical work I had called it. The 64
 selector decks produce 180 MB of waveform and a repository cannot hold that, so
@@ -155,17 +171,17 @@ selector decks produce 180 MB of waveform and a repository cannot hold that, so
 either side of every threshold crossing plus the peaks that set the threshold
 and the final timepoint. That is 2.08 percent of the rows and 4.5 MB with the
 decks and console logs included, and it is lossless for this analysis in a
-checkable sense: the real analyzer returns identical fields from the reduced and
-the full file for every deck, and CI regenerates the csv from the archive and
-diffs it against the committed one. The same tool will do for the other three
-sweeps.
+checkable sense: the real analyzer returns identical fields from the reduced
+and the full file for every deck, and CI regenerates the csv from the archive
+and diffs it against the committed one. The same tool will do for the other
+three sweeps.
 
-Worth recording what the rerun found, because it is the argument for doing this
-at all. All 256 values in `mux_validation.csv` came back identical, so the
-result was right. What was wrong was a sentence in item 2 that quoted B15's tap
-levels from the boundary decks in a paragraph about the mux decks, two
-picoseconds out. Rerunning to archive cannot change a result, but it can catch a
-number quoted from the wrong file.
+What the rerun found is the case for doing it at all. All 256 values in
+`mux_validation.csv` came back identical, so the result was right. What was
+wrong was a sentence in item 2 that quoted B15's tap levels from the boundary
+decks in a paragraph about the mux decks, two picoseconds out. Rerunning to
+archive cannot change a result, but it can catch a number quoted from the wrong
+file.
 
 Last is silicon. Uniqueness, reliability and any attack claim need measured dies
 at several supply voltages and temperatures. Until those exist this is a

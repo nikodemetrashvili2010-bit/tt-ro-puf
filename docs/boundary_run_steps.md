@@ -13,7 +13,7 @@ flop, clocked straight from the ring tap. Item 2 pushed a steady ring through al
 32 selector paths into the same flop, with the enable never falling. Each half
 checked, the combination not, and the combination is what the chip does.
 
-## What I got wrong first, and what item 2 got wrong
+## Two polarity errors, this one and item 2's
 
 I started by arguing that item 2's prediction was unsafe. It had multiplied a
 175 ps boundary pulse by a 25% shortening to get 131 ps, and I said shortening is
@@ -26,13 +26,15 @@ only reason I went and looked at the waveform, and the waveform said we were bot
 wrong for the same reason.
 
 Rise and fall cross a path at different speeds. That difference moves each
-trailing edge and leaves the leading edge alone, so one polarity grows by exactly
-as much as the other shrinks. On B15 the tap runs 539 ps high and 583 ps low
-while sel_ro runs 721 ps high and 401 ps low, period 1122 ps at both nodes to the
-picosecond. So the narrowest level at the tap is a high, the narrowest at sel_ro
-is a low, and item 2's analyzer had been comparing one against the other. All 32
-paths, not just B15. Re-running the 32 decks with the polarities kept apart gives
-rise delays identical to the old run and asymmetries of 102 to 182 ps, every one
+trailing edge and leaves the leading edge alone, so one polarity grows by
+exactly as much as the other shrinks. On B15 the tap runs 539 ps high and 583
+ps low while sel_ro runs 721 ps high and 401 ps low, period 1122 ps at both
+nodes to the picosecond.
+
+So the narrowest level at the tap is a high, the narrowest at sel_ro is a low,
+and item 2's analyzer had been comparing one against the other. All 32 paths,
+not just B15. Re-running the 32 decks with the polarities kept apart gives rise
+delays identical to the old run and asymmetries of 102 to 182 ps, every one
 positive. No path shortens a high level.
 
 The counter's first stage is a rising-edge flop, so every selector path hands it
@@ -56,10 +58,10 @@ a wider pulse to express its full asymmetry is the chain that loses narrow ones.
 
 The step at 97 to 102 ps is sharp enough that the 5 ps sweep found nothing in
 between. That is the real answer. The selector behaves as a filter, so the flop
-is either handed a full pulse or handed none, and never gets the chance to sit at
-mid rail. In every sweep the phases that lost the pulse were the phases where the
-count steps up, so the step lands one phase later rather than a count going
-missing.
+is either handed a full pulse or handed none, and never gets the chance to sit
+at mid rail. In every sweep the phases that lost the pulse were the phases
+where the count steps up, so the step lands one phase later rather than a count
+going missing.
 
 ## What is still open on this
 
@@ -67,7 +69,7 @@ Fast corner only. And B00 is harder than B15 on both counts, 375 ps of rise
 against 360 and 166 ps of asymmetry against 182, so B15 is the hardest path I
 measured and not the hardest one there is.
 
-## The lesson I want to keep
+## Why the synthetic checks missed it
 
 Item 2's four synthetic checks all passed while the polarity mistake sat in the
 middle of the analysis, because not one of them built a path where a high and a

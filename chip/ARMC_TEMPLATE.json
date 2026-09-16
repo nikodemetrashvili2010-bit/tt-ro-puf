@@ -3,9 +3,13 @@
   "The hand-placed Arm C, scored against the frozen G.2 rule",
   "and laid out as a template that a FIRM placement at step 21",
   "can replay. Written by chip/armc_template.py from the frozen",
-  "two-arm DEF. Nothing in the build reads this file. The two",
-  "layouts are candidates and neither is chosen; see",
-  "docs/phaseG_run80.md for what the choice turns on."
+  "two-arm DEF. Of the two layouts the column is chosen, by",
+  "CHOSEN_LAYOUT in the script since 12 September, and the",
+  "choice is not part of the frozen rule; docs/phaseG_run80.md",
+  "has what it turned on. Since 16 September",
+  "chip/gen_armc_fix.py reads the chosen layout out of this",
+  "file and renders src/armc_fix.tcl, so the build reads it",
+  "at one remove."
  ],
  "arm_a": {
   "box_um": [
@@ -1304,7 +1308,7 @@
    "regions_um2": 4484.301,
    "total_um2": 4706.052
   },
-  "build_days_basis": "One day to extend gen_placement_cfg.py so it emits the 512 Arm C lines into the same hook from the chosen layout, with the checker and the ring walk reading both arms. One build. Two days held back because the order of the 32 cells inside the template is a default nothing has checked against a routed ring, and a congested or badly ordered template costs a rebuild. Arm A's hook took one day on 11 September and held on its first run, but its coordinates came from a build that had already routed.",
+  "build_days_basis": "One day to extend gen_placement_cfg.py so it emits the 512 Arm C lines into the same hook from the chosen layout, with the checker and the ring walk reading both arms. One build. Two days held back because the order of the 32 cells inside the template is a default nothing has checked against a routed ring, and a congested or badly ordered template costs a rebuild. Arm A's hook took one day on 11 September and held on its first run, but its coordinates came from a build that had already routed. Spent 16 September: the generator is chip/gen_armc_fix.py rather than an extension of gen_placement_cfg.py, it took the day, and the cell order was chosen against Arm A as built rather than left at the default. The two days held back stay held until a build has run with it.",
   "build_days_is_an_estimate": true,
   "decode_rows_agree": true,
   "fields": {
@@ -1493,7 +1497,7 @@
   "cells_per_row": 8,
   "first_row_orient": "FS",
   "height_um": 10.88,
-  "order": "serpentine: the enable NAND then inverters 0 to 6 left to right on the first row, 7 to 14 right to left on the second, 15 to 22 left to right, 23 to 29 and the output buffer right to left. Default, open until the build.",
+  "order": "serpentine: the enable NAND then inverters 0 to 6 left to right on the first row, 7 to 14 right to left on the second, 15 to 22 left to right, 23 to 29 and the output buffer right to left. Default. Decided 2026-09-16 in chip/gen_armc_fix.py: the serpentine stays and the buffer moves to the slot after inverter 14, the one it taps, so it sits one row above it.",
   "reserve_chosen_for": "33 strip templates fit at this offset, the most of any",
   "reserved_tap_sites": [
    11,

@@ -16,26 +16,25 @@ methodological argument.
 | [`boundary_run_steps.md`](boundary_run_steps.md) | the boundary-through-selector sweep |
 | [`supply_run_steps.md`](supply_run_steps.md) | the supply sweep and the slow-corner rerun |
 
-## The honest part
+## What these files do and do not show
 
-**Nothing here proves when these files were written.** They were kept as local
-notes on my own disk and none of them was committed until 2026-08-11, so git
-cannot date them, and a file that first appears in history today is a file that
-could have been written today. If you want to treat the whole pre-registration
-claim as unproven, the evidence supports you and I would rather say so than
-imply a guarantee the repository cannot give.
+**Nothing here proves when they were written.** They were kept as local notes
+on my own disk and none of them was committed until 2026-08-11, so git cannot
+date them, and a file that first appears in history today is a file that could
+have been written today. The repository cannot close that gap, so the
+pre-registration claim stands unproven on the evidence here. What is checkable
+is weaker: **the predictions in these notes are sometimes wrong, and the notes
+say so.** `macro_rc_run_steps.md` names a band of 0.85 to 0.97 percent for the
+distributed-lumped shift and calls the prediction 564.3 MHz.
 
-What I can offer instead is weaker but checkable: **the predictions in these
-notes are sometimes wrong, and the notes say so.** `macro_rc_run_steps.md` names
-a band of 0.85 to 0.97 percent for the distributed-lumped shift and calls the
-prediction 564.3 MHz. The run came back at 566.05 MHz, a shift of 0.801 percent,
-which is outside the band it named. `instance_run_steps.md` records pointing
-`PDK_ROOT` at the ciel tree instead of the volare one and the deck generator
-stopping with a missing-file error. A prediction file written after the fact
-tends to be right every time, and these are not.
+The run came back at 566.05 MHz, a shift of 0.801 percent, which is outside the
+band it named. `instance_run_steps.md` records pointing `PDK_ROOT` at the ciel
+tree instead of the volare one and the deck generator stopping with a
+missing-file error. A prediction file written after the fact tends to be right
+every time, and these are not.
 
-Read them that way. They are a record of how the work went, offered so the
-method can be argued with, not a timestamp I am asking anyone to trust.
+Read them as a record of how the work went, open to being argued with on
+method. They are not a timestamp.
 
 ## Two things left as they were
 
@@ -44,8 +43,10 @@ where this repository sits at `/mnt/d/silicon/silicon chip` and the PDK at
 `/home/pc/pdks`. Substitute your own. I have not rewritten them into portable
 form, for the same reason the build outputs in `macro/romacro_final/` are left
 exactly as the flow wrote them: editing a record of a run makes it a worse
-record. `REPRODUCIBILITY.md` is the file that gives these runs as portable
-commands, and that is the one to follow if you want to repeat them.
+record.
+
+`REPRODUCIBILITY.md` is the file that gives these runs as portable commands,
+and that is the one to follow if you want to repeat them.
 
 Several notes end by running `backup_to_repo.sh`. That script and its test
 harness live on my disk and are not mirrored here; `LICENSING.md` says why and

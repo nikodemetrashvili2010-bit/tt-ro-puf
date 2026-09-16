@@ -28,13 +28,13 @@ the CSV. All 256 values came back identical. What was wrong was a sentence in
 `docs/hardware_todo.md` that quoted B15's tap levels from the boundary decks in
 a paragraph about the mux decks.
 
-The first version of this script failed on a perfectly good archive, and the
-reason is worth keeping. `gen_mux_sweep.py` writes `mux_ctlA00_out.txt` for a
-blocked control, and I had guessed at `ctrl`. So every control file was counted
+The first version of this script failed on a perfectly good archive.
+`gen_mux_sweep.py` writes `mux_ctlA00_out.txt` for a blocked control, and I had
+guessed at `ctrl`. So every control file was counted
 as an open log, and because `mux_ctlA00_out.txt` contains the string `A00` it
 also matched A00 as a second hit, and 64 correct files read as 32 duplicates and
 zero controls. The selftest passed throughout, because its fixture used the
-filenames I had imagined rather than the ones the generator emits. Names now
+same guessed filenames rather than the ones the generator emits. Names now
 come from FILENAMES below, which mirrors the generator, and the fixture uses the
 real pattern.
 

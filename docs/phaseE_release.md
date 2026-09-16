@@ -27,9 +27,9 @@ Ten raw inputs from `dualarm/build_current`, hashed.
     raw inputs 10 hashed from dualarm/build_current
     actions    7, 0 pinned to a commit
 
-## It failed on the first run, which was the point
+## Three red on the first run
 
-Three checks came back red and all three were correct.
+All three were correct.
 
 `S05` said four scripts were not in the evidence gate: `gen_e2_rtl.py`,
 `preregister.py`, `release_manifest.py` and `g3_runbook.py`. True. Days 7
@@ -59,8 +59,8 @@ would fail for a reason that has nothing to do with the design.
 A file cannot carry its own hash. The entry is recorded as null now, with
 the reason in the source, and the manifest's integrity comes from the gate
 regenerating it and diffing, which is the same guarantee one level up.
-Regenerating twice now produces byte-identical output, which is a thing
-worth testing rather than assuming.
+Regenerating twice now produces byte-identical output, and there is a check
+that runs it twice and diffs.
 
 There was also a plain mistake in `S03`. It iterated the artefact record
 looking for producers and got the record's keys instead, so every artefact

@@ -27,8 +27,8 @@ and the bit is sign(d + mismatch), same as before, same 0.062% per-ring scale.
 Two ways to score the model, and the difference matters:
 
   leave-one-out   the model that corrects ring i never saw ring i. This is what
-                  Section 6 reports and it is the honest number for a corrector
-                  that has to generalise.
+                  Section 6 reports, and it is the number that holds for a
+                  corrector that has to generalise.
   full 16-ring    the model saw everything. Smaller residual, so more entropy
                   survives. This is the best case for the corrector, not the
                   realistic one.

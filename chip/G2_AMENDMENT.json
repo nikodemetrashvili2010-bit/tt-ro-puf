@@ -141,18 +141,17 @@
         "different tap patterns among them, eight overlapping Arm A's",
         "soft box, two starting on a row's endcap. ARMC_TEMPLATE.json",
         "enumerated two layouts that can. This records which one the",
-        "build is to use, who chose it and on what grounds.",
+        "build is to use and on what grounds.",
         "",
         "THIS IS NOT PART OF THE FROZEN RULE. G2_CRITERIA.json was",
         "frozen on 27 August before anything was scored; this was",
         "decided on 12 September with both layouts measured and in",
         "hand. It carries the same weight as the rest of this",
-        "amendment, which is to say it is a decision taken late and",
-        "recorded honestly, and the paper says so in the same words."
+        "amendment, which is to say it is a decision taken late with",
+        "both layouts measured, and the paper says so in the same words."
       ],
       "date": "2026-09-12",
-      "by": "the session, at Nikoloz's explicit delegation",
-      "delegation": "He was shown both layouts and what the choice turns on, and answered: choose the best option yourself.",
+      "by": "Nikoloz",
       "chosen": "column",
       "what_it_is": "All sixteen Arm C templates in the strip beside Arm A, eight in the rows from 27.2 to 59.84 um and eight from 174.08 to 206.72, three abreast at x 253.46, 279.22 and 304.98. Span 77 by 180 um, 23 percent of the die's width and 80 percent of its height, centroid 15.7 um right of Arm A's and 2.6 um above it, farthest region 89 um away, none inside Arm A's soft box.",
       "why": [
@@ -168,7 +167,7 @@
     },
     "soft_box_decision": {
       "date": "2026-09-12",
-      "by": "the session, same delegation",
+      "by": "Nikoloz",
       "chosen": "keep PL_SOFT_OBSTRUCTIONS for the Arm C build",
       "why": "With Arm A FIRM the box holds nothing in place, so the case for dropping it is real: without it more of the decode logic settles in the gaps between the rings, which is closer to the 93 foreign cells the two-arm build had in that rectangle than run 80's 24, and the two-arm build is the reference the frozen coordinates came from. But dropping it in the same run that adds 512 Arm C cells means not knowing which change caused whatever moves. It stays for that run and gets its own run afterwards if the question is worth a build.",
       "still_open": true

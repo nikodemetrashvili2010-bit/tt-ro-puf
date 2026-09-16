@@ -451,7 +451,7 @@ def verdicts(t: dict) -> list[tuple[bool, str]]:
                   f"every one of the {len(ss)} slow-corner views has violations "
                   f"({', '.join(str(s['by_corner'][k]) for k in sorted(ss))}) "
                   f"while every fast-corner view has none"))
-    # The claim worth testing is that the slew risk is not in the measurement
+    # The claim under test is that the slew risk is not in the measurement
     # path. A ratio threshold would be invented, so this asks the question
     # directly: no ring net is among the heaviest in the design.
     if s["ring_fF_max"] and s["nonring_fF_max"]:

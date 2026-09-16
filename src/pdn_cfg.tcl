@@ -20,10 +20,9 @@
 # This is a modified copy of pdn_cfg.tcl from
 # https://github.com/TinyTapeout/tt06-dffram-example, which carries the Efabless
 # header above because the recipe comes from OpenLane's own default. I took the
-# copy without recording which commit, and that is the honest state of it; the
-# upstream file was checked again on 2026-08-09 and still carries this header.
-# It was missing here until then, which was my mistake. Apache 2.0 section 4(c)
-# says to keep it.
+# copy without recording which commit; the upstream file was checked again on
+# 2026-08-09 and still carries this header. It was missing here until then.
+# Apache 2.0 section 4(c) says to keep it.
 #
 # What I changed, which section 4(b) asks me to state:
 #   every FP_PDN_* variable renamed to PDN_*, for LibreLane 3;

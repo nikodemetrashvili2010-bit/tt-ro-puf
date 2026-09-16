@@ -26,9 +26,9 @@ It is not a script that runs the build. Nothing here invokes OpenLane,
 touches `src/` or writes anything into the build tree. The build is done by
 hand with this open beside it.
 
-It is not a promise that the build works. Every step here can be
-well-formed and the harden can still come back with a timing violation. What
-the checks buy is that no step reads a file that does not exist yet, that
+None of this says the build works. Every step here can be well-formed and
+the harden can still come back with a timing violation. What the checks buy
+is that no step reads a file that does not exist yet, that
 nothing overwrites a file that was never archived, and that the re-run at
 the end covers everything the gate covers now.
 

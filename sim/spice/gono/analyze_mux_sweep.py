@@ -142,7 +142,7 @@ def level_stats(xs):
     answer looks like erosion when nothing eroded.
 
     The first and last interval are dropped. Both are clipped by the window
-    rather than by the circuit, and a clipped level is not a measurement.
+    rather than by the circuit, so their width says nothing about the path.
     """
     if len(xs) < 4:
         return 0.0, 0.0
@@ -168,9 +168,9 @@ def match_edges(rises_in, rises_out, t_end):
 
     Totals over a fixed window cannot answer this. The selector delays every
     edge, so the last ring edge has no time to arrive before the transient ends
-    and a total count reports it as lost. Item 6 has the same lesson written
-    down: a pass condition that assumes the window lines up with the period
-    fails for a reason that has nothing to do with the design.
+    and a total count reports it as lost. Item 6 hit the same thing: a pass
+    condition that assumes the window lines up with the period fails for a
+    reason that has nothing to do with the design.
 
     So each ring edge is matched to a selector edge one delay later, and only a
     ring edge with enough time left to have produced one is judged at all. A

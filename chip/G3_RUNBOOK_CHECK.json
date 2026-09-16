@@ -41,7 +41,7 @@
       "pass": true
     },
     {
-      "detail": "17 of 17 scripts",
+      "detail": "18 of 18 scripts",
       "id": "B07",
       "name": "the re-run step covers every script the gate runs",
       "pass": true
@@ -59,7 +59,7 @@
       "pass": true
     },
     {
-      "detail": "4.50 days against 3 to 5",
+      "detail": "4.75 days against 3 to 5",
       "id": "B09",
       "name": "the steps sum to something inside the plan's budget",
       "pass": true
@@ -71,7 +71,7 @@
       "pass": true
     },
     {
-      "detail": "18 artefacts",
+      "detail": "19 artefacts",
       "id": "B11",
       "name": "every artefact the manifest attributes to a producer is regenerated after the build",
       "pass": true
@@ -201,19 +201,22 @@
       ]
     },
     {
-      "days": 0.25,
+      "days": 0.5,
       "id": "place-regions",
       "irreversible": false,
       "reads": [
+        "chip/ARMC_FIX.json",
         "chip/ARMC_REGIONS.json",
+        "chip/ARMC_TEMPLATE.json",
         "chip/FLOW_SURFACE.json",
         "chip/armc_place.tcl",
         "chip/placement.cfg"
       ],
-      "stop": "the build log does not say 512 Arm A cells were set FIRM at step 21, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build",
-      "title": "pin Arm A. The Arm C regions have no mechanism in this flow",
+      "stop": "the build log does not say 512 Arm A cells and then 512 Arm C cells were set FIRM at step 21, or any Arm A instance ends up at coordinates other than the ones it holds in the two-arm build, or any Arm C instance ends up off the coordinate chip/ARMC_FIX.json records for it",
+      "title": "pin Arm A and Arm C, both FIRM at step 21 from the PDN hook",
       "writes": [
         "dualarm/src/arma_place.tcl",
+        "dualarm/src/armc_fix.tcl",
         "dualarm/src/config.json",
         "dualarm/src/pdn_hook.tcl",
         "dualarm/src/placement.cfg"
@@ -226,6 +229,7 @@
       "reads": [
         "dualarm/info.yaml",
         "dualarm/src/arma_place.tcl",
+        "dualarm/src/armc_fix.tcl",
         "dualarm/src/config.json",
         "dualarm/src/pdn_cfg.tcl",
         "dualarm/src/pdn_hook.tcl"
@@ -300,6 +304,6 @@
       ]
     }
   ],
-  "total_days": 4.5,
+  "total_days": 4.75,
   "written": "2026-08-31"
 }

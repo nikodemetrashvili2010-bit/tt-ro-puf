@@ -9,23 +9,25 @@ TinyTapeout block. This note is how I power the macros with met4 alone.
 
 ## Why met4-only is hard
 
-met5 is forbidden in the user area, with no exceptions. TinyTapeout's precheck
-lists it directly (`tt-support-tools/precheck/tech_data.py`):
-`forbidden_layers["sky130A"] = ["met5.drawing", "met5.pin", "met5.label"]`, and
-the forbidden-layer check fails the whole precheck if any met5 shape exists in
-the GDS. So the met5 bridge from the standalone array is dead for the real chip.
+met5 is forbidden in the user area, with no exceptions.
+
+TinyTapeout's precheck lists it directly
+(`tt-support-tools/precheck/tech_data.py`): `forbidden_layers["sky130A"] =
+["met5.drawing", "met5.pin", "met5.label"]`, and the forbidden-layer check
+fails the whole precheck if any met5 shape exists in the GDS. So the met5
+bridge from the standalone array is dead for the real chip.
 
 The block's power pins are met4 with a minimum width of 1.2 um (same file:
 `power_pins_layer["sky130A"] = "met4"`, `power_pins_min_width = 1200`), and a
-default 1.6 um stripe clears that.
+default 1.6 um stripe clears that. The reason my array kept failing is the
+default PDN script itself. LibreLane's stock `pdn_cfg.tcl` ends with
+`define_pdn_grid -macro -default -halo ...` and `add_pdn_connect -layers "met4
+met5"`. In met4-only mode that macro grid still cuts the power stripes around
+every macro with its halo, but its one connect statement needs met5, which does
+not exist, so nothing ever reconnects the pieces.
 
-The reason my array kept failing is the default PDN script itself. LibreLane's
-stock `pdn_cfg.tcl` ends with `define_pdn_grid -macro -default -halo ...` and
-`add_pdn_connect -layers "met4 met5"`. In met4-only mode that macro grid still
-cuts the power stripes around every macro with its halo, but its one connect
-statement needs met5, which does not exist, so nothing ever reconnects the
-pieces. The macros come out power-isolated by construction of the default
-script. That is the PSM-0069 and PDN-0233 wall I kept hitting.
+The macros come out power-isolated by construction of the default script. That
+is the PSM-0069 and PDN-0233 wall I kept hitting.
 
 ## The recipe
 
@@ -33,24 +35,28 @@ The fix is the one the tt06-dffram-example uses, and that block has taped out.
 Use a custom PDN script that defines only the standard-cell grid and no macro
 grid at all. The met4 stripes then run uncut straight through the macro areas.
 Set the vertical pitch to the macro column pitch and the offset so each stripe
-lands on the macro's internal met4 power strap. Same layer plus direct overlap
-means connected. No met5, no halo, no macro grid.
+lands on the macro's internal met4 power strap.
+
+Same layer plus direct overlap means connected. No met5, no halo, no macro
+grid.
 
 I validated this on the standalone 16-macro array with met5 fully disabled.
 Every stripe came out as one continuous column through all four macro rows, and
 the checks were clean: Magic DRC 0, KLayout DRC 0, LVS clean, antenna 0,
 power-grid violations 0 on both VPWR and VGND, flow errors 0. The debug
-artifacts are in `array/met4only_debug/`.
+artifacts are in `array/met4only_debug/`. One thing the plain DFFRAM recipe
+does not tell you. On current OpenROAD a macro pin that belongs to no grid is
+treated as an obstruction, and it gets bloated outward by the met4 spacing
+rule, 0.3 um a side. pdngen will let a stripe cross a same-net obstruction, but
+only if the stripe fully contains it side to side (the `Shape::cut` logic in
+`src/pdn/src/shape.cpp`).
 
-One thing the plain DFFRAM recipe does not tell you. On current OpenROAD a macro
-pin that belongs to no grid is treated as an obstruction, and it gets bloated
-outward by the met4 spacing rule, 0.3 um a side. pdngen will let a stripe cross
-a same-net obstruction, but only if the stripe fully contains it side to side
-(the `Shape::cut` logic in `src/pdn/src/shape.cpp`). A stripe the same width as
-the pin can never contain the bloated version, so my first met4-only run cut
-every stripe 0.6 um short of the pins, which I could see in the DEF. This is
-also why the tt06-era recipe worked at width 1.6 on older OpenROAD and does not
-today. The fix is to make the stripe wider than the pin plus twice the bloat:
+A stripe the same width as the pin can never contain the bloated version, so my
+first met4-only run cut every stripe 0.6 um short of the pins, which I could
+see in the DEF. This is also why the tt06-era recipe worked at width 1.6 on
+older OpenROAD and does not today.
+
+The fix is to make the stripe wider than the pin plus twice the bloat:
 `FP_PDN_VWIDTH 2.4` and `FP_PDN_VSPACING 0.9`. Their sum stays 3.3 um, which is
 the macro's VPWR-to-VGND pin pitch, so the pair still lands centered on both
 pins, and the 0.9 um gap is DRC-legal.
@@ -60,15 +66,14 @@ pins, and the 0.9 um gap is DRC-legal.
 The macros sit on a 4x4 grid at x = X0 + 60k, all in orientation N and never
 flipped. A mirrored macro would swap VPWR and VGND. Inside the macro the VPWR
 strap centerline is at x = 21.84 and VGND at 25.14 (from the LEF), a pitch of
-3.3 um.
+3.3 um. pdngen puts its first VPWR stripe centerline at core_x0 plus the
+vertical offset, which I confirmed from the macro's own DEF. So the offset is
+`PDN_VOFFSET = macro_X0 + 21.84 - core_x0` and the vertical pitch `PDN_VPITCH =
+60`, the macro column pitch. Read core_x0 from ROW_0 in the floorplan DEF of
+the actual run; it is not safe to take from here.
 
-pdngen puts its first VPWR stripe centerline at core_x0 plus the vertical
-offset, which I confirmed from the macro's own DEF. So the offset is
-`PDN_VOFFSET = macro_X0 + 21.84 - core_x0` and the vertical pitch
-`PDN_VPITCH = 60`, the macro column pitch. Read core_x0 from ROW_0 in the
-floorplan DEF of the actual run rather than assuming it. `dualarm/gen_dualarm.py`
-computes VOFFSET 22.3 for X0 3.22 with the TinyTapeout 2x2 core_x0 of 2.76, but
-check it against the real DEF.
+`dualarm/gen_dualarm.py` computes VOFFSET 22.3 for X0 3.22 with the TinyTapeout
+2x2 core_x0 of 2.76, but check it against the real DEF.
 
 `dualarm/pdn_cfg.tcl` holds all of this, written with the LibreLane 3 names
 (`PDN_*` in place of the older `FP_PDN_*`): standard-cell met4 stripes with
@@ -96,12 +101,12 @@ them. Check your macro's DEF before you copy these numbers.
 
 Point the config at `pdn_cfg.tcl` through `PDN_CFG` (the LibreLane 3 variable,
 older alias `FP_PDN_CFG`) and keep `PDN_VPITCH` at the column pitch. Run the
-floorplan, read core_x0 from ROW_0 in the DEF, set
-`PDN_VOFFSET = macro_X0 + 21.84 - core_x0`, and re-run. After the PDN step, open
-the DEF and confirm the stripes are continuous over the macros at the pin x
-positions. The power connectivity check (PSM) has to be clean, which was the
-array's final gate, and then a full green flow followed by a local precheck,
-whose forbidden-layer check confirms no met5 anywhere.
+floorplan, read core_x0 from ROW_0 in the DEF, set `PDN_VOFFSET = macro_X0 +
+21.84 - core_x0`, and re-run. After the PDN step, open the DEF and confirm the
+stripes are continuous over the macros at the pin x positions. The power
+connectivity check (PSM) has to be clean, which was the array's final gate, and
+then a full green flow followed by a local precheck, whose forbidden-layer
+check confirms no met5 anywhere.
 
 ## Fallback
 

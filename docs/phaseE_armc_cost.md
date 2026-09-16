@@ -49,7 +49,7 @@ what Arm C's equalization constraints have to take out.
 It also sets the price. Under equalization every ring sits in an identical
 fixed region and the region is charged whether cells fill it or not, so the
 cost is 120.1152 divided by whatever density the constrained flow reaches.
-Arm A's own three densities are the honest bracket.
+Arm A's own three densities bracket it.
 
 ## Arm C priced
 
@@ -104,13 +104,14 @@ percent increase on the total and about a third of a percentage point on
 met1. Routing does not decide this either.
 
 Each layer's direction is measured, not assumed. met1 carries 12343.1 um
-horizontally and 393.4 um vertically, met2 carries 97.7 horizontally and
-7653.1 vertically, and so on down. The check requires at least ninety percent
-of a layer's length in one direction and requires the DEF to declare tracks
-running that way. Capacity is that track count times the die span the wires
-run along. It is a ceiling nobody reaches, not a router's own congestion
-estimate, so treat five percent as "there is room" rather than as a routed
-result.
+horizontally and 393.4 um vertically, met2 carries 97.7 horizontally and 7653.1
+vertically, and so on down. The check requires at least ninety percent of a
+layer's length in one direction and requires the DEF to declare tracks running
+that way.
+
+Capacity is that track count times the die span the wires run along. It is a
+ceiling nobody reaches, not a router's own congestion estimate, so treat five
+percent as "there is room" rather than as a routed result.
 
 ## Power, which is a rounding error
 
@@ -148,28 +149,31 @@ bidirectionals, `uio[1:7]`. The sixth select bit needs one pin. E.2 also
 wants pins, for the window-length select, the sticky overflow flag, the
 measurement-active flag and the protocol version. Both cannot have `ui[7]`.
 
-The resolution is not difficult, and it is E.2's to make: the select bit
-should take `ui[7]` because it is an input and it is on the critical decode
-path, and E.2's additions should take the bidirectionals, which are free and
-which mostly want to be outputs anyway. What matters here is that the
-collision is on the record before either side designs around a pin the other
-one has already spent. `ui[7]` was checked and is genuinely unconnected: it
-is the one `ui_in` bit that never appears in the netlist.
+The resolution is not difficult, and it is E.2's to make: the select bit should
+take `ui[7]` because it is an input and it is on the critical decode path, and
+E.2's additions should take the bidirectionals, which are free and which mostly
+want to be outputs anyway. What matters here is that the collision is on the
+record before either side designs around a pin the other one has already spent.
+
+`ui[7]` was checked and is genuinely unconnected: it is the one `ui_in` bit
+that never appears in the netlist.
 
 ## What this leaves open
 
 One number. How many femtofarads a single load cell adds to a ring node.
 
 The SPEF is written with `PIN_CAP NONE`, which the script reads out of the
-header rather than assuming, so it carries wire capacitance and no gate
-capacitance. The build has no file with the missing half. So the ladder's
-rung spacing cannot be set from these files, and the honest bracket is what
-the wire side already says: the ring nodes average 0.4527 fF of wire each,
-the sixteen rings scatter over 10.86 to 17.04 fF with a standard deviation of
-1.9155 fF, and the frequency slope on record is 4.94 MHz/fF. A rung spacing
-has to be large enough that the ladder's top rung clears that 1.92 fF of
-natural scatter by a wide margin, and 1 fF increments over sixteen rungs
-would give a 15 fF span, which more than doubles a ring's node capacitance.
+header instead of taking on trust, so it carries wire capacitance and no gate
+capacitance. The build has no file with the missing half. So the ladder's rung
+spacing cannot be set from these files, and what can be bracketed is what the
+wire side says: the ring nodes average 0.4527 fF of wire each, the sixteen
+rings scatter over 10.86 to 17.04 fF with a standard deviation of 1.9155 fF,
+and the frequency slope on record is 4.94 MHz/fF.
+
+A rung spacing has to be large enough that the ladder's top rung clears that
+1.92 fF of natural scatter by a wide margin, and 1 fF increments over sixteen
+rungs would give a 15 fF span, which more than doubles a ring's node
+capacitance.
 
 That is a SPICE question, `sim/spice/gono/gen_instance_decks.py` already has
 the machinery for it, and it is a build-time number. It does not change any
@@ -187,11 +191,12 @@ one check it must trip, plus three on the pricing model itself and one parser
 refusal.
 
 The one worth explaining is `C01`. This script needs to know which pin of a
-cell drives its net, and it uses a stated table of sky130 output pin names.
-A.1 was corrected in August for exactly that habit, so the table is not left
+cell drives its net, and it uses a stated table of sky130 output pin names. A.1
+was corrected in August for exactly that habit, so the table is not left
 standing on its own: under it, every net in the design must have exactly one
-driver, and the only nets with none must be the top-level input ports. Both
-hold. 1110 nets, no net with two drivers, and ten undriven nets which are
+driver, and the only nets with none must be the top-level input ports.
+
+Both hold. 1110 nets, no net with two drivers, and ten undriven nets which are
 `clk`, `ena`, `rst_n` and `ui_in[0]` through `ui_in[6]`. The absence of
 `ui_in[7]` from that list is how we know the pin is free.
 

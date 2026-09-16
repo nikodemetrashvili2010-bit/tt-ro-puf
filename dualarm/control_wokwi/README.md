@@ -8,8 +8,7 @@ derived from the layout". A rule like that is easy to fit to one build without
 noticing, because there is nothing to contradict it. This build contradicts it
 in the right places. It returns ten disconnected pins where the shipped build
 returns nine, and zero max-fanout violations where the shipped build returns
-one, and the script matches both against their own `metrics.json`. That is what
-makes me believe the rules rather than the passes.
+one, and the script matches both against their own `metrics.json`.
 
 It is a genuinely different design, not an earlier revision of the same one.
 One tile of 161 by 111.52 um instead of four, 32 flat oscillators instead of

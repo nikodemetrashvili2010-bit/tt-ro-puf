@@ -872,8 +872,8 @@ def main():
     # Not compiling anything and failing to compile are different answers and
     # deserve different exit codes. A machine with no iverilog gets 2, which
     # says the structural half passed and the compiler half did not run. CI
-    # installs iverilog and requires 0, so the enforcement point is there and
-    # a local run does not have to read red every time to stay honest.
+    # installs iverilog and requires 0, so the enforcement point is there
+    # and a local run without iverilog does not read red every time.
     uncompiled = not live_info["available"]
     structural_bad = [c for c in live_bad if not c.startswith("E")]
 

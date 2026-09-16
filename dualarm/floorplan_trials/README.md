@@ -1,15 +1,17 @@
 # Floorplan trials: can the two arms share the die evenly?
 
-Arm B is sixteen hardened macros on a fixed grid. Arm A is standard cells that the
-flow places wherever room is left. In the shipped build that means the macros tile
-x = 3.22 to 243.22 and all sixteen Arm A oscillators end up inside a box roughly
-44 by 78 um on the right of the tile. Arm A samples one small region while Arm B
-samples nearly the whole die, which is a poor arrangement for a hypothesis about
-spatial pattern. It is also why Arm A output nets carry about 0.84 fF against Arm
-B's 14.46.
+Arm B is sixteen hardened macros on a fixed grid.
 
-I tried to fix it by moving macros, and it did not work. This folder records what
-I measured, because the negative result is worth keeping.
+Arm A is standard cells that the flow places wherever room is left. In the
+shipped build that means the macros tile x = 3.22 to 243.22 and all sixteen Arm
+A oscillators end up inside a box roughly 44 by 78 um on the right of the tile.
+
+Arm A samples one small region while Arm B samples nearly the whole die, which
+is a poor arrangement for a hypothesis about spatial pattern. It is also why
+Arm A output nets carry about 0.84 fF against Arm B's 14.46.
+
+I tried to fix it by moving macros, and it did not work. This folder holds what
+I measured on the two attempts.
 
 ## What was tried
 
@@ -44,12 +46,14 @@ line, 126 um in the first and 106 um in the second, and that ring's loop then ha
 to route back and forth across the whole span. Its capacitance roughly doubles
 against the rest of the field.
 
-My first guess was the 8 um gap between macro rows, which after 2 um halos leaves
-a single 2.72 um cell row, so I raised the row pitch to 52 to give two rows per
-band. That was wrong. The outlier did not go away, it moved to a different
-oscillator, and the spread among the remaining fifteen got worse rather than
-better. Two independent trials, two different victims, so the cause is the
-fragmented space itself and not the band height.
+My first guess was the 8 um gap between macro rows, which after 2 um halos
+leaves a single 2.72 um cell row, so I raised the row pitch to 52 to give two
+rows per band. That was wrong.
+
+The outlier did not go away, it moved to a different oscillator, and the spread
+among the remaining fifteen got worse rather than better. Two independent
+trials, two different victims, so the cause is the fragmented space itself and
+not the band height.
 
 Interleaving does deliver what it promised elsewhere. Arm A's x-span nearly
 tripled, and Arm B's output loads became more uniform, tightening from 2.89 to
@@ -59,13 +63,17 @@ when I stopped quoting a single build.
 
 ## Why this is geometric
 
-Four macro rows is the maximum that fits: at pitch 48 the top row already ends at
-204 um against a core limit of 223.04. Sixteen macros in four rows therefore need
-four columns, and only five column positions exist, because each has to sit on the
-60 um power grid for the met4 stripes to land on the macro power pins. So the only
-freedom is which four of five columns to use. The shipped choice puts them
-together and leaves Arm A one contiguous 92 um strip. Every other choice leaves a
-60 um channel plus a 29 um remnant, and that is what fragments Arm A.
+Four macro rows is the maximum that fits: at pitch 48 the top row already ends
+at 204 um against a core limit of 223.04. Sixteen macros in four rows therefore
+need four columns, and only five column positions exist, because each has to
+sit on the 60 um power grid for the met4 stripes to land on the macro power
+pins.
+
+So the only freedom is which four of five columns to use.
+
+The shipped choice puts them together and leaves Arm A one contiguous 92 um
+strip. Every other choice leaves a 60 um channel plus a 29 um remnant, and that
+is what fragments Arm A.
 
 The confound is a consequence of the die size, the macro footprint and the grid
 pitch, not a configuration oversight. Removing it properly needs more area, a

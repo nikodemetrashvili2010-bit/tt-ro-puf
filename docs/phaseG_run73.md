@@ -71,22 +71,22 @@ own terms.
 
 ## What is the problem: there is no room
 
-I got the first measurement wrong and it is worth keeping. What I asked to
-begin with was how many of the pinned cells sit flush against the next cell
-in their row, and the answer came back 512 of 512, which felt like a finding
-for about a minute. It is not one. The final DEF is filled, so every cell in
-it is flush against its neighbour, all 6477 of them, and Arm A has nothing to
-do with it. The question only means anything once the fillers are gone, which
-is the state `dpl.tcl` puts the design in on its first line.
+The first measurement was the wrong one. What I asked to begin with was how
+many of the pinned cells sit flush against the next cell in their row, and
+the answer came back 512 of 512, which looked like a finding for about a
+minute. It is not one. The final DEF is filled, so every cell in it is flush
+against its neighbour, all 6477 of them, and Arm A has nothing to do with it.
+The question only means anything once the fillers are gone, which is the
+state `dpl.tcl` puts the design in on its first line.
 
-Widths next, because the number matters and I nearly got that wrong too. The
+Widths next, and the number matters here. The
 DEF is tiled to the last site, fillers going down to `fill_1` at one site
 wide, so the distance from a cell to the next instance in its row is exactly
 that cell's width rather than an upper bound on it. The 512 are 480 `inv_1`,
 16 `buf_1` and 16 `nand2_1`, all three 1380 dbu, three sites. `buf_1` agrees
-with the liberty, 3.7536 um2 over a 2.72 um row. So does `inv_2`, also 1380,
-which is worth writing down because I had expected 1840 and would have
-carried that mistake.
+with the liberty, 3.7536 um2 over a 2.72 um row. So does `inv_2`, also 1380.
+I had expected 1840 from memory and would have carried that number through
+everything below.
 
 So, fillers gone, how much free space does each pinned cell have to its
 right:
@@ -135,10 +135,10 @@ its neighbour is FIRM too, so `detailed_placement` cannot open a gap.
 
 ## What is still not known, and it is the whole thing
 
-Which check failed, and on which instances. The log has it. The log needs a
-signed-in session and the artifact needs a token, so I still cannot read
-either. The chain above is sourced at every link but it has not been
-observed once.
+Which check failed, and on which instances. The log has it. That log sits
+behind a sign-in and the artifact behind an API token, so neither has been
+read. The chain above is sourced at every link but it has not been observed
+once.
 
 ## So the reporter got the rest of the change
 
@@ -151,12 +151,11 @@ The warning sweep, separately, because `check_placement -verbose` can list
 several hundred instances between its verdict and the error and the verdict
 would be pushed out of any lead-in worth carrying.
 
-And the change sweep, which is Nikoloz's call and the better half of the
-two: the lines where a step says what it changed, a verb and a number on the
-same line. `repair_design` writes "Resized 42 instances" and "Inserted 18
-buffers in 12 nets" long before anything goes wrong, and those two counts
-are what decide whether the resize story above is true or invented. They
-were being thrown away.
+And the change sweep, the better half of the two: the lines where a step
+says what it changed, a verb and a number on the same line. `repair_design`
+writes "Resized 42 instances" and "Inserted 18 buffers in 12 nets" long
+before anything goes wrong, and those two counts are what decide whether the
+resize story above is true or invented. They were being thrown away.
 
 R08 and R09 are the checks, and both look for the line themselves rather
 than asking the selector what it selected. Turned off, both fail on a

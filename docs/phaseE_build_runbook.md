@@ -49,9 +49,9 @@ out of `dualarm_par_ss_out.txt` and `dualarm_par_ff_out.txt`. Build a third
 arm, forget to re-run static timing, and every window argument silently
 still refers to the two-arm build.
 
-The three reports come out of the harden step, not the extraction step,
-which is why writing the plan step by step surfaced it and reading the
-manifest never would have.
+The three reports come out of the harden step, not the extraction step. The
+manifest does not record which step wrote what, so the step-by-step plan is
+where that showed up.
 
 ## Two checks reaching for the same thing
 

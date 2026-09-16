@@ -9,11 +9,14 @@
     "is LibreLane, and its whole configuration surface is listed below.",
     "",
     "Two versions are involved and the difference matters. The run",
-    "directory on this disk was produced by 3.0.3. CI hardens with",
+    "directory on this disk was produced by 3.0.3. CI hardened with",
     "tt-gds-action@ttsky26c, whose librelane-version input defaults to",
-    "3.0.5. The four files that decide every placement question are",
-    "byte identical between the two tags, and their SHA-256 values are",
-    "recorded below so anybody can check that without taking my word.",
+    "3.0.5, until 2026-09-16, when the workflow moved to @ttsky26d for",
+    "the shuttle and the default became 3.0.14. The files that decide",
+    "every placement question are byte identical between 3.0.3 and",
+    "3.0.5, and their SHA-256 values are recorded below so anybody can",
+    "check that without taking my word. What 3.0.14 changes is under",
+    "ci_version_change, file by file, with the same rule.",
     "",
     "gds_build/ is not mirrored to the clone, so CI cannot rebuild this",
     "file. It is a pinned record, the same arrangement as",
@@ -26,8 +29,8 @@
   "flow": {
     "name": "LibreLane",
     "version_on_disk": "3.0.3",
-    "version_in_ci": "3.0.5",
-    "version_in_ci_source": "TinyTapeout/tt-gds-action@ttsky26c action.yml, input librelane-version, default value",
+    "version_in_ci": "3.0.14",
+    "version_in_ci_source": "TinyTapeout/tt-gds-action@ttsky26d action.yml, input librelane-version, default value; 3.0.5 at @ttsky26c until 2026-09-16",
     "pdk": "sky130A",
     "pdk_source": "open_pdks",
     "pdk_version": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71"
@@ -57,6 +60,68 @@
       "librelane/scripts/odbpy/placers.py": "9a0cbff8661e2c33cc1b8d58028a4c4ed2720873fab9c25193b709cc8f4f2d14",
       "librelane/flows/classic.py": "db887038493b0b33def8f6317548c7a47ef292ca6fcdcfb43f5f4598a9a2caed",
       "librelane/scripts/odbpy/reader.py": "ba82c718a7d746831dadf5e6920223dc71dafeca8c385bc1dc32144f7bd2490c"
+    }
+  },
+  "ci_version_change": {
+    "_comment": [
+      "The CI flow version moved from 3.0.5 to 3.0.14 on 2026-09-16 with",
+      "the shuttle tag, ttsky26c to ttsky26d. Retrieved the same day from",
+      "raw.githubusercontent.com at both tags and hashed by the checkout",
+      "rule. Same PDK hash in librelane/pdk_hashes.yaml, same OpenROAD",
+      "commit in nix/openroad.nix (dcf36133a369abc8f3c5e5738cd4d82e4903c0e0,",
+      "2026-02-17) and the same nix-eda and ciel locks in flake.lock, so the",
+      "tools behind the flow are the same binaries. The Python and Tcl of",
+      "the flow itself differ in the files under differs, each read in",
+      "full. Nothing that cuts a row, inserts a tap, sources PDN_CFG or",
+      "places a cell changed. Not yet built on: run 80 was 3.0.5."
+    ],
+    "from": "3.0.5",
+    "to": "3.0.14",
+    "checked": "2026-09-16",
+    "base_url": "https://raw.githubusercontent.com/librelane/librelane/<tag>/",
+    "tool_pins_identical": {
+      "openroad_rev": "dcf36133a369abc8f3c5e5738cd4d82e4903c0e0",
+      "nix_eda_lock_rev": "8f990fb77529c09e540e453cd836af9930ec58db",
+      "ciel_lock_rev": "afcb23d368614ffa1e7e96584ed33f839c71c576",
+      "pdk_sky130": "8afc8346a57fe1ab7934ba5a6056ea8b43078e71"
+    },
+    "identical": {
+      "librelane/scripts/odbpy/placers.py": "9a0cbff8661e2c33cc1b8d58028a4c4ed2720873fab9c25193b709cc8f4f2d14",
+      "librelane/flows/classic.py": "db887038493b0b33def8f6317548c7a47ef292ca6fcdcfb43f5f4598a9a2caed",
+      "librelane/scripts/odbpy/reader.py": "ba82c718a7d746831dadf5e6920223dc71dafeca8c385bc1dc32144f7bd2490c",
+      "librelane/scripts/openroad/pdn.tcl": "5a229598bc3783f64dd47b388a203373a41a87b6700a7ea8f8e03988d9a54ed6",
+      "librelane/scripts/openroad/cut_rows.tcl": "f11378fe6b8dd455e45c2535546548fe7a31dc140d54654d9509ffdb51d108a3",
+      "librelane/scripts/openroad/tapcell.tcl": "e0ebb2e54fbf72de427f2defb8b42e7562f4735c5617f6ae2ecafdad887a74fe",
+      "librelane/scripts/openroad/gpl.tcl": "e9b48d091deb9629e0e26bf10ec07daca6872ba84ee80d8ea29b4a0eee43bfb4",
+      "librelane/scripts/openroad/dpl.tcl": "5398933c17fb1f8c3772608cf3ec938cb4d5afc9e9c1ce46ee156eb339630957",
+      "librelane/pdk_hashes.yaml": "bf6b5088fb0fbd2874a6a52440331fbabc7455f6a2a227cb4da8999939d80153"
+    },
+    "differs": {
+      "librelane/steps/odb.py": {
+        "3.0.5": "2156a3279f72a6cb39528e8619f451f2d4f7c44440283ecc0e995c8095ff7e13",
+        "3.0.14": "ae86fe23fc74acd72d7b72ffbbb8d222ec7becea5822d447bf91b372582b04e9",
+        "diff": "2 lines: PAD_LIBS appended to a liberty list. This design sets no PAD_LIBS"
+      },
+      "librelane/steps/openroad.py": {
+        "3.0.5": "5eecc6d75cd78a80900d2ec1626cf30f26c4766bff77611b9fc425f5a6e79d34",
+        "3.0.14": "7ce0150201ed73082b8019b8eda781bdab8f7935613d8be0afedc78976bb73d3",
+        "diff": "4 lines in two places: PAD_LIBS appended to a liberty list. This design sets no PAD_LIBS"
+      },
+      "librelane/scripts/openroad/common/io.tcl": {
+        "3.0.5": "ebf23a2a079f6527933897215d70fa91fe43e4ec38099987fbc52aaf8759a233",
+        "3.0.14": "b70a8733a2a26a0909be220d8320d78e22a13cb418a862c1ef08a70da2985fe4",
+        "diff": "OpenSTA 3.1 scene objects handled beside the string form; a 100 to 100.0 in two expr lines; the PAD_LIBS read_liberty loops removed. STA only, and the OpenROAD pinned at both tags is the same commit, so the 3.1 branch is never taken"
+      },
+      "librelane/steps/pyosys.py": {
+        "3.0.5": "58e37879c9aeae2b70208ef669981534ec7d84a69370a1c54f9b64b33e2aa850",
+        "3.0.14": "c963394556fd61544b4d3d4d5f56d09de04a92e5bc82db121259202172527353",
+        "diff": "PAD_LIBS folded into the blackbox model list; synthesis__check_error__count now also counts reports/chk.rpt, the post-synthesis yosys check, not only pre_synth_chk.rpt. Both checks report 0 problems for this design under the same yosys in the container, with the sky130 cells as blackboxes the way the liberty makes them"
+      },
+      "librelane/scripts/pyosys/synthesize.py": {
+        "3.0.5": "1121435798966790389bd542d7bcf464501ad9800c963bc87a8dcd333a5e5a69",
+        "3.0.14": "bfc98fdddd6ffc2225e0c43ff64bae7847e3dd34633ce9a210f7bb081cc1265d",
+        "diff": "abc loses -fast only when yosys is 0.68 or newer; the yosys pinned at both tags is the same, so the pass is unchanged"
+      }
     }
   },
   "variables": [
@@ -876,6 +941,20 @@
     "ba82c718a7d746831dadf5e6920223dc71dafeca8c385bc1dc32144f7bd2490c": "librelane/librelane librelane/scripts/odbpy/reader.py at tags 3.0.3 and 3.0.5, not a file in this repository",
     "54cd313f1c0bba43513385627ccc5bf6c10e3f4fc29aaf7bdf6f5c84a64d9d09": "gds_build/runs/wokwi/resolved.json, the flow's own run record, not mirrored to the clone",
     "d551717008d61a63fef26471923ab841538583053fb5b0f238e8adef50542a39": "gds_build/runs/wokwi/pdk.json, same",
-    "29cd2da8a6054df2f1dec02ab67fd87dd12c54132e46e146dd99ece0cde623a6": "gds_build/runs/wokwi/flow.log, same"
+    "29cd2da8a6054df2f1dec02ab67fd87dd12c54132e46e146dd99ece0cde623a6": "gds_build/runs/wokwi/flow.log, same",
+    "5a229598bc3783f64dd47b388a203373a41a87b6700a7ea8f8e03988d9a54ed6": "librelane/librelane librelane/scripts/openroad/pdn.tcl at tags 3.0.5 and 3.0.14, not a file in this repository",
+    "f11378fe6b8dd455e45c2535546548fe7a31dc140d54654d9509ffdb51d108a3": "librelane/librelane librelane/scripts/openroad/cut_rows.tcl at tags 3.0.5 and 3.0.14, not a file in this repository",
+    "e0ebb2e54fbf72de427f2defb8b42e7562f4735c5617f6ae2ecafdad887a74fe": "librelane/librelane librelane/scripts/openroad/tapcell.tcl at tags 3.0.5 and 3.0.14, not a file in this repository",
+    "e9b48d091deb9629e0e26bf10ec07daca6872ba84ee80d8ea29b4a0eee43bfb4": "librelane/librelane librelane/scripts/openroad/gpl.tcl at tags 3.0.5 and 3.0.14, not a file in this repository",
+    "5398933c17fb1f8c3772608cf3ec938cb4d5afc9e9c1ce46ee156eb339630957": "librelane/librelane librelane/scripts/openroad/dpl.tcl at tags 3.0.5 and 3.0.14, not a file in this repository",
+    "bf6b5088fb0fbd2874a6a52440331fbabc7455f6a2a227cb4da8999939d80153": "librelane/librelane librelane/pdk_hashes.yaml at tags 3.0.5 and 3.0.14, not a file in this repository",
+    "ae86fe23fc74acd72d7b72ffbbb8d222ec7becea5822d447bf91b372582b04e9": "librelane/librelane librelane/steps/odb.py at tag 3.0.14, not a file in this repository",
+    "7ce0150201ed73082b8019b8eda781bdab8f7935613d8be0afedc78976bb73d3": "librelane/librelane librelane/steps/openroad.py at tag 3.0.14, not a file in this repository",
+    "ebf23a2a079f6527933897215d70fa91fe43e4ec38099987fbc52aaf8759a233": "librelane/librelane librelane/scripts/openroad/common/io.tcl at tag 3.0.5, not a file in this repository",
+    "b70a8733a2a26a0909be220d8320d78e22a13cb418a862c1ef08a70da2985fe4": "librelane/librelane librelane/scripts/openroad/common/io.tcl at tag 3.0.14, not a file in this repository",
+    "58e37879c9aeae2b70208ef669981534ec7d84a69370a1c54f9b64b33e2aa850": "librelane/librelane librelane/steps/pyosys.py at tag 3.0.5, not a file in this repository",
+    "c963394556fd61544b4d3d4d5f56d09de04a92e5bc82db121259202172527353": "librelane/librelane librelane/steps/pyosys.py at tag 3.0.14, not a file in this repository",
+    "1121435798966790389bd542d7bcf464501ad9800c963bc87a8dcd333a5e5a69": "librelane/librelane librelane/scripts/pyosys/synthesize.py at tag 3.0.5, not a file in this repository",
+    "bfc98fdddd6ffc2225e0c43ff64bae7847e3dd34633ce9a210f7bb081cc1265d": "librelane/librelane librelane/scripts/pyosys/synthesize.py at tag 3.0.14, not a file in this repository"
   }
 }

@@ -3,12 +3,10 @@
 2026-09-01. One script, `chip/lint_rtl.py`, and a day spent finding out why
 it needed to exist.
 
-The plan for the day was G.3 steps 1 to 4: archive the two-arm build, install
-the generated modules into the source tree, edit `info.yaml`, lint. Four
-quarter-days, which is what the runbook budgets, and a clean stopping point
-before the steps that need the PDK. None of it happened. Step 2 turned out to
-be the wrong command pointed at the wrong folder holding the wrong Verilog,
-and finding that out took the day.
+G.3 steps 1 to 4 are archive the two-arm build, install the generated modules
+into the source tree, edit `info.yaml`, lint, and then stop before the steps
+that need the PDK. None of that got done. Step 2 turned out to be the wrong
+command pointed at the wrong folder holding the wrong Verilog.
 
 ## What the runbook said, and where it pointed
 
@@ -155,18 +153,16 @@ findings two through five are all legal Verilog:
 | R07 | `ena` takes part in the project reset |
 | R08 | the Arm C ring matches the Arm A ring node for node |
 
-Both halves run against two file sets. The live design is required to pass
-and does, nine checks with R08 not applicable because there is no Arm C in
-it. On 31 August the drafts failed nine of ten; E02 was the only one they
-passed, and only because a file that will not parse produces no width
-warnings.
-
-**On 2 September the drafts pass all ten.** `chip/gen_e2_rtl.py` was rebuilt
-as a transformation of the live RTL rather than as fresh Verilog, and
+Both halves run against two file sets. The live design is required to pass and
+does, nine checks with R08 not applicable because there is no Arm C in it. On
+31 August the drafts failed nine of ten; E02 was the only one they passed, and
+only because a file that will not parse produces no width warnings. **On 2
+September the drafts pass all ten.** `chip/gen_e2_rtl.py` was rebuilt as a
+transformation of the live RTL rather than as fresh Verilog, and
 `draft_installable` in `RTL_LINT.json` is what G.3 step 2 reads before it
-copies anything into the source tree. Yosys 0.33 reads the same set,
-resolves the hierarchy and passes `check -assert` with no warnings, which
-this script does not run and the TT flow will.
+copies anything into the source tree. Yosys 0.33 reads the same set, resolves
+the hierarchy and passes `check -assert` with no warnings, which this script
+does not run and the TT flow will.
 
 A check that does not apply reports `n/a` and is counted separately from the
 passes. On 31 August `B07` in the runbook read an empty gate list inside the
@@ -187,41 +183,39 @@ than the one it was written against, not less.
 
 Widening the regex would have been loosening it, which is the thing freezing
 exists to prevent, so the check was made narrower instead. It now finds the
-`async_reg` register that actually samples `ui_in`, then the second
-`async_reg` register that samples that one. Counting attributes said nothing
-useful anyway: the top has three of them and the first is the reset
-synchronizer.
-
-That is strictly stronger than what it replaced, and there is a second fault
-in the selftest to show it. The bundle stays two stages deep and the
-attributes stay in place, but the first stage is fed a constant and the
-control bits are decoded off the port. The old check passed that. This one
-does not.
+`async_reg` register that actually samples `ui_in`, then the second `async_reg`
+register that samples that one. Counting attributes said nothing useful anyway:
+the top has three of them and the first is the reset synchronizer. That is
+strictly stronger than what it replaced, and there is a second fault in the
+selftest to show it. The bundle stays two stages deep and the attributes stay
+in place, but the first stage is fed a constant and the control bits are
+decoded off the port. The old check passed that. This one does not.
 
 Which pins have to be inside the bundle is a question about the spec rather
 than about the RTL, so it is not asked here. `chip/gen_e2_rtl.py` R03 asks
 it, against `OBSERVABILITY.json`.
 
-## Three things I got wrong while writing it
+## Three faults in the checker itself
 
 **R08 reported a difference that does not exist.** The first version compared
-the two ring modules as text. `ro_macro.v` writes its inverter chain as
-`for (i = 1; i <= N_INV)` with `.A(n[i-1])`, and `ro_armc.v` writes the same
-chain as `for (i = 0; i < N_INV)` with `.A(n[i])`. Those elaborate to
-identical netlists and the check called them different, which buries the real
-finding under a false one. It expands the generate loop now and compares
-elaborated nets, and it reports the one line that matters:
-`sky130_fd_sc_hd__buf_1 pin A is n[15] in Arm A and n[30] in Arm C`. The
-fixture that proves R08 can pass is deliberately written with the opposite
-loop bounds, so a regression to text comparison fails the selftest.
+the two ring modules as text. `ro_macro.v` writes its inverter chain as `for (i
+= 1; i <= N_INV)` with `.A(n[i-1])`, and `ro_armc.v` writes the same chain as
+`for (i = 0; i < N_INV)` with `.A(n[i])`. Those elaborate to identical netlists
+and the check called them different, which buries the real finding under a
+false one.
+
+It expands the generate loop now and compares elaborated nets, and it reports
+the one line that matters: `sky130_fd_sc_hd__buf_1 pin A is n[15] in Arm A and
+n[30] in Arm C`. The fixture that proves R08 can pass is deliberately written
+with the opposite loop bounds, so a regression to text comparison fails the
+selftest.
 
 **`RTL_LINT.json` could not diff clean against itself.** The temp directory
 that iverilog compiles in is different every run and its name landed in every
 recorded message, so two consecutive runs disagreed and the gate would have
 gone red forever for a reason with nothing to do with the RTL. Same shape as
 `RELEASE_MANIFEST.json` recording its own hash on 31 August. The path is
-stripped now, and I ran it twice and diffed before wiring it in rather than
-assuming.
+stripped now, and it was run twice and diffed before being wired in.
 
 **The recorded file depended on the machine.** Once the paths were stripped it
 still differed between a machine with iverilog and one without, because it
@@ -229,19 +223,16 @@ recorded whether the compiler ran and which checks had therefore failed. That
 is a fact about the machine and not about the design, and the gate diffs the
 file. Only the structural checks are recorded now. The compiler half is
 enforced through the exit code instead, and the exit code separates the two
-cases: 1 means the RTL failed, 2 means nothing was compiled. The bridge VM has
-no iverilog, so 2 is what a session gets, and it should not be allowed to read
-the same as success.
+cases: 1 means the RTL failed, 2 means nothing was compiled. A machine with
+no iverilog gets 2, and 2 must not read the same as success.
 
 ## What is checked by code and what I checked by hand
 
 Everything in the table above is a check with a planted fault behind it. Nine
 faults, each asserted to trip exactly its own check, plus two controls: the
-untouched live design passes everything, and a matching Arm C ring passes
-R08. One fault trips two checks on purpose, the part-select, because R01 and
-E01 are the same fault seen with and without a compiler and the selftest names
-both rather than pretending it is one.
-
+untouched live design passes everything, and a matching Arm C ring passes R08.
+One fault trips two checks on purpose, the part-select, because R01 and E01 are
+the same fault seen with and without a compiler, and the selftest names both.
 What I have not checked by code: that the tap difference in Arm C actually
 moves the frequency. That wants SPICE and it is not in this script. The claim
 here is only that the two rings are not the same netlist, which R08 does check

@@ -1,8 +1,7 @@
 # Run 72, and a build whose failure I could not read
 
 7 September 2026. G.3 step 8 begins by reading the run that step 7's change
-produced. I read it, it had failed, and then I spent the morning finding out
-that I had no way to learn why.
+produced. It had failed, and nothing on the public run page says why.
 
 ## What the run page says
 
@@ -26,16 +25,11 @@ this one entered the build and stopped about halfway.
 
 ## The part I could not do
 
-I wanted the log. The gds job's log needs a signed-in session, and the
-`GDS_logs` artifact, 5.65 MB and sitting right there on the run page, needs
-an API token to download. The container's proxy allows neither
-`api.github.com` nor `codeload`. The browser I have is signed out and the
-page says so in as many words.
-
-So the one thing I needed was the one thing behind a login. I tried four
-routes and none of them worked, and I am writing that down rather than
-quietly presenting the reasoning I fell back on as though it had been the
-plan.
+The log is what I wanted. The gds job's log needs a signed-in session, and
+the `GDS_logs` artifact, 5.65 MB and sitting right there on the run page,
+needs an API token to download. Four routes to it, none of them open. So the
+failure of a public build turns out not to be public, and everything below
+is reasoning around that gap rather than a plan.
 
 ## What I could establish without it
 
@@ -83,16 +77,17 @@ way round. I read `cut_rows.tcl` and `tapcell.tcl` as well. Neither settles
 it, because what they do with a standard cell that is already fixed is
 inside OpenROAD and not inside the Tcl.
 
-**That is where the reasoning stops, and I am leaving it stopped.** I have a
-strong candidate and no evidence for it. Writing the fallback in on a strong
-candidate is how you end up unable to say which of two changes mattered.
+**The reasoning stops there.** There is a strong candidate and no evidence
+for it. Write the fallback in on a strong candidate and the next run cannot
+say which of two changes mattered.
 
 ## So make the build say it
 
 Three things are readable on a public run page with no account: job names,
-durations, and annotations. Only the last can carry text I choose. The job
-summary is not on that list; run 72 wrote one and a signed-out reader sees
-nothing.
+durations, and annotations.
+
+Only the last can carry text I choose. The job summary is not on that list; run
+72 wrote one and a signed-out reader sees nothing.
 
 `chip/ci_failure_report.py`, 838 lines, reads the LibreLane run directory
 while it still exists and prints the failure into an annotation, plus the
@@ -117,22 +112,24 @@ step named has a `state_out.json` then every step completed, LibreLane got to
 the end, and whatever failed is outside it. Run against the run directory on
 my disk, which is a clean June build, it says exactly that.
 
-The selftest found a real bug in the first version. `read_text` read the
-first two megabytes of a log. Detailed routing writes tens of megabytes and
-puts the reason it stopped on the last line, so that version would have
-quoted the opening banner of the longest log in the flow and called it the
-error. It reads backwards now, and says when what it read was not the whole
-file.
+The selftest found a real bug in the first version.
 
-Two checks earn their planted fault in a way worth naming rather than
-counting. R06, that the annotation fits, cannot fail on real input because
-the renderer trims until it does; the fixture turns the trimmer off so the
-check is known to work. R05 asks the filesystem which quoted files are over
-the read limit and requires the report to have said so about exactly those,
-and no fixture can make that disagree from the input side, because both
-sides come from the same file. What the selftest plants for R05 instead is
-the bug it was written for: an error past the limit at the end of a long log,
-and the assertion is that the quote carries it.
+`read_text` read the first two megabytes of a log. Detailed routing writes tens
+of megabytes and puts the reason it stopped on the last line, so that version
+would have quoted the opening banner of the longest log in the flow and called
+it the error. It reads backwards now, and says when what it read was not the
+whole file.
+
+Two checks earn their planted fault for a different reason than the rest. R06,
+that the annotation fits, cannot fail on real input because the renderer trims
+until it does; the fixture turns the trimmer off so the check is known to work.
+R05 asks the filesystem which quoted files are over the read limit and requires
+the report to have said so about exactly those, and no fixture can make that
+disagree from the input side, because both sides come from the same file.
+
+What the selftest plants for R05 instead is the bug it was written for: an
+error past the limit at the end of a long log, and the assertion is that the
+quote carries it.
 
 The first two versions of R03 and R05 both passed on every fixture including
 the ones planted to break them, which is the 31 August shape again. A
@@ -145,6 +142,7 @@ rule selects now, and only the properties that survive that are checks.
 Six failures on the first run, three of them mine.
 
 `g3_runbook.py` B07 wants every gate script named in step 11's `covers` list.
+
 `release_manifest.py` counts the gate at 117 now, up from 116. Both fixed by
 declaring the thing rather than by loosening anything.
 
@@ -152,12 +150,13 @@ The third is better. The documented way to extract the gate command list is
 
     sed -n '/archived-evidence/,/^  gds:/p' .github/workflows/gds.yaml
 
-and line 147 of that file is `needs: archived-evidence`, inside the `gds`
-job. A sed range restarts, so it opened a second range there and ran to the
-end of the file. Until today nothing after line 147 matched the command
-pattern, so it never mattered and nobody would have noticed. My gl_test
-reporter has a `grep` and a `python3` in it and both got swept into the gate
-list. Anchoring the start fixes it:
+and line 147 of that file is `needs: archived-evidence`, inside the `gds` job.
+
+A sed range restarts, so it opened a second range there and ran to the end of
+the file. Until today nothing after line 147 matched the command pattern, so it
+never mattered and nobody would have noticed. My gl_test reporter has a `grep`
+and a `python3` in it and both got swept into the gate list. Anchoring the
+start fixes it:
 
     sed -n '/^  archived-evidence:/,/^  gds:/p'
 
@@ -192,8 +191,8 @@ either.
 `test/requirements.txt` pins cocotb 2.0.1 and the Makefile uses
 `COCOTB_TOPLEVEL` and `COCOTB_TEST_MODULES`, which are the 2.x names, so the
 harness and the pin agree. If `cocotb-config --makefiles` returned nothing on
-the runner the include would fail and make would exit 2, and that is a guess
-I am not going to dress up.
+the runner the include would fail and make would exit 2. That is a guess,
+not an observation.
 
 So gl_test got the same treatment as the build: a step that runs only on
 failure and puts the cocotb version, the makefiles path, the iverilog
@@ -220,7 +219,7 @@ leave me unable to say which of the two mattered. The fallback,
 this flow will not hold standard cells FIRM, that is one config change and
 not a day.
 
-One consequence worth writing down before it surprises anybody. The Arm C
+One consequence of that, before it surprises anybody. The Arm C
 amendment decided today picks the hand placed arm, and hand placing Arm C
 means 512 more cells pinned FIRM through the same mechanism that run 72 may
 have just failed on. So run 72's cause does not only decide Arm A's pinning.

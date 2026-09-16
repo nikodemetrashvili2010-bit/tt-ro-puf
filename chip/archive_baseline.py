@@ -85,7 +85,7 @@ RAW_PATHS = {
 # working tree is read by nothing in that chain and has been the June
 # single-arm design since dual-arm v2 landed on 22 July. Both are archived,
 # because "the two disagreed and here is by how much" is a fact about this
-# repository that is worth keeping, and because step 2 resyncs the second
+# repository, and because step 2 resyncs the second
 # from the first and the drift stops being visible afterwards.
 DUALARM_SRC = ("ro_puf.v", "ro_puf_core.v", "tt_um_ro_puf.v", "ro_macro.v",
                "config.json")

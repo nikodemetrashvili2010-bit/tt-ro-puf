@@ -75,11 +75,10 @@ the wrapper PDN_CFG now names, and MANUAL_GLOBAL_PLACEMENTS is gone from
 config.json (it would set them PLACED again at step 33). This reads the
 hook file instead: DEF-spelled names with the backslashes, coordinates
 already in dbu, OpenDB orientations mapped back to the LEF ones the DEF
-carries. What it checks
-did not change: whether each cell is where it was told to be. With FIRM
-the honest expectation is 512 of 512, and a moved cell now means the
-flow overrode a fixed placement, which is a different and louder finding
-than legalization doing its job. The box is still read from config.json.
+carries. What it checks did not change: whether each cell is where it was
+told to be. With FIRM the count should read 512 of 512, and a moved cell
+would mean the flow overrode a fixed placement, which is a different thing
+from legalization doing its job. The box is still read from config.json.
 
     python3 chip/placement_fidelity.py --selftest
     python3 chip/placement_fidelity.py \\

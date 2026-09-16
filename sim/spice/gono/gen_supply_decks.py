@@ -4,22 +4,22 @@
 """
 Hardware item 5: what a resistive supply does to a ring, in both arms.
 
-Item 5 is the one confound I had only argued about. Arm B carries its own decap,
-filler and met4 power straps, while Arm A sits in the ordinary cell fabric on
+Item 5 is the confound that had only ever been argued. Arm B carries its own
+decap, filler and met4 power straps, while Arm A sits in the ordinary cell fabric on
 met1 rails, so the two arms do not see the same supply impedance. The supply
 pushing figure is 105.9 percent per volt, measured on 2026-07-29, so ten
 millivolts of difference between the arms is a whole percent of frequency. That
-is large next to Arm A's 5.84 percent dispersion, and it is why an argument was
-never going to be enough.
+is large next to Arm A's 5.84 percent dispersion, so an argument was never
+going to settle it.
 
-The honest way to answer it is not to guess one resistance. I do not know the
-real PDN path resistance to better than a factor of a few, and if the whole
-result rested on my estimate then the result would only be as good as the
-estimate. So this sweeps the series resistance across four decades, from
-essentially ideal to a kilohm, and measures three things at each point: the
-average current the ring draws, the average supply that actually arrives at the
-cells, and the frequency. The conclusion then survives my geometry being wrong
-by a factor of ten in either direction, which it might be.
+Guessing one resistance would not settle it either. The real PDN path
+resistance is not known here to better than a factor of a few, and a result
+resting on that estimate is only as good as the estimate. So this sweeps the
+series resistance across four decades, from essentially ideal to a kilohm, and
+measures three things at each point: the average current the ring draws, the
+average supply that actually arrives at the cells, and the frequency. The
+conclusion then holds with the geometry wrong by a factor of ten in either
+direction, which it might be.
 
 Both arms are built by the generators that already produce the results this
 project quotes, so the rings here are not new models. Arm A comes from

@@ -1,7 +1,7 @@
-# Phase A — foreign layout extraction
+# Phase A - foreign layout extraction
 
 Everything the attacker is allowed to read about somebody else's chip, and the
-machinery that keeps that list honest.
+machinery that holds the list to that.
 
 The rule this directory exists to enforce: the attacker has public artifacts and
 nothing else. No victim device, no measured responses, no private correspondence.
@@ -26,7 +26,7 @@ If a file is not in `INPUT_MANIFEST.json`, Phase A does not get to use it.
 | `library_sources.json` | The 43 sky130_fd_sc_hd functional views A.4 reads, pinned by URL and SHA-256 |
 | `ring_topology.py` | Recovers the rings from a netlist using the cell library and no names |
 | `RING_TOPOLOGY.json` | What it recovered, with every library hash it read |
-| `inputs/` | The downloaded bytes. Not committed — the manifest reproduces them |
+| `inputs/` | The downloaded bytes. Not committed - the manifest reproduces them |
 
 ## Running it
 
@@ -60,7 +60,7 @@ neither network nor inputs, which is why they are the versions CI runs. The two
 that check a real recorded number without the inputs present: they re-read the
 archived JSONs and re-derive every claim that lives between them.
 
-`gds_census.py` takes project directories, not files — it needs the GDS, the
+`gds_census.py` takes project directories, not files - it needs the GDS, the
 LEF, the netlist and `stats/metrics.csv` together, because the whole point is
 that they have to agree. `spef_census.py` takes the same directories and reads
 two of them.
@@ -81,7 +81,7 @@ Two checks, deliberately not the same strength:
 
 - **With the files present**, every size and every hash is re-derived from the
   bytes. That is the real check.
-- **Without them** — in CI, on the folder bridge — only `manifest_digest` can
+- **Without them** - in CI, on the folder bridge - only `manifest_digest` can
   be recomputed. It catches a manifest edited after the fact. It cannot catch a
   file that changed underneath a manifest nobody touched.
 
@@ -93,7 +93,7 @@ as the stronger one.
 Every URL carries a 40-character commit, and the verifier fails an input whose
 URL does not. A raw URL on `main` is not an input, it is a subscription.
 
-For the two authors' repositories the pin is not `HEAD` — it is the commit the
+For the two authors' repositories the pin is not `HEAD` - it is the commit the
 shuttle actually hardened, read out of each project's own `commit_id.json`. The
 RTL those authors have pushed since is not what was manufactured.
 
@@ -109,7 +109,7 @@ that the four published files describe one die, so that later phases can quote
 any of them without saying which. It reads placements, not parasitics.
 
 A.3 begins with `spef_census.py`, which answers the question A.2 left open:
-whether `tt_um_PUF`'s SPEF carries RTL paths its GDS does not. It does — 82 of
+whether `tt_um_PUF`'s SPEF carries RTL paths its GDS does not. It does - 82 of
 358 nets, 64 of them one per ring. The script counts names and only names; the
 control in its selftest scales every capacitance in the fixture by a thousand
 and requires the census to come out identical. See `docs/phaseA_spef.md`.

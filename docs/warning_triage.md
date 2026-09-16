@@ -7,16 +7,20 @@ something I can neither act on nor defend, because it does not say whether the
 nine are chip pins I chose not to use or nine internal nets that lost their
 connection during routing. Those two cases need completely different responses.
 
-This is the triage. Every number below is re-derived from the shipped build by
+This is the triage.
+
+Every number below is re-derived from the shipped build by
 `sim/spice/gono/triage_warnings.py`, which reads the DEF, the SPEF, the gate
 netlist and `metrics.json` and refuses to agree with itself: each thing it
 derives is compared against the number the flow recorded, and it exits non-zero
-if any pair disagrees. It needs no ngspice, no PDK and no network, so a stranger
-with a clone can run it. Fourteen checks, fourteen pass.
+if any pair disagrees. It needs no ngspice, no PDK and no network, so it runs
+from a clone with nothing else installed. Fourteen checks, fourteen pass.
 
-The important part is not that they pass. It is that most of these rules were
-tested against a second build that returns different numbers, so a rule fitted
-to one build would have shown up. More on that at the end.
+The important part is not that they pass.
+
+It is that most of these rules were tested against a second build that returns
+different numbers, so a rule fitted to one build would have shown up. More on
+that at the end.
 
 ## The nine disconnected pins
 
@@ -32,7 +36,7 @@ PIN reaches no instance. That gives nine on the shipped build. On the older
 one-tile build in `dualarm/control_wokwi/` the same rule gives ten, and that
 build's metrics record ten, and the extra one is `ena`, which the old design
 left unconnected and the current one buffers through `input1`. Two builds, two
-different answers, both matching. So this is not a rule I bent until it fit.
+different answers, both matching.
 
 Unused inputs on a Tiny Tapeout project are harmless because the harness drives
 every input pin. There is nothing to fix here and nothing to change.
@@ -63,11 +67,13 @@ skew for nothing.
 
 This one turned out not to be about my design at all.
 
-`timing__drv__floating__nets` is 2 in the shipped build. It is also 2 in the
-hardened macro, which has 226 instances. It is 2 in the standalone array at
-3616, in the wokwi build at 4325, and in the old debug snapshot at 7319. Six
-builds, spanning a bare oscillator to a full dual-arm block, three of which have
-no disconnected pins and no unannotated nets whatsoever. The count never moves.
+`timing__drv__floating__nets` is 2 in the shipped build.
+
+It is also 2 in the hardened macro, which has 226 instances. It is 2 in the
+standalone array at 3616, in the wokwi build at 4325, and in the old debug
+snapshot at 7319. Six builds, spanning a bare oscillator to a full dual-arm
+block, three of which have no disconnected pins and no unannotated nets
+whatsoever. The count never moves.
 
 A number that does not depend on the design is not a property of the design. The
 DEF says what it is: the SPECIALNETS section holds exactly two nets, `VGND` and
@@ -77,23 +83,22 @@ timing analysis counts them as floating in every build it will ever run.
 Against that, `timing__drv__floating__pins` is 0, and the netlist has no net at
 all that lacks a driver or lacks a load. I checked both directions separately.
 
-## The 25 unannotated timing nets, and where I got this wrong
+## The 25 unannotated timing nets, and the first wrong explanation
 
 The nets that genuinely carry no parasitic annotation are the same nine as
 above. The SPEF holds 1101 entries against the DEF's 1110, and the nine
 missing ones are `ui_in[7]` and `uio_in[7:0]`. An unused input has no wire, so
 there is nothing to extract.
 
-The tool's own count is 25, which is sixteen higher, and my first explanation of
-that gap was wrong in a way I want to keep in the record. I noticed the design
-has sixteen black-boxed Arm B macros, wrote that 9 + 16 = 25, checked it against
-`build_debug` where 10 + 16 = 26, and treated two agreements as a mechanism.
-
-The wokwi build killed it. That build has zero macro instances, all 32 of its
-oscillators are flat standard cells, and its offset is also exactly 16. So the
-sixteen cannot be the macros. It is a constant of the flow that I have not
-identified, and the script now reports it as an unexplained offset instead of
-pretending to account for it.
+The tool's own count is 25, which is sixteen higher, and my first explanation
+of that gap was wrong in a way I want to keep in the record. I noticed the
+design has sixteen black-boxed Arm B macros, wrote that 9 + 16 = 25, checked it
+against `build_debug` where 10 + 16 = 26, and treated two agreements as a
+mechanism. The wokwi build killed it. That build has zero macro instances, all
+32 of its oscillators are flat standard cells, and its offset is also exactly
+16. So the sixteen cannot be the macros. It is a constant of the flow that I
+have not identified, and the script now reports it as an unexplained offset
+instead of pretending to account for it.
 
 The mistake is the same shape as the one item 2 recorded: an arithmetic
 coincidence that survives because I only ever tested it on cases that agreed. I
@@ -123,16 +128,17 @@ These are entirely a slow-corner effect.
 Zero at every fast view, and the count rises as the corner slows. That is what
 weaker drive under slow silicon looks like. A routing or connectivity defect
 would not switch itself off at the fast corner. The 140 that `SIGNOFF.md`
-quotes is the worst single view, `max_ss`, not a sum.
+quotes is the worst single view, `max_ss`, not a sum. The question I actually
+care about is whether any of this touches the measurement. It does not. The
+heaviest nets in the design are the clock tree and the reset and enable
+distribution, 81.24 fF on `net32` off a `clkbuf_8`, 75.04 on `_105_`, 66.99 on
+`net33`, and so on down. Every one of the top five is a repair-buffered net
+sitting at fanout 10.
 
-The question I actually care about is whether any of this touches the
-measurement. It does not. The heaviest nets in the design are the clock tree and
-the reset and enable distribution, 81.24 fF on `net32` off a `clkbuf_8`, 75.04
-on `_105_`, 66.99 on `net33`, and so on down. Every one of the top five is a
-repair-buffered net sitting at fanout 10. The 496 Arm A ring nets, which are the
-thing this chip exists to measure, carry between 0.107 and 1.838 fF. The
-heaviest ring net is 44 times lighter than the heaviest net in the design. The
-same holds in the wokwi build, where the ring nets reach 4.748 fF against 28.68.
+The 496 Arm A ring nets, which are the thing this chip exists to measure, carry
+between 0.107 and 1.838 fF. The heaviest ring net is 44 times lighter than the
+heaviest net in the design. The same holds in the wokwi build, where the ring
+nets reach 4.748 fF against 28.68.
 
 Slew on those nets is also not what sets the frequency. The SPICE work measures
 the rings against their extracted parasitics directly, at all three corners, and
@@ -154,12 +160,13 @@ The 461 is a warning count from Verilator.
 default and one of the values the file explicitly tells you not to change. With
 that on, the linter reads the PDK's own cell models alongside my RTL.
 
-The wokwi build reports 461 as well. That build is a different design: one tile
-instead of four, 32 flat oscillators instead of sixteen flat and sixteen
-hardened, 4325 instances instead of 6477, no macro at all. Two designs that
-share almost nothing above the cell level, and an identical warning count. The
-debug snapshot gives 462. So the count barely responds to my RTL, which points
-at the PDK models as the source.
+The wokwi build reports 461 as well.
+
+That build is a different design: one tile instead of four, 32 flat oscillators
+instead of sixteen flat and sixteen hardened, 4325 instances instead of 6477,
+no macro at all. Two designs that share almost nothing above the cell level,
+and an identical warning count. The debug snapshot gives 462. So the count
+barely responds to my RTL, which points at the PDK models as the source.
 
 That is an inference from a control, not a proof. Naming the 461 needs the
 linter log, which lives in the same local run directory as the timing reports.
@@ -169,8 +176,8 @@ linter log, which lives in the same local run directory as the timing reports.
 Every rule above was checked on the shipped build and on at least one build that
 returns a different answer for it. The wokwi build gives ten disconnected pins
 instead of nine and zero fanout violations instead of one, and the script
-matches its metrics on both. That is the part that makes me trust the rules,
-rather than the fourteen passes on their own.
+matches its metrics on both. A rule that reproduces two different answers is
+carrying more than a rule that passes fourteen times on one build.
 
 The full wokwi run is 119 MB and stays out of the repository, so the four files
 the triage actually reads are archived in `dualarm/control_wokwi/`, 2.1 MB, and
@@ -178,7 +185,7 @@ CI runs against those. They should never be updated. A control that tracks the
 shipped build has stopped being a control.
 
 `triage_warnings.py --selftest` plants eleven faults and all eleven are caught.
-Three are worth naming. One plants routing coordinates where connections belong,
+Three of them matter. One plants routing coordinates where connections belong,
 which is the bug that inflated every fanout in my first version of the parser
 before I noticed the clock net at 219 sinks. One plants a capacitance unit
 error, because a SPEF read as femtofarads when it says picofarads is off by a

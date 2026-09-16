@@ -3,11 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """Re-derive Phase E's four days of numbers with code that shares none.
 
-The house rule is that every number appearing in prose has to be
-re-derivable by a script that does not share code with the one that produced
-it. `verify_predictability.py` exists for that reason and writes its own SPEF
-parser and its own least-squares solver rather than importing the ones under
-test. This is the same job for Phase E.
+Every number appearing in prose has to be re-derivable by a script that does
+not share code with the one that produced it. `verify_predictability.py`
+exists for that reason and writes its own SPEF parser and its own
+least-squares solver rather than importing the ones under test. This is the
+same job for Phase E.
 
 So nothing here imports `tile_budget`, `armc_cost`, `g2_decision` or
 `observability_spec`. The DEF is parsed again, from scratch, by a different

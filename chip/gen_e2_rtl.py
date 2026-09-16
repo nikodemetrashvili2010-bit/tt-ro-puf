@@ -1150,7 +1150,7 @@ def selftest():
 
     # Control. With no edits at all the output is the live two-arm design,
     # and the checks that are about E.2 and Arm C have to fail on it. A check
-    # that passes on the design it was written to reject is decorative.
+    # that passes on the design it was written to reject has tested nothing.
     ctl = _state(live, obs, regions, config,
                  dict((k, []) for k in SOURCES))
     cres = _evaluate(ctl)

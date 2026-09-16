@@ -20,8 +20,8 @@ and Tiny Tapeout's own terms ask for the same thing. All three copies now carry
 the upstream header, a link, and a list of what I changed.
 
 I took the copy without recording which commit, so what the files say is that
-the upstream was checked again on 2026-08-09 and still carries that header. A
-commit I did not write down is not one I am going to reconstruct now.
+the upstream was checked again on 2026-08-09 and still carries that header. The
+commit itself was never written down and cannot be recovered.
 
 ## Cells and tools
 
@@ -40,8 +40,8 @@ file changes at all. The point of that manifest is that the archived bundle is
 frozen, so a comment added for tidiness would break the very check that makes
 the bundle worth having.
 
-I found this the direct way. I added the header, then went looking for what
-reads the file, and the manifest was there. The header came back off. The copy
+I added the header, then went looking for what reads the file, and the manifest
+was there. So the header came back off. The copy
 in `array/` is the same generated file and is left byte-identical to it.
 
 Every other generated build output is left exactly as the flow wrote it, for the

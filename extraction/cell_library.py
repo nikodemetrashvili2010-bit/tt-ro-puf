@@ -4,9 +4,9 @@
 """The sky130 cell library, read from the published views rather than typed.
 
 Split out of `extraction/ring_topology.py` on 2026-09-07, which is where all
-of the parsing and evaluating below was written and where it had made that
-file 1641 lines, a third over the day yardstick. Three scripts wanted the
-same thing and two of them had left a note saying so:
+of the parsing and evaluating below was written and where it had grown that
+file to 1641 lines. Three scripts wanted the same thing and two of them had
+left a note saying so:
 
   chip/armc_cost.py       a frozenset of ten sky130 output pin names, typed
                           by hand, with a comment saying the proper
@@ -423,7 +423,7 @@ DERIVED_UTC = "2026-09-07"
 def is_state_udp(kind):
     """True for a UDP that holds state, False for one that does not.
 
-    Raises on a UDP matching neither rule rather than guessing, because
+    Raises on a UDP matching neither rule instead of picking one, because
     guessing wrong in the False direction fuses a design's whole clocked
     side into one feedback region.
     """

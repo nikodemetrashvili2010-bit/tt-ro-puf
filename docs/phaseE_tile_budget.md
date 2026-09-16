@@ -32,15 +32,13 @@ account for.
 | margin between the outermost row or macro and the die edge | 5114.432 | 6.76% |
 | die, 334.88 x 225.76 | 75602.509 | 100% |
 
-The channel is the one people forget. The macro pitch is 60 um across and
-48 um down, and a macro is 60 x 40, so there is no gap between columns and an
-8 um gap between rows of macros. Three gaps, each 240 um wide. That is where
-the Arm B enable and output nets get out of the block, and it is not
-placeable.
-
-**Corrected 2026-08-30.** The first version of this table read 5760.000 for
-the channel and 4461.632 for the margin, and said the four figures adding to
-the die exactly was the first sign the geometry had been read correctly. Both
+The channel is the one people forget. The macro pitch is 60 um across and 48 um
+down, and a macro is 60 x 40, so there is no gap between columns and an 8 um
+gap between rows of macros. Three gaps, each 240 um wide. That is where the Arm
+B enable and output nets get out of the block, and it is not placeable.
+**Corrected 2026-08-30.** The first version of this table read 5760.000 for the
+channel and 4461.632 for the margin, and said the four figures adding to the
+die exactly was the first sign the geometry had been read correctly. Both
 halves of that were wrong.
 
 The macro block's bounding box is a construction, not an object, and a row
@@ -102,15 +100,13 @@ stay. Logic and Arm A stay by definition.
 
 ## How the widths were recovered, and why that is safe
 
-The sky130 LEF is not in this repository. Adding a PDK to settle one
-arithmetic question would be the wrong trade, so no cell width in this
-analysis comes from a library file.
-
-They come from the placement. A legalized row is packed edge to edge, so the
-distance from one cell's origin to the next cell's origin is the left cell's
-width. Every master in this design abuts something somewhere, so every width
-comes out. Fifty-one standard-cell masters, all recovered; the macro is the
-fifty-second and its size comes from its own LEF.
+The sky130 LEF is not in this repository. Adding a PDK to settle one arithmetic
+question would be the wrong trade, so no cell width in this analysis comes from
+a library file. They come from the placement. A legalized row is packed edge to
+edge, so the distance from one cell's origin to the next cell's origin is the
+left cell's width. Every master in this design abuts something somewhere, so
+every width comes out. Fifty-one standard-cell masters, all recovered; the
+macro is the fifty-second and its size comes from its own LEF.
 
 Three things make that safe rather than convenient, and they are one check
 rather than three:
@@ -127,12 +123,14 @@ one of them tripped the other two. They are `T06`, one check with one message,
 for the same reason the three name-audit checks in `ring_topology.py` became
 one on 19 August.
 
-The independent test is the total. Standard cells at row height, macros at
-the height their own LEF declares, summed, is 65380.877 um2.
-`metrics.json` says `design__instance__area` is 65380.9. OpenLane wrote that
-during the same run out of its own database, this script does not read it
-until the comparison, and they agree to the rounding step. That is the check
-that would catch a systematically wrong width table, and it is `T12`.
+The independent test is the total.
+
+Standard cells at row height, macros at the height their own LEF declares,
+summed, is 65380.877 um2. `metrics.json` says `design__instance__area` is
+65380.9. OpenLane wrote that during the same run out of its own database, this
+script does not read it until the comparison, and they agree to the rounding
+step. That is the check that would catch a systematically wrong width table,
+and it is `T12`.
 
 ## Two files, two escaping conventions
 
@@ -155,19 +153,21 @@ one `nand2_1` each.
 
 ## Checks and faults
 
-Sixteen checks, all passing on the current build. Sixteen planted faults in
-`--selftest`, each naming the one check it must trip and failing if a second
-one fires. Three refusals: the parser must not accept a DEF with no
-`DIEAREA`, no `ROW` records, or an empty `COMPONENTS` section.
+Sixteen checks, all passing on the current build.
 
-The fixture is a miniature of the real design rather than a toy. Real site
-width, real row height, the real 334.88 x 225.76 die, the real 4x4 macro grid
-at the real pitch, and four rows in the strip beside it. That matters,
-because with a toy fixture the checks that are statements about this die
-would have had to be excused, and an excused check is one nobody exercises.
+Sixteen planted faults in `--selftest`, each naming the one check it must trip
+and failing if a second one fires. Three refusals: the parser must not accept a
+DEF with no `DIEAREA`, no `ROW` records, or an empty `COMPONENTS` section.
+
+The fixture is a miniature of the real design rather than a toy.
+
+Real site width, real row height, the real 334.88 x 225.76 die, the real 4x4
+macro grid at the real pitch, and four rows in the strip beside it. That
+matters, because with a toy fixture the checks that are statements about this
+die would have had to be excused, and an excused check is one nobody exercises.
 Nothing is excused here.
 
-Two of the faults are worth naming because getting them wrong is easy.
+Two of the faults are easy to write badly.
 
 The site-grid fault (`T05`) recuts one row as 30 sites of 368 units instead
 of 24 sites of 460. The span is identical, so the row still packs and the row
@@ -182,9 +182,8 @@ One check cannot be tripped by any input file. `T13` says the classes
 partition the components exactly once, and `classify` returns a name from the
 declared list for every master it is handed, so no DEF can make it fail. It
 guards the classifier, so its fault comes from the other side: the selftest
-passes in a classifier that invents a class for antenna diodes. Say that
-plainly rather than letting a reader count `T13` as evidence about the
-design.
+passes in a classifier that invents a class for antenna diodes. So `T13` is
+evidence about the classifier, not about the design.
 
 ## What this does not settle
 

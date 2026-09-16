@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 """Check that an archived build folder holds one flow run, not a mixture.
 
-Every physical number I quote comes out of a folder like dualarm/build_current:
-a DEF, a gate-level netlist, a nominal SPEF, and a metrics file that reports the
-sign-off checks. Nothing in my copying routine forces those four to come from
-the same run, and I got caught by that. After the counter-gating change I
-re-hardened, copied the new GDS, DEF, SPEF and netlist over, and left the old
-metrics.json sitting there. The file that says DRC is clean was describing a
-build with 123 fewer instances than the one I was about to tape out.
+Every physical number quoted in this repository comes out of a folder like
+dualarm/build_current: a DEF, a gate-level netlist, a nominal SPEF, and a
+metrics file that reports the sign-off checks. Nothing in the copying routine
+forces those four to come from the same run. After the counter-gating change
+the new GDS, DEF, SPEF and netlist were copied over and the old metrics.json
+was left sitting there, so the file saying DRC is clean was describing a build
+with 123 fewer instances than the one going to tapeout.
 
 File timestamps cannot settle it, because copying rewrites them. So the files
 have to agree with each other instead:

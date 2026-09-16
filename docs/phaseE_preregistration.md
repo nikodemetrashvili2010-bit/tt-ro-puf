@@ -117,11 +117,12 @@ All passing. Fifteen planted faults on a fixture plus two that come from the
 files the preregistration leans on, and one direct test of the pair builder
 against arithmetic that does not call it.
 
-Two faults are worth naming. `P06` is tripped by making the tolerances file
-and the preregistration disagree about the sign of a bit, which is the sort
-of thing that would silently invert half the results. `P16` is tripped by
-declaring that predictions need not be archived before measurement, which is
-the single line that would make the whole exercise decorative.
+Two of the faults are the ones that matter. `P06` is tripped by making the
+tolerances file and the preregistration disagree about the sign of a bit,
+which is the sort of thing that would silently invert half the results. `P16`
+is tripped by declaring that predictions need not be archived before
+measurement, which is the single line that would empty the whole exercise
+out.
 
 ## What this does not settle
 

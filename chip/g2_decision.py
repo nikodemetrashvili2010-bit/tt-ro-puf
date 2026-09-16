@@ -4,7 +4,7 @@
 """The G.2 gate: Arm C or the load ladder, against a rule frozen first.
 
 G.2's acceptance condition is that research value, area, cost and schedule
-are documented. This script does the part of that a script can do honestly.
+are documented. This script does the part of that a script can do.
 
 It does not score research value. A weighted total where the same person
 picks both the weights and the scores is an opinion in a table, and the
@@ -276,9 +276,9 @@ def run_checks(budget, cost, criteria, rows, survivors, best,
             all(b in survivors for b in best.values()),
             "%d recommendations" % len(best))
 
-    # A rule that passes everything put to it is decorative. The first
-    # version of this check tested that by requiring some real option to be
-    # rejected, and it failed on the first real run: all twelve survive,
+    # A rule that passes everything put to it has not been tested. The
+    # first version of this check tested it by requiring some real option to
+    # be rejected, and it failed on the first real run: all twelve survive,
     # because the die has enough spare room that nothing on the table is
     # close to any limit. That is a fact about the floorplan, not a fault, so
     # the check was wrong rather than the data. See the writeup.

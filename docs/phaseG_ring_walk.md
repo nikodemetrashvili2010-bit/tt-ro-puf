@@ -1,8 +1,8 @@
 # The ring check was blind, and the three-arm netlist has never been checked
 
-10 September. Nikoloz asked whether the chip is good, and the honest way
-to answer that is to list what has been verified and by what, rather than
-what has been green. Doing that turned up a hole.
+10 September. The question on the table was whether the chip is good.
+Answering it means listing what has been verified and by what, not what
+has been green, and doing that turned up a hole.
 
 ## What gate-level simulation cannot see
 
@@ -119,13 +119,13 @@ Like the fidelity step it does not fail the job, so the precheck and
 gate-level test behind it still run.
 
 Run 77 is the first time any three-arm netlist gets this. Until it
-reports, the honest statement is that the three-arm rings are unverified.
+reports, the three-arm rings are unverified.
 
 ## Which nets cross the box, and a check that was reading the wrong thing
 
-While the shell was down I worked out from the two-arm netlist what the
-flow can still do inside the box after global placement is kept out of
-it. Exactly thirty-two nets cross Arm A's boundary and no others: each
+From the two-arm netlist I worked out what the flow can still do inside
+the box once global placement is kept out of it. Exactly thirty-two nets
+cross Arm A's boundary and no others: each
 ring's `en` input, driven by an `and3_2`, and each ring's `out` tap, into
 an `a22o_2` of the selector mux. In the two-arm build both of those gates
 sat inside the rectangle, along with the fourteen resizer cells, none of
@@ -146,10 +146,9 @@ coordinates came from. Frozen control 512 of 512; a `u_buf` resized to
 
 ## Run 77 named them, and it was not the resizer
 
-Nikoloz pushed `run 76` while the shell was down. Its gds run, number
-77, is green through precheck, `gl_test` is green at 7 of 7 for the
-first time, and the box report came back with eleven foreign cells,
-against 93 in the two-arm build:
+`run 76` went up. Its gds run, number 77, is green through precheck,
+`gl_test` is green at 7 of 7 for the first time, and the box report came
+back with eleven foreign cells, against 93 in the two-arm build:
 
     box 247480,70720 to 307740,171360 holds 74 taps, 1160 fillers
       and 11 other cells
@@ -186,8 +185,9 @@ clock tree put its buffers where the flops were.
 
 Eleven is much better than 93, and it is not zero.
 
-The dont-touch regex would have changed nothing. The rule not to pull a
-lever before the run names the cause was right by exactly this much.
+The dont-touch regex would have changed nothing. Pulling that lever
+before run 77 named the cause would have fixed nothing and hidden what
+the cause was.
 
 F06 did not run on 77; that checker is in the next commit. So whether
 anything was retyped is still open.

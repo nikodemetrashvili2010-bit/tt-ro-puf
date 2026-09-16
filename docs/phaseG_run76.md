@@ -87,8 +87,7 @@ and held back after run 74 showed it pointed at nothing.
 
 Pulling it now would be pulling it at a guess. It does nothing about the
 clock tree, and if the five are hold buffers it protects the wrong nets.
-The next run names the cells. Then the fix is one line or it is a
-different line, and either way it is aimed.
+The next run names the cells, and the fix follows from that.
 
 One more thing about the box, and it is not a defect.
 
@@ -168,7 +167,7 @@ racing the flop at the same timestamp.
 
 So the probe has to land after 2 ns and before 10, and the quarter clock
 at 5 ns is the middle of that window with three nanoseconds of margin
-behind it. Which is what I wanted, and had not actually shown.
+behind it. The first run never showed that margin, it only assumed it.
 
 The delay buffer contributes nothing, as expected. `clkdlybuf4s25`'s
 functional view is two `buf` primitives and a power-good UDP, no

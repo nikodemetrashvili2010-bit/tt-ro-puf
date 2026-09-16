@@ -47,13 +47,11 @@ FPGA implementations have used matched hard macros, controlled placement,
 placement selection, configurable oscillators, and statistical correction to
 reduce implementation bias [2, 5, 6]. Other work proposes constructions that
 are less sensitive to physical implementation bias [7] or studies modelling
-attacks on configurable RO designs [8].
-
-These results motivate a matched-layout arm, but they do not justify a claim
-that matching removes all frequency variation. Reusing one macro makes its
-internal geometry and extracted internal parasitics common to every instance.
-Fabrication mismatch, supply distribution, temperature, stress, and other
-top-level effects remain and must be measured.
+attacks on configurable RO designs [8]. These results motivate a matched-layout
+arm, but they do not justify a claim that matching removes all frequency
+variation. Reusing one macro makes its internal geometry and extracted internal
+parasitics common to every instance. Fabrication mismatch, supply distribution,
+temperature, stress, and other top-level effects remain and must be measured.
 
 ## 4. Open ASIC flows
 
@@ -75,9 +73,10 @@ appears in the comparison figures as a reference line at 569.5 MHz for that
 shared internal layout. Two later runs stand behind that line: the macro
 re-extracted from its full RC network at 566.05 MHz, and all sixteen instances
 extracted individually with their own top-level routes, spreading 0.0025% peak
-to peak at nominal and less at both other corners. And extraction followed by
-nominal SPICE is a practical pre-fabrication check for deterministic layout
-sensitivity.
+to peak at nominal and less at both other corners.
+
+And extraction followed by nominal SPICE is a practical pre-fabrication check
+for deterministic layout sensitivity.
 
 Uniqueness, reliability, and entropy have standard definitions in the PUF
 literature [20], and cross-die repeatability, uniqueness, and any attack are
@@ -85,24 +84,23 @@ predictions I will test on the fabricated chips rather than claims here. What I
 did not find is the exact combination this project targets. Prior mitigation
 work matches layout on FPGAs [2, 5, 6], large ASIC studies characterize RO-PUFs
 across many dies [3, 12], and temperature-aware designs tackle RO reliability
-[15]. To the best of my literature search (IEEE Xplore, arXiv, and the references
-of the papers above, through July 2026), no prior work compares a controlled
+[15].
+
+To the best of my literature search (IEEE Xplore, arXiv, and the references of
+the papers above, through July 2026), no prior work compares a controlled
 open-source RTL-to-GDS array against a matched hardened macro, quantified from
-the flow's own extraction before fabrication and then checked on the same
-dies. Feiten et al. establish the systemic-bias phenomenon on FPGAs [19] and
-SCALLER establishes deliberate layout-driven frequency control in ASIC silicon
-[17]; neither quantifies what an automated open ASIC flow does to a PUF array
-by accident, pre-fabrication, with the artifacts open. That gap, together with a
-diagnostic anyone can rerun, is the contribution. The matched-layout principle
-itself is old.
+the flow's own extraction before fabrication and then checked on the same dies.
+Feiten et al. establish the systemic-bias phenomenon on FPGAs [19] and SCALLER
+establishes deliberate layout-driven frequency control in ASIC silicon [17];
+neither quantifies what an automated open ASIC flow does to a PUF array by
+accident, pre-fabrication, with the artifacts open.
+
+That gap, together with a diagnostic anyone can rerun, is the contribution. The
+matched-layout principle itself is old.
 
 ## References
 
-Numbering follows `paper_draft.md`, which is the authoritative list. The
-two diverged from [13] onwards until 2026-08-11, so a reader following a
-citation out of one and into the other landed on the wrong paper. This file
-was the one renumbered: the paper's numbers are embedded in its prose all
-the way through and moving them was the riskier of the two edits. The gaps
+Numbering follows `paper_draft.md`, which is the authoritative list. The gaps
 below at [13], [14], [16] and [18] are references the paper carries and this
 note has no need of.
 
