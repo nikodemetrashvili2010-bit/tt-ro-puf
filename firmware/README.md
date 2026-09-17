@@ -8,7 +8,7 @@ board and SDK behavior still needs checking with the returned hardware.
 ## Files
 
 - `measure_puf.py` runs on a TinyTapeout demo board (MicroPython, TT SDK v3).
-  It measures all 32 oscillators in randomized rounds and prints a metadata
+  It measures all 48 oscillators in randomized rounds and prints a metadata
   header plus one CSV row per sample.
 - `analyze_counts.py` runs on a PC (Python standard library only). It keeps
   chip, condition, and run separate, treats the physical die as the
@@ -24,7 +24,7 @@ an assumption built into the analyzer.
 A plain arm-by-arm, oscillator-by-oscillator sweep confounds slow drift (board
 warm-up, USB supply sag, reference-clock drift) with arm and oscillator index:
 whatever is measured later carries the drift. `measure_puf.py` instead measures
-all 32 selections once per round in a fresh random order, and repeats that for
+all 48 selections once per round in a fresh random order, and repeats that for
 `ROUNDS` rounds, recording the random seed, the per-sample timestamp, and the
 acquisition order. Drift is then spread across oscillators and visible in the
 data rather than baked into a position. Take many rounds (the default is 60;
@@ -54,7 +54,11 @@ community-submitted CSVs stay interpretable.
 ## Taking a measurement
 
 1. `pip install mpremote` on the PC.
-2. Connect the board, edit the CONFIG block.
+2. Connect the board, edit the CONFIG block. The script turns the board
+   side of uio[1], uio[2] and uio[3] into outputs itself (`uio_oe_pico`)
+   because the demo board brings every bidirectional pin up as an input
+   and the chip has no pull resistors on them. If you drive the chip from
+   anything else, drive those three pins.
 3. Capture the output:
 
        mpremote run measure_puf.py > chip03_room_1v8.csv

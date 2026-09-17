@@ -191,32 +191,39 @@ jobs:
       # set FIRM at step 21 from src/pdn_hook.tcl, and the flow only says
       # what it did with that in a log nobody can read from here. So on a
       # build that finished, read the DEF it wrote and put the answer in
-      # an annotation. Never fails the job: a moved cell is a result, and
-      # the gate-level test and precheck behind this job are worth having
-      # either way.
+      # an annotation. Until 17 September this never failed the job: a
+      # moved cell was a result, and the gate-level test and precheck
+      # behind this job were worth having either way. Runs 80 and 83
+      # proved the hook, so from here a moved cell is a build that must
+      # not ship, and --strict makes it a red job. See
+      # docs/phaseG_checklist_review.md.
       - name: Did Arm A stay where it was put
         if: success()
-        run: python3 chip/placement_fidelity.py --def "runs/wokwi/final/def/*.def" --annotate
+        run: python3 chip/placement_fidelity.py --def "runs/wokwi/final/def/*.def" --annotate --strict
 
       # Arm C, since 16 September, goes in the same way from the third
       # line of src/pdn_hook.tcl, src/armc_fix.tcl, at coordinates the
-      # scored template gives rather than a frozen DEF. Nothing has built
-      # with it yet, so this is the first place the answer appears. Same
-      # arrangement again: an annotation, never a failed job.
+      # scored template gives rather than a frozen DEF. Run 83 held all
+      # 512. Same arrangement as Arm A: the annotation stays, and since
+      # 17 September a moved cell fails the job.
       - name: Did Arm C stay where it was put
         if: success()
-        run: python3 chip/gen_armc_fix.py --verify-def "runs/wokwi/final/def/*.def" --annotate
+        run: python3 chip/gen_armc_fix.py --verify-def "runs/wokwi/final/def/*.def" --annotate --strict
 
       # Gate-level simulation never enables an Arm A or Arm C ring, they are
       # zero-delay loops in the functional models, so a buffer the flow
       # spliced into one would reach silicon unseen. This walks every loop
       # in the netlist the GDS was cut from and says so on the run page.
-      # Same arrangement as the step above: it reports, it does not fail the
-      # job. Until 10 September the only ring check read the two-arm netlist
-      # and, it turned out, would have passed a broken ring anyway.
+      # With --annotate the script always exits 0, so the second call,
+      # without it, is the one that turns a broken ring into a red job
+      # (since 17 September). Until 10 September the only ring check read
+      # the two-arm netlist and, it turned out, would have passed a broken
+      # ring anyway.
       - name: Are the rings still rings
         if: success()
-        run: python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist "runs/wokwi/final/nl/*.nl.v" --annotate
+        run: |
+          python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist "runs/wokwi/final/nl/*.nl.v" --annotate
+          python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist "runs/wokwi/final/nl/*.nl.v"
 
   precheck:
     needs: gds

@@ -15,7 +15,7 @@
 # Chip protocol (from tt_um_ro_puf.v):
 #   ui[0] start (hold high for at least three clk cycles),
 #   ui[1] arm bit 0, ui[7] arm bit 1 (0 = A auto-placed, 1 = B matched
-#   macro, 2 = C equalized placement),
+#   macro, 2 = C hand-placed),
 #   ui[5:2] oscillator index, ui[6] byte select (0 low, 1 high),
 #   uio[2:1] window select, uio[3] read version bytes instead of the count,
 #   uo[7:0] selected count byte, uio[0] done (high = count valid),
@@ -168,6 +168,11 @@ def run():
     run_id = _run_id(seed)
 
     proj.enable()
+    # The RP2040 side of the bidirectional pins comes up as inputs, so the
+    # window bits written to uio_in below would never reach the chip and
+    # uio[3:1] would float. Make bits 1, 2 and 3 outputs from the board
+    # first; bits 0, 4 and 5 stay inputs because the chip drives those.
+    tt.uio_oe_pico.value = 0b0000_1110
     tt.clock_project_PWM(CLK_HZ)
     tt.reset_project(True)
     time.sleep_ms(10)

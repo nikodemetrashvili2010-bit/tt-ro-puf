@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Tiny Tapeout project information - THREE-ARM (v3, Arm B hardened macros,
-# Arm C standard cells under placement equalization).
+# Arm C standard cells hand-placed from one fixed template).
 # Schema matches the ttsky-verilog-template (SKY shuttle), yaml_version 6.
 project:
   title:        "Three-arm ring-oscillator PUF"
   author:       "Nikoloz Demetrashvili"
   discord:      ""
-  description:  "Ring-oscillator PUF with automated-layout, matched-macro and placement-equalized arms, testing deterministic layout-related frequency bias."
+  description:  "Ring-oscillator PUF with automated-layout, matched-macro and hand-placed arms, testing deterministic layout-related frequency bias."
   language:     "Verilog"
   clock_hz:     50000000        # measurement reference clock; tunable
 
@@ -23,8 +23,8 @@ project:
   # (VERILOG_FILES_BLACKBOX + MACROS). The simulation-only models
   # (ro_macro_sim.v, ro_macro_hard_sim.v, ro_armc_sim.v) are not listed
   # either. Arm C is an ordinary source: ro_armc.v is the same ring as
-  # ro_macro.v under its own module name, so that armc_place.tcl can bind
-  # its sixteen copies to equalized regions.
+  # ro_macro.v under its own module name, so that src/armc_fix.tcl can pin
+  # its sixteen copies to one fixed template, placement fixed, routing free.
   source_files:
     - "ro_macro.v"
     - "ro_armc.v"
@@ -42,7 +42,7 @@ pinout:
   ui[4]: "ro_idx[2]"
   ui[5]: "ro_idx[3]"
   ui[6]: "count byte select (0=low, 1=high)"
-  ui[7]: "arm select bit 1 (0=A automated, 1=B hardened, 2=C equalized)"
+  ui[7]: "arm select bit 1 (0=A automated, 1=B hardened, 2=C hand-placed)"
 
   # Outputs
   uo[0]: "count byte bit 0, or version byte when uio[3] is high"
