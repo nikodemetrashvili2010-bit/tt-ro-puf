@@ -115,6 +115,22 @@ CELLS = {
         "A1": {"A2": 0, "B1": 1},
         "A2": {"A1": 0, "B1": 1},
         "B1": {"A1": 1, "A2": 0}},
+    "sky130_fd_sc_hd__a21bo_2": {
+        # X = (A1 & A2) | ~B1_N
+        "A1": {"A2": 1, "B1_N": 1},
+        "A2": {"A1": 1, "B1_N": 1}},
+    "sky130_fd_sc_hd__and3_2": {
+        "A": {"B": 1, "C": 1},
+        "B": {"A": 1, "C": 1},
+        "C": {"A": 1, "B": 1}},
+    "sky130_fd_sc_hd__and3b_2": {
+        # X = ~A_N & B & C
+        "B": {"A_N": 0, "C": 1},
+        "C": {"A_N": 0, "B": 1}},
+    "sky130_fd_sc_hd__o21ba_2": {
+        # X = (A1 | A2) & ~B1_N
+        "A1": {"A2": 0, "B1_N": 0},
+        "A2": {"A1": 0, "B1_N": 0}},
     "sky130_fd_sc_hd__mux4_2": {
         "A0": {"S0": 0, "S1": 0, "A1": 0, "A2": 0, "A3": 0},
         "A1": {"S0": 1, "S1": 0, "A0": 0, "A2": 0, "A3": 0},
@@ -127,12 +143,34 @@ CELLS = {
 
 # The side value that blocks a path instead of opening it, used by --control.
 # Forcing the final cell's data pin to be ignored must yield a silent output.
+#
+# Not every data pin can be blocked from the side. A pin that enters an
+# AND-OR cell as a bare OR term, a211o's B1 and C1, a221o's C1, a21o's
+# B1, reaches the output whatever the other pins do; on the chip those
+# pins are driven by the decode upstream, so the real block sits one cell
+# earlier. The two-arm selector never ended a path on one of these. The
+# three-arm one ends 32 of 48 on a211o's B1 or C1, and the first control
+# run through it produced edges on all 32 because the block was being
+# applied to a pin it could not hold. The control now blocks at the last
+# cell on the path that can block, and leaves the cells after it open, so
+# a silent output also shows those open cells generate nothing on their
+# own.
+UNBLOCKABLE = {
+    ("sky130_fd_sc_hd__a211o_2", "B1"),
+    ("sky130_fd_sc_hd__a211o_2", "C1"),
+    ("sky130_fd_sc_hd__a221o_2", "C1"),
+    ("sky130_fd_sc_hd__a21o_2", "B1"),
+}
 BLOCK = {
     "sky130_fd_sc_hd__a221o_2": {"A1": 0, "A2": 0, "B1": 0, "B2": 0, "C1": 0},
     "sky130_fd_sc_hd__a22o_2":  {"A1": 0, "A2": 0, "B1": 0, "B2": 0},
     "sky130_fd_sc_hd__a21o_2":  {"A1": 0, "A2": 0, "B1": 0},
     "sky130_fd_sc_hd__a211o_2": {"A1": 0, "A2": 0, "B1": 0, "C1": 0},
     "sky130_fd_sc_hd__o21a_2":  {"A1": 0, "A2": 0, "B1": 0},
+    "sky130_fd_sc_hd__a21bo_2": {"A1": 0, "A2": 0, "B1_N": 1},
+    "sky130_fd_sc_hd__and3_2":  {"A": 0, "B": 0, "C": 0},
+    "sky130_fd_sc_hd__and3b_2": {"A_N": 1, "B": 0, "C": 0},
+    "sky130_fd_sc_hd__o21ba_2": {"A1": 0, "A2": 0, "B1_N": 1},
     "sky130_fd_sc_hd__mux4_2":  {"A0": 0, "A1": 0, "A2": 0, "A3": 0, "S0": 0, "S1": 0},
     "sky130_fd_sc_hd__mux2_1":  {"A0": 0, "A1": 0, "S": 0},
 }
@@ -249,6 +287,14 @@ def find_paths(insts, loads):
     for i in range(16):
         src = insts["u_rob%d" % i][1]["out"]
         out.append(("B%02d" % i, src, walk(src)))
+    # Arm C exists only in the three-arm build. Its buffers sit under
+    # g_armc[i].u_roc, so the two-arm netlist has none and the list stays
+    # at 32, which keeps the archived decks regenerating byte for byte.
+    for i in range(16):
+        key = "\\u_puf.u_core.g_armc[%d].u_roc.u_buf" % i
+        if key in insts:
+            src = insts[key][1]["X"]
+            out.append(("C%02d" % i, src, walk(src)))
     return out
 
 
@@ -287,10 +333,23 @@ def build(tag, src_net, path, caps, corner, order, control=False):
     lines = stimulus(corner)
     lines.append("")
     kind = "blocked control" if control else "open path"
+    block_at = None
+    if control:
+        for k, (_, icell, ipin, _, _) in enumerate(path):
+            if (icell, ipin) not in UNBLOCKABLE:
+                block_at = k
+        if block_at is None:
+            raise SystemExit("%s: no cell on the path can block it: %s"
+                             % (tag, " ".join(c + "." + p for _, c, p, _, _ in path)))
     chain = " ".join(c.replace("sky130_fd_sc_hd__", "") + "." + pin
                      for _, c, pin, _, _ in path)
     lines.append("* --- selector path for oscillator %s, %d cells, %s ---"
                  % (tag, len(path), kind))
+    if control and block_at != len(path) - 1:
+        lines.append("* blocked at cell %d of %d, %s; the cells after it are open"
+                     % (block_at + 1, len(path),
+                        path[block_at][1].replace("sky130_fd_sc_hd__", "")
+                        + "." + path[block_at][2]))
     lines.append("* chain: %s" % chain)
     lines.append("* the extracted ring tap b_out stands in for this oscillator")
     lines.append("Vone ONE 0 %g" % v)
@@ -298,8 +357,7 @@ def build(tag, src_net, path, caps, corner, order, control=False):
     rename = {src_net: "b_out"}
     missing = []
     for k, (iname, icell, ipin, innet, outnet) in enumerate(path):
-        last = (k == len(path) - 1)
-        if control and last:
+        if control and k == block_at:
             sides = dict(BLOCK[icell])
             sides.pop(ipin, None)
             conn = {ipin: rename.get(innet, node(innet))}
@@ -363,6 +421,10 @@ def main():
     ap.add_argument("--lib", default=None,
                     help="sky130_fd_sc_hd.spice; default is the path the "
                          "matched-macro template already includes")
+    ap.add_argument("--build", default=BUILD,
+                    help="build directory holding the routed netlist and nominal "
+                         "SPEF (default dualarm/build_current, the two-arm archive; "
+                         "point it at the three-arm build to sweep its 48 paths)")
     ap.add_argument("--control", action="store_true",
                     help="also write blocked-path controls, which must show no "
                          "output edges at all")
@@ -374,8 +436,9 @@ def main():
         lib = str(sky130_spice_paths()[1])   # same resolution run_ngspice.py uses
     order = read_pin_order(lib)
 
-    insts, loads = read_netlist(NETLIST)
-    caps = read_spef_caps(SPEF)
+    build_dir = os.path.abspath(args.build)
+    insts, loads = read_netlist(os.path.join(build_dir, os.path.basename(NETLIST)))
+    caps = read_spef_caps(os.path.join(build_dir, os.path.basename(SPEF)))
     paths = find_paths(insts, loads)
     os.makedirs(args.output_dir, exist_ok=True)
 
@@ -396,7 +459,7 @@ def main():
     depths = [len(p) for _, _, p in paths]
     print("corner %s: %g C, %g V" % (args.corner, corner["temp"], corner["supply"]))
     print("wrote %d decks to %s%s" % (len(paths), args.output_dir,
-                                      " plus 32 blocked controls" if args.control else ""))
+                                      " plus %d blocked controls" % len(paths) if args.control else ""))
     print("selector depth: %d to %d cells, %d distinct depths"
           % (min(depths), max(depths), len(set(depths))))
     for tag, _, path in paths:

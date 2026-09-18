@@ -108,6 +108,12 @@
       "id": "S11",
       "name": "every raw build file Phase E reads was found and hashed",
       "pass": true
+    },
+    {
+      "detail": "10 files hashed from dualarm/build_armc",
+      "id": "S13",
+      "name": "the release build, when present, is complete and is not the baseline",
+      "pass": true
     }
   ],
   "chip_files": {
@@ -149,7 +155,7 @@
     "placement.cfg": "92ec928f3d8a313242275524aefa750b12ea874c32a265b89900a9c2f7977d11",
     "placement_fidelity.py": "e4a8c3434c9c79d0d16b4711381278f8a8a7f12249f4fd8d1f4a5b88ef951e39",
     "preregister.py": "d983ccbce12077ebec4d1a782d464226898c9add12f38fe4687307bc1bad83cc",
-    "release_manifest.py": "9c35424764549e654d02715c82062c7a396a8d0123ed19569cc8e5bc3a68ff1e",
+    "release_manifest.py": "491e7b5072a6137961d5e79fb2de3541651fdf1b286e9e878368e2af6c32aaf2",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
     "tile_budget.py": "edaf919b06d0b269462a8894714dd24e70990f6e282328c14a3f84700acf7943",
     "verify_phaseE.py": "ab534ad6e62fbdc4e5694f7f8283e2c3dfd1eec4d466fea871b38034cf94b33a"
@@ -293,5 +299,18 @@
     "netlist": "9b04282ad5a021621e847c14a6ef5ad09d3be14c5192b4ea28a09f001349ec56",
     "positions": "d3c3c9ff0cea6b08216a642b87601cd7ad555a4f4a4be9841fa3072f2e42ad6e",
     "spef": "1015bcff163d9f3610b882aed3001f9128dd01919e1892b00436553be6795795"
+  },
+  "release_build": "dualarm/build_armc",
+  "release_inputs": {
+    "commit": "b7f957be62e15eb96f52360842a428d2b903d3a7885fadc5bab676455706c43a",
+    "def": "89a2224f99761c9d9043562ca5f1ae8e533f30d06d3ff65e5c0ae2ca06709f06",
+    "dualarm_par_ff_out.txt": "0c16f3008b61cfcc72c8dd05affc913f445641f9eb139dd915d89dffed6dc810",
+    "dualarm_par_out.txt": "4ef1cd143b88aa474d3396c7650a0ff70103233e70dae2b340abf7c6818b8566",
+    "dualarm_par_ss_out.txt": "97b183bf20a149219168005a64ae8f9c57e8255e981f90f570a21564c3881b19",
+    "gds": "90dbb1d218effebca9903e1b4ce857f27d846056ff6eacd4ca2213ce7d894bb1",
+    "metrics": "799fc51bc92038bc8198ba9d2e77ec813458c679256b234ccfd3698700e328e7",
+    "netlist": "43310832742e88e499e23be0dd007242f8c4f5d8a7774a0d36d55bae09ae5fc1",
+    "positions": "f095bbc31ec777fa24771e171e6c6ced908a97feb14377067b970f7e2efa4a72",
+    "spef": "4a9fc5e891be4496610b599be8674d3bd5763b838fb58609df4e3d34be8b5ae5"
   }
 }

@@ -539,6 +539,21 @@ def main():
     files = sorted(glob.glob(os.path.join(args.directory, "bnd_*.raw.txt")))
     if not files:
         raise SystemExit("no bnd_*.raw.txt in %s; run the decks first" % args.directory)
+
+    # One deck per phase is written into this directory, so the deck count is
+    # the expected N and this script does not have to know the grid. Added
+    # 2026-09-17 after analyze_flop_sweep.py passed on 36 of 38 phases without
+    # saying so, two decks having been killed mid-run. This file already
+    # printed its phase count in the summary, which is how a reader could have
+    # caught it, but printing a number is not the same as failing on it.
+    decks = [d for d in glob.glob(os.path.join(args.directory, "bnd_*.spice"))
+             if not os.path.basename(d).startswith("portable_")]
+    if decks and len(files) != len(decks):
+        missing = sorted(set(os.path.basename(d)[:-6] for d in decks)
+                         - set(os.path.basename(f)[:-8] for f in files))
+        print("FAIL: %d of %d phases have no result: %s"
+              % (len(decks) - len(files), len(decks), ", ".join(missing[:8])))
+        return 1
     rows = [read_phase(args.directory, p, args.vdd, args.tail_ns) for p in files]
     return report(rows, compare_models(rows), args.csv)
 

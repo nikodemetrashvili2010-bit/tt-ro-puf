@@ -66,6 +66,13 @@ def find_gate():
 
 GATE = find_gate() or GATE_CANDIDATES[0]
 BUILD = os.path.join(ROOT, "dualarm", "build_current")
+# The build that goes to the shuttle. build_current stays the two-arm
+# baseline every Phase E number was read from and every gate script
+# compares against; the three-arm build G.3 step 10 extracts lands here
+# and is hashed separately, so the manifest names both the design the
+# paper measured and the design being fabricated. Absent until step 10
+# has run, and the checks say so rather than fail.
+RELEASE = os.path.join(ROOT, "dualarm", "build_armc")
 DESIGN = "tt_um_nikodemetrashvili20_ro_puf"
 
 # Which script writes which archived artefact. One producer each; the check
@@ -210,7 +217,8 @@ def named_producers(decl):
 
 # ------------------------------------------------------------------- checks
 
-def run_checks(files, produced, frozen, cmds, acts, raw_hashes, chip_dir):
+def run_checks(files, produced, frozen, cmds, acts, raw_hashes, chip_dir,
+               release_hashes=None):
     res = Results()
 
     missing = [n for n in PRODUCERS if n not in files]
@@ -294,6 +302,25 @@ def run_checks(files, produced, frozen, cmds, acts, raw_hashes, chip_dir):
             all(k in raw_hashes for k in
                 ("def", "netlist", "spef", "metrics", "positions")),
             "%d of %d found" % (len(raw_hashes), len(RAW)))
+
+    # The release build is optional until G.3 step 10 has run. Once any of
+    # it is there, all of it has to be, and it has to be a different build
+    # from the baseline, or the manifest is naming the same files twice.
+    rel = release_hashes or {}
+    want = ("def", "netlist", "spef", "metrics", "positions", "gds",
+            "dualarm_par_out.txt", "dualarm_par_ss_out.txt",
+            "dualarm_par_ff_out.txt")
+    if not rel:
+        res.add("S13", "the release build, when present, is complete and "
+                       "is not the baseline", True, "no release build yet")
+    else:
+        short = [k for k in want if k not in rel]
+        same = [k for k in want if k in rel and rel[k] == raw_hashes.get(k)]
+        res.add("S13", "the release build, when present, is complete and "
+                       "is not the baseline", not short and not same,
+                ("missing " + ", ".join(short)) if short else
+                ("same as baseline: " + ", ".join(same)) if same else
+                "%d files hashed from dualarm/build_armc" % len(rel))
     return res
 
 
@@ -451,6 +478,17 @@ def main():
     if os.path.exists(cost):
         raw_hashes["cost"] = sha256_file(cost)
 
+    release_hashes = {}
+    for n in RAW + (DESIGN + ".gds", "commit_id.json"):
+        p = os.path.join(RELEASE, n)
+        if os.path.exists(p):
+            key = keymap.get(n, n)
+            if n == DESIGN + ".gds":
+                key = "gds"
+            elif n == "commit_id.json":
+                key = "commit"
+            release_hashes[key] = sha256_file(p)
+
     produced = {}
     for name, prod in sorted(PRODUCERS.items()):
         p = os.path.join(HERE, name)
@@ -477,7 +515,7 @@ def main():
     acts = actions(gate_text)
 
     res = run_checks(files, produced, list(FROZEN), cmds, acts, raw_hashes,
-                     HERE)
+                     HERE, release_hashes)
 
     print("Phase E release manifest")
     print("  chip/      %d files, %d scripts, %d produced, %d frozen"
@@ -486,6 +524,9 @@ def main():
     print("  gate       %d commands, %d freeze checks"
           % (len(cmds), len([c for c in cmds if "--freeze-check" in c])))
     print("  raw inputs %d hashed from dualarm/build_current" % len(raw_hashes))
+    print("  release    %s" % ("%d files hashed from dualarm/build_armc"
+                                % len(release_hashes) if release_hashes
+                                else "no three-arm build in dualarm/build_armc yet"))
     print("  actions    %d, %d pinned to a commit"
           % (len(acts), len([x for x in acts if x["pinned_to_commit"]])))
     print()
@@ -519,6 +560,8 @@ def main():
                "produced": produced,
                "frozen": dict((n, files.get(n)) for n in FROZEN),
                "raw_inputs": raw_hashes,
+               "release_build": "dualarm/build_armc",
+               "release_inputs": release_hashes,
                "gate_commands": len(cmds),
                "actions": acts,
                "checks": res.rows}

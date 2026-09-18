@@ -94,6 +94,29 @@ def main(argv=None):
         print("error: no flop_*.raw.txt in %s" % args.sweep_dir, file=sys.stderr)
         return 2
 
+    # How many phases were supposed to be here. gen_flop_sweep.py writes one
+    # deck per phase into this directory, so the deck count is the expected N
+    # and it does not depend on this script knowing the grid.
+    #
+    # This exists because on 2026-09-17 two decks were killed mid-run by a
+    # batch timeout and this script analysed the 36 results that did exist,
+    # found every one settled, and printed PASS without mentioning a number.
+    # A sweep analyser that does not state its own N can pass on a subset
+    # forever, and a subset of a phase sweep is exactly where a swallowed edge
+    # hides: the two missing phases were in the middle of the grid, which is
+    # the narrow end. Same family as B07 reading an empty gate list.
+    decks = [d for d in glob.glob(os.path.join(args.sweep_dir, "flop_*.spice"))
+             if not os.path.basename(d).startswith("portable_")]
+    expected = len(decks)
+    print("phases: %d result file(s), %d deck(s) in %s"
+          % (len(files), expected, args.sweep_dir))
+    if expected and len(files) != expected:
+        missing = sorted(set(os.path.basename(d)[:-6] for d in decks)
+                         - set(os.path.basename(f)[:-8] for f in files))
+        print("FAIL: %d of %d phases have no result: %s"
+              % (expected - len(files), expected, ", ".join(missing[:8])))
+        return 1
+
     counts, unsettled = [], 0
     for path in files:
         t, v = load(path)

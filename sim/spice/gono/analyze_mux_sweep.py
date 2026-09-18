@@ -244,7 +244,7 @@ def report(opens, controls, csv_path=None):
                                100.0 * (1 - r["hi_out"] / r["hi_in"])))
 
     if opens:
-        # The stimulus is the same extracted ring in all 32 decks, so the tap
+        # The stimulus is the same extracted ring in every deck, so the tap
         # figures should agree across them. If they do not, something in the
         # generator is varying that should not be.
         taps_hi = sorted(set("%.0f" % (r["hi_in"] * 1e12) for r in opens))
@@ -254,8 +254,8 @@ def report(opens, controls, csv_path=None):
               % ("/".join(taps_hi), "/".join(taps_lo)))
 
         asym = [(r["fall"] - r["rise"]) * 1e12 for r in opens]
-        print("rise-to-fall asymmetry across the 32 paths: %.0f ps to %.0f ps"
-              % (min(asym), max(asym)))
+        print("rise-to-fall asymmetry across the %d paths: %.0f ps to %.0f ps"
+              % (len(opens), min(asym), max(asym)))
         print("so the high level changes by that much and the low by the opposite")
 
         shrink = [r["tag"] for r in opens if r["fall"] < r["rise"]]
@@ -436,6 +436,20 @@ def main():
     files = sorted(glob.glob(os.path.join(args.directory, "mux_*.raw.txt")))
     if not files:
         raise SystemExit("no mux_*.raw.txt in %s; run the decks first" % args.directory)
+
+    # The decks in the directory are the expected N. A deck that was killed
+    # mid-run leaves no raw file, and a verdict over the files that do exist
+    # is a verdict over a subset. State the count and fail on a short one.
+    decks = sorted(glob.glob(os.path.join(args.directory, "mux_*.spice")))
+    decks = [d for d in decks if not os.path.basename(d).startswith("portable_")]
+    have = {os.path.basename(f)[:-8] for f in files}
+    short = [os.path.basename(d)[:-6] for d in decks
+             if os.path.basename(d)[:-6] not in have]
+    print("paths: %d result file(s), %d deck(s)" % (len(files), len(decks)))
+    if short:
+        print("FAIL: %d of %d decks have no result: %s"
+              % (len(short), len(decks), ", ".join(short)))
+        return 1
 
     opens, controls = [], []
     for path in files:

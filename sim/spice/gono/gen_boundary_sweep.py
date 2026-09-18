@@ -151,6 +151,9 @@ def main():
                          "the width where a pulse stops surviving." % STEP_PS)
     ap.add_argument("--steps", type=int, default=N_STEPS,
                     help="number of phases (default %d)" % N_STEPS)
+    ap.add_argument("--build", default=mux.BUILD,
+                    help="build directory holding the routed netlist and nominal "
+                         "SPEF (default the two-arm archive)")
     args = ap.parse_args()
     if args.steps < 1 or args.step_ps <= 0:
         raise SystemExit("--steps must be at least 1 and --step-ps must be positive")
@@ -159,8 +162,9 @@ def main():
     lib = args.lib if args.lib else str(sky130_spice_paths()[1])
     order = mux.read_pin_order(lib)
 
-    insts, loads = mux.read_netlist(mux.NETLIST)
-    caps = mux.read_spef_caps(mux.SPEF)
+    build_dir = os.path.abspath(args.build)
+    insts, loads = mux.read_netlist(os.path.join(build_dir, os.path.basename(mux.NETLIST)))
+    caps = mux.read_spef_caps(os.path.join(build_dir, os.path.basename(mux.SPEF)))
     paths = mux.find_paths(insts, loads)
 
     picked = [p for p in paths if p[0] == args.osc]
