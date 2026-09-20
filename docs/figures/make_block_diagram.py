@@ -3,6 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Draws the chip block diagram (Figure 0 of the paper, also used in README).
+# With --arms 3 it draws the three-arm chip into chip_block_3arm.png, which is
+# what the README shows. The two-arm figure stays the paper's until the paper
+# is brought up to the release build.
+import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -29,27 +33,55 @@ def arrow(x1, y1, x2, y2, label="", color=GREY, off=1.8):
         ax.text((x1+x2)/2, (y1+y2)/2+off, label, ha="center",
                 fontsize=8.6, color=color, fontweight="bold")
 
-# Arm A
-box(3, 32, 30, 17, ORANGE, "Arm A: 16 oscillators",
-    "auto-placed by the flow\ninstance routing can add\ndifferent parasitic loads")
-# Arm B
-box(3, 8, 30, 17, GREEN, "Arm B: 16 oscillators",
-    "16 copies of ONE hardened\nmacro with common internal\nlayout geometry")
-# mux + core
-box(44, 20, 28, 17, BLUE, "measurement core",
-    "select 1 of 32 oscillators,\ncount its edges in a fixed\nwindow of 1000 clk cycles")
-# output
-box(83, 20, 24, 17, GREY, "TinyTapeout pins",
-    "ui_in: start, arm,\nindex, byte select\nuo_out: count byte\nuio[0]: done")
+THREE = "--arms" in sys.argv and sys.argv[sys.argv.index("--arms") + 1] == "3"
+PURPLE = "#7b5ea7"
 
-arrow(33.6, 40, 44, 32, "16x en / out", ORANGE, off=2.4)
-arrow(33.6, 16, 44, 24, "16x en / out", GREEN, off=-3.0)
-arrow(72.6, 28.5, 82.4, 28.5, "16-bit count", BLUE, off=2.2)
+if not THREE:
+    # Arm A
+    box(3, 32, 30, 17, ORANGE, "Arm A: 16 oscillators",
+        "auto-placed by the flow\ninstance routing can add\ndifferent parasitic loads")
+    # Arm B
+    box(3, 8, 30, 17, GREEN, "Arm B: 16 oscillators",
+        "16 copies of ONE hardened\nmacro with common internal\nlayout geometry")
+    # mux + core
+    box(44, 20, 28, 17, BLUE, "measurement core",
+        "select 1 of 32 oscillators,\ncount its edges in a fixed\nwindow of 1000 clk cycles")
+    # output
+    box(83, 20, 24, 17, GREY, "TinyTapeout pins",
+        "ui_in: start, arm,\nindex, byte select\nuo_out: count byte\nuio[0]: done")
 
-ax.text(55, 57.5, "One design, two layout methods. Nominal post-layout simulation "
-        "isolates the implementation contribution; silicon adds variation.",
-        ha="center", fontsize=10.5, style="italic", color="#333333")
+    arrow(33.6, 40, 44, 32, "16x en / out", ORANGE, off=2.4)
+    arrow(33.6, 16, 44, 24, "16x en / out", GREEN, off=-3.0)
+    arrow(72.6, 28.5, 82.4, 28.5, "16-bit count", BLUE, off=2.2)
+
+    ax.text(55, 57.5, "One design, two layout methods. Nominal post-layout simulation "
+            "isolates the implementation contribution; silicon adds variation.",
+            ha="center", fontsize=10.5, style="italic", color="#333333")
+else:
+    fig.set_size_inches(11, 6.4)
+    ax.set_ylim(0, 72)
+    box(3, 48, 30, 13, ORANGE, "Arm A: 16 oscillators",
+        "flow placement, pinned\nrouting left to the router")
+    box(3, 27, 30, 13, GREEN, "Arm B: 16 oscillators",
+        "16 copies of ONE hardened\nmacro on a regular grid")
+    box(3, 6, 30, 13, PURPLE, "Arm C: 16 oscillators",
+        "hand-placed from one template\nrouting left to the router")
+    box(44, 26, 28, 17, BLUE, "measurement core",
+        "select 1 of 48 oscillators,\ncount its edges for 256, 512,\n2048 or 16384 clk cycles")
+    box(83, 24, 24, 21, GREY, "TinyTapeout pins",
+        "ui_in: start, arm (2 bits),\nindex, byte select\nuio_in: window, version\n"
+        "uo_out: count byte\nuio_out: done, wrap, active")
+
+    arrow(33.6, 54, 44, 39.5, "16x en / out", ORANGE, off=2.4)
+    arrow(33.6, 33.5, 44, 33.5, "16x en / out", GREEN, off=1.6)
+    arrow(33.6, 12.5, 44, 28, "16x en / out", PURPLE, off=-4.0)
+    arrow(72.6, 34.5, 82.4, 34.5, "16-bit count", BLUE, off=2.2)
+
+    ax.text(55, 68, "One ring, three layout methods. Only the placement and the "
+            "wiring differ between the arms.",
+            ha="center", fontsize=10.5, style="italic", color="#333333")
 fig.tight_layout()
-out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chip_block.png")
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                   "chip_block_3arm.png" if THREE else "chip_block.png")
 fig.savefig(out, dpi=170)
 print("written:", out)

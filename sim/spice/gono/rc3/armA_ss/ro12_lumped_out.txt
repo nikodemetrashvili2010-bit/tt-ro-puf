@@ -1,0 +1,61 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * arm a oscillator 12: lumped d_net caps
+
+Doing analysis at TEMP = 100.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+Note: Starting dynamic gmin stepping
+Warning: Dynamic gmin stepping failed
+Note: Starting true gmin stepping
+Note: True gmin stepping completed
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.6
+en                                           0
+n0                                         1.6
+n30                                        1.6
+n1                                 4.89366e-09
+n2                                         1.6
+n3                                 4.89366e-09
+n4                                         1.6
+n5                                 4.89366e-09
+n6                                         1.6
+n7                                 4.89366e-09
+n8                                         1.6
+n9                                 4.89366e-09
+n10                                        1.6
+n11                                4.89366e-09
+n12                                        1.6
+n13                                4.89366e-09
+n14                                        1.6
+n15                                4.89366e-09
+n16                                        1.6
+n17                                4.89366e-09
+n18                                        1.6
+n19                                4.89366e-09
+n20                                        1.6
+n21                                4.89366e-09
+n22                                        1.6
+n23                                4.89366e-09
+n24                                        1.6
+n25                                4.89366e-09
+n26                                        1.6
+n27                                4.89366e-09
+n28                                        1.6
+n29                                4.89366e-09
+out                                6.06323e-09
+ven#branch                                   0
+vdd#branch                        -6.68078e-11
+
+
+No. of Data Rows : 140014
+tp                  =  7.200914e-08 targ=  8.958972e-08 trig=  1.758057e-08
+f = 2.777425e+08
+Note: Simulation executed from .control section 

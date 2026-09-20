@@ -34,8 +34,16 @@ internal routing by construction, so delta_routing is zero and every bit is
 decided by mismatch alone.
 
 Run: python3 predictable_bits.py
+
+With no arguments it reads the two-arm baseline, which is what the paper and
+verify_predictability.py quote. The release build is read with
+
+    python3 predictable_bits.py \
+        --par ../../../dualarm/build_armc/dualarm_par_out.txt \
+        --rc rc_validation_3arm.csv
 """
 
+import argparse
 import csv
 import math
 import os
@@ -62,14 +70,14 @@ def hbin(p):
     return -(p * math.log2(p) + (1 - p) * math.log2(1 - p))
 
 
-def lumped():
+def lumped(path=PAR):
     d = {int(m.group(1)): float(m.group(2)) / 1e6 for m in
-         re.finditer(r"^f(\d+)\s*=\s*([0-9.eE+-]+)", open(PAR).read(), re.M)}
+         re.finditer(r"^f(\d+)\s*=\s*([0-9.eE+-]+)", open(path).read(), re.M)}
     return [d[i] for i in sorted(d)]
 
 
-def rc():
-    rows = {int(r["ro"]): float(r["rc_MHz"]) for r in csv.DictReader(open(RC))}
+def rc(path=RC):
+    rows = {int(r["ro"]): float(r["rc_MHz"]) for r in csv.DictReader(open(path))}
     return [rows[i] for i in sorted(rows)]
 
 
@@ -88,8 +96,13 @@ def score(dl, sigma_ring):
     return out
 
 
-def main():
-    fl, fr = lumped(), rc()
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--par", default=PAR, help="lumped ngspice log, f0..f15")
+    ap.add_argument("--rc", default=RC,
+                    help="distributed-RC table, rc_MHz column")
+    args = ap.parse_args(argv)
+    fl, fr = lumped(args.par), rc(args.rc)
     dl, dr = deltas(fl), deltas(fr)
 
     print("Arm A, eight adjacent pairs, separation in percent of the arm mean.")

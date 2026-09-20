@@ -31,6 +31,9 @@ which claims survive, so this reports four things instead.
 
 Usage:
     python3 analyze_rc.py --dir /tmp/rc16 --ro $(seq 0 15)
+
+`--arm C` reads the hand-placed arm's ring nets for the capacitance column,
+and `--csv` writes the table in the layout of rc_validation.csv.
 """
 
 import argparse
@@ -44,6 +47,8 @@ PROJ = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 DEFAULT_SPEF = os.path.join(
     PROJ, "dualarm", "build_current", "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
 NINV = 30
+PREFIX = {"A": "u_puf.u_core.g_ro_bank[%d].u_ro.",
+          "C": "u_puf.u_core.g_armc[%d].u_roc."}
 
 
 def read_freq(path):
@@ -53,8 +58,8 @@ def read_freq(path):
     return float(m.group(1)) / 1e6 if m else None
 
 
-def ring_caps(spef_path):
-    """Total extracted ring capacitance per Arm A oscillator, in fF."""
+def ring_caps(spef_path, arm="A"):
+    """Total extracted ring capacitance per oscillator of one arm, in fF."""
     if not os.path.exists(spef_path):
         return {}
     txt = open(spef_path).read()
@@ -67,7 +72,7 @@ def ring_caps(spef_path):
     for i in range(16):
         s = 0.0
         for k in range(NINV + 1):
-            num = inv.get(f"u_puf.u_core.g_ro_bank[{i}].u_ro.n[{k}]")
+            num = inv.get(PREFIX[arm] % i + f"n[{k}]")
             if num:
                 s += tot.get(num, 0.0)
         if s:
@@ -105,6 +110,9 @@ def main(argv=None):
                     help="rank correlation below which the fingerprint is not "
                          "safe to attribute to layout (default %(default)s)")
     ap.add_argument("--max-spread-ratio", type=float, default=2.0)
+    ap.add_argument("--arm", default="A", choices=sorted(PREFIX))
+    ap.add_argument("--csv", help="also write ro,ring_cap_fF,lumped_MHz,"
+                                  "rc_MHz,shift_pct to this path")
     args = ap.parse_args(argv)
 
     lum, rc = {}, {}
@@ -119,7 +127,15 @@ def main(argv=None):
         print("need at least three oscillators with both models", file=sys.stderr)
         return 2
 
-    caps = ring_caps(args.spef)
+    caps = ring_caps(args.spef, args.arm)
+    if args.csv:
+        rows = ["ro,ring_cap_fF,lumped_MHz,rc_MHz,shift_pct"]
+        for ro in sorted(lum):
+            rows.append("%d,%.2f,%.2f,%.2f,%.2f" % (
+                ro, caps.get(ro, float("nan")), lum[ro], rc[ro],
+                100 * (rc[ro] - lum[ro]) / lum[ro]))
+        with open(args.csv, "w", newline="\n") as fh:
+            fh.write("\n".join(rows) + "\n")
     print("%-5s %11s %11s %9s %10s" % ("ring", "lumped MHz", "RC MHz", "shift %", "ring fF"))
     print("-" * 50)
     for ro in sorted(lum):

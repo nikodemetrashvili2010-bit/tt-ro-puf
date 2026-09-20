@@ -25,7 +25,8 @@ here. An earlier version of this script did not drop it and built each of those
 capacitors twice.
 
 This script emits, for one oscillator index, two decks that differ only in the
-parasitic model:
+parasitic model. `--arm C` builds the same two decks for an Arm C ring, which
+is the same circuit under another instance path; see ARMS below.
 
   <tag>_lumped.spice        total D_NET capacitance per net, grounded, one node
   <tag>_rc.spice            per-node grounded caps, series resistors, and real
@@ -65,6 +66,16 @@ CORNERS = {
     "ff": dict(section="ff", temp=-40, supply=1.95),
 }
 
+# Arm A and Arm C are one ring under two module names, and the netlist differs
+# in two places only: the instance path, and how the inverters are numbered.
+# ro_macro.v numbers them 1 to 30 by the node each one drives, ro_armc.v 0 to
+# 29 by the node each one reads, so an Arm C inverter index is one less than
+# the deck's. Checked against src/ro_armc.v and src/ro_macro.v.
+ARMS = {
+    "A": ("u_puf.u_core.g_ro_bank[{ro}].u_ro.", 0),
+    "C": ("u_puf.u_core.g_armc[{ro}].u_roc.", 1),
+}
+
 
 def parse_spef(path):
     """Return (name_map, {netnum: {'total':pf, 'conn':[(inst,pin,dir)],
@@ -94,7 +105,7 @@ def parse_spef(path):
     return names, nets
 
 
-def node_name(spef_node, names, ro):
+def node_name(spef_node, names, ro, arm="A"):
     """Turn a SPEF node like *7501:A into a short deck node name.
 
     Instance pins become <cellshort>_<pin>; a SPEF-internal Steiner point
@@ -106,12 +117,12 @@ def node_name(spef_node, names, ro):
     full = names.get(num)
     if full is None:
         return None
-    prefix = f"u_puf.u_core.g_ro_bank[{ro}].u_ro."
+    prefix = ARMS[arm][0].format(ro=ro)
     if full.startswith(prefix):
         leaf = full[len(prefix):]
         m = re.fullmatch(r'g_inv\[(\d+)\]\.u_inv', leaf)
         if m:
-            return f"i{m.group(1)}_{pin}"
+            return f"i{int(m.group(1)) + ARMS[arm][1]}_{pin}"
         if leaf == "u_nand":
             # The NAND's A pin is the enable, driven by the source in this deck, so
             # anything the extraction couples into it lands on EN. That is the
@@ -127,15 +138,16 @@ def node_name(spef_node, names, ro):
     return None
 
 
-def ring_nets(names, ro):
+def ring_nets(names, ro, arm="A"):
     """netnum for each of n[0..30] plus out, for one oscillator."""
-    want = {f"u_puf.u_core.g_ro_bank[{ro}].u_ro.n[{k}]": f"n{k}" for k in range(NINV + 1)}
-    want[f"u_puf.u_core.g_ro_bank[{ro}].u_ro.out"] = "out"
+    prefix = ARMS[arm][0].format(ro=ro)
+    want = {f"{prefix}n[{k}]": f"n{k}" for k in range(NINV + 1)}
+    want[f"{prefix}out"] = "out"
     inv = {v: k for k, v in names.items()}
     return {lbl: inv[nm] for nm, lbl in want.items() if nm in inv}
 
 
-def cells(ro, lumped):
+def cells(ro, lumped, arm="A"):
     """The reconstructed ring.
 
     With lumped=True every pin of a net shares one node, which is what the
@@ -146,7 +158,7 @@ def cells(ro, lumped):
     buf_1 A VGND VNB VPB VPWR X. Verified against the PDK cell SPICE and against
     the pin names the SPEF itself reports.
     """
-    out = [f"* --- Arm A oscillator {ro}: nand + {NINV} inverters + tap buffer ---"]
+    out = [f"* --- Arm {arm} oscillator {ro}: nand + {NINV} inverters + tap buffer ---"]
     if lumped:
         out.append(f"Xnand EN n{NINV} 0 0 VPWR VPWR n0 sky130_fd_sc_hd__nand2_1")
         for k in range(1, NINV + 1):
@@ -165,9 +177,9 @@ def shared_node(lbl):
     return "out" if lbl == "out" else lbl
 
 
-def build(ro, spef_path, cn, lumped):
+def build(ro, spef_path, cn, lumped, arm="A"):
     names, nets = parse_spef(spef_path)
-    labels = ring_nets(names, ro)
+    labels = ring_nets(names, ro, arm)
     missing = [l for l in [f"n{k}" for k in range(NINV + 1)] if l not in labels]
     if missing:
         raise SystemExit(f"oscillator {ro}: SPEF lacks ring nets {missing[:5]}")
@@ -191,15 +203,15 @@ def build(ro, spef_path, cn, lumped):
             continue
         # --- distributed: resistors as extracted ---
         for a, b, ohm in net["res"]:
-            na, nb = node_name(a, names, ro), node_name(b, names, ro)
+            na, nb = node_name(a, names, ro, arm), node_name(b, names, ro, arm)
             if na is None or nb is None or na == nb:
                 stats["shorted"] += 1
                 continue
             body.append(f"R{lbl}_{stats['res']} {na} {nb} {ohm:.4f}")
             stats["res"] += 1
         for a, b, pf in net["caps"]:
-            na = node_name(a, names, ro)
-            nb = node_name(b, names, ro) if b else None
+            na = node_name(a, names, ro, arm)
+            nb = node_name(b, names, ro, arm) if b else None
             if na is None and nb is None:
                 continue
             if b is None:
@@ -227,7 +239,7 @@ def build(ro, spef_path, cn, lumped):
 
     corner, cellspice = sky130_spice_paths()
     v = cn["supply"]
-    head = [f"* Arm A oscillator {ro}: {'lumped D_NET caps' if lumped else 'distributed RC from SPEF'}",
+    head = [f"* Arm {arm} oscillator {ro}: {'lumped D_NET caps' if lumped else 'distributed RC from SPEF'}",
             "* auto-generated by gen_rc_decks.py",
             f".lib {spice_path(corner)} {cn['section']}",
             f".include {spice_path(cellspice)}"]
@@ -249,13 +261,16 @@ def build(ro, spef_path, cn, lumped):
             "print f",
             ".endc",
             ".end"]
-    return "\n".join(head + cells(ro, lumped) + [""] + body + tail) + "\n", stats
+    return "\n".join(head + cells(ro, lumped, arm) + [""] + body + tail) + "\n", stats
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--ro", type=int, required=True, help="Arm A oscillator index 0..15")
+    ap.add_argument("--ro", type=int, required=True,
+                    help="oscillator index 0..15")
+    ap.add_argument("--arm", default="A", choices=sorted(ARMS),
+                    help="A (default) or C, the hand-placed arm")
     ap.add_argument("--spef", default=DEFAULT_SPEF)
     ap.add_argument("--corner", default="tt", choices=sorted(CORNERS))
     ap.add_argument("--output-dir", default="/tmp/rc")
@@ -265,7 +280,7 @@ def main(argv=None):
     os.makedirs(args.output_dir, exist_ok=True)
     sfx = "" if args.corner == "tt" else f"_{args.corner}"
     for lumped in (True, False):
-        text, stats = build(args.ro, args.spef, cn, lumped)
+        text, stats = build(args.ro, args.spef, cn, lumped, args.arm)
         kind = "lumped" if lumped else "rc"
         path = os.path.join(args.output_dir, f"ro{args.ro:02d}{sfx}_{kind}.spice")
         atomic_write_text(path, text)

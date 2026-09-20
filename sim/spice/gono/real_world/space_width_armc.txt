@@ -1,0 +1,7 @@
+top cell tt_um_nikodemetrashvili20_ro_puf dbu 0.001
+li1     8769 shapes  width<0.17: 0  space<0.17: 0  smallest gap 0.170 um
+met1    4893 shapes  width<0.14: 0  space<0.14: 0  smallest gap 0.140 um
+met2    2183 shapes  width<0.14: 0  space<0.14: 0  smallest gap 0.150 um
+met3     501 shapes  width<0.30: 0  space<0.30: 0  smallest gap 0.335 um
+met4      87 shapes  width<0.30: 0  space<0.30: 0  smallest gap 0.350 um
+met5   not drawn in this cell

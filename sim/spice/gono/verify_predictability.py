@@ -830,6 +830,176 @@ check("twice the rings halves the median gap, 0.218% to 0.130%",
       "%.4f%% and %.4f%%" % (_mb, _ma))
 
 
+# ------------------------------------------------------------ release build
+# Everything above is the two-arm baseline in build_current, which is what the
+# paper measured. The chip going to the shuttle is run 83's three-arm build in
+# build_armc: the same 512 Arm A cells at the same coordinates, wired again by
+# the router. These checks hold the README's figures for that build. Its own
+# SPEF parser, so a mistake in read_spef above cannot pass here as well.
+print("\n== the release build, dualarm/build_armc ==")
+REL = os.path.join(PROJ, "dualarm", "build_armc")
+REL_SPEF = os.path.join(REL, "tt_um_nikodemetrashvili20_ro_puf.nom.spef")
+REL_RC = os.path.join(HERE, "rc_validation_3arm.csv")
+
+
+def loop_caps(path, prefix):
+    """fF on n[0]..n[30] per ring for one arm's instance prefix."""
+    txt = open(path).read()
+    num = {m.group(2).replace("\\", ""): m.group(1)
+           for m in re.finditer(r"^\*(\d+)\s+(\S+)\s*$", txt, re.M)}
+    tot = {m.group(1): float(m.group(2)) * 1000.0
+           for m in re.finditer(r"^\*D_NET\s+\*(\d+)\s+(\S+)", txt, re.M)}
+    return [sum(tot[num[prefix % i + "n[%d]" % k]] for k in range(NLOOP))
+            for i in range(NRO)]
+
+
+r3_cap = loop_caps(REL_SPEF, "u_puf.u_core.g_ro_bank[%d].u_ro.")
+r3_cap_csv = read_rows(REL_RC, "ro", "ring_cap_fF")
+r3_lumped = read_par(os.path.join(REL, "dualarm_par_out.txt"))
+r3_rc = read_rows(REL_RC, "ro", "rc_MHz")
+check("release SPEF loop caps match the RC table's column",
+      max(abs(a - b) for a, b in zip(r3_cap, r3_cap_csv)) < 0.011,
+      "worst %.4f fF" % max(abs(a - b) for a, b in zip(r3_cap, r3_cap_csv)))
+check("Arm A loop capacitance is 14.66 fF mean, 1.77 population sd, release",
+      (round(st.fmean(r3_cap), 2), round(st.pstdev(r3_cap), 2))
+      == (14.66, 1.77),
+      "%.3f, %.3f" % (st.fmean(r3_cap), st.pstdev(r3_cap)))
+check("every release ring is slower under the full RC network",
+      all(b < a for a, b in zip(r3_lumped, r3_rc)))
+
+
+def arm_a_places(path):
+    """Arm A cell name -> (x, y, orientation) from a DEF's COMPONENTS."""
+    comp = re.search(r"^COMPONENTS \d+ ;(.*?)^END COMPONENTS",
+                     open(path).read(), re.S | re.M).group(1)
+    return {n.replace("\\", ""): (x, y, o) for n, x, y, o in re.findall(
+        r"- (\S*g_ro_bank\S*) \S+ .*?\( (-?\d+) (-?\d+) \) (\S+) ;", comp)}
+
+
+DEF_NAME = "tt_um_nikodemetrashvili20_ro_puf.def"
+old_pl, new_pl = arm_a_places(os.path.join(CUR, DEF_NAME)), arm_a_places(
+    os.path.join(REL, DEF_NAME))
+check("the 512 Arm A cells sit at the same place and orientation in both DEFs",
+      len(old_pl) == 512 and old_pl == new_pl,
+      "%d and %d cells, %d differ"
+      % (len(old_pl), len(new_pl),
+         sum(1 for k in old_pl if new_pl.get(k) != old_pl[k])))
+moved = [b - a for a, b in zip(cap, r3_cap)]
+check("the largest change in one ring's loop capacitance is 3.39 fF",
+      round(max(abs(m) for m in moved), 2) == 3.39,
+      "ring %d, %+.3f fF" % (max(range(NRO), key=lambda i: abs(moved[i])),
+                            max(moved, key=abs)))
+
+
+def sign_string(f):
+    return "".join("1" if f[a] > f[b] else "0" for a, b in PAIRS)
+
+
+base_bits = sign_string(f_lumped)
+r3_bits_rc, r3_bits_lumped = sign_string(r3_rc), sign_string(r3_lumped)
+check("the release build's bits are 11100000 under both parasitic models",
+      r3_bits_rc == r3_bits_lumped == "11100000",
+      "RC %s, lumped %s" % (r3_bits_rc, r3_bits_lumped))
+check("against 01101000 on the baseline, so pairs 0 and 4 flip",
+      base_bits == "01101000"
+      and [i for i in range(8) if base_bits[i] != r3_bits_rc[i]] == [0, 4],
+      "baseline %s" % base_bits)
+r3_cap_bits = "".join("1" if r3_cap[b] > r3_cap[a] else "0" for a, b in PAIRS)
+check("ordering the release rings by capacitance alone gets all 8 signs",
+      r3_cap_bits == r3_bits_rc, r3_cap_bits)
+
+r3 = bits_for(SIGMA_RING, r3_rc)
+r3_ent, r3_acc = sum(r[2] for r in r3), sum(r[3] for r in r3)
+check("the release build's Arm A holds 0.07 bits of 8",
+      round(r3_ent, 2) == 0.07, "%.4f" % r3_ent)
+check("and the design files call 7.99 of 8", round(r3_acc, 2) == 7.99,
+      "%.4f" % r3_acc)
+check("7 of 8 release bits carry under 0.01 bits",
+      sum(1 for r in r3 if r[2] < 0.01) == 7)
+r3_mag = sorted(abs(r[0]) for r in r3)
+r3_sig = sorted(r[1] for r in r3)
+check("its two closest pairs are 0.212% and 0.316% apart, 2.4 and 3.6 sigma",
+      (round(r3_mag[0], 3), round(r3_mag[1], 3)) == (0.212, 0.316)
+      and (round(r3_sig[0], 1), round(r3_sig[1], 1)) == (2.4, 3.6),
+      "%.4f %.4f, %.2f %.2f" % (r3_mag[0], r3_mag[1], r3_sig[0], r3_sig[1]))
+r3_wide, r3_narrow = bits_for(SIGMA_HI, r3_rc), bits_for(SIGMA_LO, r3_rc)
+check("the sampling interval gives 0.02 to 0.22 bits on the release build",
+      (round(sum(r[2] for r in r3_narrow), 2),
+       round(sum(r[2] for r in r3_wide), 2)) == (0.02, 0.22),
+      "%.3f to %.3f" % (sum(r[2] for r in r3_narrow),
+                        sum(r[2] for r in r3_wide)))
+check("and 7.97 to 8.00 bits guessed",
+      (round(sum(r[3] for r in r3_wide), 2),
+       round(sum(r[3] for r in r3_narrow), 2)) == (7.97, 8.00),
+      "%.3f to %.3f" % (sum(r[3] for r in r3_wide),
+                        sum(r[3] for r in r3_narrow)))
+
+
+def p2p(f):
+    return 100.0 * (max(f) - min(f)) / st.fmean(f)
+
+
+WANT_REL = {"": (538.4, 570.0, 5.73), "_ss": (275.4, 291.3, 5.63),
+            "_ff": (837.2, 887.2, 5.83)}
+for sfx, (lo, hi, pp) in WANT_REL.items():
+    f = read_par(os.path.join(REL, "dualarm_par%s_out.txt" % sfx))
+    check("release Arm A runs %.1f to %.1f MHz at %s, %.2f%% peak to peak"
+          % (lo, hi, sfx.strip("_") or "tt", pp),
+          (round(min(f), 1), round(max(f), 1), round(p2p(f), 2))
+          == (lo, hi, pp),
+          "%.2f %.2f %.3f" % (min(f), max(f), p2p(f)))
+    check("and reads 11100000 at %s" % (sfx.strip("_") or "tt"),
+          sign_string(f) == "11100000", sign_string(f))
+check("release RC spread is 5.88% against 5.75% lumped in the same table",
+      (round(p2p(r3_rc), 2),
+       round(p2p(read_rows(REL_RC, "ro", "lumped_MHz")), 2)) == (5.88, 5.75))
+rot3 = [r3_rc[(i + 5) % NRO] for i in range(NRO)]
+check("a rotated release frequency vector does not reproduce its entropy",
+      abs(sum(r[2] for r in bits_for(SIGMA_RING, rot3)) - r3_ent) > 0.05,
+      "%.3f against %.3f"
+      % (sum(r[2] for r in bits_for(SIGMA_RING, rot3)), r3_ent))
+
+# Arm C, the hand-placed arm, first simulated on 2026-09-20 from the same SPEF
+# with gen_rc_decks.py --arm C. Same method as Arm A above.
+REL_RC_C = os.path.join(HERE, "rc_validation_armc.csv")
+c_cap = loop_caps(REL_SPEF, "u_puf.u_core.g_armc[%d].u_roc.")
+c_cap_csv = read_rows(REL_RC_C, "ro", "ring_cap_fF")
+c_lumped = read_rows(REL_RC_C, "ro", "lumped_MHz")
+c_rc = read_rows(REL_RC_C, "ro", "rc_MHz")
+check("Arm C loop caps from the SPEF match its RC table",
+      max(abs(a - b) for a, b in zip(c_cap, c_cap_csv)) < 0.011,
+      "worst %.4f fF" % max(abs(a - b) for a, b in zip(c_cap, c_cap_csv)))
+check("Arm C loop capacitance is 9.90 fF mean, 0.55 population sd",
+      (round(st.fmean(c_cap), 2), round(st.pstdev(c_cap), 2)) == (9.90, 0.55),
+      "%.3f, %.3f" % (st.fmean(c_cap), st.pstdev(c_cap)))
+check("every Arm C ring is slower under the full RC network",
+      all(b < a for a, b in zip(c_lumped, c_rc)))
+check("Arm C runs 566.9 to 579.4 MHz under full RC, 2.19% peak to peak",
+      (round(min(c_rc), 1), round(max(c_rc), 1), round(p2p(c_rc), 2))
+      == (566.9, 579.4, 2.19),
+      "%.2f %.2f %.3f" % (min(c_rc), max(c_rc), p2p(c_rc)))
+# M4's shape: sd of the sixteen frequencies in MHz, Arm C over Arm A.
+c_sd, a_sd = st.pstdev(c_rc), st.pstdev(r3_rc)
+check("Arm C's frequency sd is 0.36 of Arm A's in the same build, in MHz",
+      round(c_sd / a_sd, 2) == 0.36,
+      "%.3f / %.3f = %.4f" % (c_sd, a_sd, c_sd / a_sd))
+check("Arm C reads 11010110 under both parasitic models",
+      sign_string(c_rc) == sign_string(c_lumped) == "11010110",
+      "RC %s, lumped %s" % (sign_string(c_rc), sign_string(c_lumped)))
+cb = bits_for(SIGMA_RING, c_rc)
+c_mag = min(abs(r[0]) for r in cb)
+check("Arm C's closest pair is 0.321% apart, 3.7 sigma",
+      (round(c_mag, 3), round(c_mag / (SIGMA_RING * math.sqrt(2)), 1))
+      == (0.321, 3.7),
+      "%.4f" % c_mag)
+check("so Arm C holds 0.00 bits of 8 and the design files call 8.00",
+      (round(sum(r[2] for r in cb), 2), round(sum(r[3] for r in cb), 2))
+      == (0.00, 8.00),
+      "%.4f, %.4f" % (sum(r[2] for r in cb), sum(r[3] for r in cb)))
+cw = bits_for(SIGMA_HI, c_rc)
+check("even at the top of the mismatch interval Arm C holds under 0.05 bits",
+      sum(r[2] for r in cw) < 0.05, "%.4f" % sum(r[2] for r in cw))
+
 # ----------------------------------------------------------------- control
 # A check that cannot fail is not a check. Break the link between each ring's
 # frequency and its own parasitics by rotating the feature vectors, and the
