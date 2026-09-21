@@ -40,9 +40,11 @@ are published.
 `uio[5]` is high while the window is open, and `uio[4]` latches if the counter
 wrapped and stays latched until reset.
 
-A coherent nominal post-layout simulation of the current build predicts a 5.53%
-peak-to-peak spread in Arm A, associated closely with extracted routing
-capacitance. Nine builds that vary only placement density put that number in
+A coherent nominal post-layout simulation of the release build, run 83,
+predicts a 5.73% peak-to-peak spread in Arm A, 5.88% with the full extracted RC
+network, and it follows the routing capacitance closely. Arm C spreads 2.19%
+under the same RC network, about a third of Arm A. Nine builds of the earlier
+two-arm layout that vary only placement density put the Arm A number in
 context: they run from 4.19% to 6.99%, median 5.75%.
 
 That build passes Magic and KLayout DRC, XOR, LVS, antenna, detailed routing,
@@ -56,20 +58,29 @@ plotted sixteen times.
 The sixteen spread 0.0025% peak to peak at tt, which is 0.57 of a single
 counter count, so the chip cannot tell them apart even in principle. That is a
 measured pre-silicon result rather than an assumption, and it is what makes Arm
-B the control.
+B the control. Those runs carry the two-arm layout's routes; the release
+build's have not been run yet.
 
 The experiment will test whether Arm A's centred frequency pattern repeats more
 strongly across fabricated chips than Arm B's pattern. Cross-die repeatability,
 uniqueness, and security impact are unknown until those measurements are made.
-One timing margin belongs here rather than only in SIGNOFF. Where a ring sits
-right at the selector's own threshold the chain squeezes the last pulse instead
-of stretching it, and the narrowest clock the counter flop ever sees is 80 ps
-against the 77.5 ps the library characterizes for it at ff_n40C_1v95. That is a
-margin of 2.5 ps: characterized, and thin.
 
-The slow corners are nowhere near it, 484 ps against 169.8 at tt and 810 ps
-against 353.8 at ss. `SIGNOFF.md` has the derivation and the corrected item 2
-behind it.
+One timing figure belongs here rather than only in SIGNOFF. When a window
+closes the ring's last pulse can come out any width, and where it sits right at
+the selector's own threshold the chain squeezes it instead of stretching it. On
+the two-arm layout the narrowest clock the counter flop saw that way was 80 ps,
+against the 77.5 ps the library characterizes for it at ff_n40C_1v95. The same
+sweep through the release build's slowest selector path ran on a coarser grid
+and never landed on the threshold, so 80 ps is still the working figure.
+
+It is not the 2.5 ps margin it looks like. The 77.5 ps is the library's figure
+at a 10 ps clock slew and it climbs fast with slew, so at any realistic slew
+the pulse is under it. It does not need to clear it either. It is the last
+pulse before a stop, the flop was simulated at transistor level rather than
+looked up, and whichever way it resolves the count moves by one, which the
+three-sample handshake absorbs. On the two-arm layout the slow corners were
+nowhere near it, 484 ps against 169.8 at tt and 810 ps against 353.8 at ss.
+`SIGNOFF.md` has the rest.
 
 ## How to test
 
@@ -129,9 +140,10 @@ How long an oscillator is counted for is the window, and the count follows:
     count = f_osc * WINDOW / f_clk
 
 At 50 MHz the 2048-cycle window is 41 microseconds. The nominal post-layout
-prediction for Arm A, 540.0 to 570.7 MHz, comes out as roughly 22119 to 23376
-counts, and the spread between the slowest and fastest ring is about 1257
-counts. The 512 window gives a quarter of each, and 256 an eighth. Two things
+prediction for Arm A on the release build, 538.4 to 570.0 MHz, comes out as
+roughly 22052 to 23347 counts, and the spread between the slowest and fastest
+ring is about 1295 counts. Arm C sits higher and much closer together, 23383 to
+23895. The 512 window gives a quarter of each, and 256 an eighth. Two things
 decide the window. One count is the smallest difference the chip can report,
 and at 2048 that is 43 parts per million against a per-ring mismatch sigma of
 about 620 ppm from the Monte Carlo work, so a count is roughly a fourteenth of
@@ -144,10 +156,11 @@ stay above
 
     f_clk_min = f_osc * WINDOW / 65536
 
-The fastest ring in the simulated fast corner is 888.3 MHz, which at 2048 puts
-that floor at 27.8 MHz. At 50 MHz that same ring reads 36385, a little over
-half of full scale, so there is close to a factor of two in hand for silicon
-coming out faster than the model.
+The fastest ring on the chip in the simulated fast corner is an Arm C ring at
+911.1 MHz, which at 2048 puts that floor at 28.5 MHz. At 50 MHz that same ring
+reads 37318, a little over half of full scale, so there is still close to a
+factor of two in hand for silicon coming out faster than the model. Arm A's
+fastest there is 887.2 MHz, so it is Arm C that sets the floor now.
 
 2048 at 50 MHz is where those two pull evenly, and it is what the firmware
 uses. If a die runs faster than that leaves room for, `uio[4]` says so: it

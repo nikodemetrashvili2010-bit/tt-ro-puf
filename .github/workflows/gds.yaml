@@ -38,7 +38,9 @@ jobs:
           python3 sim/spice/gono/verify_provenance.py
           python3 sim/spice/gono/verify_ring_topology.py --selftest
           python3 sim/spice/gono/verify_ring_topology.py
+          python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nl.v
           python3 sim/spice/gono/verify_build_bundle.py
+          python3 sim/spice/gono/verify_build_bundle.py --dir dualarm/build_armc
           python3 sim/spice/gono/verify_noise.py
           python3 sim/spice/gono/sensitivity.py
           python3 sim/spice/gono/compensation.py
@@ -68,11 +70,20 @@ jobs:
           python3 sim/spice/gono/verify_mux_archive.py
           python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux --csv /tmp/mux_check.csv
           diff /tmp/mux_check.csv sim/spice/gono/mux_validation.csv
+          python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux3 --csv /tmp/mux3_check.csv
+          diff /tmp/mux3_check.csv sim/spice/gono/mux3/mux3_validation.csv
+          python3 sim/spice/gono/analyze_rc.py --dir sim/spice/gono/rc3/armA --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3a.csv
+          diff /tmp/rc3a.csv sim/spice/gono/rc_validation_3arm.csv
+          python3 sim/spice/gono/analyze_rc.py --arm C --dir sim/spice/gono/rc3/armC --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3c.csv
+          diff /tmp/rc3c.csv sim/spice/gono/rc_validation_armc.csv
+          python3 sim/spice/gono/real_world.py --selftest
+          python3 sim/spice/gono/real_world.py
           python3 sim/spice/gono/verify_instance.py
           python3 sim/spice/gono/verify_instance_corners.py --selftest
           python3 sim/spice/gono/verify_instance_corners.py
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
           python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi
+          python3 sim/spice/gono/triage_warnings.py --build dualarm/build_armc
           python3 sim/spice/gono/analyze_supply.py --dir sim/spice/gono/supply
           python3 sim/spice/gono/analyze_noise.py
           python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
@@ -125,11 +136,13 @@ jobs:
           diff /tmp/pl/arma_place.tcl dualarm/src/arma_place.tcl
           python3 chip/placement_fidelity.py --selftest
           python3 chip/placement_fidelity.py --strict --def dualarm/build_current/tt_um_nikodemetrashvili20_ro_puf.def
+          python3 chip/placement_fidelity.py --strict --def dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def
           diff chip/placement.cfg dualarm/src/placement.cfg
           python3 chip/gen_armc_fix.py --selftest
           python3 chip/gen_armc_fix.py --json /tmp/armc_fix.json --emit /tmp/afx
           diff /tmp/armc_fix.json chip/ARMC_FIX.json
           diff /tmp/afx/armc_fix.tcl dualarm/src/armc_fix.tcl
+          python3 chip/gen_armc_fix.py --verify-def dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def --strict
           python3 chip/gen_e2_rtl.py --selftest
           python3 chip/gen_e2_rtl.py --emit /tmp/e2 --csv /tmp/e2/plan.csv
           diff /tmp/e2/e2_ro_puf_core.v chip/e2_ro_puf_core.v

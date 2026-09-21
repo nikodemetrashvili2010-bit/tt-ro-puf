@@ -1,22 +1,40 @@
-# The dual-arm chip
+# The chip
 
-This directory is the dual-arm integration candidate. Arm A is the RO-PUF built the ordinary way,
-with the oscillators auto-placed by the flow. Arm B is the same circuit built
-from matched macros. Both sit in one TinyTapeout 2x2 allocation so they share
-the same die and process conditions.
+The folder name is older than the design. This started as the dual-arm
+integration and now holds the three-arm chip. Arm A is the RO-PUF built the
+ordinary way, with the oscillators auto-placed by the flow. Arm B is the same
+circuit built from matched macros. Arm C is the same circuit in standard cells
+again, placed by hand from one template. All three sit in one TinyTapeout 2x2
+allocation so they share the same die and process conditions.
 
 `src/` holds the TinyTapeout sources: the RTL, the hardened macro views, the
 config, and the custom power script. `test/` is the cocotb RTL test.
 `gen_dualarm.py` writes `src/config.json`, including where each macro sits and
-how its power lines align. `build_debug/` is a partial, mixed-stage diagnostic
-snapshot: render, Magic DRC report, metrics, checkpoint DEF, later netlist, and
-nominal SPEF. It does **not** contain a final GDS/LEF/SDF/Liberty bundle or
-KLayout results. The archived run had KLayout XOR and DRC disabled; the current
-configuration enables both for the required fresh build. The old metrics also
-record 462 lint warnings, 81 max-slew violations,
-one max-fanout violation, 10 noncritical disconnected pins, and 26 unannotated
-nets. Zero route/Magic DRC, LVS, antenna, and power-grid counts do not erase
-those gaps. See `../SIGNOFF.md` before making tapeout or signoff claims.
+how its power lines align.
+
+Which build is which:
+
+    build_armc/          run 83, the three-arm build that goes to the shuttle
+    build_current/       the two-arm baseline the paper measured, frozen
+    build_2arm_frozen/   the two-arm sources, archived before the three-arm
+                         install replaced src/
+    placement_sweep/     nine two-arm builds that differ only in placement
+                         density
+    floorplan_trials/    two two-arm floorplans that tried to share the die
+                         more evenly
+    control_wokwi/       an early one-tile build the warning triage checks
+                         itself against
+    build_debug/         an older dual-arm snapshot, described below
+
+`build_debug/` is a partial, mixed-stage diagnostic snapshot: render, Magic DRC
+report, metrics, checkpoint DEF, later netlist, and nominal SPEF. It does
+**not** contain a final GDS/LEF/SDF/Liberty bundle or KLayout results. The
+archived run had KLayout XOR and DRC disabled; the current configuration
+enables both for the required fresh build. The old metrics also record 462 lint
+warnings, 81 max-slew violations, one max-fanout violation, 10 noncritical
+disconnected pins, and 26 unannotated nets. Zero route/Magic DRC, LVS, antenna,
+and power-grid counts do not erase those gaps. See `../SIGNOFF.md` before
+making tapeout or signoff claims.
 
 The checkpoint DEF contains 1,320 components and does not represent all
 later-netlist placement detail; for example, Arm A placement extraction yields

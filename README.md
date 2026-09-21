@@ -210,8 +210,8 @@ each copy, and only silicon can settle that:
 These are nominal simulations of specific routed layouts. Whether the pattern
 survives on fabricated dies, and how it compares with real device mismatch, is
 exactly what the chip is built to measure. [SIGNOFF.md](SIGNOFF.md) lists what
-the baseline build shows and where the gaps are; it has not been brought up to
-the release build yet.
+has been run against the release build and where the gaps are, with the
+baseline's results in a table of their own.
 
 ## Status
 
@@ -248,11 +248,11 @@ same three on the release build, and Arm B's sixteen instances at all three
 corners on the baseline's routes: 0.0001, 0.0025 and 0.0009 percent peak to
 peak there, against 5.46, 5.53 and 5.56 percent for Arm A on the same build.
 
-Still open: `SIGNOFF.md` and the paper draft quote the baseline's Arm A
-frequencies and bits as the chip's and need bringing up to the release build;
-Arm B's sixteen instances want running on the release build's routes; and the
-soft obstruction around Arm A wants one build of its own to show whether it is
-still earning its place. The rest of the hardware list is in
+Still open: the fine boundary sweep through the release build's slowest
+selector path, which has only had the coarse one; Arm B's sixteen instances
+want running on the release build's routes; and the soft obstruction around
+Arm A wants one build of its own to show whether it is still earning its
+place. The rest of the hardware list is in
 [docs/hardware_todo.md](docs/hardware_todo.md).
 
 After fabrication the plan is to measure all three arms across chips, voltage,
@@ -262,7 +262,9 @@ spread less than Arm A's. The data can also prove me wrong.
 
 Operating notes for the chip itself are in [docs/info.md](docs/info.md). The
 paper source is [docs/paper_draft.md](docs/paper_draft.md); build it with
-`sh docs/build_paper.sh`. Simulation details live in
+`sh docs/build_paper.sh`. Its abstract and Section 7.4 are about the release
+build, and most of the rest was measured on the baseline and says so.
+Simulation details live in
 [docs/gono_results_writeup.md](docs/gono_results_writeup.md).
 
 ## Repository layout

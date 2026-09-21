@@ -21,6 +21,7 @@ Needs nothing but the repository.
     python3 sim/verify_datasheet.py
 """
 
+import csv
 import os
 import re
 import sys
@@ -35,8 +36,18 @@ TOP = resolve("dualarm/src/tt_um_ro_puf.v")
 CORE = resolve("dualarm/src/ro_puf_core.v")
 YAML = resolve("info.yaml")
 FW = resolve("firmware/measure_puf.py")
-PAR = resolve("dualarm/build_current/dualarm_par_out.txt")
-PAR_FF = resolve("dualarm/build_current/dualarm_par_ff_out.txt")
+# The release build since 2026-09-21. These read build_current, the two-arm
+# baseline, until then, which is how the datasheet went on quoting a chip that
+# is not being made.
+PAR = resolve("dualarm/build_armc/dualarm_par_out.txt")
+PAR_FF = resolve("dualarm/build_armc/dualarm_par_ff_out.txt")
+# Arm A is not the fastest arm. Arm C's rings carry two thirds of the load and
+# run about 2% faster, so the clock floor has to come from all three arms, not
+# from the arm the go/no-go decks happen to cover. Arm B's instance run is on
+# the two-arm routes; its frequency is the macro's own and sits under Arm C's.
+ARMC_TT = resolve("sim/spice/gono/rc_validation_armc.csv")
+ARMC_FF = resolve("sim/spice/gono/rc3/armC_ff")
+ARMB_FF = resolve("sim/spice/gono/armb_instances_ff_out.txt")
 
 results = []
 
@@ -61,6 +72,26 @@ def par_freqs(path):
     d = {n: float(v) / 1e6 for n, v in
          re.findall(r'^(f\d+)\s*=\s*(-?[0-9.eE+-]+)', text(path), re.M)}
     return [d["f%d" % i] for i in range(16)]
+
+
+def armc_ff_freqs(folder):
+    """The sixteen lumped Arm C decks at ff, one log per ring."""
+    out = []
+    for i in range(16):
+        log = os.path.join(folder, "ro%02d_lumped_out.txt" % i)
+        vals = re.findall(r'^f = ([0-9.eE+-]+)', text(log), re.M)
+        out.append(float(vals[-1]) / 1e6)
+    return out
+
+
+def armc_tt_lumped(path):
+    rows = list(csv.DictReader(open(path, encoding="utf-8")))
+    return [float(r["lumped_MHz"]) for r in rows]
+
+
+def armb_freqs(path):
+    return [float(v) / 1e6 for v in
+            re.findall(r'^f_k\d+\s*=\s*([0-9.eE+-]+)', text(path), re.M)]
 
 
 # ---------------------------------------------------------------- the hardware
@@ -165,14 +196,33 @@ check("the spread in counts follows from the same two numbers",
       abs((counts(hi, fw_clk) - counts(lo, fw_clk)) - spread) < 10,
       "%.0f against %d" % (counts(hi, fw_clk) - counts(lo, fw_clk), spread))
 
+c_tt = armc_tt_lumped(ARMC_TT)
+c_lo, c_hi = (int(x) for x in
+              re.search(r'Arm C sits higher and much closer together, '
+                        r'(\d+) to (\d+)', flat).groups())
+check("the Arm C count range follows from its lumped decks",
+      len(c_tt) == 16
+      and abs(counts(min(c_tt), fw_clk) - c_lo) < 10
+      and abs(counts(max(c_tt), fw_clk) - c_hi) < 10,
+      "%.0f to %.0f against %d to %d"
+      % (counts(min(c_tt), fw_clk), counts(max(c_tt), fw_clk), c_lo, c_hi))
+
 ppm = int(re.search(r'that is (\d+) parts per million', flat).group(1))
 check("one count is the stated fraction of full scale",
       abs(1e6 / counts(hi, fw_clk) - ppm) < 1,
       "%.1f ppm against %d" % (1e6 / counts(hi, fw_clk), ppm))
 
-fast = max(par_freqs(PAR_FF))
-check("the fast-corner ring in the datasheet is the archived one",
-      "%.1f MHz" % fast in flat, "%.3f MHz" % fast)
+fast_a = max(par_freqs(PAR_FF))
+fast_c = max(armc_ff_freqs(ARMC_FF))
+fast_b = max(armb_freqs(ARMB_FF))
+fast = max(fast_a, fast_b, fast_c)
+check("the fastest ring at ff over all three arms is the one quoted",
+      "%.1f MHz" % fast in flat and fast == fast_c
+      and "fastest ring on the chip in the simulated fast corner is an Arm C"
+      in flat,
+      "A %.3f, B %.3f, C %.3f MHz" % (fast_a, fast_b, fast_c))
+check("and Arm A's fastest there is the archived one",
+      "Arm A's fastest there is %.1f" % fast_a in flat, "%.3f MHz" % fast_a)
 
 floor_mhz = fast * window / (ceiling + 1)
 quoted_floor = float(re.search(r'floor at ([\d.]+) MHz', flat).group(1))

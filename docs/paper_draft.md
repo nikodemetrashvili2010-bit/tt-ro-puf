@@ -2,7 +2,16 @@
 
 **Nikoloz Demetrashvili** · Student researcher · Georgia
 
-Draft, 2026-07-30
+Draft, 2026-07-30, revised 2026-09-21
+
+A note on the revision. This draft was written about a two-arm version of the
+design. The chip going to the shuttle is a later build of it with three arms:
+the same sixteen automatically placed oscillators at the same coordinates, the
+same sixteen macros, and a third arm of sixteen rings placed by hand. The
+router wired that build again, and two of Arm A's eight bits came out the
+other way. The abstract and Section 7.4 give the release build's numbers.
+Everything else was measured on the two-arm build, which this revision calls
+the baseline, and has not been repeated.
 
 ---
 
@@ -20,22 +29,33 @@ The GDS, the post-route netlist and the parasitic extraction are downloads.
 This paper asks how much of the response is left for the silicon to decide once
 those files exist.
 
-For the design taped out here, not much. Arm A of the shipped build forms eight
-response bits by comparing neighbouring oscillators. Under a first-order
-mismatch estimate of 0.062% per ring, six of those eight carry under a
-hundredth of a bit of across-die entropy, the arm holds 0.46 bits out of 8, and
-someone with nothing but the public design files would call 7.91 of the 8
-correctly on average.
+For the design going to fabrication here, almost none. Arm A of the release
+build forms eight response bits by comparing neighbouring oscillators. Under a
+first-order mismatch estimate of 0.062% per ring, seven of those eight carry
+under a hundredth of a bit of across-die entropy, the arm holds 0.07 bits out
+of 8, and someone with nothing but the public design files would call 7.99 of
+the 8 correctly on average. On the two-arm baseline where the method was
+worked out, same cells at the same coordinates and different wires, the same
+count gives 0.46 bits and 7.91.
 
-Moving the mismatch estimate to the ends of its sampling interval gives 0.30 to
-0.69 bits and 7.84 to 7.95 bits guessed, so the conclusion does not rest on the
-exact figure.
+Moving the mismatch estimate to the ends of its sampling interval gives 0.02 to
+0.22 bits and 7.97 to 8.00 bits guessed on the release build, and 0.30 to 0.69
+and 7.84 to 7.95 on the baseline, so the conclusion does not rest on the exact
+figure.
+
+The release build adds a third arm, sixteen rings placed by hand from one
+template with the routing left to the flow. Its frequencies spread 2.19% peak
+to peak against 5.88% for Arm A on the same die, and it still holds 0.00 bits
+of 8, because its closest pair is 3.7 mismatch standard deviations apart.
+Fixing the placement takes out about two thirds of the spread and none of the
+predictability. The rest of this abstract, like most of the paper, is about the
+baseline.
 
 The correction the RO-PUF literature applies to systematic variation does not
-reach this effect. Scored by leave-one-out cross validation against the shipped
-build's full RC frequencies, a quadratic surface in x and y comes out 20.0%
-worse than leaving the data alone, because a per-instance routing fingerprint
-has no smooth spatial surface under it.
+reach this effect. Scored by leave-one-out cross validation against the
+baseline build's full RC frequencies, a quadratic surface in x and y comes out
+20.0% worse than leaving the data alone, because a per-instance routing
+fingerprint has no smooth spatial surface under it.
 
 Reading the design database does work: ring capacitance and series resistance
 together remove 89.5% of the dispersion out of sample, from 1.739% down to
@@ -53,8 +73,8 @@ secrecy, and only the first of them responds to it.
 
 The cheapest countermeasure available fails differently, and the way it fails
 is the more useful result. Which oscillators get compared is a free parameter:
-sixteen rings split into eight pairs 2,027,025 ways and the shipped design uses
-the order its generate loop produced. Enumerating all of them, the best pairing
+sixteen rings split into eight pairs 2,027,025 ways and the design uses the
+order its generate loop produced. Enumerating all of them, the best pairing
 takes 0.62 of the 3.91 bits a reader holds above guessing, 16%, and it is paid
 for in reliability, because hiding a bit means making its comparison a near-tie
 and a near-tie is what drifts across voltage and temperature.
@@ -69,9 +89,10 @@ build gives a frequency-capacitance correlation near -0.999 with a fitted slope
 near -4.94 MHz/fF that transfers between independent layouts.
 
 It transfers far enough to matter: a slope fitted on an earlier build and never
-refitted removes 88.2% of the shipped build's spread against 89.5% for a
-corrector fitted on the shipped build itself, and calls all eight bits the same
-way, so the reader needs the target's extraction and not a simulation of it.
+refitted removes 88.2% of the baseline build's spread against 89.5% for a
+corrector fitted on the baseline build itself, and calls all eight bits the
+same way, so the reader needs the target's extraction and not a simulation of
+it.
 
 The comparison arm places 16 copies of one hardened macro. Its sixteen
 instances still differ at the top level, through the enable and output route
@@ -206,10 +227,11 @@ with no device access at all.
 
 ## 3. Design under test
 
-The candidate design, `tt_um_nikodemetrashvili20_ro_puf`, occupies a
-TinyTapeout 2x2 tile. It holds two 16-oscillator arms and a shared serial
-measurement core that enables one oscillator at a time and counts its edges
-over a fixed window.
+The design, `tt_um_nikodemetrashvili20_ro_puf`, occupies a TinyTapeout 2x2
+tile. In the baseline form this paper measures, it holds two 16-oscillator
+arms and a shared serial measurement core that enables one oscillator at a
+time and counts its edges over a fixed window. The build going to the shuttle
+adds a third arm, described at the end of this section.
 
 Each oscillator is a 31-stage ring of SKY130 standard cells: an enable NAND, 30
 inverters, and an isolating output buffer tapped near the middle of the chain.
@@ -220,7 +242,7 @@ one hardened oscillator macro on a regular grid.
 The logical circuit is identical in both arms; the physical implementation
 method is the experimental variable. Figure 1 summarizes the design.
 
-![Figure 1. Block diagram of the two-arm design. Arm A lets the flow place and route each oscillator separately; Arm B repeats one hardened macro with a common internal layout.](figures/chip_block.png)
+![Figure 1. Block diagram of the two-arm baseline. Arm A lets the flow place and route each oscillator separately; Arm B repeats one hardened macro with a common internal layout.](figures/chip_block.png)
 
 How the measurement window is closed turned out to matter more than I first
 assumed. An earlier revision clocked the ripple counter through an AND gate
@@ -281,7 +303,7 @@ that instance's routing load and pushing the array's capacitance spread from
 
 Four macro rows is the maximum that fits the die, sixteen macros in four rows
 therefore need four columns, and only five column positions align with the
-power grid, so the shipped arrangement is the one that leaves the automatically
+power grid, so the arrangement used is the one that leaves the automatically
 placed arm a single contiguous region. The regional difference is a consequence
 of die area, macro footprint and grid pitch rather than a tuning choice, and
 removing it would need a larger tile. Both trials are recorded in the
@@ -298,11 +320,27 @@ node. So the extra output stage and the heavier output route cannot bias the
 frequencies reported here, though they would have to be accounted for in any
 comparison of edge quality or bit reliability between the arms.
 
-The main results below come from a coherent build of the current
-RTL that passes the physical checks (Magic and KLayout DRC, XOR, LVS, antenna,
-detailed route, power grid) with zero violations; two earlier builds, an
-archived dual-arm snapshot and a 32-oscillator layout, are reported for
+The main results below come from a coherent build of the two-arm RTL, the
+baseline, that passes the physical checks (Magic and KLayout DRC, XOR, LVS,
+antenna, detailed route, power grid) with zero violations; two earlier builds,
+an archived dual-arm snapshot and a 32-oscillator layout, are reported for
 contrast (see SIGNOFF.md in the repository).
+
+The build going to the shuttle is a later one of the same source with a third
+arm added. Arm C uses the same 31-stage ring in standard cells, sixteen copies
+placed by hand from one template: the same 32 cells at the same offsets inside
+sixteen identical regions, fixed before the placer runs, with the routing left
+to the flow. It asks how much of Arm A's fingerprint is placement freedom on
+its own. The selector in front of the counter grows from 32 inputs to 48, the
+window becomes selectable, 256, 512, 2048 or 16384 reference-clock cycles, and
+a counter wrap now latches a flag.
+
+In that build, run 83 of the project's CI, the 512 cells of Arm A and the
+sixteen Arm B macros sit at exactly the coordinates they have in the baseline.
+Only the wiring was done again. It passes the same physical checks with zero
+violations. Figure 1b shows it and Section 7.4 scores it.
+
+![Figure 1b. Block diagram of the three-arm release build. Arm C's sixteen rings are placed by hand from one template and routed by the flow; the core selects one of 48 and counts over a selectable window.](figures/chip_block_3arm.png)
 
 ## 4. Method
 
@@ -386,7 +424,7 @@ instance-specific routing load, not a smooth die-wide gradient.
 
 ### 5.2 Coherent dual-arm build
 
-Arm A of the candidate build contains 16 automatically placed oscillators.
+Arm A of the baseline build contains 16 automatically placed oscillators.
 Their nominal post-layout frequencies average 554.7 MHz and span 30.7 MHz from
 end to end, which is 5.53% of the mean, with a population SD of 9.15 MHz
 (1.65%). The slowest ring is RO14 at 540.0 MHz carrying 17.0 fF; the fastest is
@@ -399,7 +437,7 @@ rather than a distribution with a straggler: the two heaviest rings differ by
 oscillator leaves the spread between 4.7% and 5.5%. The build passes Magic DRC,
 KLayout DRC, XOR, LVS, antenna, and power grid with zero violations, and the
 netlist verifier confirms all 16 rings survived place and route with no cell
-inserted into a loop, so the dispersion estimate and the candidate GDS come
+inserted into a loop, so the dispersion estimate and the baseline GDS come
 from the same signed-off run.
 
 An earlier build of this design reported 10.5%. That number came from a layout
@@ -416,7 +454,7 @@ Putting two builds' spread figures side by side is a fairly weak comparison. A
 better one is whether a fit from one build predicts the individual oscillators
 of another. A linear capacitance fit trained only on the 32-oscillator build
 (624.6 MHz - 4.93 MHz/fF) predicts the frequencies of later builds to roughly
-0.1% mean absolute error with rank correlation near 0.997, and the candidate
+0.1% mean absolute error with rank correlation near 0.997, and the baseline
 build's own fitted slope, -4.94 MHz/fF, sits within a fraction of a percent of
 that independently trained value.
 
@@ -436,7 +474,7 @@ All nine builds hardened, and all nine kept every ring intact. Read the result
 as a placement-sensitivity band rather than a seed distribution.
 
 Dispersion across the nine builds has a median of 5.75%, a range of 4.19% to
-6.99%, and a standard deviation of 0.80% (Figure 3). The candidate build sits
+6.99%, and a standard deviation of 0.80% (Figure 3). The baseline build sits
 at 5.53%, close to the middle. Density itself explains little of the variation
 (*r* = 0.32), which is what I expected: the knob is a way to perturb placement,
 not a physical cause.
@@ -446,14 +484,14 @@ set, from 4.7 fF and 4.19% at the tightest build to 7.8 fF and 6.99% at the
 widest.
 
 Two details bound what the band means. The build at 60% density reproduces the
-shipped configuration exactly and returned 5.53%, matching the candidate build
+baseline configuration exactly and returned 5.53%, matching the baseline build
 to the digit, and running the entire sweep a second time reproduced all nine
 values without change. The flow is deterministic, so the band measures genuine
 placement sensitivity rather than run-to-run noise. Against that band the older
 10.5% build is a wide draw and not a typical outcome, which is why its number
 is not quoted on its own anywhere in this paper.
 
-![Figure 3. Nominal Arm A dispersion for nine builds that differ only in target placement density. The dashed line is the median, and the highlighted point is the shipped configuration.](../dualarm/placement_sweep/placement_sweep.png)
+![Figure 3. Nominal Arm A dispersion for nine builds that differ only in target placement density. The dashed line is the median, and the highlighted point is the baseline configuration.](../dualarm/placement_sweep/placement_sweep.png)
 
 ### 5.4 The dispersion across process, voltage and temperature
 
@@ -487,11 +525,18 @@ supplies, which is convenient, because holding a hobby measurement setup at one
 temperature is difficult.
 
 Two practical bounds fall out of the same simulations. The reported count is the
-oscillator frequency times the window duration, so at the fast corner the 16-bit
-counter reaches 35532 of 65535, leaving 1.84x headroom at the 25 MHz reference
-clock and the 1000-cycle window in the design. Dropping the reference clock below
-13.55 MHz, or extending the window past 1844 cycles, would push the fast corner
-into a silent wrap that returns a believable smaller count instead of an error.
+oscillator frequency times the window duration, so at the fast corner the
+baseline's 16-bit counter reaches 35532 of 65535, leaving 1.84x headroom at the
+25 MHz reference clock and the fixed 1000-cycle window that design had.
+Dropping the reference clock below 13.55 MHz, or extending the window past 1844
+cycles, would have pushed the fast corner into a silent wrap that returns a
+believable smaller count instead of an error.
+
+The release build changes both halves of that. Its window is selectable and a
+wrap latches a flag rather than passing as a reading. At the 2048 cycles and 50
+MHz the measurement firmware uses, the fastest ring on the release build, an
+Arm C ring at 911.1 MHz at the fast corner, reads 37318, 1.76x under the
+ceiling, and the clock would have to fall below 28.5 MHz before it wrapped.
 
 ### 5.5 Does the lumped model survive the real RC network?
 
@@ -610,7 +655,7 @@ Three effects set that limit. The operating point drifts between readings, the
 oscillator carries thermal noise, and the counter returns an integer. The decks
 in `sim/spice/gono/gen_noise_decks.py` address all three.
 
-They read the shipped netlist and SPEF used everywhere else in this work and
+They read the baseline netlist and SPEF used everywhere else in this work and
 they call the same ring builder, and the 1.80 V deck is the nominal deck of
 Section 5.2 under a different title, which the analysis verifies against the
 archived log before reporting anything.
@@ -686,7 +731,9 @@ periods, over which independent period jitter averages down by the square root
 of the count. The 0.94 ps figure becomes 0.00036 percent of frequency. The
 counter is coarser than that. One count in 22189 is 0.00451 percent and the
 rounding error is 0.00130 percent rms, so the instrument rather than the
-oscillator sets the floor.
+oscillator sets the floor. The release build counts over 2048 cycles at 50 MHz,
+41 microseconds rather than 40, which moves these figures by about two percent
+and none of the conclusions.
 
 Taking the larger of the two, the resolution floor is 0.00130 percent, which
 sits 48 times below the mismatch scale, 207 times below the closest pair
@@ -725,7 +772,7 @@ The matched-macro arm is this paper's version of the second answer, arrived at
 from the layout side.
 
 It does not work here. Scored by leave-one-out cross validation against the
-shipped build's full RC frequencies, whose uncorrected spread is 1.739%
+baseline build's full RC frequencies, whose uncorrected spread is 1.739%
 standard deviation, a quadratic surface in x and y leaves 2.086%, which is
 20.0% worse than leaving the data alone. The linear version leaves 1.970%,
 worse by 13.3%. Raw correlations against the placement coordinates point the
@@ -767,7 +814,7 @@ capacitance per net and vary nothing else, so a capacitance fit is measuring
 the deck's only input.
 
 Where the lumped runs do carry information is across builds, since the fit
-trained on the 32-oscillator layout reproduces the shipped build's
+trained on the 32-oscillator layout reproduces the baseline build's
 per-oscillator pattern with no refitting at all, which is the cross-build check
 already reported in Section 5.2.
 
@@ -799,21 +846,21 @@ Whether the model has to be calibrated on the victim at all is therefore a
 question about what the attack costs, and it is a question this project can
 answer, because there are two builds on disk: the earlier 32-oscillator layout
 of Section 5.1, a different RTL revision placed and routed independently, and
-the shipped build.
+the baseline build.
 
 So I moved the fit off the victim. A capacitance model fitted once on the
-earlier build, never refitted, applied to the shipped build's full RC
+earlier build, never refitted, applied to the baseline build's full RC
 frequencies:
 
 | model | fitted on | residual | removed |
 |---|---|---:|---:|
 | capacitance | earlier build | 0.2046% | 88.2% |
 | capacitance and resistance | earlier build | 0.2356% | 86.4% |
-| capacitance | shipped build, lumped decks | 0.1853% | 89.3% |
-| capacitance and resistance | shipped build, leave-one-out | 0.1828% | 89.5% |
+| capacitance | baseline build, lumped decks | 0.1853% | 89.3% |
+| capacitance and resistance | baseline build, leave-one-out | 0.1828% | 89.5% |
 
 Transfer costs 1.3 points out of 89.5. The same test in the other direction, a
-model fitted on the shipped build and applied to the earlier one's 32 rings,
+model fitted on the baseline build and applied to the earlier one's 32 rings,
 removes 89.4% against 91.1% for that build's own cross-validated fit, so the
 result is not an artefact of which build happened to be the target.
 
@@ -821,14 +868,14 @@ Two things follow from that.
 
 The first is that the transferring quantity is capacitance and not resistance.
 The resistance coefficient comes out at -0.0051 on the earlier build and
-+0.0035 on the shipped one, opposite in sign, so the extra accuracy it buys
++0.0035 on the baseline one, opposite in sign, so the extra accuracy it buys
 inside a single build is that build's own leftovers rather than a property of
 the circuit; capacitance alone transfers better than capacitance with
 resistance in both directions.
 
 The second is that the fit is almost free. Refitting the slope on the first two
 rings of the earlier build, and nothing else, still calls every bit of the
-shipped build the way the full simulation does.
+baseline build the way the full simulation does.
 
 The control says what is actually being used.
 
@@ -941,7 +988,7 @@ So subtract it and ask whether the response comes back.
 The arithmetic is Section 7.1's, run on different inputs. Each ring's predicted
 layout term is removed using the leave-one-out capacitance-and-resistance model
 of Section 6, the eight pair separations are rebuilt from what is left, and the
-same 0.062% mismatch scale is applied. Nothing about the shipped design does
+same 0.062% mismatch scale is applied. Nothing in the design does
 this. It is a post-processing step a defender could add in firmware from
 per-ring constants published alongside the netlist, and it is evaluated here as
 a candidate countermeasure rather than as something the chip performs.
@@ -1112,14 +1159,14 @@ statement about its cost and not a defence of it.
 One scaling result is worth carrying into the silicon design. On the earlier
 32-oscillator build the neighbour rule takes a reader from 16.00 of 16 down to
 13.32, a third of what he holds above guessing, against an eighth on the
-shipped build. The two builds have nearly the same spread, 1.90% and 1.74%, so
+baseline build. The two builds have nearly the same spread, 1.90% and 1.74%, so
 what differs is density: twice as many rings across the same range halves the
 median gap between neighbours in the sorted order, 0.218% to 0.130%, and it is
 the gap that has to fall under the mismatch scale.
 
 Re-pairing is worth more the more oscillators there are. That half of the trade
 is unpriced, because the earlier build has no corner logs and its reliability
-cost cannot be scored, and the shipped build says reliability is exactly where
+cost cannot be scored, and the baseline build says reliability is exactly where
 the cost lands.
 
 Doubling the mismatch scale is the case where re-pairing should look best, since
@@ -1136,6 +1183,70 @@ The script is `sim/spice/gono/pairing_policy.py`. `verify_predictability.py`
 re-derives every number above from the raw corner logs with its own parser, and
 finds the enumerated optimum a second time by dynamic programming over subsets
 of rings, which never enumerates a pairing at all.
+
+### 7.4 The build that is actually being made
+
+Everything above was scored on the baseline. The chip going to the shuttle is
+the three-arm release build of Section 3, and its Arm A cells sit at the
+baseline's coordinates to the database unit, so I expected the same eight bits
+back. They did not all come back.
+
+Scored the same way from the release build's own extraction, with the full RC
+network and the same 0.062% per ring:
+
+| pair | separation | standard deviations | entropy |
+|---|---:|---:|---:|
+| 0/1 | +1.083% | 12.3 | 0.000 |
+| 2/3 | +0.212% | 2.4 | 0.066 |
+| 4/5 | +2.037% | 23.2 | 0.000 |
+| 6/7 | -1.423% | 16.2 | 0.000 |
+| 8/9 | -0.316% | 3.6 | 0.002 |
+| 10/11 | -2.291% | 26.1 | 0.000 |
+| 12/13 | -2.878% | 32.8 | 0.000 |
+| 14/15 | -1.840% | 21.0 | 0.000 |
+
+Seven of the eight carry under a hundredth of a bit. The arm holds 0.07 bits of
+8 and a reader of the public files calls 7.99, where the baseline gave 0.46 and
+7.91, and across the sampling interval of Section 5.6 that becomes 0.02 to 0.22
+bits and 7.97 to 8.00. The full RC network is the model that matters on this
+build. It closes pairs 2/3 and 8/9 from 0.73% and 1.08% under the lumped decks
+to 0.212% and 0.316%, and under the lumped decks the arm would hold nothing at
+all. Ranking the rings by extracted capacitance alone still gets all eight
+signs.
+
+The bits themselves moved. The baseline reads `01101000` and the release build
+`11100000`: pairs 0 and 4 flip, the same way at ss, tt and ff and under both
+parasitic models. Nothing changed between the builds but wire. The router took
+different paths to the same cells, one ring's loop capacitance moved by 3.4 fF,
+and the rank correlation between the two builds' sixteen loop capacitances is
+0.71.
+
+That sharpens Section 6.2 rather than undoing it. The slope carries from one
+build to another; the individual loads do not, because they are the router's,
+and the router answers the same placement differently as soon as anything else
+on the die changes. A prediction belongs to one routed database, so it has to
+be read from the build that is actually fabricated. On an open shuttle that is
+the build whose files are published.
+
+The third arm asks the question the other way round. Arm C's sixteen rings
+carry 9.90 fF of loop capacitance on average with a standard deviation of 0.55,
+against 14.66 and 1.77 for Arm A on the same die. Their frequencies spread
+2.19% peak to peak under the full RC network, 566.9 to 579.4 MHz, where Arm A's
+spread 5.88%, and the standard deviation of the sixteen is 0.36 of Arm A's.
+Placing the rings by hand takes out about two thirds of the spread.
+
+It takes out none of the predictability. Arm C's closest pair is 0.321% apart,
+3.7 mismatch standard deviations, the arm holds 0.00 bits of 8 and a reader
+calls 8.00. Under the lumped decks the closest pair is 2.3 standard deviations
+out and the arm holds 0.09 bits, which is still close to nothing. Its bits,
+`11010110`, are the same at ss, tt and ff. A tighter arm only hides bits once
+its pair gaps fall under the mismatch scale, and a third of Arm A's spread is
+nowhere near that.
+
+`predictable_bits.py` makes the table from the release build's files, and
+`verify_predictability.py` re-derives its totals, its two closest pairs and the
+Arm C figures with separate code. CI rebuilds both frequency tables from the
+archived decks and checks them against the committed copies.
 
 ## 8. Matched-macro arm
 
@@ -1165,7 +1276,7 @@ rather than physics. 566.05 MHz is the full RC network of Section 5.5.
 The macro is faster than the typical routed ring, 569.5 MHz against an Arm A
 mean of 554.7 MHz on the model both are quoted from here, which is what the
 lighter load predicts. It is not faster than every Arm A ring. RO7 in the
-candidate build reaches 570.7 MHz because the router happened to give it 10.9
+baseline build reaches 570.7 MHz because the router happened to give it 10.9
 fF, slightly less than the macro carries.
 
 The gap is about 0.2%, below what this lumped-capacitance model resolves, and
@@ -1198,7 +1309,7 @@ a smaller total spread than Arm A is the measurement the chip exists to make.
 
 ![Figure 6. The earlier 32-oscillator array beside the matched-macro reference line at 569.5 MHz, both under the lumped-capacitance model. The macro's distributed-RC figure is 566.05 MHz; see Section 5.5.](../sim/spice/gono/armB_prediction.png)
 
-![Figure 7. Arm A of the candidate build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
+![Figure 7. Arm A of the baseline build (5.53% peak to peak) beside the matched-macro reference line.](../sim/spice/gono/dualarm_gono.png)
 
 ### 8.2 Is anything left, and could anyone use it?
 
@@ -1242,7 +1353,7 @@ pair separations in place of the zero that was assumed there:
 | tt | 7.9997 | 4.0219 | 0 |
 | ss | 8.0000 | 4.0019 | 0 |
 | ff | 7.9999 | 4.0114 | 0 |
-| Arm A, full RC | 0.46 | 7.91 | 6 |
+| Arm A, full RC, baseline | 0.46 | 7.91 | 6 |
 
 Four of eight is what a coin gets, and across the mismatch sampling interval the
 tt figure runs 4.02 to 4.03. Taking the residual at face value as though it were
@@ -1257,21 +1368,25 @@ a die; that is still the measurement the chip exists to make. And the residual
 is small enough that the floor underneath it is the transient solver rather
 than the circuit, which is why the direction test above carries the argument
 and the correlations do not. The script is `sim/spice/gono/matched_arm.py`.
+The routes are the baseline's, too. The release build drew every one of them
+again, and the sixteen have not been run on those yet.
 
 ## 9. Planned silicon test
 
 Sections 6 and 7 make a prediction that a measurement can refute, and that is
-the main reason to build the chip. The prediction is specific. On every die of
-this design the six high-margin Arm A pairs should return the sign the
-extraction gives them, the two low-margin pairs should not, and the Arm B pairs
-should behave like coin flips that repeat within a die and differ between dies.
+the main reason to build the chip. The prediction is specific, and it is made
+for the release build of Section 7.4, since that is the one being fabricated.
+On every die, all eight Arm A pairs and all eight Arm C pairs should return the
+signs the extraction gives them, `11100000` and `11010110`, with Arm A's pair
+2/3 the least certain at 2.4 standard deviations. The Arm B pairs should behave
+like coin flips that repeat within a die and differ between dies.
 
 It could fail in an interesting way. Wilde, Hiller, and Pehl found that
 adjacent-oscillator comparisons suppressed the spatial structure in their data
 well enough that their predictor could not beat its baseline [4]. If fabricated
 mismatch turns out to be much larger than the 0.062% estimate of Section 5.6,
-the same thing happens here, the six fixed bits stop being fixed, and the
-entropy figure moves back toward 8.
+the same thing happens here, the fixed bits stop being fixed, and the entropy
+figure moves back toward 8.
 
 That estimate is the weakest input in the whole chain, which is why the per-die
 measurement should replace it first. A toy population model also lives in the
@@ -1300,6 +1415,12 @@ grouping and completeness requirements are met; a single chip or an incomplete
 oscillator vector does not support a population claim.
 
 ## 10. Limitations
+
+Most of it was measured on a build that is not the one being made. The release
+build has had its corner sweep, its full RC comparison and the bit count of
+Section 7.1 repeated, in Section 7.4, and none of the rest of this paper. The
+compensation, the re-pairing, the resolution floor and the Arm B instances are
+the baseline's, and whether their numbers carry over I have not tested yet.
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. The lumped-capacitance model
@@ -1465,14 +1586,20 @@ numbers here describe the raw response and not a fielded key.
 
 ## 11. Conclusion
 
-For the design going to this shuttle, the public files decide most of the
-response. Six of Arm A's eight adjacent-pair bits carry under a hundredth of a
-bit of across-die entropy under a first-order 0.062% per-ring mismatch
-estimate.
+For the design going to this shuttle, the public files decide almost all of
+the response. On the release build seven of Arm A's eight adjacent-pair bits
+carry under a hundredth of a bit of across-die entropy under a first-order
+0.062% per-ring mismatch estimate. The arm holds 0.07 bits of 8, and a reader
+of the design database alone would call 7.99 of the 8 correctly, 0.02 to 0.22
+bits and 7.97 to 8.00 across the sampling interval of that estimate. The
+hand-placed third arm spreads a third as much and holds 0.00 bits.
 
-The arm holds 0.46 bits of 8. A reader of the design database alone would call
-7.91 of the 8 correctly, and across the sampling interval of that estimate the
-range runs 0.30 to 0.69 bits and 7.84 to 7.95 guessed.
+The method was worked out on the two-arm baseline, where the same count gives
+0.46 bits of 8 and 7.91 called, and 0.30 to 0.69 bits and 7.84 to 7.95 across
+the interval. The two builds share their placement and differ only in wiring,
+and two of the eight bits changed between them. That is the plainest evidence
+here that a reader needs the target's own extraction. The rest of this section
+is about the baseline.
 
 What makes those bits readable is a layout term that position cannot describe
 and the design database can. Cross validated, a quadratic surface in x and y
@@ -1488,9 +1615,9 @@ can resolve, so none of it hides in the instrument.
 
 That last point carries further than it first appears. The model does not have
 to be fitted on the victim at all. A capacitance slope taken from the earlier
-build and never refitted removes 88.2% of the shipped build's spread against
-89.5% for a corrector cross-validated on the shipped build itself, and it calls
-all eight bits the same way, so the 7.91 does not change.
+build and never refitted removes 88.2% of the baseline build's spread against
+89.5% for a corrector cross-validated on the baseline build itself, and it
+calls all eight bits the same way, so the 7.91 does not change.
 
 Shuffling which ring owns which capacitance destroys it, which is what says the
 target's own extraction is the part that cannot be skipped. What can be skipped
@@ -1533,15 +1660,16 @@ More to the point, the leftover is not usable: most instances read faster than
 a reference ring carrying no route at all, which capacitive loading cannot
 cause; no corrector out of the design database helps at more than one corner,
 where Arm A's removes 89.5%; and the eight bits keep 7.9997 of 8, with a reader
-calling 4.02 against 4.00 for guessing.
+calling 4.02 against 4.00 for guessing. Those were the baseline's routes, and
+the release build's are still to be run.
 
 None of this is measured on silicon.
 
 The offsets are model output, eight bits is a small response, and the mismatch
 estimate is the weakest link in the chain. That is also what makes the result
 testable. The per-pair predictions are frozen in the repository before the
-chips exist, so measuring both arms of the fabricated parts either confirms
-them or refutes them, and a refutation would teach me as much.
+chips exist, so measuring the three arms of the fabricated parts either
+confirms them or refutes them, and a refutation would teach me as much.
 
 ## References
 

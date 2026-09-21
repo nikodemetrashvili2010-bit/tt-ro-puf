@@ -30,6 +30,8 @@ python3 sim/spice/gono/matched_arm.py
 python3 sim/spice/gono/pairing_policy.py
 python3 sim/spice/gono/numerical_audit.py
 python3 sim/spice/gono/verify_predictability.py
+python3 sim/spice/gono/real_world.py     # heat, wire current, supply drop, taps
+python3 sim/verify_datasheet.py
 python3 sim/spice/gono/analyze_noise.py --selftest
 python3 sim/spice/gono/analyze_noise.py
 python3 sim/spice/mc/analyze_mc.py sim/spice/mc/mc_out.txt
@@ -44,10 +46,22 @@ the selector sweep, the supply sweep and the macro RC comparison all have their
 raw simulator output in the repository, so those verifiers really do re-derive
 from logs.
 
+So does everything run on the release build. `sim/spice/gono/rc3/` holds the
+128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
+selector decks, and `sim/spice/gono/real_world/` the power and wire-current
+decks `real_world.py` reads. CI rebuilds `rc_validation_3arm.csv`,
+`rc_validation_armc.csv` and `mux3/mux3_validation.csv` from those logs and
+diffs each against the committed copy, the same way it has done for
+`mux_validation.csv` since August.
+
 Three do not: the sixteen-ring distributed-RC comparison (`rc_validation.csv`),
 the counter-boundary flop sweep, and the seven boundary sweeps through the
 selector (`boundary_validation_*.csv`). For those three the CSV is the primary
-record and a verifier can only check that the CSV is self-consistent.
+record and a verifier can only check that the CSV is self-consistent. All three
+were run again on 17 September on a different machine and came back the same,
+which is a repeat and not a check against my logs
+(`docs/phaseG_spice_rerun.md`). The release build's boundary sweep through B13,
+`boundary_validation_B13_3arm.csv`, is a fourth with no logs behind it.
 
 Rerunning them is the only way to check them, and the decks regenerate
 deterministically so that is possible. The provenance check binds the archived
@@ -64,6 +78,8 @@ python3 -m venv .venv
 python3 -m pip install -r requirements-analysis.txt
 python3 sim/spice/gono/analyze.py
 python3 docs/figures/make_block_diagram.py
+python3 docs/figures/make_block_diagram.py --arms 3
+python3 docs/figures/make_floorplan.py
 python3 sim/spice/gono/make_figures.py
 python3 sim/spice/gono/make_dualarm_figure.py
 python3 sim/spice/gono/make_bits_figure.py
@@ -120,8 +136,15 @@ The verifiers accept `--ctrl`, `--par`, `--log-5p`, `--log-1p`, `--csv`,
 `--spef`, and related path options (see `--help`), so a fresh run can be
 checked without touching the archived logs.
 
-The distributed-RC comparison behind Section 5.5 of the paper and item 7 of
-`docs/hardware_todo.md` has no archived logs, so it is regenerated like this:
+The distributed-RC comparison on the release build has its logs in
+`sim/spice/gono/rc3/`, and that folder's README gives the commands for both
+arms and all three corners. `gen_rc_decks.py --arm C` writes Arm C's decks;
+Arm C numbers its inverters from 0 where Arm A's rings number them from 1, and
+the generator carries that difference so the caller does not have to.
+
+The same comparison on the baseline, behind Section 5.5 of the paper and item 7
+of `docs/hardware_todo.md`, has no archived logs, so it is regenerated like
+this:
 
 ```sh
 for i in $(seq 0 15); do python3 sim/spice/gono/gen_rc_decks.py --ro $i --output-dir /tmp/rc16; done
@@ -227,10 +250,14 @@ directory unchanged.
 The repository keeps failed and superseded builds as provenance, so here is
 the short answer to "which one is current":
 
-- Tapeout candidate GDS and its checks: `dualarm/build_current/` (the coherent
-  build from the current RTL). This is what the headline 5.53% comes from, via
-  its `.nom.spef` and the go/no-go logs in `sim/spice/gono/`. The nine-build
-  dispersion band around it lives in `dualarm/placement_sweep/`.
+- Tapeout candidate GDS and its checks: `dualarm/build_armc/`, run 83's
+  three-arm build. The README's figures for Arm A and Arm C come from its
+  `.nom.spef`, through the six Arm A decks stored beside it and the ring decks
+  in `sim/spice/gono/rc3/`.
+- The two-arm baseline: `dualarm/build_current/`, frozen. This is what the
+  paper's 5.53% and most of its other numbers come from, via its `.nom.spef`
+  and the go/no-go logs in `sim/spice/gono/`. The nine-build dispersion band
+  around it lives in `dualarm/placement_sweep/`.
 - Figures 2 and 3 come from the earlier 32-oscillator build under
   `sim/spice/gono/first_build/`; Figure 4 comes from `dualarm/build_current/`.
 - Everything under `dualarm/build_debug/`, `array/`, and
