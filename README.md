@@ -75,12 +75,12 @@ bits and 7.84 to 7.95 across the same interval).
 
 ![Arm A pair bits on the baseline build](sim/spice/gono/predictable_bits.png)
 
-Between the two builds nothing moved except wire. The 512 Arm A cells sit at
-the same coordinates in both, to the database unit. The router took different
-paths to them, one ring's loop capacitance moved by 3.4 fF, and two of the
-eight bits flipped, pairs 0 and 4: `01101000` on the baseline, `11100000` on
-the release build. They flip the same way at ss, tt and ff and under both the
-lumped and the full RC model.
+Between the two builds nothing about Arm A moved except wire. The 512 Arm A
+cells sit at the same coordinates in both, to the database unit. The router
+took different paths to them around the new arm, one ring's loop capacitance
+moved by 3.4 fF, and two of the eight bits flipped, pairs 0/1 and 8/9:
+`01101000` on the baseline, `11100000` on the release build. They flip the same
+way at ss, tt and ff and under both the lumped and the full RC model.
 
 So a prediction belongs to one routed database, not to a placement, and it has
 to be read from the build that is actually fabricated. On an open shuttle that

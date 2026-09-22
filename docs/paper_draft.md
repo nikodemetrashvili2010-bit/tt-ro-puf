@@ -9,9 +9,10 @@ design. The chip going to the shuttle is a later build of it with three arms:
 the same sixteen automatically placed oscillators at the same coordinates, the
 same sixteen macros, and a third arm of sixteen rings placed by hand. The
 router wired that build again, and two of Arm A's eight bits came out the
-other way. The abstract and Section 7.4 give the release build's numbers.
-Everything else was measured on the two-arm build, which this revision calls
-the baseline, and has not been repeated.
+other way. The abstract and Section 7.4 give the release build's numbers, and
+a few sentences elsewhere say where it differs. Everything else was measured on
+the two-arm build, which this revision calls the baseline, and has not been
+repeated.
 
 ---
 
@@ -35,8 +36,8 @@ first-order mismatch estimate of 0.062% per ring, seven of those eight carry
 under a hundredth of a bit of across-die entropy, the arm holds 0.07 bits out
 of 8, and someone with nothing but the public design files would call 7.99 of
 the 8 correctly on average. On the two-arm baseline where the method was
-worked out, same cells at the same coordinates and different wires, the same
-count gives 0.46 bits and 7.91.
+worked out, the same Arm A cells at the same coordinates with different
+wires, the same count gives 0.46 bits and 7.91.
 
 Moving the mismatch estimate to the ends of its sampling interval gives 0.02 to
 0.22 bits and 7.97 to 8.00 bits guessed on the release build, and 0.30 to 0.69
@@ -337,8 +338,9 @@ a counter wrap now latches a flag.
 
 In that build, run 83 of the project's CI, the 512 cells of Arm A and the
 sixteen Arm B macros sit at exactly the coordinates they have in the baseline.
-Only the wiring was done again. It passes the same physical checks with zero
-violations. Figure 1b shows it and Section 7.4 scores it.
+Their wiring was done again, around the new arm and the bigger selector. It
+passes the same physical checks with zero violations. Figure 1b shows it and
+Section 7.4 scores it.
 
 ![Figure 1b. Block diagram of the three-arm release build. Arm C's sixteen rings are placed by hand from one template and routed by the flow; the core selects one of 48 and counts over a selectable window.](figures/chip_block_3arm.png)
 
@@ -533,10 +535,11 @@ cycles, would have pushed the fast corner into a silent wrap that returns a
 believable smaller count instead of an error.
 
 The release build changes both halves of that. Its window is selectable and a
-wrap latches a flag rather than passing as a reading. At the 2048 cycles and 50
-MHz the measurement firmware uses, the fastest ring on the release build, an
-Arm C ring at 911.1 MHz at the fast corner, reads 37318, 1.76x under the
-ceiling, and the clock would have to fall below 28.5 MHz before it wrapped.
+wrap latches a flag rather than passing as a reading. Its fastest ring is not
+an Arm A ring, which is why this paragraph steps outside the section: at the
+2048 cycles and 50 MHz the measurement firmware uses, an Arm C ring at 911.1
+MHz at the fast corner reads 37318, 1.76x under the ceiling, and the clock
+would have to fall below 28.5 MHz before it wrapped.
 
 ### 5.5 Does the lumped model survive the real RC network?
 
@@ -1215,11 +1218,12 @@ all. Ranking the rings by extracted capacitance alone still gets all eight
 signs.
 
 The bits themselves moved. The baseline reads `01101000` and the release build
-`11100000`: pairs 0 and 4 flip, the same way at ss, tt and ff and under both
-parasitic models. Nothing changed between the builds but wire. The router took
-different paths to the same cells, one ring's loop capacitance moved by 3.4 fF,
-and the rank correlation between the two builds' sixteen loop capacitances is
-0.71.
+`11100000`: pairs 0/1 and 8/9 flip, the same way at ss, tt and ff and under
+both parasitic models. Nothing about Arm A changed between the builds but its
+wires. The router took different paths to the same cells, on a die that now
+also held Arm C and a bigger selector; one ring's loop capacitance moved by 3.4
+fF, and the rank correlation between the two builds' sixteen loop capacitances
+is 0.71.
 
 That sharpens Section 6.2 rather than undoing it. The slope carries from one
 build to another; the individual loads do not, because they are the router's,
@@ -1233,15 +1237,16 @@ carry 9.90 fF of loop capacitance on average with a standard deviation of 0.55,
 against 14.66 and 1.77 for Arm A on the same die. Their frequencies spread
 2.19% peak to peak under the full RC network, 566.9 to 579.4 MHz, where Arm A's
 spread 5.88%, and the standard deviation of the sixteen is 0.36 of Arm A's.
-Placing the rings by hand takes out about two thirds of the spread.
 
-It takes out none of the predictability. Arm C's closest pair is 0.321% apart,
-3.7 mismatch standard deviations, the arm holds 0.00 bits of 8 and a reader
-calls 8.00. Under the lumped decks the closest pair is 2.3 standard deviations
-out and the arm holds 0.09 bits, which is still close to nothing. Its bits,
-`11010110`, are the same at ss, tt and ff. A tighter arm only hides bits once
-its pair gaps fall under the mismatch scale, and a third of Arm A's spread is
-nowhere near that.
+Placing the rings by hand takes out about two thirds of the spread, and none of
+the predictability.
+
+Arm C's closest pair is 0.321% apart, 3.7 mismatch standard deviations, the arm
+holds 0.00 bits of 8 and a reader calls 8.00. Under the lumped decks the
+closest pair is 2.3 standard deviations out and the arm holds 0.09 bits, which
+is still close to nothing. Its bits, `11010110`, are the same at ss, tt and ff.
+A tighter arm only hides bits once its pair gaps fall under the mismatch scale,
+and a third of Arm A's spread is nowhere near that.
 
 `predictable_bits.py` makes the table from the release build's files, and
 `verify_predictability.py` re-derives its totals, its two closest pairs and the
@@ -1418,9 +1423,10 @@ oscillator vector does not support a population claim.
 
 Most of it was measured on a build that is not the one being made. The release
 build has had its corner sweep, its full RC comparison and the bit count of
-Section 7.1 repeated, in Section 7.4, and none of the rest of this paper. The
-compensation, the re-pairing, the resolution floor and the Arm B instances are
-the baseline's, and whether their numbers carry over I have not tested yet.
+Section 7.1 repeated in Section 7.4, and its counter range worked out in
+Section 5.4, and that is all. The compensation, the re-pairing, the resolution
+floor and the Arm B instances are the baseline's, and whether their numbers
+carry over I have not tested yet.
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. The lumped-capacitance model
@@ -1596,8 +1602,8 @@ hand-placed third arm spreads a third as much and holds 0.00 bits.
 
 The method was worked out on the two-arm baseline, where the same count gives
 0.46 bits of 8 and 7.91 called, and 0.30 to 0.69 bits and 7.84 to 7.95 across
-the interval. The two builds share their placement and differ only in wiring,
-and two of the eight bits changed between them. That is the plainest evidence
+the interval. Arm A has the same placement in both builds and different wiring,
+and two of its eight bits changed between them. That is the plainest evidence
 here that a reader needs the target's own extraction. The rest of this section
 is about the baseline.
 

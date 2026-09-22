@@ -41,8 +41,9 @@ are published.
 wrapped and stays latched until reset.
 
 A coherent nominal post-layout simulation of the release build, run 83,
-predicts a 5.73% peak-to-peak spread in Arm A, 5.88% with the full extracted RC
-network, and it follows the routing capacitance closely. Arm C spreads 2.19%
+predicts a 5.73% peak-to-peak spread in Arm A from the lumped decks, 5.88%
+with the full extracted RC network, and it follows the routing capacitance
+closely. Arm C spreads 2.19%
 under the same RC network, about a third of Arm A. Nine builds of the earlier
 two-arm layout that vary only placement density put the Arm A number in
 context: they run from 4.19% to 6.99%, median 5.75%.
@@ -160,7 +161,8 @@ The fastest ring on the chip in the simulated fast corner is an Arm C ring at
 911.1 MHz, which at 2048 puts that floor at 28.5 MHz. At 50 MHz that same ring
 reads 37318, a little over half of full scale, so there is still close to a
 factor of two in hand for silicon coming out faster than the model. Arm A's
-fastest there is 887.2 MHz, so it is Arm C that sets the floor now.
+fastest there is 887.2 MHz, or 891.7 in the decks the Arm C figure comes from,
+and Arm B's is 891.4, so it is Arm C that sets the floor now.
 
 2048 at 50 MHz is where those two pull evenly, and it is what the firmware
 uses. If a die runs faster than that leaves room for, `uio[4]` says so: it

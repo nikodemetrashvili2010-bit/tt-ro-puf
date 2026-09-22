@@ -10,7 +10,8 @@ as if that were the chip, and it is not any more. That build stays in the
 repository, frozen, as the baseline the paper measured. Its rows are in their
 own table further down, with a column for whether each result still holds.
 
-Every row points at archived flow output or at logs a script reads.
+Nearly every row points at archived flow output or at logs a script reads,
+and where the logs were not kept the row says so.
 `sim/spice/gono/verify_build_bundle.py` checks that a build folder holds one
 flow run and not a mixture. It exists because `dualarm/build_current` once
 carried a stale metrics file, real and clean checks that belonged to the build
@@ -33,9 +34,9 @@ netlist byte for byte identical to the archived ones.
 | Lumped capacitance against the full RC network | Arm A widens from 5.75% to 5.88%, every ring 0.67% to 1.67% slower, rank correlation 0.965; Arm C 2.17% to 2.19%, rank correlation 0.906; no pair bit reverses in either arm | `rc_validation_3arm.csv` and `rc_validation_armc.csv`, logs in `sim/spice/gono/rc3/`, both tables regenerated in CI | no |
 | 48-to-1 selector at the fast corner | all 48 paths carry every edge, 30 of 30 matched and 15 flop rises on each, 48 blocked controls silent; rise delay 174 to 349 ps; every path lengthens its high level by 90 to 209 ps and shortens its low by the same, period preserved | `sim/spice/gono/mux3/`, `mux3_validation.csv`, regenerated in CI | no |
 | Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 38 enable-fall phases 50 ps apart, every one settles to a rail and the count steps by at most one; the last edge is lost on 2 of them | `boundary_validation_B13_3arm.csv`, raw logs not archived | no |
-| Fine boundary sweep | not run on this build; the 50 ps grid only places B13's step somewhere between 4 and 104 ps at the tap, and no other path was swept at the boundary | `docs/phaseG_g3_extract.md` | before final trust |
+| Fine boundary sweep | not run on this build; the 50 ps grid only places B13's step somewhere between 68 and 104 ps at the tap, and no other path was swept at the boundary | `docs/phaseG_g3_extract.md` | before final trust |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
-| Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply 0.28 to 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
+| Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply at most 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
 | Drawn spacing, checked a second way | KLayout width and space on li1 to met4, no failures, the smallest gaps equal to the rule | `real_world/space_width.py` and its output; needs KLayout, so not in the gate | no |
 | Arm B on this build's routes | not run; the sixteen instances have only been run with the baseline's top-level routes, see the table below | - | no |
 | Silicon measurements | chips not fabricated | - | next phase |
@@ -47,7 +48,7 @@ netlist byte for byte identical to the archived ones.
 | Two-arm build | Magic DRC 0, KLayout DRC 0, XOR 0, LVS 0, antenna 0, route DRC 0, power grid 0 on both rails, no setup or hold violations; frozen and hashed, not submitted | `dualarm/build_current/` | no, a different GDS with its own row above |
 | Archived bundle is one flow run | 8 of 8 agree | `verify_build_bundle.py` | no, same reason |
 | Counter clocking at the ring boundary | 38 enable-fall phases at tt and at ff through a real `dfrtp_2`, each settles to a rail and the count moves by at most one edge; the ff sweep repeated on 17 September on another machine, 38 of 38 | `gen_flop_sweep.py`, `analyze_flop_sweep.py`, sweep logs not archived | yes, the ring, the flop and the counter are the same circuit |
-| Frequency across PVT corners, Arm A | 5.46%, 5.53%, 5.56% at ss, tt and ff, bits `01101000` | `analyze_corners.py` on the logs in `build_current/` | no, pairs 0 and 4 read the other way on the release build |
+| Frequency across PVT corners, Arm A | 5.46%, 5.53%, 5.56% at ss, tt and ff, bits `01101000` | `analyze_corners.py` on the logs in `build_current/` | no, pairs 0/1 and 8/9 read the other way on the release build |
 | Frequency across PVT corners, Arm B | sixteen instances with their own enable and output routes, 0.0001%, 0.0025% and 0.0009% peak to peak at ss, tt and ff, far under the 0.01% written down before the runs | `armb_instances_ss_out.txt`, `armb_instances_out.txt`, `armb_instances_ff_out.txt`, `analyze_instance.py --corner` | the macro, yes; the routes were drawn again and have not been rerun |
 | Lumped capacitance against distributed RC, Arm A | 5.55% to 5.84%, rank correlation 0.994, no pair bit reverses; re-simulated 2026-07-30 after the coupling capacitors were found double counted, repeated 17 September | `rc_validation.csv`, raw logs not archived | no, replaced by the release build's row |
 | Placement sensitivity | nine builds, median 5.75%, range 4.19% to 6.99% | `dualarm/placement_sweep/` | as context; Arm A's placement is the same in both builds |
@@ -76,11 +77,12 @@ diodes and 4047 fill and decap cells.
 
 Against the baseline, Arm A's cells did not move. The XOR of the two GDS files
 inside the 512 Arm A cell footprints is identical on every layer that belongs
-to the cells and different on the layers the router owns. So the difference
-between the builds is wire. That was enough to move one ring's loop
-capacitance by 3.4 fF and flip two of Arm A's eight bits, which is why every
-number in the first table was read from this build and nothing was carried
-over.
+to the cells and different on the layers the router owns, so for Arm A the
+difference between the builds is wire. The die around it did change, Arm C's
+512 cells and a bigger selector among other things, and the router answered
+with new paths. That was enough to move one ring's loop capacitance by 3.4 fF
+and flip two of Arm A's eight bits, which is why every number in the first
+table was read from this build and nothing was carried over.
 
 The run raises the warning classes a free-running ring and a black-boxed macro
 always raise under conventional static timing: 473 lint warnings and no lint
@@ -106,8 +108,9 @@ The max-fanout violation is `clknet_0_clk` at 16 against a limit of 10, the
 clock-tree root. The floating nets are `VPWR` and `VGND`, the same two every
 archived build reports. The five disconnected pins are `uio_in[0]` and
 `uio_in[4]` to `uio_in[7]`: bits 0, 4 and 5 are outputs, so their input
-halves have no use, and 6 and 7 are spare. The baseline had nine, before the
-window and version inputs took `uio_in[1:3]`. No ring net is near the heavy
+halves have no use, and 6 and 7 are spare. The baseline had nine, `ui_in[7]`
+and all eight of `uio_in`, before the second arm-select bit took `ui_in[7]` and
+the window and version inputs took `uio_in[1:3]`. No ring net is near the heavy
 end: the 992 ring nets of Arms A and C carry at most 1.849 fF, against 74.66 fF
 on the clock root. `triage_warnings.py` derives all of it from the DEF, the
 SPEF and the netlist and fails if a number disagrees with `metrics.json`.
@@ -152,9 +155,10 @@ In the order I care about them.
 
 The fine boundary sweep on the release build. B13's coarse sweep says every
 phase resolves and the count moves by one at most, and that is the claim that
-matters. What it cannot say is where the step sits or how narrow the pulse gets
-right at it. On the baseline that pulse was 80 ps, on B00, and the fine sweeps
-that found it are the model for this one.
+matters. What it cannot say is where the step sits, only that it is somewhere
+between 68 and 104 ps at the tap, or how narrow the pulse gets right at it. On
+the baseline that pulse was 80 ps, on B00, and the fine sweeps that found it
+are the model for this one.
 
 About the 80 ps. An earlier version of this file called it a 2.5 ps margin over
 the 77.5 ps the library characterizes for `dfrtp_2` at ff_n40C_1v95. I read the

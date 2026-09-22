@@ -42,11 +42,13 @@ FW = resolve("firmware/measure_puf.py")
 PAR = resolve("dualarm/build_armc/dualarm_par_out.txt")
 PAR_FF = resolve("dualarm/build_armc/dualarm_par_ff_out.txt")
 # Arm A is not the fastest arm. Arm C's rings carry two thirds of the load and
-# run about 2% faster, so the clock floor has to come from all three arms, not
-# from the arm the go/no-go decks happen to cover. Arm B's instance run is on
-# the two-arm routes; its frequency is the macro's own and sits under Arm C's.
+# run faster, about 4% ring for ring, so the clock floor has to come from all
+# three arms, not from the arm the go/no-go decks happen to cover. It was not
+# Arm A even on the baseline: Arm B's instances reach 891.4 MHz at ff there.
+# Arm B's instance run is on the two-arm routes; the frequency is the macro's.
 ARMC_TT = resolve("sim/spice/gono/rc_validation_armc.csv")
 ARMC_FF = resolve("sim/spice/gono/rc3/armC_ff")
+ARMA_FF_RC3 = resolve("sim/spice/gono/rc3/armA_ff")
 ARMB_FF = resolve("sim/spice/gono/armb_instances_ff_out.txt")
 
 results = []
@@ -75,7 +77,8 @@ def par_freqs(path):
 
 
 def armc_ff_freqs(folder):
-    """The sixteen lumped Arm C decks at ff, one log per ring."""
+    """The sixteen lumped decks at ff, one log per ring. Arm C's folder or
+    Arm A's from the same generator."""
     out = []
     for i in range(16):
         log = os.path.join(folder, "ro%02d_lumped_out.txt" % i)
@@ -223,6 +226,15 @@ check("the fastest ring at ff over all three arms is the one quoted",
       "A %.3f, B %.3f, C %.3f MHz" % (fast_a, fast_b, fast_c))
 check("and Arm A's fastest there is the archived one",
       "Arm A's fastest there is %.1f" % fast_a in flat, "%.3f MHz" % fast_a)
+# 887.2 comes from the go/no-go decks and 911.1 from gen_rc_decks, which run
+# about half a percent apart on the same ring, so the datasheet gives Arm A on
+# Arm C's generator as well, and Arm B, and all of them have to be below it.
+fast_a3 = max(armc_ff_freqs(ARMA_FF_RC3))
+check("Arm A and Arm B on the other generators are quoted and slower",
+      "or %.1f in the decks the Arm C figure comes from" % fast_a3 in flat
+      and "Arm B's is %.1f" % fast_b in flat
+      and fast_a3 < fast_c and fast_b < fast_c,
+      "A %.3f on gen_rc_decks, B %.3f" % (fast_a3, fast_b))
 
 floor_mhz = fast * window / (ceiling + 1)
 quoted_floor = float(re.search(r'floor at ([\d.]+) MHz', flat).group(1))

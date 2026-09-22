@@ -19,9 +19,11 @@ unchanged. The manifest does count every command.
 Reading the gate for that turned up the bigger gap. It ran the bundle, ring,
 placement and warning checks on `build_current`, and `build_armc`, the build
 that is actually going to the shuttle, it only hashed. The one script reading
-its logs was `verify_predictability.py`. So everything that runs against the
-baseline's archive now runs against the release build's as well, and the tables
-made yesterday are regenerated from their logs:
+its logs was `verify_predictability.py`. So the bundle, ring, placement and
+warning checks now run against the release build's archive as well, and the
+tables made yesterday are regenerated from their logs. The analysis scripts,
+noise, compensation, pairing and the Arm B instances, still read only the
+baseline, which is where they were measured:
 
     verify_ring_topology.py --arms AC, release netlist       32 of 32 rings
     verify_build_bundle.py --dir dualarm/build_armc           8 of 8
@@ -51,15 +53,17 @@ counts, a spread of 1295.
 
 The part worth keeping is the fast corner. The fastest ring on this chip is
 not in Arm A. Arm C's rings carry two thirds of the load, and at ff its ring 10
-runs at 911.1 MHz against 887.2 for Arm A's fastest and 891.4 for Arm B's. So
+runs at 911.1 MHz. Arm A's fastest is 887.2 in the go/no-go decks and 891.7 in
+the decks the Arm C figure comes from, and Arm B's is 891.4. So
 at the 2048-cycle window the clock floor is 28.5 MHz and not 27.7, and at
 50 MHz that ring reads 37318, 56.9% of full scale. Still a little over half and
-nothing to change. But the number had been taken from the wrong arm since
-Arm C existed, and nothing would have said so, because the verifier only ever
-looked at Arm A's decks.
+nothing to change. But the number had been taken from Arm A alone, and Arm A
+was not the fastest even on the baseline, where Arm B's instances reached 891.4
+against Arm A's 888.3. Nothing would have said so, because the verifier only
+ever looked at Arm A's decks.
 
 It takes the maximum over all three arms now and checks that the datasheet
-names Arm C as the one setting the floor. 25 checks. Five planted edits to a
+names Arm C as the one setting the floor. 26 checks. Six planted edits to a
 copy of the datasheet, among them putting 888.3 back and naming Arm A, each
 fail the one check they should.
 
@@ -134,7 +138,7 @@ README had two sentences saying SIGNOFF and the paper were still to do.
 
 ## Mistakes
 
-Six, kept.
+Seven, kept.
 
 B07, above. Yesterday's note and `PENDING_PUSH.md` both say the covers list
 has to move. It did not, and I only found out because I opened
@@ -168,6 +172,32 @@ The committed PDF says LibreOffice 24.2 in its own metadata, which is the
 container's, and the container rebuilds the old draft to the same page text
 line for line. So both files come from there now, and I looked at the 7.4
 table on the page before copying them anywhere.
+
+And the last one is a batch. With everything committed and before pushing, I
+read all of today's text again against the files, slowly, and it had six more
+wrong things in it. They are fixed in a second commit on top of the first:
+
+- the paper and SIGNOFF said the two builds differ only in wire. True of Arm A,
+  not of the die, which gained Arm C and a bigger selector
+- "pairs 0 and 4 flip", in a paper whose new table names pairs by their rings.
+  It is 0/1 and 8/9
+- the baseline's nine disconnected pins, explained by three inputs coming into
+  use. It was four; `ui_in[7]` became the second arm-select bit
+- B13's step bracketed as 4 to 104 ps, copied from the 18th's note. Phase 2 of
+  the same sweep already lost a 68 ps pulse, so it is 68 to 104
+- Arm C's 911.1 MHz set against Arm A's 887.2, which come from two different
+  deck generators. On the same generator Arm A's fastest is 891.7. Arm C is
+  still the fastest either way
+- "everything" that runs on the baseline's archive now running on the release
+  build's. The bundle, ring, placement and warning checks do; the analysis
+  scripts do not
+
+And a few that were loose rather than wrong: SIGNOFF quoted the supply drop as
+0.28 to 0.58 mV, which is Arm A's worst feed alone, and says "at most 0.58 mV"
+now; the paper's revision note and its limitation said no section but the
+abstract and 7.4 had release numbers, when 5.4, 5.7, 9 and 11 do too; and a
+comment in the verifier said Arm C runs 2% faster, which is fastest against
+fastest. Ring for ring it is about 4%.
 
 ## Not done
 
