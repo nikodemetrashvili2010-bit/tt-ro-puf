@@ -188,6 +188,53 @@ Records: `boundary_validation_B00.csv`, `boundary_validation_B00_fine.csv`,
 `boundary_validation_B15_tt.csv` and `boundary_validation_B15_ss.csv`, alongside
 the three from 08-02.
 
+### Through the release build's slowest path, 2026-09-22
+
+The three-arm selector is a different tree, and on the 18th its slowest path,
+B13, got the coarse sweep only: 38 phases 50 ps apart, all at a rail. That grid
+only brackets the threshold, a 68 ps pulse lost and a 104 ps one kept, so the
+question this item ended on, how narrow the last pulse gets right at the edge,
+was open again for the chip actually being made.
+
+The coarse sweep first, again, as a check on the environment. The csv came back
+byte for byte the 18th's. Then three finer grids across the step, each one
+inside the one before:
+
+    grid     phases  step at the tap    narrowest pulse at sel_ro
+    50 ps      38    68 to 104 ps       253 ps
+    5 ps       13    75 to 82 ps        202 ps
+    1 ps        6    75 to 77 ps        128 ps
+    0.2 ps      6    about 76 ps         80 ps
+
+63 phases, and every one resolves the flop to 0.000 or 1.950 V with the count
+moving by one edge at most. Nothing at mid supply, same as the baseline.
+
+The last column is the one to be careful with. Every finer grid found a
+narrower pulse, because right at the threshold the chain squeezes the last one
+and the closer the enable falls to that point the thinner the survivor gets.
+So there is no smallest pulse to quote, only a grid. At 0.2 ps it comes out at
+80 ps, B00's number on the baseline, and the flop still resolves it. That is
+where the 17th ended up from the library side: the pulse cannot be held above a
+minimum width, and it does not need to be, since it is the last one before a
+stop and either answer costs one count.
+
+One thing written above does not survive. The threshold is not only a property
+of the ring. B13 drives the same macro ring as B15 and B00, the same 1122 ps
+period at ff, and gives up at about 76 ps, 6.8% of it, where B15 gave up near
+100 and B00 near 111. The path matters too.
+
+The selector still adds a fixed time and not a fraction: 170 ps with 4.4 ps
+left unexplained on the coarse sweep, against 67.7 ps for the fraction model.
+
+This time the waveforms are kept. `sim/spice/gono/bnd3/` holds all four sweeps,
+decks, console logs and waveforms reduced by `reduce_raw.py --kind bnd`, which
+keeps what `analyze_boundary_sweep.py` actually reads: the crossings, the last
+50 samples and any tail sample of q inside the forbidden band. 264 MB of
+waveform went to 5.1 MB, the analyzer returns every field the same from both,
+and CI rebuilds all four csvs from the archive. Records:
+`boundary_validation_B13_3arm.csv` and the `_5ps`, `_1ps` and `_0p2ps` files
+beside it.
+
 ## 2. The 32-to-1 selection path (done 2026-07-31, corrected 2026-08-02)
 
 `ro_out[active_sel]` picks one of 32 outputs through a synthesized mux. A
@@ -905,6 +952,47 @@ belongs to item 1.
 Tools are `gen_instance_decks.py`, `analyze_instance.py` with `--selftest`, and
 `verify_instance.py`. The raw log and the derived record are archived in
 `sim/spice/gono/`.
+
+### On the release build's routes, 2026-09-22
+
+Everything above ran on the two-arm build's routes. Run 83 drew all sixteen
+enable and output routes again, to the 48-input selector, and the macro is the
+only part that stayed the same bytes. So the same deck, built from the release
+netlist and SPEF, at all three corners.
+
+The new routes are a little lighter on average, and the output routes are
+longer at the top. Enable runs 1.1 to 8.8 fF against 1.0 to 12.8, output 1.5 to
+45.4 fF against 2.9 to 29.5. The worst route delay goes from 4.5 to 9.1 ps, and
+the slowest edge at the selector from 318.2 to 468.5 ps at tt.
+
+    corner   peak to peak   baseline   counts at 2048 / 50 MHz
+    ss       0.0001%        0.0001%    0.02
+    tt       0.0033%        0.0025%    0.76
+    ff       0.0019%        0.0009%    0.68
+
+Wider at tt and ff, though not from the routes: at tt both ends of the spread
+carry under a picosecond of route, at ff most of it is one instance with 0.1
+ps, and the baseline's logs came from ngspice 45.2 where these are 42. Still
+under the 0.01% from `instance_run_steps.md` and under one count at every
+corner. Route delay against output capacitance is +0.915 at tt and the
+selector-side edge +1.000, as before. Frequency against it is -0.114 at tt and
++0.300 at ff, t = 1.18 where the baseline's ff reached 2.40, and at ss the
+spread is 1.5e-6 of the mean against a log that agrees with itself to 1.6e-7,
+nine times, so read that corner as an upper bound.
+
+The sentence above that says the chip cannot distinguish the sixteen "even in
+principle" was too strong when I wrote it. The count follows the reference
+clock as well as the window, and a clock slowed to just short of a wrap makes
+one count about 15 ppm, less than the 25 ppm the sixteen spread. What the run
+supports is that one reading at the measurement setting cannot tell them apart.
+
+`analyze_instance.py` and `verify_instance_corners.py` held every spread
+against the baseline's Arm A, so both take `--build release` now and use the
+release build's, 5.63%, 5.88% and 5.83% at ss, tt and ff. The second also uses
+the release window, and on these logs its ff significance check prints as a
+note, since that check was a statement about the baseline's routes. The other
+35 pass. Logs are in `sim/spice/gono/armb3/`, and CI reads all three. Section
+8.2's analysis, `matched_arm.py`, has not been redone on these routes.
 
 ## 9. Controlled multi-build spread (done, 2026-07-24)
 

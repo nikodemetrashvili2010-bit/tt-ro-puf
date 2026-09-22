@@ -4,9 +4,12 @@
 
 """Run a checked-in deck with PDK paths resolved from the environment.
 
-The historical decks retain their original absolute include paths as provenance.
-This runner substitutes only the SKY130 corner-library and standard-cell include
-lines in a temporary copy; it never rewrites the checked-in deck.
+The checked-in decks carry absolute include paths. The older ones keep the path
+they were generated with, as provenance. The release build's decks under rc3/,
+real_world/, bnd3/ and armb3/ all carry /home/pc/pdks instead, whichever machine
+made them, which is the path the older decks mostly use. This runner substitutes
+only the SKY130 corner-library and standard-cell include lines in a temporary
+copy; it never rewrites the checked-in deck.
 """
 
 import argparse

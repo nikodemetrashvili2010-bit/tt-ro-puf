@@ -5,7 +5,9 @@ project's numbers.
 
 Inputs, generated decks, raw ngspice logs, and analysis scripts live under
 `sim/spice/gono/`. The scientific argument and the limitations discussion are
-in the paper; this file keeps the run detail.
+in the paper; this file keeps the run detail. All of it is the two-arm
+baseline, `dualarm/build_current/`. The three-arm release build's numbers are
+in `README.md` and `SIGNOFF.md`.
 
 ## Summary
 
@@ -195,7 +197,7 @@ The RO-PUF papers already have a correction for systematic variation and it
 works on position. Die gradients are spatially correlated, so you fit a surface
 in x and y and subtract it. That is the thing to beat.
 
-It does not work here. Cross validated against the shipped build's full RC
+It does not work here. Cross validated against the baseline build's full RC
 frequencies, a quadratic surface in x and y comes out worse than leaving the
 data alone. On the 32-oscillator first build it reaches 27.8%, and that is
 in-sample with six free parameters, so it is a generous number. The plain
@@ -234,7 +236,7 @@ removes 97.6% and lands under the mismatch floor. That figure does not count.
 The lumped deck is handed one capacitance per net and nothing else varies, so
 the fit is recovering its own input, and only the full RC run tests anything.
 What the lumped runs are good for is transfer. The first build's fit, a
-different RTL on a different placement, reproduces the shipped build's pattern
+different RTL on a different placement, reproduces the baseline build's pattern
 without being refitted.
 
 Why the scalar correctors stop where they do is not mysterious. Two numbers
@@ -268,27 +270,27 @@ can be answered.
 
 The earlier 32-oscillator layout is a different RTL revision on an independent
 placement. Fit the capacitance model on that, never refit it, and apply it to
-the shipped build's full RC frequencies:
+the baseline build's full RC frequencies:
 
-    model                                   fitted on          residual  removed
-    capacitance                             earlier build        0.2046%   88.2%
-    capacitance and resistance              earlier build        0.2356%   86.4%
-    capacitance                             shipped, lumped      0.1853%   89.3%
-    capacitance and resistance              shipped, leave-1-out 0.1828%   89.5%
+    model                         fitted on               residual  removed
+    capacitance                   earlier build            0.2046%    88.2%
+    capacitance and resistance    earlier build            0.2356%    86.4%
+    capacitance                   baseline, lumped         0.1853%    89.3%
+    capacitance and resistance    baseline, leave-1-out    0.1828%    89.5%
 
 Transfer costs 1.3 points out of 89.5. Turning it around, a model fitted on the
-shipped build and applied to the earlier one's 32 rings removes 89.4% against
+baseline build and applied to the earlier one's 32 rings removes 89.4% against
 91.1% for that build's own cross-validated fit, so it is not an accident of
 which build I picked as the target.
 
 Two things fell out of that. The first is that resistance does not travel. Its
-coefficient is -0.0051 on the earlier build and +0.0035 on the shipped one,
+coefficient is -0.0051 on the earlier build and +0.0035 on the baseline one,
 opposite signs, so the extra half point it buys inside one build is that
 build's own leftovers and not a property of the ring. Capacitance alone
 transfers better than capacitance and resistance in both directions.
 
 The second is how little of the other build is needed: fit the slope on its
-first two rings and nothing else, and every one of the shipped build's eight
+first two rings and nothing else, and every one of the baseline build's eight
 bits still comes out the way the full simulation says.
 
     fitted on n rings   slope %/fF   residual   signs   bits guessed
@@ -702,13 +704,13 @@ that. The operating point can drift between readings, the oscillator has
 thermal noise of its own, and the counter returns an integer. All three are
 below, and the counter is the binding one.
 
-The decks come from `gen_noise_decks.py`. They read the same shipped netlist and
-SPEF as everything else here and they call `gen_dualarm_decks.py`'s own ring
-builder, so the topology cannot drift between the two scripts. The 1.80 V deck
-is the shipped nominal deck with a different title line. `analyze_noise.py`
-refuses to report anything unless that deck returns the archived nominal
-frequencies, and it checks the temperature ngspice printed in each log against
-the temperature the deck asked for.
+The decks come from `gen_noise_decks.py`. They read the same baseline netlist
+and SPEF as everything else here and they call `gen_dualarm_decks.py`'s own
+ring builder, so the topology cannot drift between the two scripts. The 1.80 V
+deck is the baseline's nominal deck with a different title line.
+`analyze_noise.py` refuses to report anything unless that deck returns the
+archived nominal frequencies, and it checks the temperature ngspice printed in
+each log against the temperature the deck asked for.
 
 ### Supply
 

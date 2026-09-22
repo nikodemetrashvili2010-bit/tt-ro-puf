@@ -48,20 +48,34 @@ from logs.
 
 So does everything run on the release build. `sim/spice/gono/rc3/` holds the
 128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
-selector decks, and `sim/spice/gono/real_world/` the power and wire-current
-decks `real_world.py` reads. CI rebuilds `rc_validation_3arm.csv`,
-`rc_validation_armc.csv` and `mux3/mux3_validation.csv` from those logs and
-diffs each against the committed copy, the same way it has done for
-`mux_validation.csv` since August.
+selector decks, `sim/spice/gono/bnd3/` the four boundary sweeps through B13,
+`sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
+`sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
+reads. CI rebuilds `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
+`mux3/mux3_validation.csv` and the four `boundary_validation_B13_3arm*.csv`
+from those logs and diffs each against the committed copy, the same way it has
+done for `mux_validation.csv` since August. The Arm B logs have no csv;
+`analyze_instance.py --build release` reads each corner and
+`verify_instance_corners.py --build release` reads all three.
+
+The boundary waveforms are reduced with `reduce_raw.py --kind bnd`, which keeps
+the crossings at half the supply, the last 50 samples and any tail sample of q
+inside the forbidden band. That is everything `analyze_boundary_sweep.py` looks
+at, with one catch: the share of the tail spent in the band is taken over all
+the tail samples, and the reduction drops the ones on a rail, so the share only
+survives when it was zero, as it is on every archived deck. Run with `--verify`
+it reads both copies of every deck through the real analyzer and fails on any
+field that differs, so a deck where it was not zero cannot slip through.
 
 Three do not: the sixteen-ring distributed-RC comparison (`rc_validation.csv`),
-the counter-boundary flop sweep, and the seven boundary sweeps through the
-selector (`boundary_validation_*.csv`). For those three the CSV is the primary
-record and a verifier can only check that the CSV is self-consistent. All three
-were run again on 17 September on a different machine and came back the same,
-which is a repeat and not a check against my logs
-(`docs/phaseG_spice_rerun.md`). The release build's boundary sweep through B13,
-`boundary_validation_B13_3arm.csv`, is a fourth with no logs behind it.
+the counter-boundary flop sweep, and the seven two-arm boundary sweeps through
+the selector (`boundary_validation_A05.csv` and the rest without `3arm` in the
+name). For those three the CSV is the primary record and a verifier can only
+check that the CSV is self-consistent. All three were run again on 17 September
+on a different machine and came back the same, which is a repeat and not a
+check against my logs (`docs/phaseG_spice_rerun.md`). The release build's
+coarse sweep through B13 had no logs either until 22 September, when it was run
+again and kept, along with three finer ones run that day for the first time.
 
 Rerunning them is the only way to check them, and the decks regenerate
 deterministically so that is possible. The provenance check binds the archived

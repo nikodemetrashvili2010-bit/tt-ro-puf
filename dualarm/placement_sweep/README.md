@@ -26,8 +26,8 @@ tried to describe it that way everywhere it gets cited.
 
 Nine builds, all hardened, all with their sixteen rings structurally intact. The
 median dispersion is 5.75% peak-to-peak and the nine run from 4.19% to 6.99%,
-with a standard deviation of 0.80%. The shipped build is the density-60 point at
-5.53%, near the middle of the band.
+with a standard deviation of 0.80%. The two-arm baseline, `build_current`, is
+the density-60 point at 5.53%, near the middle of the band.
 
 Density on its own barely predicts dispersion (r = 0.32). That is the expected
 outcome: the knob perturbs placement, it is not a physical cause of spread. Ring
@@ -35,7 +35,7 @@ capacitance spread and frequency spread do track each other across the set, from
 4.7 fF and 4.19% at the tightest build to 7.8 fF and 6.99% at the widest.
 
 I wanted to be sure the band was real and not just the flow being noisy. The
-density-60 build rebuilds the shipped configuration and came back at 5.53%,
+density-60 build rebuilds the baseline's configuration and came back at 5.53%,
 matching `build_current` to the digit, and I ran the whole sweep twice and got
 identical numbers both times. The flow is deterministic, so what the band
 measures is placement sensitivity.
@@ -64,5 +64,5 @@ repository; override with `SWEEP_ARCH`, and point at a different build directory
 with `TT_BUILD_DIR`.
 
 `plot_placement_sweep.py` prints the summary and writes `placement_sweep.png`.
-It reports the density-60 point against the shipped figure as an explicit
+It reports the density-60 point against the baseline's figure as an explicit
 determinism check.

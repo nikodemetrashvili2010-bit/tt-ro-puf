@@ -79,7 +79,7 @@ and ask what it costs an attacker.
 `build_transfer.py` moves the fit off the victim: leave-one-ring-out still
 hands a reader fifteen of the sixteen target frequencies, which he would have
 to simulate himself, so the model is refitted on the earlier 32-oscillator
-build instead and applied to the shipped one with no refitting.
+build instead and applied to the two-arm baseline with no refitting.
 
 It removes 88.2% against 89.5% for the corrector fitted on the victim, calls
 all eight bits the same way, and works in the reverse direction too. Two rings
@@ -177,7 +177,9 @@ period is 3439 ps, so ss needs `--steps 76`.
 The analyzer rejects a sweep whose count never changes for exactly that reason.
 Seven `boundary_validation_*.csv` files are the records: B15, A05 and B00 at
 the fast corner, fine 5 ps sweeps around the B15 and B00 thresholds, and B15
-again at tt and at ss.
+again at tt and at ss. Those are the two-arm baseline. The release build's
+four, all through B13 at ff on grids of 50, 5, 1 and 0.2 ps, are the `_3arm`
+files, with their decks, logs and reduced waveforms in `bnd3/`.
 
 `check_pulse_width.py` reads what the PDK promises rather than what the simulator
 shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out
@@ -200,7 +202,10 @@ without a resistor, or if an output net reaches no known selector cell.
 
 `verify_instance.py` re-derives the published numbers from the raw log with its
 own SPEF parser, netlist parser and correlation code. Records are
-`armb_instances_out.txt` and `instance_parasitics.csv`.
+`armb_instances_out.txt` and `instance_parasitics.csv`. The release build's
+routes have their own run in `armb3/`, a deck and a log per corner and one
+`instance_parasitics.csv`, and `analyze_instance.py` and
+`verify_instance_corners.py` read it with `--build release`.
 
 `gen_supply_decks.py` and `analyze_supply.py` bound the supply confound, which
 is that Arm B sits on its own met4 straps and decap while Arm A sits on

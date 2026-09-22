@@ -45,11 +45,13 @@ PAR_FF = resolve("dualarm/build_armc/dualarm_par_ff_out.txt")
 # run faster, about 4% ring for ring, so the clock floor has to come from all
 # three arms, not from the arm the go/no-go decks happen to cover. It was not
 # Arm A even on the baseline: Arm B's instances reach 891.4 MHz at ff there.
-# Arm B's instance run is on the two-arm routes; the frequency is the macro's.
+# Since 22 September Arm B has a run on the release build's own routes, armb3/,
+# and that is the one read here. Its fastest instance lands on the same 891.4,
+# because the routes sit outside the ring and the frequency is the macro's.
 ARMC_TT = resolve("sim/spice/gono/rc_validation_armc.csv")
 ARMC_FF = resolve("sim/spice/gono/rc3/armC_ff")
 ARMA_FF_RC3 = resolve("sim/spice/gono/rc3/armA_ff")
-ARMB_FF = resolve("sim/spice/gono/armb_instances_ff_out.txt")
+ARMB_FF = resolve("sim/spice/gono/armb3/armb_instances_ff_out.txt")
 
 results = []
 
@@ -179,6 +181,20 @@ def counts(f_mhz, clk_hz):
     return f_mhz * 1e6 * window / clk_hz
 
 
+def quoted(pattern, what, conv=int):
+    """The numbers one datasheet sentence states, or a FAIL saying it is gone.
+
+    Until 2026-09-22 a reworded sentence stopped this script with an
+    AttributeError, a red job with no reason on it. Now it says which one.
+    """
+    m = re.search(pattern, flat)
+    if m is None:
+        check("the datasheet still states " + what, False,
+              "no sentence matches %r" % pattern)
+        return None
+    return tuple(conv(g) for g in m.groups())
+
+
 # ------------------------------------------------- the arithmetic in the prose
 
 par = par_freqs(PAR)
@@ -186,34 +202,40 @@ lo, hi = min(par), max(par)
 check("the Arm A range in the datasheet is the archived one",
       "%.1f to %.1f MHz" % (lo, hi) in flat, "%.1f to %.1f" % (lo, hi))
 
-quoted_lo, quoted_hi = (int(x) for x in
-                        re.search(r'roughly (\d+) to (\d+) counts', flat).groups())
-check("the quoted count range follows from the quoted frequencies",
-      abs(counts(lo, fw_clk) - quoted_lo) < 10
-      and abs(counts(hi, fw_clk) - quoted_hi) < 10,
-      "%.0f to %.0f against %d to %d"
-      % (counts(lo, fw_clk), counts(hi, fw_clk), quoted_lo, quoted_hi))
+got = quoted(r'roughly (\d+) to (\d+) counts', "the Arm A count range")
+if got:
+    quoted_lo, quoted_hi = got
+    check("the quoted count range follows from the quoted frequencies",
+          abs(counts(lo, fw_clk) - quoted_lo) < 10
+          and abs(counts(hi, fw_clk) - quoted_hi) < 10,
+          "%.0f to %.0f against %d to %d"
+          % (counts(lo, fw_clk), counts(hi, fw_clk), quoted_lo, quoted_hi))
 
-spread = int(re.search(r'about (\d+) counts', flat).group(1))
-check("the spread in counts follows from the same two numbers",
-      abs((counts(hi, fw_clk) - counts(lo, fw_clk)) - spread) < 10,
-      "%.0f against %d" % (counts(hi, fw_clk) - counts(lo, fw_clk), spread))
+got = quoted(r'about (\d+) counts', "the spread in counts")
+if got:
+    spread, = got
+    check("the spread in counts follows from the same two numbers",
+          abs((counts(hi, fw_clk) - counts(lo, fw_clk)) - spread) < 10,
+          "%.0f against %d" % (counts(hi, fw_clk) - counts(lo, fw_clk), spread))
 
 c_tt = armc_tt_lumped(ARMC_TT)
-c_lo, c_hi = (int(x) for x in
-              re.search(r'Arm C sits higher and much closer together, '
-                        r'(\d+) to (\d+)', flat).groups())
-check("the Arm C count range follows from its lumped decks",
-      len(c_tt) == 16
-      and abs(counts(min(c_tt), fw_clk) - c_lo) < 10
-      and abs(counts(max(c_tt), fw_clk) - c_hi) < 10,
-      "%.0f to %.0f against %d to %d"
-      % (counts(min(c_tt), fw_clk), counts(max(c_tt), fw_clk), c_lo, c_hi))
+got = quoted(r'Arm C sits higher and much closer together, (\d+) to (\d+)',
+             "the Arm C count range")
+if got:
+    c_lo, c_hi = got
+    check("the Arm C count range follows from its lumped decks",
+          len(c_tt) == 16
+          and abs(counts(min(c_tt), fw_clk) - c_lo) < 10
+          and abs(counts(max(c_tt), fw_clk) - c_hi) < 10,
+          "%.0f to %.0f against %d to %d"
+          % (counts(min(c_tt), fw_clk), counts(max(c_tt), fw_clk), c_lo, c_hi))
 
-ppm = int(re.search(r'that is (\d+) parts per million', flat).group(1))
-check("one count is the stated fraction of full scale",
-      abs(1e6 / counts(hi, fw_clk) - ppm) < 1,
-      "%.1f ppm against %d" % (1e6 / counts(hi, fw_clk), ppm))
+got = quoted(r'that is (\d+) parts per million', "one count in ppm")
+if got:
+    ppm, = got
+    check("one count is the stated fraction of full scale",
+          abs(1e6 / counts(hi, fw_clk) - ppm) < 1,
+          "%.1f ppm against %d" % (1e6 / counts(hi, fw_clk), ppm))
 
 fast_a = max(par_freqs(PAR_FF))
 fast_c = max(armc_ff_freqs(ARMC_FF))
@@ -236,16 +258,36 @@ check("Arm A and Arm B on the other generators are quoted and slower",
       and fast_a3 < fast_c and fast_b < fast_c,
       "A %.3f on gen_rc_decks, B %.3f" % (fast_a3, fast_b))
 
-floor_mhz = fast * window / (ceiling + 1)
-quoted_floor = float(re.search(r'floor at ([\d.]+) MHz', flat).group(1))
-check("the clock floor is where the counter would wrap",
-      abs(floor_mhz - quoted_floor) < 0.05,
-      "%.3f MHz against %.1f quoted" % (floor_mhz, quoted_floor))
+# The Arm B spreads the datasheet quotes are the release routes' own, the
+# three logs in armb3/, to the four decimals it prints. Added 2026-09-22 with
+# that run, so a rerun that moves them cannot leave the page behind.
+ARMB = {c: resolve("sim/spice/gono/armb3/" + n) for c, n in
+        (("tt", "armb_instances_out.txt"), ("ss", "armb_instances_ss_out.txt"),
+         ("ff", "armb_instances_ff_out.txt"))}
+got = quoted(r"spread ([\d.]+)% peak to peak at tt, ([\d.]+)% at ss and "
+             r"([\d.]+)% at ff", "the Arm B spreads on the release routes", str)
+if got:
+    want = []
+    for c in ("tt", "ss", "ff"):
+        f = armb_freqs(ARMB[c])
+        want.append("%.4f" % (100.0 * (max(f) - min(f)) / (sum(f) / len(f))))
+    check("the Arm B spreads it quotes are the release logs'",
+          list(got) == want, "%s against %s" % ("/".join(got), "/".join(want)))
 
-at_fast = int(re.search(r'same ring reads (\d+)', flat).group(1))
-check("the fast-corner count at the recommended clock is right",
-      abs(counts(fast, fw_clk) - at_fast) < 1,
-      "%.0f against %d" % (counts(fast, fw_clk), at_fast))
+floor_mhz = fast * window / (ceiling + 1)
+got = quoted(r'floor at ([\d.]+) MHz', "the clock floor", float)
+if got:
+    quoted_floor, = got
+    check("the clock floor is where the counter would wrap",
+          abs(floor_mhz - quoted_floor) < 0.05,
+          "%.3f MHz against %.1f quoted" % (floor_mhz, quoted_floor))
+
+got = quoted(r'same ring reads (\d+)', "the fast-corner reading")
+if got:
+    at_fast, = got
+    check("the fast-corner count at the recommended clock is right",
+          abs(counts(fast, fw_clk) - at_fast) < 1,
+          "%.0f against %d" % (counts(fast, fw_clk), at_fast))
 check("that count really is a little over half of full scale",
       0.5 < counts(fast, fw_clk) / ceiling < 0.6,
       "%.1f%% of %d" % (100 * counts(fast, fw_clk) / ceiling, ceiling))
@@ -255,10 +297,13 @@ check("the window below the one in use is a quarter of it, as the "
       and "The 512 window gives a quarter of each, and 256 an eighth." in flat,
       "%d, %d, %d" % (wins[0], wins[1], wins[2]))
 
-ppm_512 = int(re.search(r'At 512 it is (\d+) ppm', flat).group(1))
-check("the finer window's resolution follows from the same frequencies",
-      abs(1e6 / (hi * 1e6 * wins[1] / fw_clk) - ppm_512) < 1,
-      "%.1f ppm against %d" % (1e6 / (hi * 1e6 * wins[1] / fw_clk), ppm_512))
+got = quoted(r'At 512 it is (\d+) ppm', "the resolution at 512")
+if got:
+    ppm_512, = got
+    check("the finer window's resolution follows from the same frequencies",
+          abs(1e6 / (hi * 1e6 * wins[1] / fw_clk) - ppm_512) < 1,
+          "%.1f ppm against %d"
+          % (1e6 / (hi * 1e6 * wins[1] / fw_clk), ppm_512))
 
 
 # ------------------------------------------------------------------------ report

@@ -33,12 +33,12 @@ netlist byte for byte identical to the archived ones.
 | Counter range | the fastest ring on the chip is Arm C's ring 10 at ff, and it reads 37318 of 65535 at the 2048-cycle window and 50 MHz; a wrap would latch `uio[4]` rather than pass as a reading | `verify_datasheet.py` | no |
 | Lumped capacitance against the full RC network | Arm A widens from 5.75% to 5.88%, every ring 0.67% to 1.67% slower, rank correlation 0.965; Arm C 2.17% to 2.19%, rank correlation 0.906; no pair bit reverses in either arm | `rc_validation_3arm.csv` and `rc_validation_armc.csv`, logs in `sim/spice/gono/rc3/`, both tables regenerated in CI | no |
 | 48-to-1 selector at the fast corner | all 48 paths carry every edge, 30 of 30 matched and 15 flop rises on each, 48 blocked controls silent; rise delay 174 to 349 ps; every path lengthens its high level by 90 to 209 ps and shortens its low by the same, period preserved | `sim/spice/gono/mux3/`, `mux3_validation.csv`, regenerated in CI | no |
-| Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 38 enable-fall phases 50 ps apart, every one settles to a rail and the count steps by at most one; the last edge is lost on 2 of them | `boundary_validation_B13_3arm.csv`, raw logs not archived | no |
-| Fine boundary sweep | not run on this build; the 50 ps grid only places B13's step somewhere between 68 and 104 ps at the tap, and no other path was swept at the boundary | `docs/phaseG_g3_extract.md` | before final trust |
+| Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 63 enable-fall phases over four sweeps 50, 5, 1 and 0.2 ps apart, every one settles to a rail and the count steps by at most one. The step sits at about 76 ps at the tap, and just above it the flop sees a pulse as narrow as 80 ps on the finest grid | the four `boundary_validation_B13_3arm*.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_b13_armb.md` | no |
+| Boundary through the other 47 paths | not swept; every one carries all 30 judged edges in the selector sweep, and B13 is the slowest rise of the 48 | `mux3_validation.csv` | before final trust |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
 | Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply at most 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
 | Drawn spacing, checked a second way | KLayout width and space on li1 to met4, no failures, the smallest gaps equal to the rule | `real_world/space_width.py` and its output; needs KLayout, so not in the gate | no |
-| Arm B on this build's routes | not run; the sixteen instances have only been run with the baseline's top-level routes, see the table below | - | no |
+| Arm B on this build's routes | all sixteen start at ss, tt and ff carrying the enable and output routes run 83 drew, the longest output route 45.4 fF where the baseline's stopped at 29.5: 0.0001%, 0.0033% and 0.0019% peak to peak, under the 0.01% written down before the first run and under one count at the 2048-cycle window and 50 MHz | `sim/spice/gono/armb3/`, `analyze_instance.py --build release` at each corner and `verify_instance_corners.py --build release`, in CI, `docs/phaseG_b13_armb.md` | no |
 | Silicon measurements | chips not fabricated | - | next phase |
 
 ## The two-arm baseline
@@ -49,7 +49,7 @@ netlist byte for byte identical to the archived ones.
 | Archived bundle is one flow run | 8 of 8 agree | `verify_build_bundle.py` | no, same reason |
 | Counter clocking at the ring boundary | 38 enable-fall phases at tt and at ff through a real `dfrtp_2`, each settles to a rail and the count moves by at most one edge; the ff sweep repeated on 17 September on another machine, 38 of 38 | `gen_flop_sweep.py`, `analyze_flop_sweep.py`, sweep logs not archived | yes, the ring, the flop and the counter are the same circuit |
 | Frequency across PVT corners, Arm A | 5.46%, 5.53%, 5.56% at ss, tt and ff, bits `01101000` | `analyze_corners.py` on the logs in `build_current/` | no, pairs 0/1 and 8/9 read the other way on the release build |
-| Frequency across PVT corners, Arm B | sixteen instances with their own enable and output routes, 0.0001%, 0.0025% and 0.0009% peak to peak at ss, tt and ff, far under the 0.01% written down before the runs | `armb_instances_ss_out.txt`, `armb_instances_out.txt`, `armb_instances_ff_out.txt`, `analyze_instance.py --corner` | the macro, yes; the routes were drawn again and have not been rerun |
+| Frequency across PVT corners, Arm B | sixteen instances with their own enable and output routes, 0.0001%, 0.0025% and 0.0009% peak to peak at ss, tt and ff, far under the 0.01% written down before the runs | `armb_instances_ss_out.txt`, `armb_instances_out.txt`, `armb_instances_ff_out.txt`, `analyze_instance.py --corner` | the macro, yes; the routes were drawn again and have their own row above |
 | Lumped capacitance against distributed RC, Arm A | 5.55% to 5.84%, rank correlation 0.994, no pair bit reverses; re-simulated 2026-07-30 after the coupling capacitors were found double counted, repeated 17 September | `rc_validation.csv`, raw logs not archived | no, replaced by the release build's row |
 | Placement sensitivity | nine builds, median 5.75%, range 4.19% to 6.99% | `dualarm/placement_sweep/` | as context; Arm A's placement is the same in both builds |
 | Hardened Arm B macro | recorded checks clean, bundle 8 of 8 | `macro/romacro_final/` | yes, the same macro |
@@ -153,12 +153,10 @@ from it stays in the paper as a prior run, not as a result of this design.
 
 In the order I care about them.
 
-The fine boundary sweep on the release build. B13's coarse sweep says every
-phase resolves and the count moves by one at most, and that is the claim that
-matters. What it cannot say is where the step sits, only that it is somewhere
-between 68 and 104 ps at the tap, or how narrow the pulse gets right at it. On
-the baseline that pulse was 80 ps, on B00, and the fine sweeps that found it
-are the model for this one.
+The boundary through the other 47 selector paths. B13, the slowest, has been
+swept four ways since 22 September, down to 0.2 ps steps, and every phase
+resolves. The rest have only the steady selector sweep behind them. The old
+file marked 29 of 32 paths the same way on the baseline.
 
 About the 80 ps. An earlier version of this file called it a 2.5 ps margin over
 the 77.5 ps the library characterizes for `dfrtp_2` at ff_n40C_1v95. I read the
@@ -172,21 +170,28 @@ whichever way it resolves the count moves by one, which is what the
 three-sample handshake is for. It was never a margin, and I should not have
 written it as one.
 
-Arm B's sixteen instances on the release build's routes. The macro and its
-inside are the same, but every instance's enable and output routes were drawn
-again, to a bigger selector. `gen_instance_decks.py` already takes the netlist
-and the top-level SPEF as arguments.
+The release build says the same from the other side. B13's sweeps found a
+narrower pulse at every finer grid, 202 ps at 5 ps steps, 128 at 1 ps and 80 at
+0.2 ps, so the width right at the threshold is a property of how finely you
+look rather than of the circuit, and the flop resolved every one of them.
+
+Arm B's leftover on the release build's routes. The sixteen were run on them on
+22 September and still spread under one count at the measurement setting.
+Whether anything in the design database predicts what is left, and what it
+would be worth in bits, is Section 8.2 of the paper, and that has only been
+asked of the baseline's routes; `matched_arm.py` reads the baseline's DEF and
+logs by name.
 
 The soft obstruction around Arm A. With Arm A and Arm C both fixed in place it
 holds nothing, and it wants one build with only that change to show whether it
 still earns its place.
 
-Raw logs. The release build's rings, selector and physical checks keep their
-logs in the repository, and CI re-derives the numbers from them. The B13
-boundary sweep does not, and on the baseline neither do the distributed-RC
-comparison, the flop sweep and the seven boundary sweeps. All of those
-baseline ones were run again on 17 September on a different machine, with a
-different ngspice and PDK install, and came back the same
+Raw logs. The release build's rings, selector, boundary sweeps, Arm B instances
+and physical checks keep their logs in the repository, and CI re-derives the
+numbers from them. On the baseline the distributed-RC comparison, the flop
+sweep and the seven boundary sweeps do not. All of those baseline ones were run
+again on 17 September on a different machine, with a different ngspice and PDK
+install, and came back the same
 ([docs/phaseG_spice_rerun.md](docs/phaseG_spice_rerun.md)). A repeat, not a
 check against the original logs.
 

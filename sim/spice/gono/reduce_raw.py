@@ -30,8 +30,20 @@ Three things have to survive or every number moves:
 Kept rows are copied as their original bytes. Nothing is reparsed and
 reformatted on the way out, so no float rounding can creep in.
 
+The boundary sweeps need more than that, and `--kind bnd` is for them. Added
+2026-09-22, when the release build's B13 sweeps were run again to be archived.
+`analyze_boundary_sweep.py` crosses at half the supply rather than half the
+peak, so the brackets are taken at that level. It also reads the settle tail:
+q has to sit at a rail over the last two nanoseconds, measured as the fraction
+of tail samples inside 20 to 80% of the supply, and the final level is the mean
+of the last 50 samples. So the last 50 rows stay, and so does every tail
+sample of q inside that band. Rows on the rail in the tail are dropped. When
+none of q's tail is in the band the fraction is zero with or without them, and
+when some is, the fraction moves and --verify says so rather than passing.
+
 Usage:
     python3 reduce_raw.py --dir /tmp/mux --out mux --verify
+    python3 reduce_raw.py --kind bnd --vdd 1.95 --dir /tmp/bnd --out bnd3/B13 --verify
     python3 reduce_raw.py --selftest
 """
 
@@ -49,6 +61,13 @@ sys.path.insert(0, HERE)
 # interpolation needs; it makes a reduced file readable as a waveform and costs
 # almost nothing.
 MARGIN = 2
+
+# What analyze_boundary_sweep.tail_state reads, copied here so the two cannot
+# drift without --verify noticing: the forbidden band as a fraction of the
+# supply, and how many samples at the very end make up the final level.
+BND_BAND = (0.2, 0.8)
+BND_FINAL_ROWS = 50
+BND_TAIL_NS = 2.0
 
 
 class ReduceError(Exception):
@@ -114,9 +133,46 @@ def keep_indices(values, ncol: int) -> set[int]:
     return keep
 
 
-def reduce_file(src: str, dst: str) -> dict:
+def keep_indices_bnd(values, ncol: int, vdd: float,
+                     tail_ns: float = BND_TAIL_NS) -> set[int]:
+    """The rows analyze_boundary_sweep.read_phase can still see afterwards."""
+    t = [v[0] for v in values]
+    vectors = [[v[i] for v in values] for i in range(1, ncol, 2)]
+    if len(vectors) < 3:
+        raise ReduceError("expected the tap, sel_ro and q vectors")
+    level = 0.5 * vdd
+
+    keep: set[int] = {0, len(values) - 1}
+    for v in vectors:
+        for i in range(1, len(v)):
+            a, b = v[i - 1], v[i]
+            if (a < level <= b) or (a > level >= b):
+                lo = max(0, i - 1 - MARGIN)
+                hi = min(len(v) - 1, i + MARGIN)
+                keep.update(range(lo, hi + 1))
+
+    # the final level is the mean of the last samples, so they all stay
+    keep.update(range(max(0, len(values) - BND_FINAL_ROWS), len(values)))
+
+    # and any tail sample of q that sits in the forbidden band
+    q = vectors[2]
+    start = t[-1] - tail_ns * 1e-9
+    lo_v, hi_v = BND_BAND[0] * vdd, BND_BAND[1] * vdd
+    keep.update(i for i in range(len(values))
+                if t[i] >= start and lo_v < q[i] < hi_v)
+    return keep
+
+
+def reduce_file(src: str, dst: str, kind: str = "mux",
+                vdd: float | None = None) -> dict:
     header, rows, values, ncol = parse(src)
-    keep = sorted(keep_indices(values, ncol))
+    if kind == "bnd":
+        if vdd is None:
+            raise ReduceError("a boundary sweep needs --vdd, the level is "
+                              "half the supply")
+        keep = sorted(keep_indices_bnd(values, ncol, vdd))
+    else:
+        keep = sorted(keep_indices(values, ncol))
     with open(dst, "w", encoding="utf-8", newline="") as fh:
         for h in header:
             fh.write(h)
@@ -154,15 +210,36 @@ def verify_pair(src_dir: str, red_dir: str, tag: str) -> list[str]:
     return diffs
 
 
-def run(src_dir: str, out_dir: str, do_verify: bool) -> int:
-    files = sorted(glob.glob(os.path.join(src_dir, "mux_*.raw.txt")))
+def verify_pair_bnd(src_dir: str, red_dir: str, tag: str, vdd: float) -> list[str]:
+    """The same test for one boundary deck, through the boundary analyzer.
+
+    The enable-fall time is read from the deck, which reduction does not touch,
+    so both reads are pointed at the source directory for it.
+    """
+    import analyze_boundary_sweep as B
+
+    name = f"bnd_{tag}.raw.txt"
+    full = B.read_phase(src_dir, os.path.join(src_dir, name), vdd, BND_TAIL_NS)
+    red = B.read_phase(src_dir, os.path.join(red_dir, name), vdd, BND_TAIL_NS)
+    diffs = []
+    for k in sorted(set(full) | set(red)):
+        if full.get(k) != red.get(k):
+            diffs.append(f"{tag}.{k}: full {full.get(k)!r}, reduced {red.get(k)!r}")
+    return diffs
+
+
+def run(src_dir: str, out_dir: str, do_verify: bool, kind: str = "mux",
+        vdd: float | None = None) -> int:
+    prefix = "bnd_" if kind == "bnd" else "mux_"
+    files = sorted(glob.glob(os.path.join(src_dir, prefix + "*.raw.txt")))
     if not files:
-        raise ReduceError(f"no mux_*.raw.txt in {src_dir}")
+        raise ReduceError(f"no {prefix}*.raw.txt in {src_dir}")
     os.makedirs(out_dir, exist_ok=True)
 
     stats = []
     for f in files:
-        stats.append(reduce_file(f, os.path.join(out_dir, os.path.basename(f))))
+        stats.append(reduce_file(f, os.path.join(out_dir, os.path.basename(f)),
+                                 kind, vdd))
 
     tot_in = sum(s["bytes_in"] for s in stats)
     tot_out = sum(s["bytes_out"] for s in stats)
@@ -180,7 +257,7 @@ def run(src_dir: str, out_dir: str, do_verify: bool) -> int:
     # The decks carry the chain comment the analyzer reads back, so copy them
     # across too or the reduced folder is not self-contained.
     copied = 0
-    for d in sorted(glob.glob(os.path.join(src_dir, "mux_*.spice"))):
+    for d in sorted(glob.glob(os.path.join(src_dir, prefix + "*.spice"))):
         dst = os.path.join(out_dir, os.path.basename(d))
         if not os.path.exists(dst):
             open(dst, "w", newline="").write(open(d).read())
@@ -191,7 +268,10 @@ def run(src_dir: str, out_dir: str, do_verify: bool) -> int:
     print(f"\nverifying {len(tags)} decks against the real analyzer")
     all_diffs = []
     for tag in tags:
-        all_diffs += verify_pair(src_dir, out_dir, tag)
+        if kind == "bnd":
+            all_diffs += verify_pair_bnd(src_dir, out_dir, tag, vdd)
+        else:
+            all_diffs += verify_pair(src_dir, out_dir, tag)
     if all_diffs:
         print(f"\nFAIL: {len(all_diffs)} field(s) differ between full and reduced")
         for d in all_diffs[:20]:
@@ -295,6 +375,62 @@ def selftest() -> int:
         caught2 = "expected" in str(exc)
     checks.append(("an unexpected column layout is refused", caught2))
 
+    # --kind bnd, read back through analyze_boundary_sweep itself. Phase 0 is a
+    # normal stop with a small ripple on q's last samples, so the mean of the
+    # last 50 is not the last sample; phase 1 leaves q hung at mid-rail, the
+    # failure the whole sweep exists to find, so its tail is in the band.
+    import analyze_boundary_sweep as B
+    vdd = 1.95
+    bd = tempfile.mkdtemp()
+    B._synth(bd, 0, vdd, 1.13e-9, 12.3e-9, 0.36e-9, 0.541e-9, 120e-12)
+    B._synth(bd, 1, vdd, 1.13e-9, 12.4e-9, 0.36e-9, 0.541e-9, 120e-12,
+             hang=True)
+    raw0 = os.path.join(bd, "bnd_00.raw.txt")
+    lines = open(raw0).read().splitlines()
+    for j in range(len(lines) - 60, len(lines)):
+        p = lines[j].split()
+        p[5] = "%.6e" % (float(p[5]) + 1e-4 * ((j % 3) - 1))
+        lines[j] = " ".join(p)
+    open(raw0, "w", newline="\n").write("\n".join(lines) + "\n")
+
+    def reduce_bnd(out):
+        os.makedirs(out, exist_ok=True)
+        return [reduce_file(os.path.join(bd, "bnd_%02d.raw.txt" % k),
+                            os.path.join(out, "bnd_%02d.raw.txt" % k),
+                            "bnd", vdd) for k in (0, 1)]
+
+    st_b = reduce_bnd(os.path.join(bd, "red"))
+    diffs = (verify_pair_bnd(bd, os.path.join(bd, "red"), "00", vdd)
+             + verify_pair_bnd(bd, os.path.join(bd, "red"), "01", vdd))
+    checks.append((f"boundary mode keeps {st_b[0]['rows_out']} of "
+                   f"{st_b[0]['rows_in']} rows and the boundary analyzer reads "
+                   f"every field the same, hung q included", not diffs
+                   and st_b[0]["rows_out"] < st_b[0]["rows_in"]))
+
+    # planted: keep only the last sample instead of the last 50
+    global BND_FINAL_ROWS
+    saved, BND_FINAL_ROWS = BND_FINAL_ROWS, 1
+    try:
+        reduce_bnd(os.path.join(bd, "red1"))
+        d1 = verify_pair_bnd(bd, os.path.join(bd, "red1"), "00", vdd)
+    finally:
+        BND_FINAL_ROWS = saved
+    checks.append(("boundary mode without the last-50 rule moves the final "
+                   "level, and verify sees it", any(".final:" in x for x in d1)))
+
+    # and a boundary reduction with no supply given is refused
+    try:
+        reduce_file(raw0, os.path.join(bd, "x.txt"), "bnd", None)
+        caught3 = False
+    except ReduceError as exc:
+        caught3 = "--vdd" in str(exc)
+    checks.append(("a boundary reduction without --vdd is refused", caught3))
+
+    # Both scratch folders go, so running this in a loop does not fill /tmp.
+    import shutil
+    shutil.rmtree(d, ignore_errors=True)
+    shutil.rmtree(bd, ignore_errors=True)
+
     print("selftest")
     bad_n = 0
     for line, ok in checks:
@@ -311,6 +447,10 @@ def main(argv=None) -> int:
     ap.add_argument("--out", help="where to write the reduced copies")
     ap.add_argument("--verify", action="store_true",
                     help="run the real analyzer over both and diff every field")
+    ap.add_argument("--kind", choices=("mux", "bnd"), default="mux",
+                    help="mux for the selector sweep, bnd for a boundary sweep")
+    ap.add_argument("--vdd", type=float, default=None,
+                    help="supply of a boundary sweep, 1.95 at ff")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args(argv)
 
@@ -318,7 +458,7 @@ def main(argv=None) -> int:
         return selftest()
     if not args.dir or not args.out:
         ap.error("--dir and --out are required")
-    return run(args.dir, args.out, args.verify)
+    return run(args.dir, args.out, args.verify, args.kind, args.vdd)
 
 
 if __name__ == "__main__":

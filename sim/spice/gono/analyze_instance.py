@@ -76,6 +76,18 @@ ARM_A_DISPERSION = {
     "ss": (5.459, "lumped C"),
     "ff": (5.559, "lumped C"),
 }
+# The same yardstick for the release build, three arms, run 83. Its copies of Arm
+# B sit on routes drawn again to the 48 to 1 selector, so they get held against
+# the Arm A they share that die with, not the baseline's. tt is the distributed
+# figure from rc_validation_3arm.csv, ss and ff the lumped corner decks in
+# dualarm/build_armc, both as verify_predictability.py reports them. Added 22
+# September, for the run in armb3/.
+ARM_A_DISPERSION_RELEASE = {
+    "tt": (5.879, "distributed RC"),
+    "ss": (5.632, "lumped C"),
+    "ff": (5.832, "lumped C"),
+}
+BUILDS = {"baseline": ARM_A_DISPERSION, "release": ARM_A_DISPERSION_RELEASE}
 MISMATCH_SIGMA = 0.062       # Monte Carlo, per-ring, percent
 FLAG_LEVEL = 10 * MISMATCH_SIGMA
 
@@ -118,11 +130,11 @@ def pearson(xs, ys):
     return sxy / math.sqrt(sxx * syy)
 
 
-def analyse(vals, corner, loads=None):
+def analyse(vals, corner, loads=None, build="baseline"):
     """Return (report lines, failures, flags, numbers)."""
     lines, fail, flag = [], [], []
     ps = 1e12
-    arm_a, arm_a_model = ARM_A_DISPERSION[corner]
+    arm_a, arm_a_model = BUILDS[build][corner]
 
     # A measurement ngspice could not make is absent from the log rather than
     # zero, so every name this report needs is checked up front. Reading on with
@@ -209,13 +221,13 @@ def analyse(vals, corner, loads=None):
     lines.append("peak to peak %.4f%%, standard deviation %.4f%%, mean sits %.4f%% "
                  "off the reference" % (ptp, sd, off))
     if ptp:
-        lines.append("Arm A at %s spreads %.2f%% peak to peak (%s), so integration "
-                     "spread is %.0f times smaller"
-                     % (corner, arm_a, arm_a_model, arm_a / ptp))
+        lines.append("the %s build's Arm A at %s spreads %.2f%% peak to peak (%s), "
+                     "so integration spread is %.0f times smaller"
+                     % (build, corner, arm_a, arm_a_model, arm_a / ptp))
     else:
         lines.append("the sixteen agree to every digit the measurement resolves, "
-                     "against Arm A's %.2f%% at %s (%s)"
-                     % (arm_a, corner, arm_a_model))
+                     "against the %s build's Arm A at %.2f%% at %s (%s)"
+                     % (build, arm_a, corner, arm_a_model))
 
     drs = [r["dr"] for r in rows]
     srs = [r["sr"] for r in rows]
@@ -321,6 +333,11 @@ def selftest():
          dict(slope=0.0037), "flag"),
         ("a spread that clears tt but not ss, read as ss", "ss",
          dict(slope=0.0037), "fail"),
+        # The release build's Arm A spreads 5.632% at ss, so the same 5.55% that
+        # fails against the baseline clears it. If --build release were ignored
+        # this would fail like the case above.
+        ("the same spread against the release build's ss", "ss",
+         dict(slope=0.0037, build="release"), "flag"),
         # A smoke run measures over five periods, not twenty. The route delay
         # here is a tenth of a period, which no real route reaches; it is set
         # that high because it is the arithmetic being tested, not a circuit.
@@ -330,10 +347,11 @@ def selftest():
     ok = True
     for name, corner, tweak, want in cases:
         span = tweak.pop("span", 20)
+        build = tweak.pop("build", "baseline")
         fh = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False)
         fh.write(synth(corner=corner, span=span, **tweak))
         fh.close()
-        _, fail, flag, _ = analyse(read_log(fh.name), corner)
+        _, fail, flag, _ = analyse(read_log(fh.name), corner, build=build)
         os.unlink(fh.name)
         got = "fail" if fail else ("flag" if flag else "pass")
         mark = "ok  " if got == want else "WRONG"
@@ -355,6 +373,9 @@ def main(argv=None):
     ap.add_argument("--log", help="ngspice log from armb_instances.spice")
     ap.add_argument("--csv", help="instance_parasitics.csv from the generator")
     ap.add_argument("--corner", default="tt", choices=sorted(CONTROL_MHZ))
+    ap.add_argument("--build", default="baseline", choices=sorted(BUILDS),
+                    help="whose Arm A the spread is held against (default "
+                         "baseline; release for the run in armb3/)")
     ap.add_argument("--selftest", action="store_true",
                     help="run the planted-fault cases and exit; needs no log, no "
                          "PDK and no ngspice")
@@ -366,7 +387,8 @@ def main(argv=None):
         ap.error("--log is required unless --selftest is given")
 
     loads = read_csv(args.csv) if args.csv else None
-    lines, fail, flag, _ = analyse(read_log(args.log), args.corner, loads)
+    lines, fail, flag, _ = analyse(read_log(args.log), args.corner, loads,
+                                   build=args.build)
     for line in lines:
         print(line)
     print()

@@ -72,6 +72,14 @@ jobs:
           diff /tmp/mux_check.csv sim/spice/gono/mux_validation.csv
           python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux3 --csv /tmp/mux3_check.csv
           diff /tmp/mux3_check.csv sim/spice/gono/mux3/mux3_validation.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13 --vdd 1.95 --csv /tmp/bnd3_B13.csv
+          diff /tmp/bnd3_B13.csv sim/spice/gono/boundary_validation_B13_3arm.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_5ps --vdd 1.95 --csv /tmp/bnd3_B13_5ps.csv
+          diff /tmp/bnd3_B13_5ps.csv sim/spice/gono/boundary_validation_B13_3arm_5ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_1ps --vdd 1.95 --csv /tmp/bnd3_B13_1ps.csv
+          diff /tmp/bnd3_B13_1ps.csv sim/spice/gono/boundary_validation_B13_3arm_1ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_0p2ps --vdd 1.95 --csv /tmp/bnd3_B13_0p2ps.csv
+          diff /tmp/bnd3_B13_0p2ps.csv sim/spice/gono/boundary_validation_B13_3arm_0p2ps.csv
           python3 sim/spice/gono/analyze_rc.py --dir sim/spice/gono/rc3/armA --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3a.csv
           diff /tmp/rc3a.csv sim/spice/gono/rc_validation_3arm.csv
           python3 sim/spice/gono/analyze_rc.py --arm C --dir sim/spice/gono/rc3/armC --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3c.csv
@@ -81,6 +89,10 @@ jobs:
           python3 sim/spice/gono/verify_instance.py
           python3 sim/spice/gono/verify_instance_corners.py --selftest
           python3 sim/spice/gono/verify_instance_corners.py
+          python3 sim/spice/gono/analyze_instance.py --build release --corner tt --log sim/spice/gono/armb3/armb_instances_out.txt --csv sim/spice/gono/armb3/instance_parasitics.csv
+          python3 sim/spice/gono/analyze_instance.py --build release --corner ff --log sim/spice/gono/armb3/armb_instances_ff_out.txt --csv sim/spice/gono/armb3/instance_parasitics.csv
+          python3 sim/spice/gono/analyze_instance.py --build release --corner ss --log sim/spice/gono/armb3/armb_instances_ss_out.txt --csv sim/spice/gono/armb3/instance_parasitics.csv
+          python3 sim/spice/gono/verify_instance_corners.py --build release --dir sim/spice/gono/armb3
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
           python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_armc

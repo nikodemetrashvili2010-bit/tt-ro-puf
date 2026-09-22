@@ -2,17 +2,17 @@
 
 **Nikoloz Demetrashvili** · Student researcher · Georgia
 
-Draft, 2026-07-30, revised 2026-09-21
+Draft, 2026-07-30, revised 2026-09-22
 
 A note on the revision. This draft was written about a two-arm version of the
 design. The chip going to the shuttle is a later build of it with three arms:
 the same sixteen automatically placed oscillators at the same coordinates, the
 same sixteen macros, and a third arm of sixteen rings placed by hand. The
-router wired that build again, and two of Arm A's eight bits came out the
-other way. The abstract and Section 7.4 give the release build's numbers, and
-a few sentences elsewhere say where it differs. Everything else was measured on
-the two-arm build, which this revision calls the baseline, and has not been
-repeated.
+router wired that build again, and two of Arm A's eight bits came out the other
+way. The abstract, Section 7.4 and part of Section 8.1 give the release build's
+numbers, and a few sentences elsewhere say where it differs. Everything else
+was measured on the two-arm build, which this revision calls the baseline, and
+has not been repeated.
 
 ---
 
@@ -1298,10 +1298,19 @@ three corners. They spread 0.0025% peak to peak at tt, 0.0001% at ss and
 0.0009% at ff, which is 0.57, 0.02 and 0.30 of a single counter count and
 between three and four orders of magnitude under Arm A at the same corner.
 
-The chip cannot resolve the difference between them even in principle. Read the
-ss digits as an upper bound rather than a measurement: at that corner the
-spread is 1.3e-6 of the mean and the log's two definitions of frequency
-disagree at 1.6e-7, so the third significant figure depends on which is read.
+Those are the baseline's routes. The release build drew every one of them
+again, to the 48-input selector, and the longest output route grew from 29.5 to
+45.4 fF. Run again on those, the sixteen spread 0.0033% at tt, 0.0001% at ss
+and 0.0019% at ff, at most 0.76 of one count at the 2048 cycles and 50 MHz the
+release firmware uses, and at least three orders of magnitude under that
+build's Arm A.
+
+At the setting each build is measured with, a single reading cannot resolve the
+difference between them. Read the ss digits as an upper bound rather than a
+measurement: on the baseline the spread there is 1.3e-6 of the mean and the
+log's two definitions of frequency disagree at 1.6e-7, so the third significant
+figure depends on which is read. The release build's run lands at 1.5e-6
+against the same 1.6e-7, so the same goes for it.
 
 By construction the internal layout contributes zero spread; fabricated Arm B
 instances will still differ through device mismatch, top-level routing, supply,
@@ -1372,9 +1381,11 @@ top-level integration contributes and says nothing about fabricated mismatch on
 a die; that is still the measurement the chip exists to make. And the residual
 is small enough that the floor underneath it is the transient solver rather
 than the circuit, which is why the direction test above carries the argument
-and the correlations do not. The script is `sim/spice/gono/matched_arm.py`.
-The routes are the baseline's, too. The release build drew every one of them
-again, and the sixteen have not been run on those yet.
+and the correlations do not. The script is `sim/spice/gono/matched_arm.py`. The
+routes are the baseline's, too. The release build drew every one of them again,
+and Section 8.1 has the sixteen run on those, but the three questions here have
+not been asked of them. Only the first is cheap to read off the new logs, and
+ten of sixteen still sit above the reference at tt and twelve at ff.
 
 ## 9. Planned silicon test
 
@@ -1423,10 +1434,11 @@ oscillator vector does not support a population claim.
 
 Most of it was measured on a build that is not the one being made. The release
 build has had its corner sweep, its full RC comparison and the bit count of
-Section 7.1 repeated in Section 7.4, and its counter range worked out in
-Section 5.4, and that is all. The compensation, the re-pairing, the resolution
-floor and the Arm B instances are the baseline's, and whether their numbers
-carry over I have not tested yet.
+Section 7.1 repeated in Section 7.4, its counter range worked out in Section
+5.4, and its sixteen Arm B instances run on their own routes at three corners
+in Section 8.1. The compensation, the re-pairing, the resolution floor and
+Section 8.2's look at what is left of Arm B are the baseline's, and whether
+their numbers carry over I have not tested yet.
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. The lumped-capacitance model
@@ -1480,14 +1492,18 @@ are not chip-wide numbers. Arm B is covered at the same three corners by a
 separate run rather than left at nominal: all sixteen instances start at ss, tt
 and ff carrying the top-level routes they actually have, and spread 0.0001%,
 0.0025% and 0.0009% peak to peak against Arm A's 5.46%, 5.53% and 5.56% at the
-same corners.
+same corners. On the release build's own routes the same run gives 0.0001%,
+0.0033% and 0.0019% against that build's Arm A at 5.63%, 5.73% and 5.83%.
 
 That is the comparison this chip exists to test, and at this stage it is still
 a comparison between two models and not between two measurements. The boundary
 behaviour of the oscillator-clocked ripple counter is checked at both nominal
 and the fast corner, which is where the shorter period makes it hardest, and
 the selector path feeding it has now been validated as a whole chain at 888
-MHz, though at the stopping boundary only three of the 32 paths were swept.
+MHz, though at the stopping boundary only three of the 32 paths were swept. On
+the release build the selector is 48 to 1, and at the boundary one path has
+been swept, the slowest, in steps down to 0.2 ps, with the flop reaching a rail
+at every phase.
 
 None of this erases the modelled dispersion; it bounds what can be concluded
 from it.
@@ -1666,8 +1682,9 @@ More to the point, the leftover is not usable: most instances read faster than
 a reference ring carrying no route at all, which capacitive loading cannot
 cause; no corrector out of the design database helps at more than one corner,
 where Arm A's removes 89.5%; and the eight bits keep 7.9997 of 8, with a reader
-calling 4.02 against 4.00 for guessing. Those were the baseline's routes, and
-the release build's are still to be run.
+calling 4.02 against 4.00 for guessing. Those were the baseline's routes. On
+the release build's the sixteen spread at most 0.0033%, under one count at the
+measurement setting, and the rest of that analysis has not been redone there.
 
 None of this is measured on silicon.
 

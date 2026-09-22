@@ -1,0 +1,7 @@
+phase,en_fall_ns,tap_high_ps,sel_high_ps,tap_low_ps,sel_low_ps,rise_delay_ps,fall_delay_ps,final_edge_arrived,flop_edges,final_q_v,settled
+0,30.105,75,,584,412,350,521,no,25,1.9500,yes
+1,30.106,77,128,584,427,350,521,yes,26,0.0000,yes
+2,30.107,78,166,584,421,350,521,yes,26,0.0000,yes
+3,30.108,79,182,584,418,350,521,yes,26,0.0000,yes
+4,30.109,81,194,584,416,350,521,yes,26,0.0000,yes
+5,30.110,82,202,584,415,350,521,yes,26,0.0000,yes

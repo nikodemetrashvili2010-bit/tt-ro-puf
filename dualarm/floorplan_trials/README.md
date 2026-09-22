@@ -3,8 +3,9 @@
 Arm B is sixteen hardened macros on a fixed grid.
 
 Arm A is standard cells that the flow places wherever room is left. In the
-shipped build that means the macros tile x = 3.22 to 243.22 and all sixteen Arm
-A oscillators end up inside a box roughly 44 by 78 um on the right of the tile.
+two-arm baseline, and in the release build that kept its placement, that means
+the macros tile x = 3.22 to 243.22 and all sixteen Arm A oscillators end up
+inside a box roughly 44 by 78 um on the right of the tile.
 
 Arm A samples one small region while Arm B samples nearly the whole die, which
 is a poor arrangement for a hypothesis about spatial pattern. It is also why
@@ -24,7 +25,7 @@ be reproduced. Run these from `dualarm/`:
     python3 gen_dualarm.py --interleaved --pitch-y 52 --out floorplan_trials/config_interleaved_p52.json
 
 They live here and not in `src/` for a practical reason. `src/config.json` is the
-input the shipped chip is built from, and I once copied a trial config over it and
+input the real chip is built from, and I once copied a trial config over it and
 then rebuilt, which cost me the metrics file for the real build.
 
 Interleaving means skipping the middle column of the 60 um power grid, so a 60 um
@@ -35,7 +36,7 @@ being pushed to one edge. Columns become 3.22, 63.22, 183.22, 243.22.
 
 | run | Arm A ring cap spread | excluding worst ring | worst ring bbox | Arm A x-span |
 |---|---|---|---|---|
-| shipped block, pitch 48 | 6.18 fF (44%) | 42% | 22 x 14 um | 43.5 um |
+| baseline block, pitch 48 | 6.18 fF (44%) | 42% | 22 x 14 um | 43.5 um |
 | interleaved, pitch 48 | 26.68 fF (199%) | 74% | RO9 126 x 3 um | 100.0 um |
 | interleaved, pitch 52 | 20.11 fF (135%) | 84% | RO4 106 x 19 um | 123.9 um |
 
@@ -71,9 +72,9 @@ pins.
 
 So the only freedom is which four of five columns to use.
 
-The shipped choice puts them together and leaves Arm A one contiguous 92 um
-strip. Every other choice leaves a 60 um channel plus a 29 um remnant, and that
-is what fragments Arm A.
+The choice both builds use puts them together and leaves Arm A one contiguous
+92 um strip. Every other choice leaves a 60 um channel plus a 29 um remnant,
+and that is what fragments Arm A.
 
 The confound is a consequence of the die size, the macro footprint and the grid
 pitch, not a configuration oversight. Removing it properly needs more area, a

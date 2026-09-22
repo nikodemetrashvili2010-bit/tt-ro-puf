@@ -13,7 +13,8 @@ I am a self-taught student and built the project with open tools on a home PC.
 The analysis code and the scripts that recompute the headline numbers are all
 in the repo, and so are the raw logs behind most of them: the corner sweep, the
 sixteen Arm B instances, the selector sweep, the supply sweep, the macro RC
-comparison, and the distributed-RC runs on the release build.
+comparison, and on the release build the distributed-RC runs and the boundary
+sweeps.
 
 Three early runs are the exception and only their result CSVs are here: the
 sixteen-ring distributed-RC comparison on the baseline, the counter-boundary
@@ -131,11 +132,13 @@ routing, but not the enable and output route each one carries at the top level,
 so "the offset is zero" was a claim about the inside of the macro doing duty
 for a claim about the whole thing.
 
-The sixteen per-instance runs settle it: the leftover is not a loading effect,
-since eleven of sixteen read faster than a reference ring with no top-level
-route and capacitance cannot do that; nothing in the design database predicts
-it at more than one corner; and the eight bits keep 7.9997 of 8 with a reader
-calling 4.02 against 4.00 for guessing.
+The sixteen per-instance runs on the baseline's routes settle it: the leftover
+is not a loading effect, since eleven of sixteen read faster than a reference
+ring with no top-level route and capacitance cannot do that; nothing in the
+design database predicts it at more than one corner; and the eight bits keep
+7.9997 of 8 with a reader calling 4.02 against 4.00 for guessing. On the
+release build's routes only the first of those has been looked at, and it
+holds: ten of sixteen faster at tt and twelve at ff.
 
 The pairing is the one free parameter left, and turning it does not help much
 either. Which rings get compared is the order the generate loop emitted;
@@ -196,10 +199,10 @@ B copies are the same GDS, so the matched arm removes internal-layout variation
 by construction.
 
 That is why the figure draws Arm B as one reference line; the sixteen have
-since been run individually and sit inside 0.0025% of each other, so the line
-is now shorthand for sixteen results rather than a stand-in for them. Those
-runs carry the baseline's top-level routes. The release build moved them, and
-the sixteen have not been run again on it.
+since been run individually, on the baseline's routes and again on the release
+build's, which drew every one of them again, and they sit inside 0.0025% and
+0.0033% of each other at tt. So the line is now shorthand for sixteen results
+rather than a stand-in for them.
 
 It does not yet show that Arm B's total spread on real chips is lower than Arm
 A's: top-level routing, supply, temperature, and device mismatch still act on
@@ -228,9 +231,9 @@ the state machine leaves before a ring is enabled.
 
 The 48-to-1 selector from the rings to the counter has been simulated at the
 fast corner on all 48 paths and every edge arrives. The counter's stopping
-boundary, swept through the slowest of those paths, resolves to a rail on all
-38 phases; the most a boundary can cost is one count, about 23000 being a
-normal reading at the 2048-cycle window.
+boundary, swept through the slowest of those paths four times over, the finest
+at 0.2 ps steps, resolves to a rail on all 63 phases; the most a boundary can
+cost is one count, about 23000 being a normal reading at the 2048-cycle window.
 
 The physical side was checked against run 83's own files on 20 September, in
 [docs/phaseG_realworld.md](docs/phaseG_realworld.md). A running ring burns
@@ -244,16 +247,17 @@ drawn wire is closer to its neighbour than the spacing rule. The supply sags
 changes no bit.
 
 The corner sweep covers Arm A at ss, tt and ff on both builds, Arm C at the
-same three on the release build, and Arm B's sixteen instances at all three
-corners on the baseline's routes: 0.0001, 0.0025 and 0.0009 percent peak to
-peak there, against 5.46, 5.53 and 5.56 percent for Arm A on the same build.
+same three on the release build, and Arm B's sixteen instances at all three on
+each build's own routes: 0.0001, 0.0033 and 0.0019 percent peak to peak on the
+release build, against 5.63, 5.73 and 5.83 percent for its Arm A, and 0.0001,
+0.0025 and 0.0009 on the baseline.
 
-Still open: the fine boundary sweep through the release build's slowest
-selector path, which has only had the coarse one; Arm B's sixteen instances
-want running on the release build's routes; and the soft obstruction around
-Arm A wants one build of its own to show whether it is still earning its
-place. The rest of the hardware list is in
-[docs/hardware_todo.md](docs/hardware_todo.md).
+Still open: the stopping boundary through the other 47 selector paths, which
+have been swept for edges but not for that; whether anything in the design
+files predicts what is left of Arm B on the release build's routes, which has
+only been asked of the baseline's; and one build to show whether the soft
+obstruction around Arm A still earns its place. The rest of the hardware list
+is in [docs/hardware_todo.md](docs/hardware_todo.md).
 
 After fabrication the plan is to measure all three arms across chips, voltage,
 and temperature with the scripts in `firmware/`. What I expect on silicon: Arm

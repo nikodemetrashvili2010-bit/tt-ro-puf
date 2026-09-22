@@ -30,7 +30,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, ".."))
 sys.path.insert(0, HERE)
 from repo_paths import resolve  # noqa: E402
-BUILD = os.path.join(ROOT, "dualarm", "build_current")
+# The release build, run 83's three arms, since 2026-09-22. Until then this
+# hashed build_current, the two-arm baseline, which is not what gets tagged.
+BUILD = os.path.join(ROOT, "dualarm", "build_armc")
 MACRO = os.path.join(ROOT, "macro", "romacro_final")
 
 SHIPPED = [
@@ -89,6 +91,8 @@ def main():
         w("    Tiny Tapeout tooling   %s" % rec.get("app", "not recorded"))
         w("    design repository      %s" % rec.get("repo", "not recorded"))
         w("    design commit          %s" % rec.get("commit", "not recorded"))
+        if rec.get("workflow_url"):
+            w("    workflow run           %s" % rec["workflow_url"])
     else:
         w("    commit_id.json is absent")
     spef = os.path.join(BUILD, "tt_um_nikodemetrashvili20_ro_puf.nom.spef")

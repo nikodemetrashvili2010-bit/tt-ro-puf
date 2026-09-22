@@ -24,8 +24,16 @@ The cross-corner checks are the part that could not exist before item D. A
 single corner cannot tell a real effect from solver noise. Three can, and two
 of the checks below are exactly that test.
 
+The release build drew every one of those routes again, to a 48-input selector,
+and on 22 September the sixteen were run again on the new routes, logs in
+`armb3/`. `--build release` reads that folder against the release build's own
+Arm A and its own counter window. One check is the baseline's alone: ff reached
+nominal significance there, and a check that says so has nothing to say about a
+different set of routes, so on the release it prints as a note.
+
 Run:
     python3 verify_instance_corners.py
+    python3 verify_instance_corners.py --build release --dir armb3
     python3 verify_instance_corners.py --selftest
 """
 import argparse
@@ -40,6 +48,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 NRO = 16
 EDGES = 20                 # the deck measures from edge 5 to edge 25
 WINDOW, FREF = 1000, 25e6  # the counter window the RTL uses
+# The release RTL counts over a selectable window, and the measurement firmware
+# uses 2048 cycles of a 50 MHz reference, which is 40.96 us against the
+# baseline's 40.
+WINDOW_RELEASE, FREF_RELEASE = 2048, 50e6
 
 LOGS = {
     "tt": "armb_instances_out.txt",
@@ -55,6 +67,9 @@ ARCHIVED_CTRL = {"tt": 633.640, "ss": 323.140, "ff": 987.948}
 # the lumped corner decks, which are the smaller numbers and therefore make the
 # comparison stricter rather than easier.
 ARM_A_PP = {"tt": 5.84, "ss": 5.459, "ff": 5.559}
+# The same three for the release build: distributed RC at tt from
+# rc_validation_3arm.csv, lumped at ss and ff from dualarm/build_armc.
+ARM_A_PP_RELEASE = {"tt": 5.879, "ss": 5.632, "ff": 5.832}
 
 # Written down in docs/armb_corner_run_steps.md before either corner was run.
 PREDICTED_CEILING = 0.01
@@ -136,8 +151,13 @@ def reduce_log(m):
     return d
 
 
-def run(logdir, csvpath):
+def run(logdir, csvpath, build="baseline"):
     caps = read_out_caps(csvpath)
+    if build == "release":
+        arm_a, window, fref = ARM_A_PP_RELEASE, WINDOW_RELEASE, FREF_RELEASE
+    else:
+        arm_a, window, fref = ARM_A_PP, WINDOW, FREF
+    print("build: %s, logs in %s" % (build, os.path.relpath(logdir)))
     D = {}
     for corner, name in LOGS.items():
         D[corner] = reduce_log(read_measurements(os.path.join(logdir, name)))
@@ -181,14 +201,14 @@ def run(logdir, csvpath):
         d = D[c]
         check("%s: under the %.2f percent written down before the runs" % (c, PREDICTED_CEILING),
               d["pp"] < PREDICTED_CEILING, "%.4f" % d["pp"])
-        periods = d["mean"] * 1e6 * WINDOW / FREF
+        periods = d["mean"] * 1e6 * window / fref
         one_count = 100.0 / periods
         check("%s: the whole spread is smaller than one count of the counter" % c,
               d["pp"] < one_count,
               "%.4f percent against %.4f per count, %.2f counts"
               % (d["pp"], one_count, d["pp"] / one_count))
         check("%s: at least a hundred times under Arm A on the same build" % c,
-              ARM_A_PP[c] / d["pp"] > 100, "%.0f times" % (ARM_A_PP[c] / d["pp"]))
+              arm_a[c] / d["pp"] > 100, "%.0f times" % (arm_a[c] / d["pp"]))
 
     print("\n== what three corners can decide that one could not ==")
     lo = [min(D[c]["delay"]) for c in ("ss", "tt", "ff")]
@@ -222,16 +242,22 @@ def run(logdir, csvpath):
         sxy = sum((x - mx) * (y - my) for x, y in zip(use, d["fk"]))
         sxx = sum((x - mx) ** 2 for x in use)
         swing = (sxy / sxx) * (max(use) - min(use))
-        periods = d["mean"] * 1e6 * WINDOW / FREF
+        periods = d["mean"] * 1e6 * window / fref
         counts = abs(swing) / d["mean"] * periods
         t = abs(d["r_f"]) * math.sqrt(n - 2) / math.sqrt(1 - d["r_f"] ** 2)
-        check("%s: taken at face value the whole 2.89 to 29.46 fF span buys "
-              "under a fifth of one counter count" % c, counts < 0.2,
+        check("%s: taken at face value the whole %.2f to %.2f fF span buys "
+              "under a fifth of one counter count" % (c, min(use), max(use)),
+              counts < 0.2,
               "r %+.3f, t %.3f, %.4f counts" % (d["r_f"], t, counts))
     t_ff = abs(D["ff"]["r_f"]) * math.sqrt(NRO - 2) / math.sqrt(1 - D["ff"]["r_f"] ** 2)
-    check("ff does reach nominal significance, recorded here so nobody repeats "
-          "my mistake of reading one corner's insignificance as an answer",
-          t_ff > 2.1448, "t = %.3f against 2.145" % t_ff)
+    if build == "baseline":
+        check("ff does reach nominal significance, recorded here so nobody "
+              "repeats my mistake of reading one corner's insignificance as an "
+              "answer", t_ff > 2.1448, "t = %.3f against 2.145" % t_ff)
+    else:
+        print("note  ff's correlation on these routes is t = %.3f against the "
+              "2.145 a 14-degree test needs; the baseline's reached it"
+              % t_ff)
     ratio = [max(D[c]["slew"]) / max(D["tt"]["slew"]) for c in ("ss", "ff")]
     period = [D["tt"]["mean"] / D[c]["mean"] for c in ("ss", "ff")]
     check("receiver slew scales with the devices, not with the ring period",
@@ -262,7 +288,7 @@ def run(logdir, csvpath):
     print("== SUMMARY ==  %d passed, %d failed" % (ok, fail))
     for c in ("ss", "tt", "ff"):
         print("%s  mean %9.3f MHz, spread %.4f percent peak to peak, %.0f times "
-              "under Arm A" % (c, D[c]["mean"], D[c]["pp"], ARM_A_PP[c] / D[c]["pp"]))
+              "under Arm A" % (c, D[c]["mean"], D[c]["pp"], arm_a[c] / D[c]["pp"]))
     return fail == 0
 
 
@@ -272,16 +298,16 @@ def selftest():
     import tempfile
     global ok, fail
 
-    def attempt(mutate, label):
+    def attempt(mutate, label, src=HERE, build="baseline"):
         global ok, fail
         tmp = tempfile.mkdtemp()
         for c, name in LOGS.items():
-            shutil.copy(os.path.join(HERE, name), os.path.join(tmp, name))
+            shutil.copy(os.path.join(src, name), os.path.join(tmp, name))
         csv = os.path.join(tmp, "instance_parasitics.csv")
-        shutil.copy(os.path.join(HERE, "instance_parasitics.csv"), csv)
+        shutil.copy(os.path.join(src, "instance_parasitics.csv"), csv)
         mutate(tmp, csv)
         ok = fail = 0
-        out = io_capture(lambda: run(tmp, csv))
+        out = io_capture(lambda: run(tmp, csv, build))
         shutil.rmtree(tmp, ignore_errors=True)
         return fail, out
 
@@ -366,6 +392,25 @@ def selftest():
           % ("ok  " if nfail == 0 else "MISS", "the archived logs untouched", nfail))
     if nfail:
         bad += 1
+
+    # The release logs through the release path: clean as they are, and one
+    # planted fault, so the switch is exercised and not only the baseline.
+    rel = os.path.join(HERE, "armb3")
+    nfail, out = attempt(move_the_control, "release ff control off by five percent",
+                         src=rel, build="release")
+    caught = any(line.startswith("FAIL") and "the control lands" in line
+                 for line in out.splitlines())
+    print("  %s  %-45s expected the 'the control lands' check to fail, %d "
+          "check(s) failed" % ("ok  " if (nfail and caught) else "MISS",
+                               "release ff control off by five percent", nfail))
+    if not (nfail and caught):
+        bad += 1
+    nfail, _ = attempt(lambda d, c: None, "release logs untouched", src=rel,
+                       build="release")
+    print("  %s  %-45s expected nothing to fail, %d did"
+          % ("ok  " if nfail == 0 else "MISS", "the release logs untouched", nfail))
+    if nfail:
+        bad += 1
     print("\nselftest: %d planted case(s) behaved wrongly" % bad)
     return bad == 0
 
@@ -373,11 +418,20 @@ def selftest():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--selftest", action="store_true")
-    ap.add_argument("--dir", default=HERE)
+    ap.add_argument("--dir", default=None,
+                    help="folder holding the three logs and instance_parasitics.csv "
+                         "(default this folder for the baseline, armb3/ for the "
+                         "release)")
+    ap.add_argument("--build", default="baseline",
+                    choices=("baseline", "release"),
+                    help="whose Arm A and counter window to read the logs "
+                         "against (default baseline)")
     args = ap.parse_args()
     if args.selftest:
         return 0 if selftest() else 1
-    good = run(args.dir, os.path.join(args.dir, "instance_parasitics.csv"))
+    logdir = args.dir or (os.path.join(HERE, "armb3") if args.build == "release"
+                          else HERE)
+    good = run(logdir, os.path.join(logdir, "instance_parasitics.csv"), args.build)
     return 0 if good else 1
 
 

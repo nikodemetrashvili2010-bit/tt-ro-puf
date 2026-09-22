@@ -9,7 +9,7 @@ connection during routing. Those two cases need completely different responses.
 
 This is the triage.
 
-Every number below is re-derived from the shipped build by
+Every number below is re-derived from the two-arm baseline, `build_current`, by
 `sim/spice/gono/triage_warnings.py`, which reads the DEF, the SPEF, the gate
 netlist and `metrics.json` and refuses to agree with itself: each thing it
 derives is compared against the number the flow recorded, and it exits non-zero
@@ -32,7 +32,7 @@ an output. Not one of them is an internal net. The flow agrees on this from its
 own side, since `design__critical_disconnected_pin__count` is 0.
 
 The rule the script uses is that a DEF net whose only connection is a top-level
-PIN reaches no instance. That gives nine on the shipped build. On the older
+PIN reaches no instance. That gives nine on the baseline. On the older
 one-tile build in `dualarm/control_wokwi/` the same rule gives ten, and that
 build's metrics record ten, and the extra one is `ena`, which the old design
 left unconnected and the current one buffers through `input1`. Two builds, two
@@ -67,7 +67,7 @@ skew for nothing.
 
 This one turned out not to be about my design at all.
 
-`timing__drv__floating__nets` is 2 in the shipped build.
+`timing__drv__floating__nets` is 2 in the baseline, and in the release build.
 
 It is also 2 in the hardened macro, which has 226 instances. It is 2 in the
 standalone array at 3616, in the wokwi build at 4325, and in the old debug
@@ -173,7 +173,7 @@ linter log, which lives in the same local run directory as the timing reports.
 
 ## What this ran against, and one side result
 
-Every rule above was checked on the shipped build and on at least one build that
+Every rule above was checked on the baseline and on at least one build that
 returns a different answer for it. The wokwi build gives ten disconnected pins
 instead of nine and zero fanout violations instead of one, and the script
 matches its metrics on both. A rule that reproduces two different answers is
@@ -182,7 +182,7 @@ carrying more than a rule that passes fourteen times on one build.
 The full wokwi run is 119 MB and stays out of the repository, so the four files
 the triage actually reads are archived in `dualarm/control_wokwi/`, 2.1 MB, and
 CI runs against those. They should never be updated. A control that tracks the
-shipped build has stopped being a control.
+build under test has stopped being a control.
 
 `triage_warnings.py --selftest` plants eleven faults and all eleven are caught.
 Three of them matter. One plants routing coordinates where connections belong,

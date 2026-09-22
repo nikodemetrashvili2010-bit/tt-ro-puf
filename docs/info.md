@@ -56,11 +56,12 @@ macro layout, and since 2026-08-04 each one has been extracted separately with
 the top-level routes it actually carries, rather than one macro result being
 plotted sixteen times.
 
-The sixteen spread 0.0025% peak to peak at tt, which is 0.57 of a single
-counter count, so the chip cannot tell them apart even in principle. That is a
-measured pre-silicon result rather than an assumption, and it is what makes Arm
-B the control. Those runs carry the two-arm layout's routes; the release
-build's have not been run yet.
+On the release build's routes the sixteen spread 0.0033% peak to peak at tt,
+0.0001% at ss and 0.0019% at ff, less than one count at the 2048-cycle window
+and the 50 MHz clock the firmware uses, so one such reading cannot tell them
+apart; on the two-arm layout's routes it was 0.0025% at tt. That is a measured
+pre-silicon result rather than an assumption, and it is what makes Arm B the
+control.
 
 The experiment will test whether Arm A's centred frequency pattern repeats more
 strongly across fabricated chips than Arm B's pattern. Cross-die repeatability,
@@ -68,11 +69,12 @@ uniqueness, and security impact are unknown until those measurements are made.
 
 One timing figure belongs here rather than only in SIGNOFF. When a window
 closes the ring's last pulse can come out any width, and where it sits right at
-the selector's own threshold the chain squeezes it instead of stretching it. On
-the two-arm layout the narrowest clock the counter flop saw that way was 80 ps,
-against the 77.5 ps the library characterizes for it at ff_n40C_1v95. The same
-sweep through the release build's slowest selector path ran on a coarser grid
-and never landed on the threshold, so 80 ps is still the working figure.
+the selector's own threshold the chain squeezes it instead of stretching it.
+Swept through the release build's slowest selector path down to 0.2 ps steps,
+the narrowest clock the counter flop saw that way was 80 ps, the same as on the
+two-arm layout, against the 77.5 ps the library characterizes for it at
+ff_n40C_1v95. Every finer grid found a narrower pulse than the one before, so
+this is not a number with a floor under it.
 
 It is not the 2.5 ps margin it looks like. The 77.5 ps is the library's figure
 at a 10 ps clock slew and it climbs fast with slew, so at any realistic slew
