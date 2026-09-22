@@ -17,3 +17,6 @@ test/gate_level_netlist.v
 
 # keep the master plan local, never in the public repo
 Project_SILICON_Master_Plan.md
+sim/stress/sim_build
+sim/stress/results.xml
+sim/stress/stress_netlist.v
