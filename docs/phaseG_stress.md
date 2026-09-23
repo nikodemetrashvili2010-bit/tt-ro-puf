@@ -199,6 +199,15 @@ the 4032 transitions a mix of old and new inputs gives 1. One cell, `_448_`,
 exposed on 832 transitions. Its selftest plants a two-cell hazard and a clean
 twin and requires the one and not the other.
 
+**23 September: that is wrong, and the script was wrong with it.** It only
+looked at cells that are 0 for every selector value. A cell that is 0 at both
+ends of one particular change, and 1 for some other selector, can pulse on
+that change too, and a pulse can pass through a cell whose inputs are
+themselves mid-change. Three-valued simulation of the whole cone catches both:
+twelve cells where a pulse can start, `_448_` one of them, and 1728
+transitions, not 832. Below, read 1728 where it says 832. The script is
+rewritten and `docs/phaseG_hazard.md` has the rest.
+
 Then I asked the same question of ordinary starts, not restarts: finish a run
 on slot p, start slot q from idle, read the counter in the quiet cycle before
 the window opens.
@@ -259,7 +268,8 @@ day.
 `test_restart_carries_one_count` pins all of it: the counter in the quiet cycle
 is 0 or 1 and never more, the count is n, n + 1 or n + 2 and never more, and
 the repeated start begins at 0. If a rebuild changes the tree, that test and
-`mux_hazard.py --expect-sites 1` say so.
+`mux_hazard.py --expect-sites 1` say so. (That option is `--expect 1728` since
+the 23rd.)
 
 ## Current, once more, with the one-hot proof in hand
 
@@ -327,3 +337,7 @@ second section into a gate script with planted faults; the datasheet sentence
 on holding the window bits; the firmware's second start per slot, or the RTL's
 second quiet cycle, Nikoloz's call; a timed run of the mux tree to say whether
 the hazard reaches the counter on this silicon.
+
+23 September: the datasheet sentence and the second start are done, the
+firmware's rather than the RTL's, which is what Nikoloz picked. The timed run
+is `docs/phaseG_hazard.md`'s next part.

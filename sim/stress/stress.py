@@ -598,7 +598,7 @@ async def test_restart_carries_one_count(dut):
     """The edge that takes a start does three things at once: the
     selector flops switch the counter clock mux, the old ring's enable
     falls, and the counter's reset is released. The mux tree has a
-    static-0 hazard (sim/mux_hazard.py names the cell), so the switch
+    static-0 hazard (sim/mux_hazard.py lists where), so the switch
     can clock the counter once, and a ring stopped by a restart can
     still deliver its draining edge. Either way the new run may begin
     with the counter at 1 and never more. This pins that bound, on

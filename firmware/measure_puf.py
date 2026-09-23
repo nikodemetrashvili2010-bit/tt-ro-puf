@@ -33,6 +33,22 @@
 # The old near-ceiling warning is kept as a second opinion, because a flag
 # that is never read is a flag nobody trusts.
 #
+# Every selection is started twice and both counts are kept. The clock
+# edge that takes a start switches the selector and releases the counter's
+# reset at the same moment, and on some changes of selection the selector's
+# mux pulses while it settles, so the first run after a change can read one
+# count high (docs/phaseG_hazard.md). A second start on the same selection
+# changes nothing in the selector, so its count is the clean one. `count` is
+# the second run and is what every analysis uses; `count_first` is the first
+# run, kept because first minus second, averaged over repeats, is that pulse
+# measured on the real die. One pair also differs by the usual one-count
+# boundary jitter, so read it as an average, not sample by sample.
+#
+# Before anything is measured the script reads the two version bytes through
+# uio[3] and stops unless they are 2 and 0x1A. A wrong project, a board that
+# is not driving the pins, or a die whose project does not answer all show
+# up there, before any count is written.
+#
 # Ordering: samples are taken in randomized rounds. Each round measures all 48
 # (arm, idx) selections once in a fresh random order, and the run repeats that
 # for ROUNDS rounds. This keeps arm and oscillator index from being correlated
@@ -62,12 +78,14 @@ ROUNDS      = 60             # randomized rounds; raise for a real dataset
 TIMEOUT_MS  = 200
 # -------------------------------------------------------------------------
 
-SCRIPT_VERSION = "measure_puf/3"
+SCRIPT_VERSION = "measure_puf/4"
 WIN_SEL = 2                  # 0=256, 1=512, 2=2048, 3=16384 clk cycles
 WINDOW = 2048                # must be the length WIN_SEL selects in the RTL
 SAT_WARN = 65000             # warn when a count gets this close to the ceiling
 N_ARM = 3
 N_IDX = 16
+PROTOCOL_VERSION = 2         # uio[3] high, ui[6] low: must read this
+BUILD_ID = 0x1A              # uio[3] high, ui[6] high: and this
 PROJECT = "tt_um_nikodemetrashvili20_ro_puf"
 
 tt = DemoBoard.get()
@@ -78,15 +96,33 @@ def _ui(start, arm, idx, byte_sel):
             | ((byte_sel & 1) << 6) | (((arm >> 1) & 1) << 7))
 
 
-def _uio():
+def _uio(rd_ver=False):
     """What the board drives into the chip. Only bits 3:1 are read."""
-    return (WIN_SEL & 3) << 1
+    return ((WIN_SEL & 3) << 1) | ((1 if rd_ver else 0) << 3)
 
 
-def measure_one(arm, idx):
-    """One measurement. Returns (count, overflow), or (-1, 0) on timeout."""
-    base = _ui(0, arm, idx, 0)
+def read_version():
+    """The protocol and build bytes, read through uio[3].
+
+    Both go through the same two-flop synchronizer as every other control
+    pin, so each byte select is held a millisecond before uo is read.
+    """
+    tt.uio_in.value = _uio(rd_ver=True)
+    tt.ui_in.value = _ui(0, 0, 0, 0)
+    time.sleep_ms(1)
+    proto = int(tt.uo_out.value)
+    tt.ui_in.value = _ui(0, 0, 0, 1)
+    time.sleep_ms(1)
+    build = int(tt.uo_out.value)
+    tt.ui_in.value = _ui(0, 0, 0, 0)
     tt.uio_in.value = _uio()
+    time.sleep_ms(1)
+    return proto, build
+
+
+def _run(arm, idx):
+    """One start and its readout. The count, or -1 on timeout."""
+    base = _ui(0, arm, idx, 0)
     tt.ui_in.value = base
     time.sleep_ms(1)
     tt.ui_in.value = base | 1
@@ -95,13 +131,26 @@ def measure_one(arm, idx):
     t0 = time.ticks_ms()
     while not tt.uio_out[0]:
         if time.ticks_diff(time.ticks_ms(), t0) > TIMEOUT_MS:
-            return -1, 0
+            return -1
     lo = int(tt.uo_out.value)
     tt.ui_in.value = _ui(0, arm, idx, 1)
     time.sleep_ms(1)
     hi = int(tt.uo_out.value)
     tt.ui_in.value = base
-    return (hi << 8) | lo, int(tt.uio_out[4])
+    return (hi << 8) | lo
+
+
+def measure_one(arm, idx):
+    """Two runs of one selection, see the header.
+
+    Returns (count, count_first, overflow): count is the second run's,
+    count_first the first's, -1 for a run that timed out, and overflow the
+    sticky flag after both.
+    """
+    tt.uio_in.value = _uio()
+    first = _run(arm, idx)
+    second = _run(arm, idx)
+    return second, first, int(tt.uio_out[4])
 
 
 def _shuffled(pairs, _rand):
@@ -130,6 +179,8 @@ def _emit_metadata(run_id, seed):
         "vdd_v_measured": MEAS_VDD_V, "temp_method": TEMP_METHOD,
         "temp_c_measured": MEAS_TEMP_C, "seed": seed,
         "t_start_ms": time.ticks_ms(), "notes": NOTES,
+        "protocol_version": PROTOCOL_VERSION, "build_id": BUILD_ID,
+        "starts_per_sample": 2, "count_is": "second start",
     }
     # This used to build the JSON by hand, on the grounds that it kept the
     # script MicroPython-safe. It escaped nothing. A double quote or a backslash
@@ -179,18 +230,39 @@ def run():
     tt.reset_project(False)
     time.sleep_ms(10)
 
+    try:
+        proto, build = read_version()
+        if (proto, build) != (PROTOCOL_VERSION, BUILD_ID):
+            # A wrong project, a board that is not reaching the pins, or a
+            # die whose project does not answer. Nothing measured after
+            # this could be trusted, so nothing is measured.
+            raise SystemExit("ERROR: version bytes read %d and 0x%02x,"
+                             " expected %d and 0x%02x"
+                             % (proto, build, PROTOCOL_VERSION, BUILD_ID))
+    except BaseException:
+        tt.reset_project(True)
+        tt.clock_project_stop()
+        raise
+
     _emit_metadata(run_id, seed)
-    print("run_id,chip_id,condition,round,order,arm,idx,count,overflow,t_ms")
+    print("run_id,chip_id,condition,round,order,arm,idx,count,overflow,"
+          "count_first,t_ms")
 
     pairs = [(a, i) for a in range(N_ARM) for i in range(N_IDX)]
     timeouts = 0
     saturated = 0
     wrapped = 0
     zeros = 0
+    # First minus second start, over samples where both ran and nothing
+    # wrapped: -1, 0, +1 and anything else.
+    diffs = {-1: 0, 0: 0, 1: 0, "other": 0}
     try:
         for r in range(ROUNDS):
             for order, (arm, idx) in enumerate(_shuffled(pairs, random)):
-                c, ovf = measure_one(arm, idx)
+                c, c1, ovf = measure_one(arm, idx)
+                if c >= 0 and c1 >= 0 and not ovf:
+                    d = c1 - c
+                    diffs[d if d in (-1, 0, 1) else "other"] += 1
                 if c < 0:
                     timeouts += 1
                 elif ovf:
@@ -199,12 +271,14 @@ def run():
                     saturated += 1
                 elif c == 0:
                     zeros += 1
-                print("%s,%s,%s,%d,%d,%d,%d,%d,%d,%d"
+                print("%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d"
                       % (run_id, CHIP_ID, CONDITION, r, order, arm, idx, c,
-                         ovf, time.ticks_ms()))
+                         ovf, c1, time.ticks_ms()))
         print("# done rounds=%d timeouts=%d wrapped=%d near_saturation=%d"
               " zero_counts=%d"
               % (ROUNDS, timeouts, wrapped, saturated, zeros))
+        print("# first minus second start: -1 in %d, 0 in %d, +1 in %d,"
+              " other in %d" % (diffs[-1], diffs[0], diffs[1], diffs["other"]))
         if wrapped:
             print("# WARNING: %d samples set the overflow flag; drop WIN_SEL"
                   " to 1 and rerun. A wrapped count is not a slow ring."
@@ -217,7 +291,11 @@ def run():
             print("# WARNING: %d zero counts; check start/enable and the"
                   " selected oscillator" % zeros)
     finally:
-        # Always leave the project safe, even if acquisition raised.
+        # Always leave the project safe, even if acquisition raised. Reset
+        # first: a ring whose window is open when the clock stops stays on,
+        # and docs/info.md says to abort with rst_n or ena before stopping
+        # the clock. The earlier version stopped the clock only.
+        tt.reset_project(True)
         tt.clock_project_stop()
 
 

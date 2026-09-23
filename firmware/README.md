@@ -8,12 +8,16 @@ board and SDK behavior still needs checking with the returned hardware.
 ## Files
 
 - `measure_puf.py` runs on a TinyTapeout demo board (MicroPython, TT SDK v3).
-  It measures all 48 oscillators in randomized rounds and prints a metadata
-  header plus one CSV row per sample.
+  It measures all 48 oscillators in randomized rounds, starts each one twice,
+  and prints a metadata header plus one CSV row per sample.
 - `analyze_counts.py` runs on a PC (Python standard library only). It keeps
   chip, condition, and run separate, treats the physical die as the
   experimental unit, and reports descriptive metrics with a bootstrap-by-chip
   interval.
+- `test_analyze_counts.py` and `test_measure_puf.py` are what CI runs on
+  these two. The second runs `measure_puf.py` itself under CPython against a
+  fake board that keeps the chip's pin protocol, so the script has been
+  through a whole run before it ever meets a board.
 
 The pre-silicon hypothesis is that the centred Arm A frequency pattern will be
 more correlated across chips than the Arm B pattern. That is a prediction, not
@@ -66,10 +70,15 @@ community-submitted CSVs stay interpretable.
 4. Repeat per chip and condition. Analyze together:
 
        python3 analyze_counts.py chip01_room_1v8.csv chip02_room_1v8.csv
-       python3 analyze_counts.py *.csv --positions ../dualarm/build_current/dualarm_positions.csv
+       python3 analyze_counts.py *.csv \
+           --positions ../dualarm/build_armc/dualarm_positions.csv
 
    `--positions` adds a geometry-based oscillator pairing alongside the logical
-   one; both pairings are fixed before the frequencies are seen.
+   one; both pairings are fixed before the frequencies are seen. Arm A's
+   coordinates are the same in `build_current` and the release build.
+   `--hazard-csv` takes a list of the changes of selection a timed
+   simulation says should read one high (columns `a`, `b` and `counted`) and
+   splits the first-start report (below) into those and the rest.
 
 ## What the analyzer reports
 
@@ -80,8 +89,11 @@ community-submitted CSVs stay interpretable.
   correlation (the chip's centred pattern against the mean centred pattern of
   the other chips), then the paired Arm A minus Arm B difference of those
   per-chip scores, with a bootstrap interval over chips. The prediction is a
-  positive difference. This is the statistic to preregister; everything else
-  is descriptive support.
+  positive difference. It needs at least three chips with both arms complete
+  and says so when it has fewer. When this was written it was meant to be the
+  statistic to preregister. The preregistration went another way on 31 August
+  (`docs/phaseE_preregistration.md`: M2 is a Spearman correlation between
+  every pair of dies), so this is descriptive support now, like the rest.
 - Per chip and arm: pattern correlations on centred vectors
   ((f - mean) / mean per chip, so chip-wide speed cancels), the shared
   per-position variance fraction, and uniqueness for each predeclared pairing.
@@ -111,27 +123,41 @@ community-submitted CSVs stay interpretable.
 - Fix the analysis before looking at silicon: tag a commit with the primary
   hypothesis, the metric, the pairings, exclusion and outlier rules, and the
   minimum chip and completeness counts. Exploratory analysis afterwards is fine
-  if it is labeled exploratory.
+  if it is labeled exploratory. Most of that is frozen in
+  `chip/PREREGISTRATION.json` since 31 August; the minimum chip count is not
+  in it yet.
 
 ## Protocol notes
 
-- The counter is 16 bit and the window is fixed at 1000 reference-clock cycles, so
-  at 25 MHz the window lasts 40 us and the count wraps above 1638 MHz. That has
-  now been checked against corners rather than assumed: the fast corner (ff,
-  -40 C, 1.95 V) puts the oscillators at 840 to 888 MHz, giving a worst-case count
-  of 35532 out of 65535, so 1.84x headroom. A silent wrap would return a
-  plausible-looking lower count rather than an error, so the margin matters.
-- Two limits follow from that, and both bite if you change the clock. The lowest
-  safe reference clock at the fast corner is 13.55 MHz, below which the window
-  gets long enough to wrap. The longest safe window at 25 MHz is 1844 cycles. Stay
-  inside both or add an overflow flag first.
-- Expect roughly 276 to 888 MHz across corners, a 3.2x range, so a count near
-  11000 at a hot low-voltage board and near 35000 at a cold high-voltage one are
-  both normal. Every oscillator still starts at 1.6 V and 100 C in simulation.
+- The counter is 16 bit and the window is picked on `uio[2:1]`: 256, 512,
+  2048 or 16384 reference-clock cycles. The script uses 2048 at 50 MHz, 41
+  us, so a count wraps above 1600 MHz. In the fast corner (ff, -40 C, 1.95 V)
+  the fastest ring on the chip is Arm C's ring 10 at 911.1 MHz, which reads
+  37318 of 65535, about 1.76x headroom. A wrap no longer passes as a low
+  reading: `uio[4]` latches it until reset and the script writes it to the
+  `overflow` column.
+- If you change the clock, the floor at 2048 is 28.5 MHz for that same ring;
+  below it the fast corner wraps. 16384 wraps at every corner on purpose. It
+  is there to exercise the flag and is not a data window.
+- Expect roughly 275 to 911 MHz across the simulated corners, Arm A's slowest
+  at ss (1.60 V, 100 C) to Arm C's fastest at ff, a 3.3x range. At 2048 and
+  50 MHz that is a count near 11300 on a hot, low-voltage board and near
+  37300 on a cold, high-voltage one, and both are normal.
+- Every selection is started twice. `count` is the second run and is the
+  reading; `count_first` is the first. The edge that takes a start switches
+  the selector and releases the counter's reset together, and on some changes
+  of selection the counter clock mux pulses once while it settles, so the
+  first run after a change can read one high. The second start changes
+  nothing in the selector. `docs/phaseG_hazard.md` has the rest. The script
+  prints how many first-minus-second differences were -1, 0 and +1 at the
+  end of a run.
+- Before anything is measured the script reads the version bytes through
+  `uio[3]` and stops unless they are 2 and 0x1A.
 - A count of `-1` is a timeout marker; the analyzer skips it and reports the
   count. The script also flags counts near the ceiling and zero counts.
 - The script fails hard if the exact project `tt_um_nikodemetrashvili20_ro_puf`
   is not on the shuttle. It does not fall back to the first project matching
   `ro_puf`, which could select the wrong die.
-- The SDK calls match TT SDK v3 as of July 2026. Check the SDK release notes
-  before the first hardware run.
+- The SDK calls were checked against tt-micropython-firmware v3.1.1 on 23
+  September 2026. Check the release notes again before the first hardware
+  run.

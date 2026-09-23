@@ -43,7 +43,8 @@ class AnalyzeCountsTests(unittest.TestCase):
             analyzer.load_files([str(p)])
 
     def test_arm_idx_range_rejected(self):
-        p = make_csv(self.root / "r.csv", "r1", "c1", "room", {2: [100] * 16})
+        # Arm 2 is Arm C since the three-arm design; 3 selects no oscillator.
+        p = make_csv(self.root / "r.csv", "r1", "c1", "room", {3: [100] * 16})
         with self.assertRaisesRegex(ValueError, "arm/idx out of range"):
             analyzer.load_files([p])
 
@@ -209,20 +210,61 @@ class VolunteerDataFaultTests(unittest.TestCase):
         self.assertFalse(analyzer.settings_ok([("x", g), ("y", g)]))
 
     def test_wrap_levels_match_the_documented_floor(self):
-        # 13.55 MHz is the floor quoted in measure_puf.py's own header, derived
-        # there independently. The 1.0x boundary has to land on it.
-        self.assertEqual(analyzer.wrap_risk(25_000_000, 1000)[0], "ok")
-        self.assertEqual(analyzer.wrap_risk(20_000_000, 1000)[0], "thin")
-        self.assertEqual(analyzer.wrap_risk(13_000_000, 1000)[0], "wrap")
-        self.assertEqual(analyzer.wrap_risk(10_000_000, 1000)[0], "wrap")
-        self.assertEqual(analyzer.wrap_risk(None, 1000)[0], "unknown")
-        floor_mhz = analyzer.FASTEST_SIM_MHZ * 1000 / 65536
-        self.assertAlmostEqual(floor_mhz, 13.55, places=2)
+        # docs/info.md quotes a 28.5 MHz clock floor at the 2048 window, from
+        # the fastest ring on the chip, Arm C ring 10 at 911.1 MHz in the ff
+        # corner; sim/verify_datasheet.py re-derives it. The 1.0x boundary has
+        # to land on it. (This was 13.55 MHz at a 1000-cycle window, from the
+        # two-arm baseline's 888.3, until 23 September.)
+        self.assertEqual(analyzer.wrap_risk(50_000_000, 2048)[0], "ok")
+        self.assertEqual(analyzer.wrap_risk(40_000_000, 2048)[0], "thin")
+        self.assertEqual(analyzer.wrap_risk(29_000_000, 2048)[0], "thin")
+        self.assertEqual(analyzer.wrap_risk(28_000_000, 2048)[0], "wrap")
+        self.assertEqual(analyzer.wrap_risk(None, 2048)[0], "unknown")
+        floor_mhz = analyzer.FASTEST_SIM_MHZ * 2048 / 65536
+        self.assertAlmostEqual(floor_mhz, 28.5, places=1)
 
     def test_a_long_window_wraps_just_as_well_as_a_slow_clock(self):
         # count = f * window / clk, so the window is the other way in.
         self.assertEqual(analyzer.wrap_risk(25_000_000, 1000)[0], "ok")
         self.assertEqual(analyzer.wrap_risk(25_000_000, 2000)[0], "wrap")
+
+    def test_third_arm_is_read(self):
+        vals = list(range(2000, 2016))
+        p = make_csv(self.root / "c.csv", "r1", "c1", "room",
+                     {0: vals, 1: vals, 2: vals}, rounds=2)
+        g = analyzer.load_files([p])[("c1", "room")]
+        self.assertEqual(analyzer.osc_means(g, 2)[15], 2015.0)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            analyzer.print_summaries({("c1", "room"): g})
+        self.assertIn("Arm C (hand-placed): 16/16 osc", out.getvalue())
+
+    def test_first_start_split_by_prediction(self):
+        # Slot 0 to slot 1 is the one transition the census says counts,
+        # and it comes up twice; the other three changes do not count.
+        lines = ["run_id,chip_id,condition,round,order,arm,idx,count,"
+                 "overflow,count_first,t_ms"]
+        seq = [0, 1, 2, 1, 0, 1]
+        predicted = {(0, 1)}
+        prev = None
+        for k, slot in enumerate(seq):
+            count = 1000 + slot
+            first = count + (1 if (prev, slot) in predicted else 0)
+            lines.append("r1,c1,room,0,%d,0,%d,%d,0,%d,%d"
+                         % (k, slot, count, first, k))
+            prev = slot
+        p = self.root / "f.csv"
+        p.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        groups = analyzer.load_files([str(p)])
+        fs = groups[("c1", "room")]["first_start"]
+        self.assertEqual(len(fs), 5)  # the first row has nothing before it
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            analyzer.print_first_start(groups, predicted)
+        text = out.getvalue()
+        self.assertIn("mean +0.400 over 5", text)
+        self.assertIn("predicted to count +1.000 over 2", text)
+        self.assertIn("the rest +0.000 over 3", text)
 
 
 if __name__ == "__main__":

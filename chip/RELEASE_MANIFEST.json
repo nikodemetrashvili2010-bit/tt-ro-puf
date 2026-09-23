@@ -165,7 +165,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 155,
+  "gate_commands": 157,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {

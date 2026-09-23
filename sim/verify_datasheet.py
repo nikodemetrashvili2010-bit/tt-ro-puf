@@ -156,6 +156,29 @@ check("the count holds until the next start, as the datasheet claims",
       "count_latched  <= cnt_sync[CNT_W-1:0];" in core
       and "There is no hurry over step 4." in flat)
 
+# 23 September. The window bits are decoded combinationally from the
+# synchronizer and compared against the timer on every clock, not latched at
+# the start, so a change under a run moves its end. The stress run on the 22nd
+# found that; the datasheet said nothing about holding them until then.
+check("the window is read live, and the datasheet says to hold it",
+      "wire [1:0] win_sel     = ui_sync[9:8];" in top
+      and re.search(r"always @\(\*\) begin\s+case \(win_sel\)", top)
+      and "if (wtimer == window - 1'b1) begin" in core
+      and re.search(r"<=\s*window\b", core) is None
+      and "the window bits on `uio[2:1]` unchanged until `done`" in flat)
+
+# Same day. The edge that takes a start switches the selector and releases
+# the counter's reset together, so a first run can carry one count from the
+# mux settling. The firmware starts every selection twice and keeps the
+# second; the datasheet has to say the same thing.
+fw = text(FW)
+twice = re.search(r"def measure_one\(arm, idx\):.*?first = _run\(arm, idx\)"
+                  r"\s+second = _run\(arm, idx\)\s+return second, first,",
+                  fw, re.S)
+check("the firmware keeps the second of two starts, as the datasheet says",
+      twice is not None
+      and "Start each selection twice and keep the second count." in flat)
+
 
 # ------------------------------------------------------------------ the clocks
 

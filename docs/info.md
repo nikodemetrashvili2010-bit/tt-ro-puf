@@ -98,9 +98,15 @@ asynchronously shuts down the selected oscillator.
    on purpose, so that the flag on `uio[4]` can be exercised on any die.
 1. Select an oscillator: set the arm with `ui[1]` and `ui[7]` (0 = Arm A,
    1 = Arm B, 2 = Arm C) and the oscillator index with `ui[2]` through `ui[5]`.
+   Arm 3 selects nothing: the run goes through, `done` rises and the count
+   is 0, apart from the one count a change of selection can add (below).
 2. Keep arm and index stable for at least three `clk` cycles, hold `ui[0]`
-   (`start`) high for at least three more cycles, then drive it low. Leave arm
-   and index unchanged until `done`.
+   (`start`) high for at least three more cycles, then drive it low. Leave
+   arm, index and the window bits on `uio[2:1]` unchanged until `done`. The
+   window is compared on every clock, not taken at the start, so a change
+   under a run moves its end. If the timer is already past the new length the
+   run goes on until the 16-bit timer comes round again, up to 65536 cycles
+   with the ring on.
 3. Wait for `done` on `uio[0]`.
 4. Read the 16-bit count as two bytes on `uo[7:0]`. `ui[6]` low selects the low
    byte and high selects the high byte. **Wait three `clk` cycles after changing
@@ -115,6 +121,15 @@ There is no hurry over step 4.
 bytes can be read as slowly as you like. Check `uio[4]` while you are there: if
 it is high the count wrapped and the reading means nothing, whatever it looks
 like.
+
+Start each selection twice and keep the second count. The clock edge that
+takes a start switches the selector and lets go of the counter's reset at the
+same moment, and on some changes of selection the mux that feeds the counter
+can pulse once while the six selector bits settle. If that pulse arrives
+after the reset has let go, it is a count, and the first run after the change
+reads one high. A second start on the same selection changes nothing in the
+selector. `firmware/measure_puf.py` does this and keeps both counts, and
+`docs/phaseG_hazard.md` has which changes can do it.
 
 Driving `uio[3]` high swaps `uo` from the count to two version bytes, protocol
 on the low half and build id on the high half, so a board can tell which design

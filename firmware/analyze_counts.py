@@ -3,8 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 """Summarize RO-PUF measurements without mixing chips, conditions, or runs.
 
-Input CSVs come from measure_puf.py: a ``# META {json}`` header line plus rows
-``run_id,chip_id,condition,round,order,arm,idx,count,t_ms``. The physical die is
+Input CSVs come from measure_puf.py: a ``# META {json}`` header line plus
+rows of run_id, chip_id, condition, round, order, arm, idx, count, overflow,
+count_first and t_ms (``overflow`` and ``count_first`` are optional; older
+runs lack them). Arm is 0 (A, auto-placed), 1 (B, matched macro) or 2 (C,
+hand-placed). The physical die is
 the experimental unit, so across-chip statistics are bootstrapped over chips
 rather than over the dependent set of chip pairs. Response bits use pairings
 that are fixed before the data is seen. All outputs are descriptive; they do
@@ -21,6 +24,8 @@ import sys
 from itertools import combinations
 
 NRO = 16
+ARMS = ((0, "Arm A (auto)"), (1, "Arm B (matched)"),
+        (2, "Arm C (hand-placed)"))
 # Predeclared logical adjacent pairs. Same index mapping in both arms, so this
 # is a clean architectural comparison. A geometry-based pairing can be supplied
 # with --positions (also fixed before seeing frequencies).
@@ -108,6 +113,9 @@ def load_files(paths):
                 if v:
                     measured[k] = v
         rows = csv.DictReader(l for l in lines if not l.startswith("#"))
+        has_first = "count_first" in (rows.fieldnames or ())
+        has_ovf = "overflow" in (rows.fieldnames or ())
+        last_slot = {}
         required = {"run_id", "chip_id", "condition", "round", "arm", "idx", "count"}
         if not rows.fieldnames or not required.issubset(rows.fieldnames):
             missing = sorted(required.difference(rows.fieldnames or ()))
@@ -121,9 +129,11 @@ def load_files(paths):
                 arm = int(row["arm"])
                 idx = int(row["idx"])
                 count = int(row["count"])
+                first = int(row["count_first"]) if has_first else None
+                ovf = int(row["overflow"] or 0) if has_ovf else 0
             except (KeyError, TypeError, ValueError) as exc:
                 raise ValueError("%s:%d: %s" % (path, n, exc)) from exc
-            if arm not in (0, 1) or not 0 <= idx < NRO:
+            if arm not in (0, 1, 2) or not 0 <= idx < NRO:
                 raise ValueError("%s:%d: arm/idx out of range" % (path, n))
             # Reject a run_id seen in a different file: re-submitting the same
             # run would inflate the sample with duplicate observations.
@@ -135,7 +145,15 @@ def load_files(paths):
                 (chip_id, condition),
                 {"raw": {}, "by_round": {}, "runs": set(), "sources": set(),
                  "settings": set(), "timeouts": 0, "saturated": 0,
-                 "measured": {}})
+                 "measured": {}, "first_start": []})
+            # Rows arrive in acquisition order, so the previous row of the
+            # same run is the selection this row's first start switched from.
+            slot = 16 * arm + idx
+            prev = last_slot.get(run_id)
+            last_slot[run_id] = slot
+            if (first is not None and prev is not None and count >= 0
+                    and first >= 0 and not ovf):
+                g["first_start"].append((prev, slot, first - count))
             g["sources"].add(path)
             g["runs"].add(run_id)
             g["settings"].add(setting)
@@ -227,12 +245,15 @@ TEMP_TOL = 3.0      # degrees C
 # what the design can plausibly run at, the run is unsafe and no amount of later
 # analysis recovers it.
 #
-# 888.3 MHz is the fastest Arm A oscillator in the ff corner simulation, paper
-# section 5.4. The margin is for silicon coming back faster than the model,
-# which is the direction that causes this failure. At the 25 MHz the firmware
-# recommends the ceiling is 1.638 GHz and there is no risk; at 10 MHz it is
-# 655 MHz and every fast-corner reading wraps into a believable number.
-FASTEST_SIM_MHZ = 888.3
+# 911.1 MHz is the fastest oscillator on the chip in the ff corner simulation,
+# Arm C ring 10 on the release build: the figure docs/info.md quotes and
+# sim/verify_datasheet.py pins. Until 23 September this was 888.3, the two-arm
+# baseline's fastest Arm A ring. The margin is for silicon coming back faster
+# than the model, which is the direction that causes this failure. At the
+# 50 MHz and 2048 cycles the firmware uses the ceiling is 1600 MHz and there
+# is no risk; at 20 MHz it is 640 MHz and every fast-corner reading wraps into
+# a believable number.
+FASTEST_SIM_MHZ = 911.1
 WRAP_SPEED_MARGIN = 1.5
 
 
@@ -248,7 +269,7 @@ def wrap_risk(clk_hz, window):
 
     Two levels, because they mean different things and a single flag would
     either cry wolf or miss the real case. Below 1.0x the simulated fast corner
-    already wraps, which is the 13.55 MHz floor the firmware header quotes.
+    already wraps, the 28.5 MHz floor docs/info.md quotes at 2048 cycles.
     Between 1.0x and 1.5x nothing wraps in simulation but there is little room
     for silicon coming back faster than the model, and faster is the direction
     that breaks this.
@@ -482,7 +503,7 @@ def print_summaries(groups):
             print("  acquisition metadata: missing or inconsistent across files")
             print("  WRAP RISK: without the clock and window the 16-bit counter "
                   "cannot be shown not to have wrapped")
-        for arm, name in ((0, "Arm A (auto)"), (1, "Arm B (matched)")):
+        for arm, name in ARMS:
             v = osc_means(g, arm)
             if not v:
                 print("  %s: no valid data" % name)
@@ -502,11 +523,45 @@ def print_summaries(groups):
                 print("  %s: mean is zero" % name)
 
 
+def load_hazard(path):
+    """Transitions a -> b (slot = 16 * arm + idx) the census marks counted."""
+    with open(path, encoding="utf-8", newline="") as fh:
+        return {(int(r["a"]), int(r["b"])) for r in csv.DictReader(fh)
+                if int(r["counted"])}
+
+
+def print_first_start(groups, hazard=None):
+    """First start minus second, where the firmware recorded both.
+
+    The first run after the selection changes can carry one extra count
+    from the selector switching as the counter's reset lets go
+    (docs/phaseG_hazard.md); a second run of the same selection cannot.
+    One difference also carries the one-count boundary jitter, so the
+    mean is the measurement. Given a census of the changes a timed run
+    of the extracted layout predicts to count, those are split out.
+    """
+    rows = [(k, g["first_start"]) for k, g in sorted(groups.items())
+            if g["first_start"]]
+    if not rows:
+        return
+    print("\n== First start minus second start (count_first - count)")
+    for (chip, cond), fs in rows:
+        d = [x for _, _, x in fs]
+        line = "  %s/%s: mean %+.3f over %d" % (chip, cond, mean(d), len(d))
+        if hazard is not None:
+            hit = [x for a, b, x in fs if (a, b) in hazard]
+            rest = [x for a, b, x in fs if (a, b) not in hazard]
+            line += "; predicted to count %s over %d, the rest %s over %d" % (
+                "%+.3f" % mean(hit) if hit else "n/a", len(hit),
+                "%+.3f" % mean(rest) if rest else "n/a", len(rest))
+        print(line)
+
+
 def print_across_chips(groups, pairings):
     print("\n== Across chips at the same condition (chip is the unit)")
     for cond in sorted({c for _, c in groups}):
         print("  Condition: %s" % cond)
-        for arm, name in ((0, "Arm A (auto)"), (1, "Arm B (matched)")):
+        for arm, name in ARMS:
             entries = []
             for (chip, gc), g in sorted(groups.items()):
                 if gc != cond:
@@ -582,7 +637,7 @@ def print_primary_delta(groups):
 def print_reliability(groups, pairings):
     print("\n== Bit reliability within chip/condition (needs repeated rounds)")
     for (chip, cond), g in sorted(groups.items()):
-        for arm, name in ((0, "Arm A"), (1, "Arm B")):
+        for arm, name in ARMS:
             for label, pairs in pairings:
                 ber, fragile, nb = bit_reliability(g, arm, pairs)
                 if ber is None:
@@ -596,7 +651,7 @@ def print_reliability(groups, pairings):
 def print_across_conditions(groups, pairings):
     print("\n== Same chip across conditions")
     for chip in sorted({c for c, _ in groups}):
-        for arm, name in ((0, "Arm A"), (1, "Arm B")):
+        for arm, name in ARMS:
             entries = []
             for (gc, cond), g in sorted(groups.items()):
                 if gc != chip:
@@ -623,6 +678,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("csv_files", metavar="CSV", nargs="+")
     ap.add_argument("--positions", help="ro/x_um/y_um CSV for a geometry-based pairing")
+    ap.add_argument("--hazard-csv",
+                    help="census of the changes of selection that should"
+                         " count one extra: columns a, b and counted")
     args = ap.parse_args(argv)
     try:
         groups = load_files(args.csv_files)
@@ -642,6 +700,8 @@ def main(argv=None):
             print("note: --positions ignored (incomplete or nan coordinates)", file=sys.stderr)
 
     print_summaries(groups)
+    hazard = load_hazard(args.hazard_csv) if args.hazard_csv else None
+    print_first_start(groups, hazard)
     print_across_chips(groups, pairings)
     print_primary_delta(groups)
     print_reliability(groups, pairings)

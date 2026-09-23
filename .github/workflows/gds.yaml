@@ -93,6 +93,8 @@ jobs:
           python3 sim/spice/gono/analyze_instance.py --build release --corner ff --log sim/spice/gono/armb3/armb_instances_ff_out.txt --csv sim/spice/gono/armb3/instance_parasitics.csv
           python3 sim/spice/gono/analyze_instance.py --build release --corner ss --log sim/spice/gono/armb3/armb_instances_ss_out.txt --csv sim/spice/gono/armb3/instance_parasitics.csv
           python3 sim/spice/gono/verify_instance_corners.py --build release --dir sim/spice/gono/armb3
+          python3 sim/mux_hazard.py --selftest
+          python3 sim/mux_hazard.py --netlist dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nl.v --expect 1728
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
           python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_armc

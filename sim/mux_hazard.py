@@ -1,35 +1,42 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
-"""Static-0 hazard search in the counter clock mux of a gate-level netlist.
+"""Static hazards in the counter clock mux of a gate-level netlist.
 
 The ripple counter is clocked by sel_ro, the output of the 64:1 mux that
-synthesis built from `ro_out[active_sel]`. With every ring output held at
-0 (the idle case, and the case at every start from idle) sel_ro must be 0
-whatever the selector says, and it is. But the mux is a multi-level
-network, and while the six selector flops change together a cell inside
-it can see the old value of one input and the new value of another. A
-cell whose output is 0 for every selector value but which has two or more
-inputs that are each 1 for some selector values is a static-0 hazard
-site: on a transition between selector values where the old value of one
-input and the new value of another are both 1, the output can pulse. The
-counter's reset is released on the edge that switches the selector, so a
-pulse there is a count.
+synthesis built from `ro_out[active_sel]`. With every ring stopped, every
+ring output is 0 and sel_ro must be 0 whatever the selector says, and it
+is. But the counter's reset is released on the same clock edge that
+switches the six selector flops, and while they change the mux can pulse.
+A pulse after the reset is released is a count.
 
-This reads the netlist, evaluates every net in the cone of sel_ro as a
-64-entry table over the selector with rings at 0, using the sky130 cell
-functions, and reports the hazard sites and the selector transitions that
-expose each. Found on 22 September 2026 by a gate-level run that counted
-one extra on slot 41; test/stress/stress.py pins the behaviour.
+The method is ternary simulation (Eichelberger 1965). For a transition
+from selector a to selector b, every selector bit that changes is X, every
+ring output is 0, and every cell in the cone of sel_ro is evaluated in
+three-valued logic: a cell whose output is the same for every way its X
+inputs could resolve takes that value, otherwise it is X. If sel_ro comes
+out X although it is 0 at both ends, some assignment of gate and wire
+delays can pulse it on that transition. That is a statement about what the
+structure allows, not about what the silicon does. Which of these
+transitions really pulse depends on delays, and that takes a timed run
+against the extracted layout.
+
+An origin is a cell whose output is X, is the same at both ends, and has
+no input that is itself such a static X: the place the pulse starts.
+
+Found on 22 September 2026 by a gate-level run that counted one extra on
+slot 41. The first version of this script checked each cell on its own
+and reported one origin and 832 transitions; the ternary run on the 23rd
+found twelve origins and 1728 transitions. `docs/phaseG_hazard.md`.
 
   python3 sim/mux_hazard.py --netlist dualarm/build_armc/<top>.nl.v
-  python3 sim/mux_hazard.py --netlist ... --expect-sites 1   (exit 1 if not)
+  python3 sim/mux_hazard.py --netlist ... --expect 1728   (exit 1 if not)
   python3 sim/mux_hazard.py --selftest
 """
 import argparse
+import itertools
 import re
 import sys
-from itertools import product
 
 INST_RE = re.compile(
     r"^\s*(sky130_fd_sc_hd__\w+|ro_macro_hard)\s+(\S+)\s*\((.*?)\);",
@@ -38,6 +45,7 @@ PIN_RE = re.compile(r"\.(\w+)\(\s*([^()]*?)\s*\)")
 OUT_PINS = {"Q", "Y", "X", "HI", "LO", "out"}
 ROOT = "\\u_puf.u_core.sel_ro"
 SEL = ["\\u_puf.u_core.active_sel[%d]" % i for i in range(6)]
+X = 2
 
 FUNCS = {
     "inv": lambda A: not A,
@@ -65,6 +73,7 @@ FUNCS = {
     "xor2": lambda A, B: A != B,
     "xnor2": lambda A, B: A == B,
     "mux2": lambda A0, A1, S: A1 if S else A0,
+    "mux4": lambda A0, A1, A2, A3, S0, S1: (A0, A1, A2, A3)[S0 + 2 * S1],
     "a21o": lambda A1, A2, B1: (A1 and A2) or B1,
     "a21oi": lambda A1, A2, B1: not ((A1 and A2) or B1),
     "a21bo": lambda A1, A2, B1_N: (A1 and A2) or (not B1_N),
@@ -94,6 +103,14 @@ def cell_function(master):
     return FUNCS[base]
 
 
+def tie_value(net, drivers):
+    """1 or 0 for a net driven by a tie cell, None otherwise."""
+    d = drivers.get(net)
+    if d is None or "conb" not in d[0]:
+        return None
+    return 1 if d[2].get("HI") == net else 0
+
+
 def is_ring_out(net):
     return (net.endswith(".u_ro.out") or net.endswith(".u_roc.out")
             or net.startswith("\\armb_out"))
@@ -115,9 +132,13 @@ class Cone:
     def __init__(self, drivers, root=ROOT, sel=SEL):
         self.drivers = drivers
         self.sel = sel
-        self.tables = {}
         self.root = root
+        self.tables = {}
         self.table(root)
+
+    def inputs(self, net):
+        master, name, pins = self.drivers[net]
+        return {k: v for k, v in pins.items() if k not in OUT_PINS}
 
     def table(self, net):
         """Value of net for each of the 64 selector values, rings at 0."""
@@ -130,136 +151,179 @@ class Cone:
             t = (False,) * 64
         elif net not in self.drivers:
             raise KeyError("undriven net in the mux cone: " + net)
+        elif tie_value(net, self.drivers) is not None:
+            t = (bool(tie_value(net, self.drivers)),) * 64
         else:
             master, name, pins = self.drivers[net]
             if "dfrtp" in master or "dfxtp" in master:
                 raise KeyError("a flop other than active_sel feeds the mux: "
                                + name)
             f = cell_function(master)
-            ins = {k: v for k, v in pins.items() if k not in OUT_PINS}
+            ins = self.inputs(net)
             tabs = {k: self.table(v) for k, v in ins.items()}
             t = tuple(bool(f(**{k: tabs[k][s] for k in ins}))
                       for s in range(64))
         self.tables[net] = t
         return t
 
-    def sites(self):
-        """Hazard sites: (name, master, inputs, exposed transitions)."""
+    def ternary(self, a, b):
+        """Three-valued value of every net in the cone for a -> b."""
+        memo = {}
+
+        def val(net):
+            if net in memo:
+                return memo[net]
+            if net in self.sel:
+                i = self.sel.index(net)
+                va, vb = (a >> i) & 1, (b >> i) & 1
+                v = va if va == vb else X
+            elif is_ring_out(net):
+                v = 0
+            elif tie_value(net, self.drivers) is not None:
+                v = tie_value(net, self.drivers)
+            else:
+                f = cell_function(self.drivers[net][0])
+                ins = self.inputs(net)
+                vals = {k: val(n) for k, n in ins.items()}
+                xs = [k for k, v in vals.items() if v == X]
+                seen = set()
+                for combo in itertools.product((0, 1), repeat=len(xs)):
+                    d = dict(vals)
+                    d.update(zip(xs, combo))
+                    seen.add(bool(f(**d)))
+                v = int(seen.pop()) if len(seen) == 1 else X
+            memo[net] = v
+            return v
+
+        val(self.root)
+        return memo
+
+    def static_x(self, net, memo, a, b):
+        return (memo.get(net) == X and net not in self.sel
+                and not is_ring_out(net)
+                and self.tables[net][a] == self.tables[net][b])
+
+    def hazards(self):
+        """Transitions on which sel_ro can pulse, and the origin cells."""
         found = []
-        seen = set()
-
-        def walk(net):
-            if net in seen or net in self.sel or is_ring_out(net):
-                return
-            seen.add(net)
-            master, name, pins = self.drivers[net]
-            ins = {k: v for k, v in pins.items() if k not in OUT_PINS}
-            if not any(self.tables[net]):
-                varying = [k for k in ins if any(self.tables[ins[k]])
-                           and not all(self.tables[ins[k]])]
-                if len(varying) >= 2:
-                    found.append((name, master, ins,
-                                  self.exposed(master, ins)))
-            for v in ins.values():
-                walk(v)
-
-        walk(self.root)
-        return [s for s in found if s[3]], len(seen)
-
-    def exposed(self, master, ins):
-        """Transitions a -> b on which some mix of old and new input
-        values makes the cell's output 1."""
-        f = cell_function(master)
-        keys = list(ins)
-        tabs = [self.tables[ins[k]] for k in keys]
-        haz = []
+        origins = {}
         for a in range(64):
-            old = [t[a] for t in tabs]
             for b in range(64):
                 if a == b:
                     continue
-                new = [t[b] for t in tabs]
-                for mask in product((0, 1), repeat=len(keys)):
-                    mix = {k: (new[i] if bit else old[i])
-                           for i, (k, bit) in enumerate(zip(keys, mask))}
-                    if f(**mix):
-                        haz.append((a, b))
-                        break
-        return haz
+                memo = self.ternary(a, b)
+                if memo[self.root] != X:
+                    continue
+                found.append((a, b))
+                for net in memo:
+                    if not self.static_x(net, memo, a, b):
+                        continue
+                    ins = self.inputs(net).values()
+                    if any(self.static_x(n, memo, a, b) for n in ins
+                           if n in memo):
+                        continue
+                    name = self.drivers[net][1]
+                    origins[name] = origins.get(name, 0) + 1
+        return found, origins
 
 
-def report(cone, sites, cone_size):
+def report(cone, found, origins):
     print("sel_ro with every ring at 0 is 0 for all 64 selectors:",
           not any(cone.tables[cone.root]))
-    print("nets in the cone of sel_ro: %d" % cone_size)
-    print("static-0 hazard sites exposed on some transition: %d" % len(sites))
-    for name, master, ins, haz in sites:
-        print("  cell %s %s" % (name, master.replace("sky130_fd_sc_hd__", "")))
-        for k, v in ins.items():
-            ones = [s for s in range(64) if cone.tables[v][s]]
-            print("    %s = %s, 1 for %d selector values%s" % (
-                k, v, len(ones), ": %s" % ones if len(ones) <= 16 else ""))
-        dests = sorted(set(b for _, b in haz))
-        srcs = sorted(set(a for a, _ in haz))
-        print("    exposed on %d of 4032 transitions, %d destinations, "
-              "%d sources" % (len(haz), len(dests), len(srcs)))
+    print("nets in the cone of sel_ro: %d" % len(cone.tables))
+    print("transitions on which sel_ro can pulse: %d of 4032" % len(found))
+    print("origin cells: %d" % len(origins))
+    for name in sorted(origins, key=lambda n: -origins[n]):
+        net = next(k for k, v in cone.drivers.items() if v[1] == name)
+        master = cone.drivers[net][0].replace("sky130_fd_sc_hd__", "")
+        print("  %-8s %-10s starts %d" % (name, master, origins[name]))
+    dests = sorted(set(b for _, b in found))
+    print("destinations reached: %d of 64" % len(dests))
 
 
-FIXTURE = """
-module top (a, b);
- wire \\u_puf.u_core.active_sel[0] ;
- wire \\u_puf.u_core.active_sel[1] ;
- wire \\u_puf.u_core.active_sel[2] ;
- wire \\u_puf.u_core.active_sel[3] ;
- wire \\u_puf.u_core.active_sel[4] ;
- wire \\u_puf.u_core.active_sel[5] ;
- sky130_fd_sc_hd__inv_2 i0 (.A(\\u_puf.u_core.active_sel[0] ), .Y(nsel0));
- sky130_fd_sc_hd__and2_2 g1 (.A(\\u_puf.u_core.active_sel[0] ), .B(nsel0),
-    .X(haz));
- sky130_fd_sc_hd__and2_2 g2 (.A(\\u_puf.u_core.active_sel[1] ),
-    .B(\\u_puf.u_core.g_ro_bank[0].u_ro.out ), .X(leaf));
- sky130_fd_sc_hd__or2_2 g3 (.A(haz), .B(leaf), .X(\\u_puf.u_core.sel_ro ));
-endmodule
-"""
+def fixture(extra=""):
+    sel = "".join(" wire \\u_puf.u_core.active_sel[%d] ;\n" % i
+                  for i in range(6))
+    return ("module top (a, b);\n" + sel +
+            " sky130_fd_sc_hd__and2_2 g1 (.A(\\u_puf.u_core.active_sel[0] ),"
+            "\n    .B(\\u_puf.u_core.active_sel[1] ), .X(p01));\n"
+            " sky130_fd_sc_hd__a21o_2 g2 (.A1(p01), .A2(p2n), .B1(leaf),"
+            "\n    .X(\\u_puf.u_core.sel_ro ));\n"
+            " sky130_fd_sc_hd__and2_2 g3 (.A(\\u_puf.u_core.active_sel[3] ),"
+            "\n    .B(\\u_puf.u_core.g_ro_bank[0].u_ro.out ), .X(leaf));\n"
+            + extra + "endmodule\n")
 
 
 def selftest():
-    """A four-cell mux with one planted hazard, sel0 AND NOT sel0, and one
-    clean leaf, sel1 AND ring. Exactly the planted cell must be reported,
-    exposed on every transition that flips sel0; then the planted cell is
-    replaced by a clean one and nothing may be reported."""
-    cone = Cone(parse(FIXTURE))
-    sites, _ = cone.sites()
-    names = [s[0] for s in sites]
-    if names != ["g1"]:
-        print("selftest: expected only g1, got %s" % names)
+    """Plant a two-level function hazard and require exactly its
+    transitions; then take it away and require none.
+
+    g1 ANDs selector bits 0 and 1 and g2 passes that to sel_ro while
+    bit 2 is 0 (p2n is NOT bit 2), so with the ring at 0 sel_ro is
+    s0 AND s1 AND NOT s2. Only transitions whose two ends are both 0
+    are asked about, where any pulse is a hazard. The expected set is
+    written in closed form rather than by resolving X: an AND of known
+    and unknown inputs is X exactly when no input is known 0, so the
+    pulse is possible unless s2 is 1 at both ends, or s0 is 0 at both
+    ends, or s1 is 0 at both ends.
+
+    The first version of this script only examined cells whose output
+    is 0 for every selector value, and g1 and g2 are each 1 somewhere,
+    so it could not have seen this. The clean twin ties g2's A2 low,
+    which makes sel_ro constant 0, and ternary simulation must report
+    nothing on it.
+    """
+    inv2 = (" sky130_fd_sc_hd__inv_2 g4 (.A(\\u_puf.u_core.active_sel[2] ),"
+            " .Y(p2n));\n")
+    cone = Cone(parse(fixture(inv2)))
+    const0 = not any(cone.tables[ROOT])
+    if const0:
+        print("selftest: the planted fixture is constant 0, not a test")
         return 1
-    haz = sites[0][3]
-    flips = [(a, b) for a in range(64) for b in range(64)
-             if a != b and (a ^ b) & 1]
-    if sorted(haz) != sorted(flips):
-        print("selftest: g1 exposed on %d transitions, expected %d"
-              % (len(haz), len(flips)))
+    # Ask only about transitions whose two ends are both 0, where a
+    # pulse is a hazard and not a legitimate change.
+    zero = [s for s in range(64) if not cone.tables[ROOT][s]]
+    got = set()
+    for a in zero:
+        for b in zero:
+            if a != b and cone.ternary(a, b)[ROOT] == X:
+                got.add((a, b))
+
+    def both(bit, v, a, b):
+        return (a >> bit) & 1 == v and (b >> bit) & 1 == v
+
+    def expect(a, b):
+        return not (both(2, 1, a, b) or both(0, 0, a, b)
+                    or both(1, 0, a, b))
+    want = set((a, b) for a in zero for b in zero if a != b and expect(a, b))
+    if not want:
+        print("selftest: the expectation is empty, not a test")
         return 1
-    clean = FIXTURE.replace(
-        ".B(nsel0),", ".B(\\u_puf.u_core.g_ro_bank[1].u_ro.out ),")
-    if clean == FIXTURE:
-        print("selftest: the clean fixture did not change anything")
+    if got != want:
+        print("selftest: planted hazard, %d transitions found, %d expected"
+              % (len(got), len(want)))
         return 1
-    sites2, _ = Cone(parse(clean)).sites()
-    if sites2:
-        print("selftest: the clean fixture reported %s"
-              % [s[0] for s in sites2])
+    clean = Cone(parse(fixture(
+        " sky130_fd_sc_hd__conb_1 g4 (.LO(p2n));\n")))
+    if any(clean.tables[ROOT]):
+        print("selftest: the clean fixture is not constant 0")
         return 1
-    print("selftest: planted hazard found on g1 and only g1, %d transitions; "
-          "clean fixture reports none" % len(haz))
+    found, origins = clean.hazards()
+    if found:
+        print("selftest: the clean fixture reported %d transitions"
+              % len(found))
+        return 1
+    print("selftest: planted two-level hazard found on exactly its %d "
+          "transitions; clean twin reports none" % len(want))
     return 0
+
 
 
 def main(argv):
     ap = argparse.ArgumentParser()
     ap.add_argument("--netlist")
-    ap.add_argument("--expect-sites", type=int)
+    ap.add_argument("--expect", type=int,
+                    help="exit 1 unless this many transitions can pulse")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args(argv)
     if a.selftest:
@@ -267,11 +331,10 @@ def main(argv):
     if not a.netlist:
         ap.error("--netlist or --selftest")
     cone = Cone(parse(open(a.netlist).read()))
-    sites, cone_size = cone.sites()
-    report(cone, sites, cone_size)
-    if a.expect_sites is not None and len(sites) != a.expect_sites:
-        print("FAIL: %d hazard sites, expected %d"
-              % (len(sites), a.expect_sites))
+    found, origins = cone.hazards()
+    report(cone, found, origins)
+    if a.expect is not None and len(found) != a.expect:
+        print("FAIL: %d transitions, expected %d" % (len(found), a.expect))
         return 1
     return 0
 
