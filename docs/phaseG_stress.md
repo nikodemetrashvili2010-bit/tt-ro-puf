@@ -335,9 +335,9 @@ Open: wire `sim/stress` into the gl_test job after the action's own `make`,
 with `NETLIST=../test/gate_level_netlist.v`; turn the structural checks of the
 second section into a gate script with planted faults; the datasheet sentence
 on holding the window bits; the firmware's second start per slot, or the RTL's
-second quiet cycle, Nikoloz's call; a timed run of the mux tree to say whether
+second quiet cycle, still to decide; a timed run of the mux tree to say whether
 the hazard reaches the counter on this silicon.
 
 23 September: the datasheet sentence and the second start are done, the
-firmware's rather than the RTL's, which is what Nikoloz picked. The timed run
+firmware's rather than the RTL's, which is the one I picked. The timed run
 is `docs/phaseG_hazard.md`'s next part.

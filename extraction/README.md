@@ -81,9 +81,10 @@ Two checks, deliberately not the same strength:
 
 - **With the files present**, every size and every hash is re-derived from the
   bytes. That is the real check.
-- **Without them** - in CI, on the folder bridge - only `manifest_digest` can
-  be recomputed. It catches a manifest edited after the fact. It cannot catch a
-  file that changed underneath a manifest nobody touched.
+- **Without them**, in CI or on a machine that never fetched them, only
+  `manifest_digest` can be recomputed. It catches a manifest edited after the
+  fact. It cannot catch a file that changed underneath a manifest nobody
+  touched.
 
 `verify_inputs.py` prints which of the two it ran. Do not read the weaker line
 as the stronger one.

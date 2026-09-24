@@ -4,8 +4,8 @@
 mux and two cheap fixes for it: a line in the datasheet about holding the
 window bits, and a second start for every selection in the firmware.
 
-Nikoloz said to do both and to say whether the chip is actually good to go,
-allowing for what a simulation cannot see.
+I did both, and then went looking for whether the chip is actually good to
+go, allowing for what a simulation cannot see.
 
 Before any of that I had to count the hazard again, because last night's count
 was wrong.

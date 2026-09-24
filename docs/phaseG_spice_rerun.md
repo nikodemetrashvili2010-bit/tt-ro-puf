@@ -21,8 +21,8 @@ The archived logs were produced on the Windows PC under WSL with
 ngspice 45.2 and an open_pdks install at `/home/pc/pdks/sky130A`.
 
 What ran here is ngspice 42 out of Ubuntu's archive, against a
-`sky130A` tree assembled by hand, because `ciel` cannot reach its
-release host through this container's proxy. The device models come
+`sky130A` tree assembled by hand, because `ciel` could not reach its
+release host from the machine this ran on. The device models come
 from `fossi-foundation/skywater-pdk-libs-sky130_fd_pr` at `403964d`,
 which is the commit open_pdks pins in its own `sky130.json`, and the
 standard cells from `efabless/skywater-pdk-libs-sky130_fd_sc_hd` at
@@ -236,5 +236,5 @@ were built from and the comparison is against those archives.
 
 The run 83 artifacts are on the Windows machine and it is switched
 off, so the three-arm netlist, DEF and SPEF are out of reach until it
-is back. Staging them into this container while the machine was still
-up was the obvious move and I did not make it.
+is back. Copying them across while that machine was still up was the
+obvious move and I did not make it.

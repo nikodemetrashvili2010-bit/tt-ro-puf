@@ -6,15 +6,17 @@
 The layout is dualarm/build_armc's GDS, flattened and drawn layer by layer
 (diffusion, poly, local interconnect, metal 1 to 4) the way a layout viewer
 shows it. The outlines on top come from the same build's DEF: the sixteen
-Arm B macros, the box that holds Arm A's 512 cells, and the blocks Arm C's
-sixteen rings make where they sit next to each other.
+Arm B macros, the box that holds Arm A's sixteen rings, and each of Arm C's
+sixteen rings.
 
 Until 24 September this script drew every placed cell as its own rectangle
 instead: 712 logic cells and Arm A's 512, each a few pixels across at the
 width the README shows, scattered between the filler it left out, and the
 met4 stripes, which only showed as stubs between the macro rows. It read as
 a broken image. It draws the layout now, and the cell rectangles are only
-used to find the outlines.
+used to find the outlines. The first layout version, the same evening,
+outlined Arm C as six merged blocks under a label that said sixteen rings,
+and gave every outline a dark edge that read as a double line. Both went.
 
 A cell's width is the distance to the next cell origin in its row, which is
 exact here because the final DEF is filled edge to edge; the last cell in a
@@ -33,7 +35,6 @@ import matplotlib
 matplotlib.use("Agg")
 import gdstk  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib import patheffects  # noqa: E402
 from matplotlib.collections import PolyCollection  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
@@ -56,7 +57,7 @@ LAYERS = [
     ((68, 20), "met1", "#8a6fc8", 0.45),
     ((69, 20), "met2", "#e0a040", 0.60),
     ((70, 20), "met3", "#40b8c8", 0.60),
-    ((71, 20), "met4", "#b0b0b0", 0.40),
+    ((71, 20), "met4", "#b0b0b0", 0.22),
 ]
 
 
@@ -127,51 +128,26 @@ def bbox(boxes):
             max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
-def merge(boxes, gap=0.5):
-    """Join boxes that overlap or sit within `gap` of each other."""
-    out = [list(b) for b in boxes]
-    changed = True
-    while changed:
-        changed = False
-        for i in range(len(out)):
-            for j in range(i + 1, len(out)):
-                a, b = out[i], out[j]
-                if (a[0] <= b[2] + gap and b[0] <= a[2] + gap
-                        and a[1] <= b[3] + gap and b[1] <= a[3] + gap):
-                    out[i] = list(bbox([a, b]))
-                    del out[j]
-                    changed = True
-                    break
-            if changed:
-                break
-    return [tuple(b) for b in out]
-
-
 def arms(die, rows, cells):
+    """Macro boxes, and each arm's cell boxes grouped by ring index."""
     w = widths(rows, cells)
-    macros, arm_a, rings = [], [], {}
+    macros, ring_a, ring_c = [], {}, {}
     for name, master, x, y in cells:
         if master == "ro_macro_hard":
             macros.append((x, y, x + MACRO_W, y + MACRO_H))
             continue
         box = (x, y, x + w.get(name, 0.46), y + ROW_H)
-        if ".g_ro_bank[" in name:
-            arm_a.append(box)
-        elif ".g_armc[" in name:
-            ring = re.search(r"\.g_armc\[(\d+)\]", name).group(1)
-            rings.setdefault(int(ring), []).append(box)
-    blocks = merge([bbox(v) for v in rings.values()])
-    return macros, arm_a, rings, blocks
+        for key, into in ((".g_ro_bank[", ring_a), (".g_armc[", ring_c)):
+            if key in name:
+                i = int(name.split(key, 1)[1].split("]", 1)[0])
+                into.setdefault(i, []).append(box)
+    return macros, ring_a, ring_c
 
 
 def outline(ax, box, colour, lw=2.0):
-    """A coloured box with a dark edge under it, so it reads on the layout."""
     x0, y0, x1, y1 = box
-    r = Rectangle((x0, y0), x1 - x0, y1 - y0, fc="none", ec=colour, lw=lw,
-                  zorder=6)
-    r.set_path_effects([patheffects.withStroke(linewidth=lw + 2.2,
-                                               foreground="#0a0a0a")])
-    ax.add_patch(r)
+    ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, fc="none",
+                           ec=colour, lw=lw, zorder=6))
 
 
 def main(argv):
@@ -179,9 +155,10 @@ def main(argv):
     die, rows, cells = read_def(DEF)
     if any(abs(a - b) > 1e-3 for a, b in zip(gbox, die)):
         raise SystemExit("GDS box %s and DEF die %s disagree" % (gbox, die))
-    macros, arm_a, rings, blocks = arms(die, rows, cells)
+    macros, ring_a, ring_c = arms(die, rows, cells)
+    cells_a = [b for v in ring_a.values() for b in v]
 
-    fig, ax = plt.subplots(figsize=(10.5, 7.6))
+    fig, ax = plt.subplots(figsize=(10.5, 7.4))
     ax.add_patch(Rectangle((0, 0), die[2], die[3], fc="#161616",
                            ec="#444444", lw=1.2, zorder=0))
     drawn = 0
@@ -192,37 +169,44 @@ def main(argv):
             polys, facecolors=colour, edgecolors="none", alpha=alpha,
             antialiased=False, zorder=2))
     for m in macros:
-        outline(ax, m, B_GREEN, lw=1.4)
-    outline(ax, bbox(arm_a), A_RED, lw=2.4)
-    for b in blocks:
-        outline(ax, b, C_PURPLE, lw=2.4)
+        outline(ax, m, B_GREEN, lw=1.5)
+    outline(ax, bbox(cells_a), A_RED, lw=2.4)
+    for i in sorted(ring_c):
+        outline(ax, bbox(ring_c[i]), C_PURPLE, lw=1.6)
 
-    ax.text(90, -9, "Arm B: %d hardened macros" % len(macros),
-            color="#2f7f52", ha="center", fontsize=10.5, fontweight="bold")
-    ax.text(236, -9, "Arm A: %d cells" % len(arm_a),
-            color="#c0504d", ha="center", fontsize=10.5, fontweight="bold")
-    ax.text(310, -9, "Arm C: %d rings" % len(rings),
-            color="#7b5ea7", ha="center", fontsize=10.5, fontweight="bold")
-    ax.text(
-        0, die[3] + 5,
+    keys = [
+        Rectangle((0, 0), 1, 1, fc="none", ec=B_GREEN, lw=2.0),
+        Rectangle((0, 0), 1, 1, fc="none", ec=A_RED, lw=2.4),
+        Rectangle((0, 0), 1, 1, fc="none", ec=C_PURPLE, lw=2.0),
+    ]
+    ax.legend(
+        keys,
+        ["Arm B: %d hardened macros" % len(macros),
+         "Arm A: %d rings, placed by the flow" % len(ring_a),
+         "Arm C: %d rings, placed by hand" % len(ring_c)],
+        loc="upper center", bbox_to_anchor=(0.5, -0.09), ncol=3,
+        frameon=False, fontsize=10.5, handlelength=1.6, columnspacing=2.2)
+    ax.set_title(
         "Release build (run 83), drawn from its GDS: diffusion, poly, local"
-        " interconnect and metal 1 to 4. The\ncoloured outlines come from the"
-        " same build's DEF and mark where each arm sits.",
-        fontsize=9.5, color="#333333", va="bottom")
+        " interconnect and metal 1 to 4.\nThe outlines come from the same"
+        " build's DEF and mark where each arm sits.",
+        loc="left", fontsize=10.5, color="#333333", pad=10)
     ax.set_xlim(-4, die[2] + 4)
-    ax.set_ylim(-14, die[3] + 16)
+    ax.set_ylim(-4, die[3] + 4)
     ax.set_aspect("equal")
     ax.set_xlabel("x (um)")
     ax.set_ylabel("y (um)")
     for s in ("top", "right"):
         ax.spines[s].set_visible(False)
+    ax.spines["left"].set_bounds(0, die[3])
+    ax.spines["bottom"].set_bounds(0, die[2])
     fig.tight_layout()
     fig.savefig(OUT, dpi=170)
     print(
-        "floorplan_3arm.png: %d shapes on %d layers, %d macros, %d Arm A "
-        "cells, %d Arm C cells in %d rings, %d Arm C blocks"
-        % (drawn, len(LAYERS), len(macros), len(arm_a),
-           sum(len(v) for v in rings.values()), len(rings), len(blocks))
+        "floorplan_3arm.png: %d shapes on %d layers, %d macros, Arm A %d "
+        "cells in %d rings, Arm C %d cells in %d rings"
+        % (drawn, len(LAYERS), len(macros), len(cells_a), len(ring_a),
+           sum(len(v) for v in ring_c.values()), len(ring_c))
     )
     return 0
 

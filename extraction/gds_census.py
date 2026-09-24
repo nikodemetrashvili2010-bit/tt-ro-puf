@@ -11,8 +11,8 @@ the LEF, the gate-level netlist and the flow's own metrics are four files writte
 by four stages of one flow, and an attack that reads three of them is entitled to
 know they describe the same die.
 
-So this reads the GDS itself — records, transforms, placements and the instance
-names the flow left in the property records — and reconciles it against the other
+So this reads the GDS itself (records, transforms, placements and the instance
+names the flow left in the property records) and reconciles it against the other
 three, one instance at a time. Everything is stdlib; there is no layout library
 in the loop that could paper over a disagreement.
 

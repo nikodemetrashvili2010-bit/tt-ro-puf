@@ -8,8 +8,8 @@ the retrieval date, the byte size and the SHA-256 of what actually arrived.
 The manifest it writes is the artifact Phase A depends on; the downloaded
 bytes are reproducible from it and are not committed.
 
-Needs network, so it does not run in CI and it does not run on the folder
-bridge. `verify_inputs.py` checks its output and needs neither.
+Needs network, so it does not run in CI and it does not run offline.
+`verify_inputs.py` checks its output and needs neither.
 
     python3 fetch_inputs.py                 # fetch everything declared
     python3 fetch_inputs.py --target ID     # one target only

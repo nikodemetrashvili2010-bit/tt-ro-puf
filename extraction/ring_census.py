@@ -9,7 +9,7 @@ and an attribute written for a different tool will not stop it. So this reads
 the gate-level netlist that the shuttle hardened and finds the cycles itself.
 
 Used in Phase A to justify target selection before any response is predicted.
-It says nothing about which ring is faster than which — that is A.5 onward.
+It says nothing about which ring is faster than which; that is A.5 onward.
 
     python3 ring_census.py NETLIST [NETLIST ...]     # census, human readable
     python3 ring_census.py --json OUT NETLIST ...    # census, machine readable

@@ -5,9 +5,10 @@
 
 Written not to share code with `fetch_inputs.py`. The check that matters is the
 one that does not need the fetcher to be right: given the files, this re-derives
-every size and every SHA-256 itself and compares. Where the files are absent —
-in CI, on the folder bridge — it falls back to the manifest's own digest, which
-catches a manifest edited by hand but cannot catch a file that changed under it.
+every size and every SHA-256 itself and compares. Where the files are absent,
+in CI or on a machine that never fetched them, it falls back to the manifest's
+own digest, which catches a manifest edited by hand but cannot catch a file
+that changed under it.
 Both are reported separately so nobody reads the weaker one as the stronger one.
 
     python3 verify_inputs.py                  # manifest only

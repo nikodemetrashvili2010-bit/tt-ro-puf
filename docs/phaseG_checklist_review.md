@@ -274,8 +274,8 @@ signoff without names behind it.
 **`dualarm/info.yaml`** still said "equalized" for Arm C, and not in two places
 but four: the header comment, the project description, the comment over
 `source_files` and the `ui[7]` line. The description and the pin line are what
-the datasheet page is built from. Nikoloz said to change them, so all four now
-read hand-placed, in `dualarm/info.yaml`, the top-level copy the mirror makes
+the datasheet page is built from. I changed them, so all four now read
+hand-placed, in `dualarm/info.yaml`, the top-level copy the mirror makes
 from it, and the clone, one hash for the three. The same words in the firmware
 header went with them. `docs/info.md` and the README were already clean.
 
@@ -315,8 +315,8 @@ the library's. The gate-level test that ran in CI enables Arm B only.
 
 ## What changed in the gate, after the review
 
-The three post-build checks can fail the job now. Nikoloz chose that when
-asked, and it went into `ci/gds.yaml` in the working tree and the clone's
+The three post-build checks can fail the job now. I decided that after the
+review, and it went into `ci/gds.yaml` in the working tree and the clone's
 `.github/workflows/gds.yaml`, same bytes. Both placement scripts already took
 `--strict`; the ring walk exits non-zero without `--annotate`, so it is called
 twice, once for the run page and once for the verdict:

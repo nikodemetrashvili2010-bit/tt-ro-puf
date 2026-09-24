@@ -49,8 +49,9 @@ Treat the GDS, LEF, netlist and SPEF as one artefact set pinned by
 
 The bytes are not committed. The manifest reproduces them, and
 `verify_inputs.py --inputs` re-derives every size and hash to prove it. Where
-the bytes are absent - in CI, on the folder bridge - only the manifest's own
-digest can be checked, which catches a manifest edited by hand and nothing more.
+the bytes are absent, in CI or on a machine that never fetched them, only the
+manifest's own digest can be checked, which catches a manifest edited by hand
+and nothing more.
 The script prints which of the two checks it ran.
 
 ## The tiers do not describe availability
