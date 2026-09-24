@@ -219,8 +219,9 @@ baseline's results in a table of their own.
 ## Status
 
 Run 83 is the candidate for the TTSKY26d shuttle, with gds, precheck and the
-gate-level test green on it. It is not a finished tapeout. On 20 September the
-shuttle page still listed TTSKY26d as upcoming, with a November deadline.
+gate-level test green on it. It is not a finished tapeout. By 24 September
+TTSKY26d was open for submissions, closing on 30 November, but tiles and boards
+were not on sale yet.
 
 On that build STA is clean at all nine corners, the worst setup slack 9.20 ns
 at the slow corner and the worst hold slack 0.110 ns at the fast one. There are

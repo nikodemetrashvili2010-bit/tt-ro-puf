@@ -95,6 +95,7 @@ jobs:
           python3 sim/spice/gono/verify_instance_corners.py --build release --dir sim/spice/gono/armb3
           python3 sim/mux_hazard.py --selftest
           python3 sim/mux_hazard.py --netlist dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nl.v --expect 1728
+          python3 sim/release_identity.py --selftest
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_current --all-builds .
           python3 sim/spice/gono/triage_warnings.py --build dualarm/control_wokwi
           python3 sim/spice/gono/triage_warnings.py --build dualarm/build_armc
@@ -251,6 +252,19 @@ jobs:
         run: |
           python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist "runs/wokwi/final/nl/*.nl.v" --annotate
           python3 sim/spice/gono/verify_ring_topology.py --arms AC --netlist "runs/wokwi/final/nl/*.nl.v"
+
+      # Every prediction was read off one layout, run 83's, archived in
+      # dualarm/build_armc, and the shuttle gets whatever this job builds.
+      # Nothing the build reads has changed since run 83 except wording in
+      # info.yaml, so the two should be the same layout. This says whether
+      # they are, in an annotation. On its first runs it cannot fail the
+      # job, continue-on-error and no --strict, because a wrong path here
+      # should not turn a good build red. Once a run has said identical,
+      # both come off.
+      - name: Is this the layout that was analysed
+        if: success()
+        continue-on-error: true
+        run: python3 sim/release_identity.py --run-dir runs/wokwi --against dualarm/build_armc --annotate
 
   precheck:
     needs: gds

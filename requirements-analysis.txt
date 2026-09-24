@@ -1,3 +1,4 @@
 # Dependencies for regenerating the checked-in figures.
 matplotlib==3.10.8
 Pillow==12.3.0
+gdstk==1.0.1
