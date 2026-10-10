@@ -218,9 +218,20 @@ def measure(t, vec, directory, tag):
                 cells=cells, chain=chain)
 
 
-def report(opens, controls, csv_path=None):
+def deck_corner(decks):
+    """Which corner the decks were written for, off their own .lib line."""
+    names = {"ff": "fast", "tt": "typical", "ss": "slow"}
+    for deck in decks:
+        for line in open(deck, encoding="utf-8", errors="replace"):
+            m = re.match(r'\.lib\s+\S+\s+(\w+)\s*$', line)
+            if m:
+                return names.get(m.group(1), m.group(1))
+    return "fast"
+
+
+def report(opens, controls, csv_path=None, corner="fast"):
     failures = []
-    print("selection path, fast corner")
+    print("selection path, %s corner" % corner)
     print()
     print("  osc   judged  matched  flop rises   rise    fall   asym   high    low")
     for r in opens:
@@ -461,7 +472,7 @@ def main():
         row = measure(t, vec, args.directory, tag)
         (controls if tag.startswith("ctl") else opens).append(row)
 
-    return report(opens, controls, args.csv)
+    return report(opens, controls, args.csv, deck_corner(decks))
 
 
 if __name__ == "__main__":

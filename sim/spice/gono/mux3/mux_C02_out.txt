@@ -62,7 +62,7 @@ qbar                                      1.95
 vrstn#branch                                 0
 vone#branch                                  0
 ven#branch                                   0
-vdd#branch                        -2.55627e-10
+vdd#branch                        -2.55629e-10
 
 
 No. of Data Rows : 42020

@@ -33,6 +33,8 @@ netlist byte for byte identical to the archived ones.
 | Counter range | the fastest ring on the chip is Arm C's ring 10 at ff, and it reads 37318 of 65535 at the 2048-cycle window and 50 MHz; a wrap would latch `uio[4]` rather than pass as a reading | `verify_datasheet.py` | no |
 | Lumped capacitance against the full RC network | Arm A widens from 5.75% to 5.88%, every ring 0.67% to 1.67% slower, rank correlation 0.965; Arm C 2.17% to 2.19%, rank correlation 0.906; no pair bit reverses in either arm | `rc_validation_3arm.csv` and `rc_validation_armc.csv`, logs in `sim/spice/gono/rc3/`, both tables regenerated in CI | no |
 | 48-to-1 selector at the fast corner | all 48 paths carry every edge, 30 of 30 matched and 15 flop rises on each, 48 blocked controls silent; rise delay 174 to 349 ps; every path lengthens its high level by 90 to 209 ps and shortens its low by the same, period preserved | `sim/spice/gono/mux3/`, `mux3_validation.csv`, regenerated in CI | no |
+| 48-to-1 selector at tt and ss | all 48 paths carry every edge at both, 19 of 19 at tt and 9 of 9 at ss, 96 blocked controls silent; at its narrowest the counter's clock is low for 573 ps at tt and 1205 at ss, B11 both times, against the library's 260 to 262 and 574 to 578 | `sim/spice/gono/mux3_tt/` and `mux3_ss/`, both csvs regenerated in CI, `docs/phaseG_selector_tt_ss.md` | no |
+| Selector side inputs against the netlist | every tie on all 48 paths, 612 of them, at the level the netlist's own decode holds with that ring selected. One `o21a_2` on C00 to C03 was tied the other way until 2026-10-10; those four rows moved 4 to 7 ps on the low | `gen_mux_sweep.py --check-sides`, on both builds in CI | no |
 | Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 63 enable-fall phases over four sweeps 50, 5, 1 and 0.2 ps apart, every one settles to a rail and the count steps by at most one. The step sits at about 76 ps at the tap, and just above it the flop sees a pulse as narrow as 80 ps on the finest grid | the four `boundary_validation_B13_3arm*.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_b13_armb.md` | no |
 | Boundary through the other 47 paths | not swept; every one carries all 30 judged edges in the selector sweep, and B13 is the slowest rise of the 48 | `mux3_validation.csv` | before final trust |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
@@ -159,6 +161,16 @@ The boundary through the other 47 selector paths. B13, the slowest, has been
 swept four ways since 22 September, down to 0.2 ps steps, and every phase
 resolves. The rest have only the steady selector sweep behind them. The old
 file marked 29 of 32 paths the same way on the baseline.
+
+At tt and ss not even B13 has been swept at the boundary on this build. The
+baseline's B15 was, at both corners, through a selector deck with the old tie
+below.
+
+The baseline's selector archive. Its sixteen Arm B decks in `mux/`, and every
+deck of the B00 and B15 boundary sweeps, tie one `o21a_2` with A1 high where
+the two-arm netlist holds A2. Found 2026-10-10 and kept as they ran: the
+baseline is not the chip, and on the release build the same swap moved four
+paths by 4 or 5 ps at ff.
 
 About the 80 ps. An earlier version of this file called it a 2.5 ps margin over
 the 77.5 ps the library characterizes for `dfrtp_2` at ff_n40C_1v95. I read the

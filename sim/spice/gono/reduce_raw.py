@@ -228,6 +228,28 @@ def verify_pair_bnd(src_dir: str, red_dir: str, tag: str, vdd: float) -> list[st
     return diffs
 
 
+def copy_decks(src_dir: str, out_dir: str, prefix: str) -> tuple[int, int]:
+    """Put each run's own deck beside its reduced waveform.
+
+    A deck already in the folder under the same name is replaced when it
+    differs. Until 2026-10-10 it was kept, so folding a rerun into an archive
+    left the old deck beside the new waveform and log, and nothing after this
+    could tell. Returns how many were new and how many were replaced.
+    """
+    copied = replaced = 0
+    for d in sorted(glob.glob(os.path.join(src_dir, prefix + "*.spice"))):
+        dst = os.path.join(out_dir, os.path.basename(d))
+        text = open(d).read()
+        if os.path.exists(dst):
+            if open(dst).read() == text:
+                continue
+            replaced += 1
+        else:
+            copied += 1
+        open(dst, "w", newline="").write(text)
+    return copied, replaced
+
+
 def run(src_dir: str, out_dir: str, do_verify: bool, kind: str = "mux",
         vdd: float | None = None) -> int:
     prefix = "bnd_" if kind == "bnd" else "mux_"
@@ -256,13 +278,9 @@ def run(src_dir: str, out_dir: str, do_verify: bool, kind: str = "mux",
 
     # The decks carry the chain comment the analyzer reads back, so copy them
     # across too or the reduced folder is not self-contained.
-    copied = 0
-    for d in sorted(glob.glob(os.path.join(src_dir, prefix + "*.spice"))):
-        dst = os.path.join(out_dir, os.path.basename(d))
-        if not os.path.exists(dst):
-            open(dst, "w", newline="").write(open(d).read())
-            copied += 1
-    print(f"  copied {copied} decks alongside")
+    copied, replaced = copy_decks(src_dir, out_dir, prefix)
+    print(f"  copied {copied} decks alongside"
+          + (f", replaced {replaced} that differed" if replaced else ""))
 
     tags = [os.path.basename(f)[4:-8] for f in files]
     print(f"\nverifying {len(tags)} decks against the real analyzer")
@@ -425,6 +443,23 @@ def selftest() -> int:
     except ReduceError as exc:
         caught3 = "--vdd" in str(exc)
     checks.append(("a boundary reduction without --vdd is refused", caught3))
+
+    # The trap of 2026-10-10: a rerun folded into an archive kept the old deck.
+    d4 = tempfile.mkdtemp()
+    src4, out4 = os.path.join(d4, "src"), os.path.join(d4, "out")
+    os.makedirs(src4)
+    os.makedirs(out4)
+    for name, run_deck, old_deck in (("mux_C00.spice", "new\n", "old\n"),
+                                      ("mux_C01.spice", "same\n", "same\n"),
+                                      ("mux_C02.spice", "fresh\n", None)):
+        open(os.path.join(src4, name), "w").write(run_deck)
+        if old_deck is not None:
+            open(os.path.join(out4, name), "w").write(old_deck)
+    got4 = copy_decks(src4, out4, "mux_")
+    kept = open(os.path.join(out4, "mux_C00.spice")).read()
+    checks.append((f"a rerun's deck replaces an older one of the same name "
+                   f"(new, replaced: {got4})",
+                   got4 == (1, 1) and kept == "new\n"))
 
     # Both scratch folders go, so running this in a loop does not fill /tmp.
     import shutil

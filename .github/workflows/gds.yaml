@@ -72,6 +72,16 @@ jobs:
           diff /tmp/mux_check.csv sim/spice/gono/mux_validation.csv
           python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux3 --csv /tmp/mux3_check.csv
           diff /tmp/mux3_check.csv sim/spice/gono/mux3/mux3_validation.csv
+          python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux3_tt --csv /tmp/mux3_tt_check.csv
+          diff /tmp/mux3_tt_check.csv sim/spice/gono/mux3_tt/mux3_tt_validation.csv
+          python3 sim/spice/gono/analyze_mux_sweep.py sim/spice/gono/mux3_ss --csv /tmp/mux3_ss_check.csv
+          diff /tmp/mux3_ss_check.csv sim/spice/gono/mux3_ss/mux3_ss_validation.csv
+          python3 sim/spice/gono/verify_mux_archive.py --dir sim/spice/gono/mux3 --csv sim/spice/gono/mux3/mux3_validation.csv
+          python3 sim/spice/gono/verify_mux_archive.py --dir sim/spice/gono/mux3_tt --csv sim/spice/gono/mux3_tt/mux3_tt_validation.csv
+          python3 sim/spice/gono/verify_mux_archive.py --dir sim/spice/gono/mux3_ss --csv sim/spice/gono/mux3_ss/mux3_ss_validation.csv
+          python3 sim/spice/gono/gen_mux_sweep.py --selftest
+          python3 sim/spice/gono/gen_mux_sweep.py --check-sides
+          python3 sim/spice/gono/gen_mux_sweep.py --check-sides --build dualarm/build_armc
           python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13 --vdd 1.95 --csv /tmp/bnd3_B13.csv
           diff /tmp/bnd3_B13.csv sim/spice/gono/boundary_validation_B13_3arm.csv
           python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_5ps --vdd 1.95 --csv /tmp/bnd3_B13_5ps.csv

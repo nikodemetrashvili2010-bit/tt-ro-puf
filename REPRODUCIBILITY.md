@@ -200,6 +200,20 @@ committed `mux_validation.csv` exactly, since both come from the same routed
 netlist. If they do not, the build in `dualarm/build_current/` is not the one the
 csv was made from.
 
+Since 2026-10-10 those commands do not write the archive's decks exactly. The
+generator now ties one `o21a_2` the way the netlist does, which changes the
+sixteen Arm B decks by one line each, and every deck of the B00 and B15
+boundary sweeps below the same way. A fresh run would move those rows. On the
+release build the same swap moved four paths by 4 or 5 ps at ff; the two-arm
+ones have not been run with it. The archive is kept as it ran, and
+`docs/phaseG_selector_tt_ss.md` has the reason.
+
+The release build's sweep is the same three commands with
+`--build dualarm/build_armc` and `--corner ff`, `tt` or `ss`, into
+`sim/spice/gono/mux3/`, `mux3_tt/` and `mux3_ss/`. All 288 decks there are
+what the generator writes now, and CI rebuilds each folder's csv from its
+waveforms.
+
 That csv changed shape on 2026-08-02.
 
 It used to carry a single `narrowest_ps` column, which mixed high levels and

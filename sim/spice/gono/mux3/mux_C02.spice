@@ -86,7 +86,7 @@ Cb_en EN 0 1.128140e-15
 Vone ONE 0 1.95
 Xsel0 b_out ONE 0 0 0 0 VPWR VPWR _194_ sky130_fd_sc_hd__a211o_2
 Csel0 _194_ 0 2.055040e-15
-Xsel1 ONE 0 _194_ 0 0 VPWR VPWR _200_ sky130_fd_sc_hd__o21a_2
+Xsel1 0 ONE _194_ 0 0 VPWR VPWR _200_ sky130_fd_sc_hd__o21a_2
 Csel1 _200_ 0 2.938320e-16
 Xsel2 ONE ONE _200_ 0 0 VPWR VPWR _201_ sky130_fd_sc_hd__and3_2
 Csel2 _201_ 0 6.185980e-15

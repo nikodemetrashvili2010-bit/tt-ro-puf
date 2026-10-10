@@ -88,7 +88,7 @@ Xsel0 0 0 ONE b_out 0 0 VPWR VPWR _193_ sky130_fd_sc_hd__a22o_2
 Csel0 _193_ 0 2.687040e-15
 Xsel1 0 0 0 _193_ 0 0 VPWR VPWR _194_ sky130_fd_sc_hd__a211o_2
 Csel1 _194_ 0 2.055040e-15
-Xsel2 ONE 0 _194_ 0 0 VPWR VPWR _200_ sky130_fd_sc_hd__o21a_2
+Xsel2 0 ONE _194_ 0 0 VPWR VPWR _200_ sky130_fd_sc_hd__o21a_2
 Csel2 _200_ 0 2.938320e-16
 Xsel3 ONE ONE _200_ 0 0 VPWR VPWR _201_ sky130_fd_sc_hd__and3_2
 Csel3 _201_ 0 6.185980e-15

@@ -155,10 +155,23 @@ written down here, and the script stops if a cell or a pin is missing. Passing
 silent; without that the open runs would rest on an assumption about the side
 inputs rather than on evidence.
 
+Open is not the same as right, though, and the controls cannot tell the two
+apart. An `o21a_2` entered at B1 opens with either A1 or A2 high, and until
+2026-10-10 the table held A1 where both netlists hold A2: all sixteen Arm B
+paths of the two-arm build, and C00 to C03 of the release build.
+`--check-sides` works every side input's level out of the netlist's own decode,
+with the selection register set and nothing else known, and fails on any tie
+that disagrees. It needs no PDK, so the gate runs it on both builds.
+
 The analysis matches each ring edge to the selector edge it produced instead of
 comparing totals over a window, because the selector delays every edge and a
 total count reports the last one as lost. Results land in `mux_validation.csv`,
 one row per oscillator with its cell chain.
+
+`mux/` is the two-arm sweep at ff. `mux3/`, `mux3_tt/` and `mux3_ss/` hold the
+release build's 48 paths and their 48 controls at ff, tt and ss, each folder
+with its own csv, and CI rebuilds all four csv files from the waveforms. The
+sixteen Arm B decks in `mux/` are the old tie's and are kept as they ran.
 
 `gen_boundary_sweep.py` and `analyze_boundary_sweep.py` ask item 1's question
 through item 2's path. The generator does not rebuild the selector, it calls

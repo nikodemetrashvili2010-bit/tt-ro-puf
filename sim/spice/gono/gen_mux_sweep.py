@@ -111,10 +111,17 @@ CELLS = {
         "A2": {"A1": 1, "B1": 0, "C1": 0},
         "B1": {"A1": 0, "A2": 0, "C1": 0},
         "C1": {"A1": 0, "A2": 0, "B1": 0}},
+    # Entered at B1 an o21a_2 passes with either A1 or A2 high, and the
+    # two do not time the same. Both builds hold A2 high and A1 low there:
+    # _356_ on the two-arm build, all sixteen Arm B paths, and _447_ on the
+    # release build, C00 to C03. This line had A1 until 2026-10-10, so the
+    # two-arm archive in mux/ and the B00 and B15 boundary decks were made
+    # with the other input high. --check-sides holds this table to the
+    # netlist's own decode.
     "sky130_fd_sc_hd__o21a_2": {
         "A1": {"A2": 0, "B1": 1},
         "A2": {"A1": 0, "B1": 1},
-        "B1": {"A1": 1, "A2": 0}},
+        "B1": {"A1": 0, "A2": 1}},
     "sky130_fd_sc_hd__a21bo_2": {
         # X = (A1 & A2) | ~B1_N
         "A1": {"A2": 1, "B1_N": 1},
@@ -413,6 +420,192 @@ def build(tag, src_net, path, caps, corner, order, control=False):
     return "\n".join(lines) + "\n", missing
 
 
+# --- the table against the netlist, --check-sides ---------------------------
+#
+# Every tie in CELLS is a claim about the chip: with this oscillator selected,
+# this side input sits at this level. Until 2026-10-10 nothing tested it, and
+# the o21a_2 line was wrong on both builds from the first sweep on. This works
+# the levels out of the netlist's own decode and fails on any tie that
+# disagrees.
+#
+# A level is 0, 1 or None for unknown. The selection register is the only
+# state that gets set; every other flop is unknown and so is the running ring.
+# A stopped ring's output is low. Its NAND holds n[0] high once the enable
+# drops and fifteen inverters bring the tap n[15] down, the same in
+# ro_macro.v, ro_armc.v and the hard macro's own netlist.
+
+def _and(*v):
+    return 0 if 0 in v else (None if None in v else 1)
+
+
+def _or(*v):
+    return 1 if 1 in v else (None if None in v else 0)
+
+
+def _not(a):
+    return None if a is None else 1 - a
+
+
+def _mux(s, a0, a1):
+    if s is None:
+        return a0 if a0 == a1 else None
+    return a1 if s else a0
+
+
+LOGIC = {
+    "inv":           lambda p: _not(p["A"]),
+    "clkinv":        lambda p: _not(p["A"]),
+    "buf":           lambda p: p["A"],
+    "bufbuf":        lambda p: p["A"],
+    "clkbuf":        lambda p: p["A"],
+    "clkdlybuf4s15": lambda p: p["A"],
+    "clkdlybuf4s18": lambda p: p["A"],
+    "clkdlybuf4s25": lambda p: p["A"],
+    "clkdlybuf4s50": lambda p: p["A"],
+    "dlygate4sd1":   lambda p: p["A"],      # hold buffers, which start "dl"
+    "dlygate4sd2":   lambda p: p["A"],      # like a latch and are not one
+    "dlygate4sd3":   lambda p: p["A"],
+    "dlymetal6s2s":  lambda p: p["A"],
+    "dlymetal6s4s":  lambda p: p["A"],
+    "dlymetal6s6s":  lambda p: p["A"],
+    "and2":          lambda p: _and(p["A"], p["B"]),
+    "and2b":         lambda p: _and(_not(p["A_N"]), p["B"]),
+    "and3":          lambda p: _and(p["A"], p["B"], p["C"]),
+    "and3b":         lambda p: _and(_not(p["A_N"]), p["B"], p["C"]),
+    "nand2":         lambda p: _not(_and(p["A"], p["B"])),
+    "nor2":          lambda p: _not(_or(p["A"], p["B"])),
+    "a21o":          lambda p: _or(_and(p["A1"], p["A2"]), p["B1"]),
+    "a21bo":         lambda p: _or(_and(p["A1"], p["A2"]), _not(p["B1_N"])),
+    "a211o":         lambda p: _or(_and(p["A1"], p["A2"]), p["B1"], p["C1"]),
+    "a22o":          lambda p: _or(_and(p["A1"], p["A2"]),
+                                   _and(p["B1"], p["B2"])),
+    "a221o":         lambda p: _or(_and(p["A1"], p["A2"]),
+                                   _and(p["B1"], p["B2"]), p["C1"]),
+    "o21a":          lambda p: _and(_or(p["A1"], p["A2"]), p["B1"]),
+    "o21ba":         lambda p: _and(_or(p["A1"], p["A2"]), _not(p["B1_N"])),
+    "mux2":          lambda p: _mux(p["S"], p["A0"], p["A1"]),
+    "mux4":          lambda p: _mux(p["S1"], _mux(p["S0"], p["A0"], p["A1"]),
+                                    _mux(p["S0"], p["A2"], p["A3"])),
+}
+
+
+def net_levels(insts, ring_slot, sel_bits, slot):
+    """Level of any net with oscillator `slot` selected and its window open."""
+    drivers = {}
+    for name, (cell, pins) in insts.items():
+        for pin, net in pins.items():
+            if net and pin in OUT_PINS:
+                drivers[net] = (name, pin)
+    memo = {}
+
+    def level(net):
+        if net in memo:
+            return memo[net]
+        memo[net] = None                     # a loop reads as unknown
+        if net in ring_slot:
+            v = None if ring_slot[net] == slot else 0
+        elif net in sel_bits:
+            v = (slot >> sel_bits[net]) & 1
+        elif net not in drivers:
+            v = None                         # a pin of the project
+        else:
+            name, opin = drivers[net]
+            cell, pins = insts[name]
+            base = re.sub(r'_\d+$', '', cell.replace("sky130_fd_sc_hd__", ""))
+            if base == "conb":
+                v = 1 if opin == "HI" else 0
+            elif base in LOGIC:
+                v = LOGIC[base]({p: level(n) for p, n in pins.items()
+                                 if p not in OUT_PINS and p not in PWR_PINS})
+            elif re.match(r'(df|dl|sdf|edf)', base):
+                v = None                     # state nobody set
+            else:
+                raise SystemExit("--check-sides: no logic written for %s (%s)"
+                                 % (cell, name))
+        memo[net] = v
+        return v
+    return level
+
+
+def slot_of(tag):
+    return {"A": 0, "B": 16, "C": 32}[tag[0]] + int(tag[1:])
+
+
+def check_sides(build_dir, cells=None):
+    """Every CELLS tie on every path, held to the netlist's own decode."""
+    cells = CELLS if cells is None else cells
+    netlist = os.path.join(build_dir, os.path.basename(NETLIST))
+    insts, loads = read_netlist(netlist)
+    paths = find_paths(insts, loads)
+    sel_bits = {}
+    for cell, pins in insts.values():
+        q = pins.get("Q", "")
+        m = re.match(r'\\u_puf\.u_core\.active_sel\[(\d+)\]$', q)
+        if m:
+            sel_bits[q] = int(m.group(1))
+    if not sel_bits:
+        raise SystemExit("--check-sides: no active_sel flops in %s"
+                         % build_dir)
+    ring_slot = {src: slot_of(tag) for tag, src, _ in paths}
+    compared, bad = 0, []
+    for tag, src, path in paths:
+        if not path:
+            raise SystemExit("--check-sides: no selector path for %s" % tag)
+        level = net_levels(insts, ring_slot, sel_bits, slot_of(tag))
+        for iname, icell, ipin, _, _ in path:
+            for pin, want in sorted(cells[icell][ipin].items()):
+                got = level(insts[iname][1][pin])
+                compared += 1
+                if got != want:
+                    bad.append((tag, iname, icell, pin, want, got))
+    return compared, len(paths), bad
+
+
+def selftest():
+    """Plant wrong ties and a missing cell; each has to be caught, alone."""
+    import copy
+    builds = {"two-arm": os.path.join(ROOT, "dualarm", "build_current"),
+              "release": os.path.join(ROOT, "dualarm", "build_armc")}
+    ok = True
+
+    def expect(name, got, want):
+        nonlocal ok
+        good = got == want
+        ok = ok and good
+        print("  %-52s %s" % (name, "ok" if good else "FAILED: %r" % (got,)))
+
+    for label, b in builds.items():
+        n, npaths, bad = check_sides(b)
+        expect("%s, table as it stands: %d ties" % (label, n),
+               (n > 0, bad), (True, []))
+    old = copy.deepcopy(CELLS)
+    old["sky130_fd_sc_hd__o21a_2"]["B1"] = {"A1": 1, "A2": 0}
+    _, _, bad = check_sides(builds["release"], old)
+    expect("release, the o21a_2 line as it was",
+           sorted({(t, i) for t, i, _, _, _, _ in bad}),
+           [("C0%d" % k, "_447_") for k in range(4)])
+    _, _, bad = check_sides(builds["two-arm"], old)
+    expect("two-arm, the o21a_2 line as it was",
+           sorted({(t, i) for t, i, _, _, _, _ in bad}),
+           [("B%02d" % k, "_356_") for k in range(16)])
+    wrong = copy.deepcopy(CELLS)
+    wrong["sky130_fd_sc_hd__a22o_2"]["A1"]["A2"] = 0
+    _, _, bad = check_sides(builds["release"], wrong)
+    expect("release, a22o_2 at A1 with its partner low",
+           sorted({(c, p, w) for _, _, c, p, w, _ in bad}),
+           [("sky130_fd_sc_hd__a22o_2", "A2", 0)])
+    kept = LOGIC.pop("and2b")
+    try:
+        check_sides(builds["release"])
+        expect("release, no logic for and2b", "passed", "stopped")
+    except SystemExit:
+        expect("release, no logic for and2b", "stopped", "stopped")
+    finally:
+        LOGIC["and2b"] = kept
+    print("selftest: %s" % ("all caught" if ok else "FAILED"))
+    return 0 if ok else 1
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--output-dir", default="/tmp/muxsweep")
@@ -428,7 +621,22 @@ def main():
     ap.add_argument("--control", action="store_true",
                     help="also write blocked-path controls, which must show no "
                          "output edges at all")
+    ap.add_argument("--check-sides", action="store_true",
+                    help="hold every side tie to the netlist's decode and "
+                         "write nothing; needs no PDK")
+    ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if args.check_sides:
+        n, npaths, bad = check_sides(os.path.abspath(args.build))
+        for tag, iname, icell, pin, want, got in bad:
+            print("  %s %s %s.%s: table %s, netlist %s"
+                  % (tag, iname, icell.replace("sky130_fd_sc_hd__", ""),
+                     pin, want, got))
+        print("side ties: %d on %d paths held to the netlist, %d disagree"
+              % (n, npaths, len(bad)))
+        return 1 if bad or not n else 0
     corner = CORNERS[args.corner]
 
     lib = args.lib
@@ -474,4 +682,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
