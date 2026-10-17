@@ -36,6 +36,7 @@ netlist byte for byte identical to the archived ones.
 | 48-to-1 selector at tt and ss | all 48 paths carry every edge at both, 19 of 19 at tt and 9 of 9 at ss, 96 blocked controls silent; at its narrowest the counter's clock is low for 573 ps at tt and 1205 at ss, B11 both times, against the library's 260 to 262 and 574 to 578 | `sim/spice/gono/mux3_tt/` and `mux3_ss/`, both csvs regenerated in CI, `docs/phaseG_selector_tt_ss.md` | no |
 | Selector side inputs against the netlist | every tie on all 48 paths, 612 of them, at the level the netlist's own decode holds with that ring selected. One `o21a_2` on C00 to C03 was tied the other way until 2026-10-10; those four rows moved 4 to 7 ps on the low | `gen_mux_sweep.py --check-sides`, on both builds in CI | no |
 | Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 63 enable-fall phases over four sweeps 50, 5, 1 and 0.2 ps apart, every one settles to a rail and the count steps by at most one. The step sits at about 76 ps at the tap, and just above it the flop sees a pulse as narrow as 80 ps on the finest grid | the four `boundary_validation_B13_3arm*.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_b13_armb.md` | no |
+| Boundary pulse at tt and ss | B13 again, at tt and at ss, each on a 50 ps grid and then a 5 ps grid across the step, 140 phases: every one settles to a rail and the count steps by at most one. The step sits at 115 to 122 ps at the tap at tt and 258 to 264 at ss. One 5 ps step past it the flop still sees 231 ps at tt and 507 at ss, over the library's 169.8 and 353.8, and a finer grid would find narrower, as at ff | `boundary_validation_B13_3arm_tt.csv`, `_tt_5ps`, `_ss` and `_ss_5ps`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_tt_ss.md` | no |
 | Boundary through the other 47 paths | not swept; every one carries all 30 judged edges in the selector sweep, and B13 is the slowest rise of the 48 | `mux3_validation.csv` | before final trust |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
 | Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply at most 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
@@ -43,6 +44,7 @@ netlist byte for byte identical to the archived ones.
 | Arm B on this build's routes | all sixteen start at ss, tt and ff carrying the enable and output routes run 83 drew, the longest output route 45.4 fF where the baseline's stopped at 29.5: 0.0001%, 0.0033% and 0.0019% peak to peak, under the 0.01% written down before the first run and under one count at the 2048-cycle window and 50 MHz | `sim/spice/gono/armb3/`, `analyze_instance.py --build release` at each corner and `verify_instance_corners.py --build release`, in CI, `docs/phaseG_b13_armb.md` | no |
 | Logic under stress, all 48 rings | 7 of 7 tests on seeds 1 to 4 on the release netlist with every ring given a delay: power-up from X with no clock, all 64 selector values, a seeded random host, the window changed under a run, the clock at 100 and 12.5 MHz, a soak, restarts; `ena` low stops every ring in 10 ns with no clock, and no two enables were ever high together in all 128 states of the seven flops behind them | `sim/stress/`, `docs/phaseG_stress.md`; not in CI yet | no |
 | First count after a change of selection | the counter clock mux can pulse while the selector settles, on 1728 of 4032 changes and 960 of the 2256 between rings, starting in twelve cells; if it lands after the counter's reset lets go, the first run reads one high. The firmware starts every selection twice and keeps the second, and the datasheet says to | `sim/mux_hazard.py --expect 1728`, `verify_datasheet.py`, `docs/phaseG_hazard.md` | no |
+| Fit to Tiny Tapeout's own sources | run 83's GDS, LEF and powered netlist pass four of the precheck's own functions, pin, power pin, cell name and analog pin; the build replaces seven settings and `config.json` sets none of them; a project not selected has its inputs and reset held at 0; the project sits behind the power switch `tt_pg_1v8_ll_2`, whose channel drops under a millivolt with a ring running, the same for every ring; the board makes the 50 MHz exactly, 100 MHz divided by 2; the firmware reads `ui_in` back, stops if `enable()` refuses and drives every `uio` pin the chip does not | `sim/tt_fit.py` against three pinned Tiny Tapeout repositories, decks in `sim/spice/pg/`, `docs/phaseG_tt_fit.md`; not in CI, it needs those repositories | no |
 | Silicon measurements | chips not fabricated | - | next phase |
 
 ## The two-arm baseline
@@ -162,9 +164,8 @@ swept four ways since 22 September, down to 0.2 ps steps, and every phase
 resolves. The rest have only the steady selector sweep behind them. The old
 file marked 29 of 32 paths the same way on the baseline.
 
-At tt and ss not even B13 has been swept at the boundary on this build. The
-baseline's B15 was, at both corners, through a selector deck with the old tie
-below.
+At tt and ss B13 has been swept since 18 October, on grids of 50 and 5 ps
+only. Nothing finer has run there.
 
 The baseline's selector archive. Its sixteen Arm B decks in `mux/`, and every
 deck of the B00 and B15 boundary sweeps, tie one `o21a_2` with A1 high where
@@ -187,7 +188,8 @@ written it as one.
 The release build says the same from the other side. B13's sweeps found a
 narrower pulse at every finer grid, 202 ps at 5 ps steps, 128 at 1 ps and 80 at
 0.2 ps, so the width right at the threshold is a property of how finely you
-look rather than of the circuit, and the flop resolved every one of them.
+look rather than of the circuit, and the flop resolved every one of them. At
+tt and ss the 5 ps grids got to 231 and 507 ps and the flop resolved those too.
 
 Arm B's leftover on the release build's routes. The sixteen were run on them on
 22 September and still spread under one count at the measurement setting.
@@ -214,7 +216,8 @@ preregistered box reaches 125 C, while the RP2040 on the demo board is rated to
 85 C and makes the reference clock, so only the breakout can be heated.
 At -40 C a cold board condenses water out of the air, and frost melting on a
 powered board shorts pins. And nothing in the repository says yet how the core
-supply gets set to 1.62 and 1.98 V and measured at the chip.
+supply gets set to 1.62 and 1.95 V and measured at the chip. The top was
+1.98 V until the amendment of 18 October, `docs/phaseG_prereg_amendment.md`.
 
 Last is silicon. Uniqueness, reliability and any attack claim need measured dies
 at several supply voltages and temperatures. Until those exist this is a

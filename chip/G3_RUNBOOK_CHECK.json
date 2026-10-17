@@ -41,7 +41,7 @@
       "pass": true
     },
     {
-      "detail": "18 of 18 scripts",
+      "detail": "19 of 19 scripts",
       "id": "B07",
       "name": "the re-run step covers every script the gate runs",
       "pass": true

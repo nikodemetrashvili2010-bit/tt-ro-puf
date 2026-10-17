@@ -1,0 +1,299 @@
+{
+  "_comment": [
+    "An amendment to G.4, written 2026-10-18. It does not replace",
+    "chip/PREREGISTRATION.json and it does not change a byte of it. That",
+    "file is recorded here by hash and stays on disk as it was frozen on",
+    "31 August, and preregister.py --freeze-check still holds it there.",
+    "",
+    "The research design was read cold on 8 September and four findings",
+    "came out of that audit. Four more gaps were found on 23 September and",
+    "one on 18 October. The four decisions of 3 October are five items",
+    "below, the three of 18 October are three more, and the one about",
+    "which count is a reading dates from 23 September, when the firmware",
+    "began starting every selection twice. No die existed for any of them.",
+    "",
+    "preregister.py --amendment holds this file to the frozen one: every",
+    "item quotes the frozen text it amends, and the gate fails if the quote",
+    "and the frozen file part company."
+  ],
+  "written": "2026-10-18",
+  "gate": "G.4",
+  "kind": "amendment",
+  "not_a_preregistration": true,
+  "not_a_preregistration_why": [
+    "PREREGISTRATION.json was frozen on 31 August before any of this was",
+    "known, and that is what makes it a preregistration. This file was",
+    "written after an audit of that plan, with the audit's numbers in hand.",
+    "No die had been read and nothing had been measured, so none of it can",
+    "have been fitted to data, but it is still a set of decisions taken",
+    "late, and it must never be cited as though it carried the frozen",
+    "file's weight. The paper says so in the same words."
+  ],
+  "dies_read_when_written": 0,
+  "supersedes_nothing": true,
+  "frozen_record": {
+    "chip/PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
+  },
+  "reference_implementation": {
+    "chip/primary_tests.py": "0418b0a9c2c83dcf46387e9d79f897ba9c228a2c1f836484422cd899642a70c4"
+  },
+
+  "amends": [
+    {
+      "id": "family",
+      "frozen_key": "multiplicity.family",
+      "frozen_text": "M1 across three arms, M2 across three arms, M4 once. Seven tests.",
+      "decided": "2026-10-03",
+      "by": "Nikoloz",
+      "now": [
+        "Two primary tests, M1 on Arm A and M4. Holm runs over those two",
+        "only, so the smaller p is tested at 0.025 and the other at 0.05 if",
+        "the first passed. M1 on Arms B and C and M2 on all three arms are",
+        "secondary: computed, reported, and carrying no claim of their own."
+      ],
+      "primaries": ["M1 on Arm A", "M4"],
+      "holm_levels": [0.025, 0.05],
+      "why": [
+        "Under the frozen family of seven the first Holm level is 0.05/7,",
+        "0.007143, and a perfect M1 on Arm A, six scored pairs all called",
+        "right, has p = 0.015625. The leakage claim would be reported false",
+        "on exactly the result it predicts. That is the audit's finding 1.",
+        "With two primaries six of six passes, and five of five, p =",
+        "0.03125, can still pass second."
+      ],
+      "gives_up": [
+        "M2, and M1 on Arms B and C, no longer carry a claim. Arm B near",
+        "chance and Arm B not repeating become reported results and stop",
+        "being tests that have to come out as nulls, which is most of the",
+        "audit's finding 3."
+      ]
+    },
+    {
+      "id": "m1_test",
+      "frozen_key": "falsification.M1",
+      "frozen_text": "If Arm A's predictable-bit count is not above chance with the Holm-corrected family below 0.05 across the declared comparisons, the leakage claim fails and the paper says so.",
+      "decided": "2026-10-03",
+      "by": "Nikoloz",
+      "now": [
+        "The test is the exact one-sided binomial on Arm A's scored pairs:",
+        "with n pairs not abstaining and k of them called right, p is the",
+        "chance of k or more right out of n at one half each. The leakage",
+        "claim fails unless p clears the level Holm gives it."
+      ],
+      "why": [
+        "The frozen text names a correction and no test. A binomial over",
+        "one die's pairs and one pooled over dies are both defensible, and",
+        "the audit put the gap between them at two orders of magnitude in",
+        "power, so the choice had to be made while there was no data."
+      ],
+      "gives_up": [
+        "the pooled reading, which would have more power with more dies.",
+        "M1 is a test on one die, see the item named die."
+      ]
+    },
+    {
+      "id": "die",
+      "frozen_key": "primary_metrics.M1.definition",
+      "frozen_text": "of the 8 pairs in an arm, the number whose measured sign matches the sign predicted from the public design database before silicon, counting only non-abstaining pairs.",
+      "decided": "2026-10-18",
+      "by": "Nikoloz",
+      "now": [
+        "M1 and M4 are tested on the first die read, and on no other. Which",
+        "die that is goes into the archive with its first reading, before",
+        "anything is computed on it. Every other die is reported with the",
+        "same numbers and tests nothing."
+      ],
+      "why": [
+        "Both are tests on one die and the frozen text never says which.",
+        "M2 needs three dies, so more than one is the plan, and a die chosen",
+        "after reading them all is a result chosen."
+      ],
+      "gives_up": [
+        "whatever power later dies would have added to M1 and M4. They stay",
+        "one die's tests however many come in."
+      ]
+    },
+    {
+      "id": "m2_dies",
+      "frozen_key": "primary_metrics.M2.definition",
+      "frozen_text": "Spearman correlation of the 16 per-ring mean frequencies between every pair of dies, within an arm, at the nominal cell.",
+      "decided": "2026-10-03",
+      "by": "Nikoloz",
+      "now": [
+        "M2 is computed only if three or more dies have been read by",
+        "2027-09-30, and is reported as not run otherwise. The pairs of dies",
+        "are combined as the mean of the pairwise Spearman correlations, and",
+        "its p-value comes from shuffling each die's ring labels."
+      ],
+      "min_dies": 3,
+      "last_die_date": "2027-09-30",
+      "why": [
+        "The frozen text names no die count and no way to combine D(D-1)/2",
+        "correlations that are not independent, so as written M2 cannot be",
+        "computed. That is the audit's finding 4. One devkit is one die."
+      ],
+      "gives_up": [
+        "with one devkit M2 rests on other people's boards, and under three",
+        "dies it does not run at all."
+      ]
+    },
+    {
+      "id": "m4_secondary",
+      "frozen_key": "primary_metrics.M4.definition",
+      "frozen_text": "the standard deviation of the 16 Arm C mean frequencies at the nominal cell, divided by the same figure for Arm A on the same die.",
+      "decided": "2026-10-03",
+      "by": "Nikoloz",
+      "now": [
+        "M4 stays as frozen. One secondary is named before any data: Arm",
+        "C's spread inside its lower eight rings and inside its upper eight,",
+        "pooled, over Arm A's spread. The paper gives the two footprints,",
+        "Arm C 77 by 180 um around Arm A's 59 by 98."
+      ],
+      "halves": {
+        "below_arm_a": [0, 1, 4, 5, 6, 10, 11, 12],
+        "above_arm_a": [2, 3, 7, 8, 9, 13, 14, 15],
+        "read_from": "dualarm/src/armc_fix.tcl, where each ring's NAND sits",
+        "pooled": "the two sums of squares about each half's own mean, over fourteen degrees of freedom"
+      },
+      "why": [
+        "Arm C's column is taller than Arm A's block, so a gradient up the",
+        "die adds more to Arm C's spread than to Arm A's, and that works",
+        "against the claim. That is the audit's finding 2. Lower and upper",
+        "mean below and above Arm A, by where the hook puts each ring and",
+        "not by ring number. Each half spans 33 um of height, where the",
+        "whole column spans 180 and Arm A 98."
+      ],
+      "gives_up": [
+        "the primary number still carries the position term, and it works",
+        "against the claim. The secondary decides nothing."
+      ]
+    },
+    {
+      "id": "m4_interval",
+      "frozen_key": "falsification.M4",
+      "frozen_text": "If Arm C's spread ratio is not below 1 with its confidence interval clear of 1, placement equalization did not suppress the layout term and the paper reports a null.",
+      "decided": "2026-10-18",
+      "by": "Nikoloz",
+      "now": [
+        "The interval comes from a permutation test, inverted, on the first",
+        "die read. M4 supports the claim only if the ratio is below 1 and",
+        "p(1) is at or under the level Holm gives M4, which is the interval",
+        "being clear of 1."
+      ],
+      "method": {
+        "statistic": "the sample standard deviation of Arm C's 16 ring means over Arm A's, the frozen M4",
+        "centring": "each arm's 16 values less that arm's own median",
+        "test": "for a ratio r, Arm C's centred values are divided by r and pooled with Arm A's, and the 32 are shuffled between the two arms, 16 and 16; p(r) is the share of shuffles, the observed split counted as one of them, whose ratio is at or under the observed one",
+        "shuffles": 100000,
+        "seed": 20261018,
+        "generator": "one random.Random(seed), shuffling the pooled indices in place again and again, Arm A's in ring order first, every order kept and used at every r",
+        "sided": "one-sided, the ratio below r",
+        "level": "the level Holm gives M4 over the two primaries, 0.025 if its p(1) is the smaller of the two and 0.05 if M1 passed first",
+        "interval": "every r whose p(r) is above that level, its upper end found by bisection on log r",
+        "decision": "the ratio below 1 and p(1) at or under the level"
+      },
+      "why": [
+        "The frozen text asks for an interval and names none. A ratio of two",
+        "standard deviations over sixteen values a side is where the",
+        "textbook F interval is least safe: it is exact only for normal",
+        "data, ring frequencies shaped by a layout need not be normal, and",
+        "with heavy tails it comes out too narrow, which makes passing",
+        "easier than it should be. A bootstrap over sixteen rings comes out",
+        "too narrow as well. The permutation test assumes only that the two",
+        "arms, centred, differ in scale and not in shape."
+      ],
+      "gives_up": [
+        "a formula a reader can check with a table. This one needs the",
+        "script, the seed and a hundred thousand shuffles. And some power if",
+        "the frequencies do turn out normal: on normal arms of sixteen it",
+        "wants the ratio under about 0.56 to clear 0.025 where the F",
+        "interval wants 0.591."
+      ]
+    },
+    {
+      "id": "reading",
+      "frozen_key": "conditions.cell_count_note",
+      "frozen_text": "each read 20 times on every one of 48 oscillators",
+      "decided": "2026-09-23",
+      "by": "Nikoloz",
+      "now": [
+        "A reading is the count from the second of two starts on one",
+        "selection. The first start's count is kept beside it as",
+        "count_first and analysed on its own, as the first-start effect of",
+        "docs/phaseG_hazard.md. It never stands in for a reading, in M1 to",
+        "M4 or anywhere else."
+      ],
+      "why": [
+        "Since 23 September the firmware starts every selection twice,",
+        "because the first run after a change of selection can read one",
+        "high, and the datasheet tells anyone measuring to do the same. The",
+        "frozen protocol was written when a reading was one start and has",
+        "no word for this. It is written down here as the firmware and the",
+        "datasheet have had it since that day."
+      ],
+      "gives_up": [
+        "half the starts on a die go to something that is not a reading."
+      ]
+    },
+    {
+      "id": "order",
+      "frozen_key": "conditions.order",
+      "frozen_text": "ABBA within every cell: arm A, then B, then B, then A, then C twice in the same mirrored order. Sequential comparison drifts; a mirrored order cancels a linear drift over the cell.",
+      "decided": "2026-10-18",
+      "by": "Nikoloz",
+      "now": [
+        "Inside every cell each of the 20 repeats reads all 48 oscillators",
+        "once, in a fresh order drawn from a seeded generator. The seed and",
+        "a time stamp for every reading are recorded, as",
+        "firmware/measure_puf.py already does."
+      ],
+      "why": [
+        "The bench firmware has read in this order since July and is",
+        "tested on it, and no script in the repository reads in the frozen",
+        "one. The",
+        "frozen sentence fixes the order of the arms and not of the sixteen",
+        "rings inside an arm, where an order that repeats would line ring",
+        "index up with any drift inside the block, and that is spread M4",
+        "would count. A random order keeps arm and ring from lining up with",
+        "time at all."
+      ],
+      "gives_up": [
+        "the exact cancelling of a linear drift that a mirrored order gives.",
+        "Drift averages out over the twenty repeats instead, and the time",
+        "stamps let it be seen."
+      ]
+    },
+    {
+      "id": "voltage",
+      "frozen_key": "conditions.voltage_v",
+      "frozen_value": [1.62, 1.8, 1.98],
+      "now_value": [1.62, 1.8, 1.95],
+      "decided": "2026-10-03",
+      "by": "Nikoloz",
+      "now": [
+        "The top of the box is 1.95 V, not 1.98. The three voltages are",
+        "1.62, 1.80 and 1.95 V."
+      ],
+      "why": [
+        "1.98 V is 30 mV past the 0 to 1.95 V SkyWater gives for the gate",
+        "and drain of its 1.8 V devices, and past the fastest library",
+        "corner, ff_n40C_1v95. Found on 23 September."
+      ],
+      "gives_up": [
+        "the box is no longer plus and minus ten percent about 1.80 V."
+      ]
+    }
+  ],
+
+  "not_amended": [
+    "The pairing, the bit convention, the exclusions and the refusal to drop outliers, the abstention rule read from extraction/TOLERANCES.json, the temperatures, the windows, the 20 repeats and the must_record list all stand as frozen.",
+    "preregister.py P10 still reads the frozen box, 1.62 to 1.98 V, and passes on it. The amended box is held by --amendment instead."
+  ],
+
+  "still_open": [
+    "Whether the secondary named on 3 October gets an interval, and which.",
+    "The number of shuffles and the seed for M2's p-value, now that M2 is secondary.",
+    "E.3, the collector that has to read in this order, is not written. firmware/measure_puf.py is the bench script that already does, and it is not that collector.",
+    "The paper's preregistration section describes the frozen file. It takes this up in Phase C, with the sentence above."
+  ]
+}

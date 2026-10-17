@@ -246,6 +246,7 @@
         "placement_fidelity.py",
         "verify_phaseE.py",
         "preregister.py",
+        "primary_tests.py",
         "release_manifest.py",
         "g3_runbook.py",
         "lint_rtl.py",

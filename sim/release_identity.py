@@ -26,6 +26,14 @@ structure compared as a set. The same set everywhere is the same layout,
 and is reported as identical with the reason. Anything else names the
 structures that differ.
 
+Magic gives the hard macro's own copies of the standard cells a prefix that
+is random per hardening run (AD_ on run 83, RS_ on run 89, in front of each
+sky130_fd_sc_hd__ name). It is a name and not a layout, so the structure
+compare learns that prefix from each file and normalises it away, both in the
+structure names and in the references the macro makes to them, before it
+compares anything. Run 89's warning was only that prefix. With it handled the
+compare runs under --strict, and the gds job does.
+
   python3 sim/release_identity.py --run-dir runs/wokwi \
       --against dualarm/build_armc --annotate [--strict]
   python3 sim/release_identity.py --selftest
@@ -194,16 +202,89 @@ def gds_contents(blob):
     return out
 
 
+MACRO_TAG = b"sky130_fd_sc_hd__"
+MACRO_CANON = b"MACRO_"
+
+
+def macro_prefix(blob):
+    """Magic's per-run prefix on the hard macro's own cells, learned from a
+    normalised stream (AD_ on run 83, RS_ on run 89). It is the one non-empty
+    token sitting in front of sky130_fd_sc_hd__ on a structure name. Returns
+    b'' unless exactly one such token is found, so an unexpected set of names
+    is never quietly normalised away."""
+    pres = set()
+    i = 0
+    while i + 4 <= len(blob):
+        n = struct.unpack(">H", blob[i:i + 2])[0]
+        if n < 4:
+            break
+        if blob[i + 2] == 0x06:                      # STRNAME
+            name = blob[i + 4:i + n].rstrip(b"\x00")
+            m = re.match(rb"^([0-9A-Za-z]+_)" + MACRO_TAG, name)
+            if m:
+                pres.add(m.group(1))
+        i += n
+    return next(iter(pres)) if len(pres) == 1 else b""
+
+
+def canon_macro_prefix(blob, prefix):
+    """Swap Magic's per-run prefix for a fixed token wherever it names one of
+    the macro's cells: in the structure definitions (STRNAME) and in the
+    references the macro makes to them (SNAME). Record lengths are recomputed
+    and the name repadded to an even length. Nothing else is touched, so text
+    labels and the un-prefixed library cells are left alone, and the token
+    keeps its own distance from those library cells rather than colliding."""
+    if not prefix:
+        return blob
+    out = bytearray()
+    i = 0
+    while i + 4 <= len(blob):
+        n = struct.unpack(">H", blob[i:i + 2])[0]
+        if n < 4:
+            break
+        rt, dt = blob[i + 2], blob[i + 3]
+        if rt in (0x06, 0x12):                       # STRNAME, SNAME
+            name = blob[i + 4:i + n].rstrip(b"\x00")
+            if name.startswith(prefix) \
+                    and name[len(prefix):].startswith(MACRO_TAG):
+                name = MACRO_CANON + name[len(prefix):]
+                if len(name) % 2:
+                    name += b"\x00"
+                out += struct.pack(">HBB", 4 + len(name), rt, dt) + name
+                i += n
+                continue
+        out += blob[i:i + n]
+        i += n
+    return bytes(out)
+
+
 def compare_gds(new, old):
-    """(same layout, detail) for two normalised streams whose bytes
-    differ."""
-    sa, sb = gds_contents(new), gds_contents(old)
+    """(same layout, detail) for two normalised streams whose bytes differ.
+
+    Magic's per-run prefix on the hard macro's cells is learned from each
+    stream and normalised away first, in both the structure names and the
+    macro's references to them, so it reads as a name and not a layout change.
+    """
+    pa, pb = macro_prefix(new), macro_prefix(old)
+    sa = gds_contents(canon_macro_prefix(new, pa))
+    sb = gds_contents(canon_macro_prefix(old, pb))
     only_new = sorted(set(sa) - set(sb))
     only_old = sorted(set(sb) - set(sa))
     changed = sorted(k for k in set(sa) & set(sb) if sa[k] != sb[k])
+    note = ""
+    if pa or pb:
+        da = (pa.rstrip(b"_").decode("latin1") or "none") if pa else "none"
+        db = (pb.rstrip(b"_").decode("latin1") or "none") if pb else "none"
+        if pa and pb and pa != pb:
+            note = ("; the hard macro's cells carry Magic's per-run prefix, %s"
+                    " in this build and %s in the archive, a name and not a"
+                    " layout change" % (da, db))
+        else:
+            note = ("; the hard macro's cells carry Magic's per-run prefix %s,"
+                    " normalised away" % (da if pa else db))
     if not (only_new or only_old or changed):
         return True, ("same %d structures and shapes, written in another "
-                      "order" % (len(sa) - 1))
+                      "order%s" % (len(sa) - 1, note))
     parts = []
     for what, names in (("only in this build", only_new),
                         ("only in the archive", only_old),
@@ -213,7 +294,7 @@ def compare_gds(new, old):
             more = " and %d more" % (len(names) - 4) if len(names) > 4 else ""
             parts.append("%d structures %s: %s%s"
                          % (len(names), what, shown, more))
-    return False, "; ".join(parts)
+    return False, "; ".join(parts) + note
 
 
 def report(rows, annotate):
@@ -268,6 +349,49 @@ def gds_library(date, structs):
                                                 5, 0, 0)),
                     rec(0x11, 0x00)]
         out.append(rec(0x07, 0x00))
+    out.append(rec(0x04, 0x00))
+    return b"".join(out)
+
+
+def gds_macro_fixture(date, prefix, macro_inv_x=10, lib_inv_x=30):
+    """A stream shaped like the real build: a top cell that references the
+    hard macro and a library inv, the macro that references its own prefixed
+    copy of that inv, and the two inv structures. `prefix` is Magic's per-run
+    token on the macro's private copy (a str, e.g. 'AD_'). The library inv
+    carries no prefix, so it must stay distinct from the macro's copy."""
+    def rec(rt, dt, data=b""):
+        return struct.pack(">HBB", 4 + len(data), rt, dt) + data
+
+    def name_rec(rt, s):
+        b = s.encode()
+        if len(b) % 2:
+            b += b"\x00"
+        return rec(rt, 0x06, b)
+
+    def boundary(x):
+        return b"".join([rec(0x08, 0x00), rec(0x0D, 0x02, struct.pack(">H", 68)),
+                         rec(0x0E, 0x02, struct.pack(">H", 20)),
+                         rec(0x10, 0x03, struct.pack(">10i", 0, 0, x, 0, x, 5,
+                                                     0, 5, 0, 0)),
+                         rec(0x11, 0x00)])
+
+    def sref(target):
+        return b"".join([rec(0x0A, 0x00), name_rec(0x12, target),
+                         rec(0x10, 0x03, struct.pack(">2i", 0, 0)),
+                         rec(0x11, 0x00)])
+
+    d = struct.pack(">12H", *date)
+    macro_cell = prefix + "sky130_fd_sc_hd__inv_1"
+    structs = [
+        ("sky130_fd_sc_hd__inv_1", boundary(lib_inv_x)),
+        (macro_cell, boundary(macro_inv_x)),
+        ("ro_macro_hard", sref(macro_cell)),
+        (TOP, sref("ro_macro_hard") + sref("sky130_fd_sc_hd__inv_1")),
+    ]
+    out = [rec(0x00, 0x02, struct.pack(">H", 600)), rec(0x01, 0x02, d),
+           rec(0x02, 0x06, b"LIB\x00")]
+    for nm, body in structs:
+        out += [rec(0x05, 0x02, d), name_rec(0x06, nm), body, rec(0x07, 0x00)]
     out.append(rec(0x04, 0x00))
     return b"".join(out)
 
@@ -370,6 +494,34 @@ def selftest():
         print("selftest %-22s %s: %s" % (label, "ok" if good else "WRONG",
                                          detail))
         ok = ok and good
+    # Magic's per-run prefix on the hard macro's cells (AD_ on run 83, RS_ on
+    # run 89) is a name, not a layout: a build that differs only by it has to
+    # read as the same layout, and a real move inside those cells still has to
+    # show.
+    arch = gds_normalised(gds_macro_fixture(base_date, "AD_"))
+    for label, other, want_same, must in (
+            ("macro prefix differs", gds_macro_fixture(other_date, "RS_"),
+             True, "prefix"),
+            ("same prefix reordered", gds_macro_fixture(other_date, "AD_"),
+             True, "prefix"),
+            ("a macro cell moved", gds_macro_fixture(other_date, "RS_",
+             macro_inv_x=11), False, "MACRO_sky130_fd_sc_hd__inv_1")):
+        same, detail = compare_gds(gds_normalised(other), arch)
+        good = same == want_same and must in detail
+        print("selftest %-22s %s: %s" % (label, "ok" if good else "WRONG",
+                                         detail))
+        ok = ok and good
+    # With the prefix normalised, a change to the top-level library inv is the
+    # only difference: the macro's private copy must not be renamed onto the
+    # library cell (which would hide a change) and must not read as added or
+    # removed.
+    other = gds_normalised(gds_macro_fixture(other_date, "RS_", lib_inv_x=31))
+    same, detail = compare_gds(other, arch)
+    good = (not same) and "only in" not in detail and "MACRO_" not in detail \
+        and "with different shapes: sky130_fd_sc_hd__inv_1" in detail
+    print("selftest %-22s %s: %s" % ("library inv not merged",
+                                     "ok" if good else "WRONG", detail))
+    ok = ok and good
     print("selftest %s" % ("passed" if ok else "FAILED"))
     return 0 if ok else 1
 

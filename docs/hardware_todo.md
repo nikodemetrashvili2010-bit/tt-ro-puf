@@ -235,6 +235,31 @@ and CI rebuilds all four csvs from the archive. Records:
 `boundary_validation_B13_3arm.csv` and the `_5ps`, `_1ps` and `_0p2ps` files
 beside it.
 
+### At tt and ss on the release build, 2026-10-18
+
+Until today the slow corners had only the baseline's B15 behind them. B13
+now, the coarse grid first and then 5 ps across the step:
+
+    corner  grid    phases  step at the tap    narrowest at sel_ro  library
+    tt      50 ps     38    108 to 170 ps      422 ps               169.8
+    tt       5 ps     13    115 to 122 ps      231 ps
+    ss      50 ps     76    230 to 295 ps      686 ps               353.8
+    ss       5 ps     13    258 to 264 ps      507 ps
+
+All 140 settle at a rail, the count moves by one edge at most, and a reader
+of my own agrees with the analyzer either side of every step. Same story as
+ff: the narrowest number belongs to the grid, and the 5 ps grids would not be
+the last word if anyone ran a finer one.
+
+Fixed time still wins on the coarse grids, +281 ps at tt with 6 left over
+and +483 at ss with 14, where a fraction leaves 95 and 202. One thing did not
+carry over from ff. The step there was 6.8% of the period and at tt it is
+6.6 to 7.0, but at ss it is 7.5 to 7.7, so the share drifts with the corner
+as well as the path.
+
+Four new folders in `bnd3/` with the decks, logs and reduced waveforms, and
+CI rebuilds the four csvs. `docs/phaseG_boundary_tt_ss.md` has the rest.
+
 ## 2. The 32-to-1 selection path (done 2026-07-31, corrected 2026-08-02)
 
 `ro_out[active_sel]` picks one of 32 outputs through a synthesized mux. A
@@ -1106,9 +1131,12 @@ never touched, the two floating nets are the power and ground rails and are 2
 in every build I have, and the max-slew violations vanish at the fast corner
 and are nowhere near the ring nets.
 
-Two smaller debts came out of it: the names of the 140 slew-violating pins and
-of the 461 lint warnings, both of which need the timing reports and the linter
-log out of my local run directory. My first account of the 25 unannotated nets
+That left one smaller debt: the names of the 140 slew-violating pins, which
+need the per-corner timing reports out of my local run directory. The lint
+warnings are named in `docs/warning_triage.md` now, the linter log having been
+on disk all along; they are the black-boxed cell models' missing timescale and
+the power pins and one simulation parameter on the hand-instantiated cells,
+nothing in the logic. My first account of the 25 unannotated nets
 was wrong: I explained the gap with the sixteen black-boxed macros, the
 arithmetic worked on two builds, and then a third build with no macros at all
 showed the same offset.

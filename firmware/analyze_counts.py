@@ -89,6 +89,31 @@ def parse_meta(lines, path="<input>"):
     return meta
 
 
+def csv_body(lines, path="<input>"):
+    """The CSV part of a run file, its header line and the rows under it.
+
+    The SDK on the board prints log lines of its own to the same console
+    before the script writes anything, so a file straight off a board has
+    lines above the header that are neither comments nor rows. This used to
+    take the first line not starting with # as the header, which on such a
+    file is one of the SDK's, and every column then came out missing. The
+    header is found by what it says now. A file with no such line falls
+    through to the old reading and fails on its columns, as before.
+
+    A run that stopped prints "# ERROR:" and the reason, and whatever rows
+    it wrote are a run cut short, so that file is refused here.
+    """
+    for l in lines:
+        if l.startswith("# ERROR:"):
+            raise ValueError("%s: the run stopped: %s"
+                             % (path, l[len("# ERROR:"):].strip()))
+    body = [l for l in lines if not l.startswith("#")]
+    for i, l in enumerate(body):
+        if l.startswith("run_id,"):
+            return body[i:]
+    return body
+
+
 def load_files(paths):
     groups = {}
     seen_runs = {}
@@ -112,7 +137,7 @@ def load_files(paths):
                 v = meta.get(k)
                 if v:
                     measured[k] = v
-        rows = csv.DictReader(l for l in lines if not l.startswith("#"))
+        rows = csv.DictReader(csv_body(lines, path))
         has_first = "count_first" in (rows.fieldnames or ())
         has_ovf = "overflow" in (rows.fieldnames or ())
         last_slot = {}

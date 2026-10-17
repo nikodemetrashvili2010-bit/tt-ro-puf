@@ -481,7 +481,8 @@ after C10.
 ### Still not settled
 
 The last pulse before a stop, at tt and ss, on this build. Only ff has been
-swept, through B13.
+swept, through B13. (Swept at both on 18 October, on 50 and 5 ps grids:
+`docs/phaseG_boundary_tt_ss.md`.)
 
 The baseline's sixteen Arm B rows of `mux_validation.csv`, and the B00 and B15
 boundary csv files, made with the other input high.

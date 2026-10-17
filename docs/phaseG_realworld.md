@@ -316,6 +316,12 @@ Arm B's reliability across the 27 cells. The Tiny Tapeout grid, package and
 board above the stripes, and the macro's own grid. Arm B on the release build's
 routes. Ageing, not modelled at all.
 
+Added 18 October: the power switch every Tiny Tapeout project sits behind,
+`tt_pg_1v8_ll_2`, which this note never mentioned. Its channel alone is
+simulated in `docs/phaseG_tt_fit.md`, under a millivolt with a ring and the
+rest of the logic running and the same for every ring. Its metal and the grid
+either side of it belong on the line above.
+
 `real_world.py` is not wired into the evidence gate yet. Adding it moves the
 gate count and the manifest, so it goes in with the push rather than today.
 `verify_predictability.py` is in the gate already and now holds every

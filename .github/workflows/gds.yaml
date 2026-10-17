@@ -90,6 +90,14 @@ jobs:
           diff /tmp/bnd3_B13_1ps.csv sim/spice/gono/boundary_validation_B13_3arm_1ps.csv
           python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_0p2ps --vdd 1.95 --csv /tmp/bnd3_B13_0p2ps.csv
           diff /tmp/bnd3_B13_0p2ps.csv sim/spice/gono/boundary_validation_B13_3arm_0p2ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_tt --vdd 1.80 --csv /tmp/bnd3_B13_tt.csv
+          diff /tmp/bnd3_B13_tt.csv sim/spice/gono/boundary_validation_B13_3arm_tt.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_tt_5ps --vdd 1.80 --csv /tmp/bnd3_B13_tt_5ps.csv
+          diff /tmp/bnd3_B13_tt_5ps.csv sim/spice/gono/boundary_validation_B13_3arm_tt_5ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_ss --vdd 1.60 --csv /tmp/bnd3_B13_ss.csv
+          diff /tmp/bnd3_B13_ss.csv sim/spice/gono/boundary_validation_B13_3arm_ss.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_ss_5ps --vdd 1.60 --csv /tmp/bnd3_B13_ss_5ps.csv
+          diff /tmp/bnd3_B13_ss_5ps.csv sim/spice/gono/boundary_validation_B13_3arm_ss_5ps.csv
           python3 sim/spice/gono/analyze_rc.py --dir sim/spice/gono/rc3/armA --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3a.csv
           diff /tmp/rc3a.csv sim/spice/gono/rc_validation_3arm.csv
           python3 sim/spice/gono/analyze_rc.py --arm C --dir sim/spice/gono/rc3/armC --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3c.csv
@@ -182,6 +190,8 @@ jobs:
           python3 chip/preregister.py --selftest
           python3 chip/preregister.py --freeze-check
           python3 chip/preregister.py
+          python3 chip/preregister.py --amendment
+          python3 chip/primary_tests.py --selftest
           python3 chip/verify_phaseE.py --selftest
           python3 chip/verify_phaseE.py
           python3 chip/g3_runbook.py --selftest
@@ -266,15 +276,14 @@ jobs:
       # Every prediction was read off one layout, run 83's, archived in
       # dualarm/build_armc, and the shuttle gets whatever this job builds.
       # Nothing the build reads has changed since run 83 except wording in
-      # info.yaml, so the two should be the same layout. This says whether
-      # they are, in an annotation. On its first runs it cannot fail the
-      # job, continue-on-error and no --strict, because a wrong path here
-      # should not turn a good build red. Once a run has said identical,
-      # both come off.
+      # info.yaml, so the two should be the same layout. This checks it. Run
+      # 89's only difference was Magic's per-run prefix on the macro's cells
+      # (AD_ then RS_), which the check now learns and normalises, so it runs
+      # under --strict and fails the build on a real layout change instead of
+      # only annotating one.
       - name: Is this the layout that was analysed
         if: success()
-        continue-on-error: true
-        run: python3 sim/release_identity.py --run-dir runs/wokwi --against dualarm/build_armc --annotate
+        run: python3 sim/release_identity.py --run-dir runs/wokwi --against dualarm/build_armc --annotate --strict
 
   precheck:
     needs: gds

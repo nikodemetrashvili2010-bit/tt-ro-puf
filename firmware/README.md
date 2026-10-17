@@ -62,10 +62,17 @@ community-submitted CSVs stay interpretable.
    side of uio[1], uio[2] and uio[3] into outputs itself (`uio_oe_pico`)
    because the demo board brings every bidirectional pin up as an input
    and the chip has no pull resistors on them. If you drive the chip from
-   anything else, drive those three pins.
+   anything else, drive those three pins. Since 18 October it also drives
+   uio[6] and uio[7] low. The chip reads neither, and a pad input nobody
+   drives can sit anywhere.
 3. Capture the output:
 
        mpremote run measure_puf.py > chip03_room_1v8.csv
+
+   The SDK prints log lines of its own before the script's header, and the
+   analyzer starts at the CSV header and skips them. A run that stopped
+   ends in a `# ERROR:` line with the reason, and the analyzer refuses that
+   file rather than loading a run cut short.
 
 4. Repeat per chip and condition. Analyze together:
 
@@ -124,8 +131,9 @@ community-submitted CSVs stay interpretable.
   hypothesis, the metric, the pairings, exclusion and outlier rules, and the
   minimum chip and completeness counts. Exploratory analysis afterwards is fine
   if it is labeled exploratory. Most of that is frozen in
-  `chip/PREREGISTRATION.json` since 31 August; the minimum chip count is not
-  in it yet.
+  `chip/PREREGISTRATION.json` since 31 August. The minimum die count, three
+  for M2 by 30 September 2027, is in `chip/PREREG_AMENDMENT.json` since 18
+  October, with the rest of what the frozen file left open.
 
 ## Protocol notes
 
@@ -153,11 +161,32 @@ community-submitted CSVs stay interpretable.
   end of a run.
 - Before anything is measured the script reads the version bytes through
   `uio[3]` and stops unless they are 2 and 0x1A.
+- It then drives every `ui_in` pin both ways and reads it back, and stops on a
+  pin it cannot drive. The SDK leaves an input pin that reads high when it
+  takes control as an input, the way it treats a DIP switch left on, and only
+  logs it. On the start pin that stalls; on one of the six selection pins it is
+  silent and half the selections read the other half's rings. Turn the DIP
+  switches off before a run; the read back is the backstop.
 - A count of `-1` is a timeout marker; the analyzer skips it and reports the
   count. The script also flags counts near the ceiling and zero counts.
 - The script fails hard if the exact project `tt_um_nikodemetrashvili20_ro_puf`
   is not on the shuttle. It does not fall back to the first project matching
   `ro_puf`, which could select the wrong die.
+- It stops too if `enable()` says no. The SDK refuses a project whose danger
+  level is not safe, returns False and logs why; the script does not force
+  it.
+- Every stop prints a `# ERROR:` line. MicroPython on the board prints
+  nothing for a bare SystemExit, it only soft resets, which is how the stops
+  used to end.
+- `mpremote run` soft resets the board first and the SDK's `main.py` only
+  runs from the friendly REPL, so the script probes the board itself before
+  `DemoBoard.get()`, as the SDK's README says to. A board whose `main.py`
+  already made a DemoBoard is not probed again. The header says which, and
+  what board the probe found.
+- The header carries the clock the SDK says it made, `clk_hz_sdk`, next to
+  the one asked for, and a warning line when they differ, since every count
+  scales with it.
 - The SDK calls were checked against tt-micropython-firmware v3.1.1 on 23
-  September 2026. Check the release notes again before the first hardware
-  run.
+  September 2026, and the probe, `enable()`'s return and
+  `auto_clocking_freq` read in its source at v2.0.4, v3.0.0 and v3.1.1 on 18
+  October. Check the release notes again before the first hardware run.

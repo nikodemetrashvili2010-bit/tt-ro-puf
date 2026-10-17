@@ -105,12 +105,18 @@ PRODUCERS = {
 # schedule, so what is required of it is a checker, not a hash.
 AUTHORED = {"G3_RUNBOOK.json": "g3_runbook.py",
             "FLOW_SURFACE.json": "gen_placement_cfg.py",
-            "G2_AMENDMENT.json": "g2_decision.py"}
+            "G2_AMENDMENT.json": "g2_decision.py",
+            "PREREG_AMENDMENT.json": "preregister.py"}
 # G2_AMENDMENT.json is written by hand and nothing regenerates it. It records
 # the SHA-256 of the two files it amends, so hash_stability.py H02 is what
 # holds it to them: if G2_CRITERIA.json or G2_DECISION.json is ever edited,
 # the amendment's recorded hash stops resolving to a file in this tree and
 # the gate says so. No separate freeze check is needed for that reason.
+# PREREG_AMENDMENT.json, 18 October, is the same arrangement for G.4, with
+# one thing more: preregister.py --amendment reads it against the frozen
+# file it quotes, and H02 also holds the hash it records for
+# primary_tests.py, so the implementation of the two primary tests cannot
+# change without the gate saying so.
 # FLOW_SURFACE.json is here rather than under PRODUCERS because CI cannot
 # rebuild it. It is the flow's own run record and gds_build/ is not
 # mirrored, so --refresh-surface only runs on a machine that has the run

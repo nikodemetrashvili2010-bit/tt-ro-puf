@@ -81,9 +81,11 @@ at a 10 ps clock slew and it climbs fast with slew, so at any realistic slew
 the pulse is under it. It does not need to clear it either. It is the last
 pulse before a stop, the flop was simulated at transistor level rather than
 looked up, and whichever way it resolves the count moves by one, which the
-three-sample handshake absorbs. On the two-arm layout the slow corners were
-nowhere near it, 484 ps against 169.8 at tt and 810 ps against 353.8 at ss.
-`SIGNOFF.md` has the rest.
+three-sample handshake absorbs. The slow corners have been swept on the
+release build too, on 50 and 5 ps grids only. One 5 ps step past the edge the
+flop still saw 231 ps against 169.8 at tt and 507 ps against 353.8 at ss, and
+a finer grid would find narrower pulses there as well. `SIGNOFF.md` has the
+rest.
 
 ## How to test
 
@@ -92,6 +94,25 @@ Drive `clk` with a clean reference clock and release `rst_n`.
 Keep `clk` running until `done`. If a measurement must be aborted, assert
 `rst_n` or deselect the project (`ena=0`) before stopping the clock; either path
 asynchronously shuts down the selected oscillator.
+
+The project sits behind a power switch, as every Tiny Tapeout project does
+unless it opts out: `tt_pg_1v8_ll_2` for a 2x2 tile, turned on by the same
+select that drives `ena`. Deselected, it has no supply at all, which is more
+than reset. Selecting it brings the supply up as its inputs come alive, so the
+flops start in no particular state and anything it shows before its first
+reset means nothing. At most one ring can run in that state. Hold `rst_n` low
+for a few milliseconds after selecting the project; the demo board's SDK
+pulses reset for 2 ms the first time it enables a project, and
+`firmware/measure_puf.py` holds it for 10 ms more.
+
+The rings run on the far side of that switch. Its channel, simulated on its
+own, is 0.89 ohm at tt, 1.38 at ss and 0.61 at ff. At 0.7 mA, about what a
+ring and the rest of the logic draw, it drops 0.62, 0.96 and 0.43 mV, and at
+the 106 percent a volt the rings move by that is about a tenth of a percent of
+frequency at the worst. It is the same for every ring to within the few
+percent they differ in current, since the switch sees how much current flows
+and not which ring draws it. The switch's own metal and the grid either side
+of it are not in those figures.
 
 0. Choose a window on `uio[2:1]`: 0 is 256 cycles, 1 is 512, 2 is 2048 and 3
    is 16384. 2 is the measurement setting. 3 is there to overflow the counter

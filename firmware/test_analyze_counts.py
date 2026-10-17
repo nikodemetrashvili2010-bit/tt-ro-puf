@@ -42,6 +42,28 @@ class AnalyzeCountsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "missing CSV column"):
             analyzer.load_files([str(p)])
 
+    def test_sdk_log_lines_above_the_header_are_skipped(self):
+        # A file straight off a board: the SDK's own lines come first.
+        vals = list(range(1000, 1016))
+        plain = make_csv(self.root / "plain.csv", "r1", "c1", "room",
+                         {0: vals, 1: vals})
+        board = self.root / "board.csv"
+        board.write_text(
+            "BOOT: Tiny Tapeout SDK\n"
+            "ttboard.project_mux: Enable design tt_um_x\n"
+            + Path(plain).read_text(encoding="utf-8"), encoding="utf-8")
+        g = analyzer.load_files([str(board)])[("c1", "room")]
+        self.assertEqual(analyzer.osc_means(g, 0)[15], 1015.0)
+        self.assertEqual(len(analyzer.complete_vector(g, 1)), 16)
+
+    def test_a_run_that_stopped_is_refused(self):
+        p = make_csv(self.root / "s.csv", "r1", "c1", "room", {0: [1] * 16})
+        text = Path(p).read_text(encoding="utf-8")
+        Path(p).write_text(text + "# ERROR: version bytes read 0 and 0x00,"
+                           " expected 2 and 0x1a\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "the run stopped: version"):
+            analyzer.load_files([p])
+
     def test_arm_idx_range_rejected(self):
         # Arm 2 is Arm C since the three-arm design; 3 selects no oscillator.
         p = make_csv(self.root / "r.csv", "r1", "c1", "room", {3: [100] * 16})

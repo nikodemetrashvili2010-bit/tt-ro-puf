@@ -230,11 +230,12 @@ with its own delay buffers (the select decode, the counter reset, the start
 pulse), none on a ring, and each of those nets settles in the quiet clock cycle
 the state machine leaves before a ring is enabled.
 
-The 48-to-1 selector from the rings to the counter has been simulated at the
-fast corner on all 48 paths and every edge arrives. The counter's stopping
-boundary, swept through the slowest of those paths four times over, the finest
-at 0.2 ps steps, resolves to a rail on all 63 phases; the most a boundary can
-cost is one count, about 23000 being a normal reading at the 2048-cycle window.
+The 48-to-1 selector from the rings to the counter has been simulated on all
+48 paths at all three corners, and every edge arrives. The counter's stopping
+boundary was swept through the slowest of those paths four times over at the
+fast corner, the finest at 0.2 ps steps, and twice each at tt and ss. It
+resolves to a rail on all 203 phases; the most a boundary can cost is one
+count, about 23000 being a normal reading at the 2048-cycle window.
 
 The physical side was checked against run 83's own files on 20 September, in
 [docs/phaseG_realworld.md](docs/phaseG_realworld.md). A running ring burns

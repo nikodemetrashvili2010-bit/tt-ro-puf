@@ -18,3 +18,12 @@ them that way.
 artifacts. `spice/mc/` is a first-order mismatch-sensitivity study. Neither is
 a silicon measurement or an entropy/reliability validation; the exact modeled
 scope and omitted effects are stated in each subdirectory README.
+
+`tt_fit.py` reads Tiny Tapeout's own sources at pinned commits, the precheck,
+the multiplexer and the demo board's SDK, and holds the chip and the bench
+firmware to them: the layout through four of their precheck functions, what
+the build writes over `config.json`, what a project that is not selected
+gets, the power switch, the clock the board makes, the SDK calls and who
+drives which pin. It needs the three repositories and run 83's final views,
+so it is not in the evidence gate. `spice/pg/` has the three decks of the
+switch's channel. `docs/phaseG_tt_fit.md` covers both.

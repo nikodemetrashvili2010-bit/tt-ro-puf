@@ -1,0 +1,25 @@
+* Tiny Tapeout's power switch tt_pg_1v8_ll_2, turned on, at ss
+* M3 in its schematic is one pfet3_01v8_hvt, W=3683 nf=508 L=0.15, source on
+* VPWR and drain on the project's supply. Here it is 508 fingers of 7.25 um
+* in parallel, the same device, because ngspice with no compatibility mode
+* bins on the total width. Channel only: no metal, no grid.
+* Run with sim/spice/run_ngspice.py, which puts the PDK paths in.
+.lib /home/pc/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice ss
+.temp 100
+.include /home/pc/pdks/sky130A/libs.ref/sky130_fd_sc_hd/spice/sky130_fd_sc_hd.spice
+.param mc_mm_switch=0
+Vdd vdd 0 1.6
+Vg ctrl_n 0 0
+XM3 gpwr ctrl_n vdd vdd sky130_fd_pr__pfet_01v8_hvt L=0.15 W=7.25 nf=1
++ ad='W*0.29' as='W*0.29' pd='2*(W+0.29)' ps='2*(W+0.29)'
++ nrd='0.29/W' nrs='0.29/W' sa=0 sb=0 sd=0 mult=1 m=508
+Iload gpwr 0 DC 1m
+.control
+foreach i 0.1m 0.35m 0.7m 1m 2m 5m
+  alter Iload dc = $i
+  op
+  print v(vdd)-v(gpwr)
+end
+quit
+.endc
+.end

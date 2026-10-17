@@ -48,11 +48,11 @@ from logs.
 
 So does everything run on the release build. `sim/spice/gono/rc3/` holds the
 128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
-selector decks, `sim/spice/gono/bnd3/` the four boundary sweeps through B13,
+selector decks, `sim/spice/gono/bnd3/` the eight boundary sweeps through B13,
 `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
 `sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
 reads. CI rebuilds `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
-`mux3/mux3_validation.csv` and the four `boundary_validation_B13_3arm*.csv`
+`mux3/mux3_validation.csv` and the eight `boundary_validation_B13_3arm*.csv`
 from those logs and diffs each against the committed copy, the same way it has
 done for `mux_validation.csv` since August. The Arm B logs have no csv;
 `analyze_instance.py --build release` reads each corner and
@@ -239,6 +239,23 @@ that located the surviving width adds three arguments and runs thirteen decks:
 python3 sim/spice/gono/gen_boundary_sweep.py --output-dir /tmp/bndfine --corner ff --osc B15 --base-ns 30.10 --step-ps 5 --steps 13
 ```
 
+The release build's sweeps through B13 keep their decks, logs and reduced
+waveforms in `sim/spice/gono/bnd3/`: at ff on four grids since 22 September,
+at tt and ss since 18 October, and CI rebuilds every csv from them. The tt and
+ss decks come from the same generator:
+
+```sh
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B13 --corner tt --output-dir /tmp/bnd_tt
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B13 --corner ss --steps 76 --output-dir /tmp/bnd_ss
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B13 --corner tt --base-ns 30.15 --step-ps 5 --steps 13 --output-dir /tmp/bnd_tt5
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B13 --corner ss --base-ns 33.20 --step-ps 5 --steps 13 --output-dir /tmp/bnd_ss5
+```
+
+The slow corner needs the 76 steps for its longer ring period. The two 5 ps
+grids start at the last coarse phase that lost the pulse and run 60 ps on.
+On a two-core machine run the decks one at a time; two at once took three
+times as long each on 18 October.
+
 Both analyzers carry planted-fault checks that need no PDK and no ngspice, so the
 analysis can be exercised on any machine before the decks are run:
 
@@ -251,6 +268,28 @@ The archived decks use nominal TT models at 1.8 V and transfer only SPEF
 `*D_NET` total capacitance as lumped loads. Distributed resistance, coupling
 topology, mismatch, PVT sweeps, and supply noise are out of scope here; the
 paper's limitations section says what that means for the claims.
+
+## Tiny Tapeout's own sources
+
+`sim/tt_fit.py` reads three of Tiny Tapeout's repositories and wants them at
+the commits it was written against, with `pip install gdstk klayout pyyaml`:
+
+```sh
+git clone https://github.com/TinyTapeout/tt-support-tools
+git -C tt-support-tools checkout 01d5d2814fa9dd61e9d211e0b235a4a592a9316a
+git clone https://github.com/TinyTapeout/tt-multiplexer
+git -C tt-multiplexer checkout 885086c91ebbe5e636559f540c23a492a7d1284a
+git clone https://github.com/TinyTapeout/tt-micropython-firmware
+git -C tt-micropython-firmware checkout d485c7a9986336024e35d790568fca33be1c5665
+python3 sim/tt_fit.py --tools tt-support-tools --mux tt-multiplexer \
+    --sdk tt-micropython-firmware --final <run 83>/runs/wokwi/final
+python3 sim/tt_fit.py ... --selftest
+```
+
+`--final` is the `runs/wokwi/final` folder of the build the GDS came from,
+for its LEF and powered netlist; neither is archived here. Seven lines of
+`ok`, and the selftest ends "all 11 caught". The power switch's three decks
+are in `sim/spice/pg/` and run with `sim/spice/run_ngspice.py` like any other.
 
 ## Recorded development environment
 

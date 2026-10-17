@@ -329,6 +329,101 @@ if got:
           % (1e6 / (hi * 1e6 * wins[1] / fw_clk), ppm_512))
 
 
+# ------------------------------------------------------------ the power switch
+
+# Added 2026-10-18 with the two paragraphs on the switch. The resistances and
+# the drops are the switch decks' own logs, read here by a parser of their
+# own; the pushing figure is the baseline's three supply logs at tt, the same
+# sixteen Arm A rings the paper fits it on. The SDK's 2 ms is not in this
+# repository and sim/tt_fit.py holds that one to the SDK.
+SW = resolve("sim/spice/pg")
+SW_CURRENTS_MA = (0.1, 0.35, 0.7, 1.0, 2.0, 5.0)  # the decks' foreach
+drops = {}
+for corner in ("tt", "ss", "ff"):
+    vals = [float(v) for v in re.findall(
+        r'^v\(vdd\)-v\(gpwr\) = ([0-9.eE+-]+)',
+        text(os.path.join(SW, "sw_%s_out.txt" % corner)), re.M)]
+    drops[corner] = vals
+check("each switch log has a drop for every current its deck steps",
+      all(len(v) == len(SW_CURRENTS_MA) for v in drops.values()),
+      ", ".join("%s %d" % (c, len(v)) for c, v in drops.items()))
+ohm = {c: v[SW_CURRENTS_MA.index(1.0)] / 1e-3 for c, v in drops.items()}
+got = quoted(r'is ([\d.]+) ohm at tt, ([\d.]+) at ss and ([\d.]+) at ff',
+             "the switch's resistance", float)
+if got:
+    check("the switch's resistance is the decks' at 1 mA",
+          got == tuple(round(ohm[c], 2) for c in ("tt", "ss", "ff")),
+          "%.3f, %.3f, %.3f ohm" % (ohm["tt"], ohm["ss"], ohm["ff"]))
+mv = {c: v[SW_CURRENTS_MA.index(0.7)] * 1e3 for c, v in drops.items()}
+got = quoted(r'At 0\.7 mA,.*? it drops ([\d.]+), ([\d.]+) and ([\d.]+) mV',
+             "the switch's drop at 0.7 mA", float)
+if got:
+    check("the drop at 0.7 mA is the decks' at each corner",
+          got == tuple(round(mv[c], 2) for c in ("tt", "ss", "ff")),
+          "%.4f, %.4f, %.4f mV" % (mv["tt"], mv["ss"], mv["ff"]))
+sup = {}
+for v in (1620, 1800, 1980):
+    sup[v] = par_freqs(resolve("sim/spice/gono/noise_vdd_%d_out.txt" % v))
+push = sum((sup[1980][i] - sup[1620][i]) / 0.36 / sup[1800][i] * 100
+           for i in range(16)) / 16
+got = quoted(r'at the (\d+) percent a volt the rings move by',
+             "the supply pushing figure")
+if got:
+    check("the pushing figure is the archived supply logs'",
+          got == (round(push),), "%.2f%% a volt" % push)
+worst = max(mv.values()) * 1e-3 * push
+check("the worst drop moves a ring by about a tenth of a percent",
+      round(worst, 2) == 0.10 and "about a tenth of a percent" in flat,
+      "%.3f%% at %.2f mV" % (worst, max(mv.values())))
+hold = re.search(r'tt\.reset_project\(True\)\n\s+time\.sleep_ms\((\d+)\)',
+                 fw)
+check("the firmware holds reset as long as the datasheet says",
+      hold is not None and "holds it for %s ms more" % hold.group(1) in flat,
+      "%s ms" % (hold.group(1) if hold else "no hold found"))
+tiles = re.search(r'tiles:\s*"(\d+x\d+)"', text(YAML))
+check("the switch the datasheet names is the one for this tile count",
+      tiles is not None and tiles.group(1) == "2x2"
+      and "`tt_pg_1v8_ll_2` for a 2x2 tile" in flat,
+      tiles.group(1) if tiles else "no tiles line in info.yaml")
+
+
+# -------------------------------------------------------------- the last pulse
+
+# Added 2026-10-18 with the tt and ss sweeps. The 80 ps has been in the
+# datasheet since August and nothing here read it. docs/phaseG_writing_pass.md
+# says this script re-derived that paragraph on 21 September; no version of it
+# ever opened a boundary csv. The widths are read from those csvs, which the
+# gate rebuilds from bnd3/. The library's 77.5, 169.8 and 353.8 need the PDK's
+# Liberty files, so check_pulse_width.py holds those and this does not.
+def narrowest(name):
+    rows = list(csv.DictReader(open(resolve(
+        "sim/spice/gono/boundary_validation_B13_3arm%s.csv" % name),
+        encoding="utf-8")))
+    return min(int(r["sel_high_ps"]) for r in rows
+               if r["final_edge_arrived"] == "yes")
+
+
+GRIDS = {"ff": ("", "_5ps", "_1ps", "_0p2ps"), "tt": ("_tt", "_tt_5ps"),
+         "ss": ("_ss", "_ss_5ps")}
+widths = {c: [narrowest(g) for g in gs] for c, gs in GRIDS.items()}
+got = quoted(r'saw that way was (\d+) ps', "the narrowest pulse at ff")
+if got:
+    check("the narrowest pulse at ff is the 0.2 ps grid's",
+          got == (widths["ff"][-1],), "%d ps" % widths["ff"][-1])
+got = quoted(r'flop still saw (\d+) ps against 169\.8 at tt and (\d+) ps '
+             r'against 353\.8 at ss', "the narrowest pulses at tt and ss")
+if got:
+    check("the narrowest at tt and ss are the 5 ps grids'",
+          got == (widths["tt"][-1], widths["ss"][-1]),
+          "%d and %d ps" % (widths["tt"][-1], widths["ss"][-1]))
+check("every finer grid found a narrower pulse, as the datasheet says",
+      all(a > b for w in widths.values() for a, b in zip(w, w[1:]))
+      and "Every finer grid found a narrower pulse than the one before"
+      in flat,
+      "; ".join("%s %s" % (c, " > ".join(str(x) for x in w))
+                for c, w in widths.items()))
+
+
 # ------------------------------------------------------------------------ report
 
 width = max(len(n) for n, _, _ in results)

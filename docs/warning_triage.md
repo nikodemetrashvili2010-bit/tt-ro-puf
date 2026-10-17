@@ -151,25 +151,44 @@ reports, which are not in the archived bundle, only in my local run directory.
 Pulling them across is the one piece of this triage still owed, and it is
 mechanical.
 
-## The 461 lint warnings
+## The lint warnings, named
 
 Zero lint errors and zero timing constructs, so nothing here blocks anything.
-The 461 is a warning count from Verilator.
+The rest are warnings from Verilator, and `src/config.json` sets
+`LINTER_INCLUDE_PDK_MODELS` to 1, Tiny Tapeout's default and one of the values
+the file tells you not to change, so the linter reads the PDK's own cell models
+alongside my RTL.
 
-`src/config.json` sets `LINTER_INCLUDE_PDK_MODELS` to 1, which is Tiny Tapeout's
-default and one of the values the file explicitly tells you not to change. With
-that on, the linter reads the PDK's own cell models alongside my RTL.
+When I first wrote this I said naming them needed a log out of reach in my
+local run directory. That was wrong. Run 83's lint log has been on disk since
+17 September, in `run83/runs/wokwi/01-verilator-lint/verilator-lint.log`, and
+the wokwi control's is under `gds_build/`. So here they are.
 
-The wokwi build reports 461 as well.
+The release build, run 83, the three-arm chip that ships, raises 473, no errors
+and no timing constructs:
 
-That build is a different design: one tile instead of four, 32 flat oscillators
-instead of sixteen flat and sixteen hardened, 4325 instances instead of 6477,
-no macro at all. Two designs that share almost nothing above the cell level,
-and an identical warning count. The debug snapshot gives 462. So the count
-barely responds to my RTL, which points at the PDK models as the source.
+- 447 `TIMESCALEMOD`, every one a black-boxed cell model, 446 the PDK's own
+  standard cells and one the hardened macro. My five RTL files carry a
+  `` `timescale `` line and the generated models do not, which is the whole of
+  it. That is 95 percent of the count and touches none of my logic.
+- 24 `PINMISSING`: the power and body pins `VPWR`, `VGND`, `VPB` and `VNB` on
+  the standard cells the two ring modules instantiate by hand, six instances
+  of four pins, three in `ro_macro.v` and three in `ro_armc.v`. The RTL leaves
+  those pins off on purpose; the cells take power from the grid at hardening,
+  not from a net in the source.
+- 2 `UNUSEDPARAM`: `IDX`, in `ro_macro.v` and `ro_armc.v`. Only the simulation
+  model reads it, to tag a ring; the synthesizable path does not.
 
-That is an inference from a control, not a proof. Naming the 461 needs the
-linter log, which lives in the same local run directory as the timing reports.
+So 26 of the 473 are about my hand-instantiated cells and every one is
+deliberate, and the other 447 are the models the linter was told to read.
+
+The controls land where that reading predicts. The wokwi build is 461: the
+same 447 model warnings, but one tile and no Arm C, so 12 `PINMISSING` and one
+`UNUSEDPARAM` where the release build has 24 and two, plus one `UNUSEDSIGNAL`
+of its own, bit 16 of `tff_clk` in `ro_puf_core.v`, that the release build does
+not raise. The debug snapshot gives 462. Three builds that share almost nothing
+above the cell level move only by the cells each one actually instantiates,
+which is what "the count comes from the PDK models" has to mean if it is true.
 
 ## What this ran against, and one side result
 

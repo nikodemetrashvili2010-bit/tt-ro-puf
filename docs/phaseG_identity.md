@@ -140,3 +140,34 @@ yet. Run 88 only ran the byte comparison.
 If a build does differ in layout, the annotation says where, but not what to
 do about it. Reading the predictions again from the new build and pinning the
 submission to an older run are both open, and I have not decided which.
+
+## Later, 17 October: the prefix learned, and --strict on
+
+Run 89 on 24 September was the first build whose GDS the structure compare
+actually read, and it came back not identical for one reason: the eight cells
+inside the hard macro. Magic gives the macro's own copies of the standard
+cells a prefix it picks fresh each time it hardens the macro, `AD_` on run 83
+and `RS_` on run 89, in front of every `sky130_fd_sc_hd__` name. So the eight
+structures were named `AD_...` in the archive and `RS_...` in the build, which
+reads as eight gone and eight new, and the macro itself reads as changed
+because it places its own cells by those names.
+
+None of that is a layout, so the compare learns the prefix now. It finds the
+one token in front of `sky130_fd_sc_hd__` on a structure name, in each file on
+its own, and rewrites it to a fixed tag wherever it names one of those cells,
+in the structure definitions and in the references the macro makes to them,
+before anything is compared. It only acts when there is exactly one such
+token, so a set of names it did not expect is left alone and still shows.
+
+Checked on run 83's own GDS with `AD_` rewritten to `RS_` across the whole
+file: same layout, 69 structures, the prefix named in the reason. Move one
+point in that copy and it names the cell the point is in, macro cell or
+library cell. The macro's private `inv_1` and the top level's own `inv_1`
+stay apart, so a change to either still shows. Four cases went into the
+selftest.
+
+With the prefix handled the step runs under `--strict` and without
+`continue-on-error`, so a real layout difference fails the build, which is the
+point of the check. A missing run directory was always an error. What a
+difference would mean, rereading the predictions off the new build or pinning
+the submission to run 83, is still mine to decide if it ever fires.

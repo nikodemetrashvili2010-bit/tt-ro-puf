@@ -191,8 +191,9 @@ The analyzer rejects a sweep whose count never changes for exactly that reason.
 Seven `boundary_validation_*.csv` files are the records: B15, A05 and B00 at
 the fast corner, fine 5 ps sweeps around the B15 and B00 thresholds, and B15
 again at tt and at ss. Those are the two-arm baseline. The release build's
-four, all through B13 at ff on grids of 50, 5, 1 and 0.2 ps, are the `_3arm`
-files, with their decks, logs and reduced waveforms in `bnd3/`.
+eight, all through B13, are the `_3arm` files, with their decks, logs and
+reduced waveforms in `bnd3/`: four at ff on grids of 50, 5, 1 and 0.2 ps, and
+since 18 October two each at tt and ss on grids of 50 and 5 ps.
 
 `check_pulse_width.py` reads what the PDK promises rather than what the simulator
 shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out
