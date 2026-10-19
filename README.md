@@ -266,6 +266,10 @@ and temperature with the scripts in `firmware/`. What I expect on silicon: Arm
 A shows more cross-chip pattern correlation than Arm B, and Arm C's rings
 spread less than Arm A's. The data can also prove me wrong.
 
+On 19 October I ran the firmware against the chip's logic on a Tang Nano 9K
+FPGA, through 23 jumper wires. The protocol held up and the wires did not,
+see [docs/phaseG_fpga_bench.md](docs/phaseG_fpga_bench.md).
+
 Operating notes for the chip itself are in [docs/info.md](docs/info.md). The
 paper source is [docs/paper_draft.md](docs/paper_draft.md); build it with
 `sh docs/build_paper.sh`. Its abstract and Section 7.4 are about the release
