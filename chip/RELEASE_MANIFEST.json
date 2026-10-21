@@ -98,7 +98,7 @@
       "pass": true
     },
     {
-      "detail": "4 authored",
+      "detail": "5 authored",
       "id": "S12",
       "name": "every authored file names a checker that is in chip/",
       "pass": true
@@ -131,6 +131,7 @@
     "PLACEMENT_CFG.json": "78fdb3054468de87a82d35207decd0ac0b0fadf33f9658dd2c693e51bd09fc28",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
     "PREREG_AMENDMENT.json": "056b8188b68f8e057309d1905dd6fc9d8d288d86ad1bde5dc8ea8d90f81d13c3",
+    "PREREG_AMENDMENT_2.json": "20d61d0dc0e38813760f6d15a48caa795d1265f740656f11c8c38ed3f2bd5c18",
     "RELEASE_MANIFEST.json": null,
     "RTL_LINT.json": "bd1abe521020a7b16d6089a1a0800a1704a06ec0224c02f187a7fa0f6642f291",
     "TILE_BUDGET.json": "36462dcd58b13a770be0a49a03f848dd427963896b4071b8f31ba45c5c4e4ce2",
@@ -155,9 +156,9 @@
     "observability_spec.py": "e90671b49d9728e8e9222745213e74bfb697ef068e25539d63378f7189ea0111",
     "placement.cfg": "92ec928f3d8a313242275524aefa750b12ea874c32a265b89900a9c2f7977d11",
     "placement_fidelity.py": "e4a8c3434c9c79d0d16b4711381278f8a8a7f12249f4fd8d1f4a5b88ef951e39",
-    "preregister.py": "26a3eba543a7cae6f21172bf77fa51b622e022e5f22f97642e29f01e32ab9535",
+    "preregister.py": "695754257f6f26e72b7b3c33a9dc16a1af321ef714f8b5c2e8c176f531d9824f",
     "primary_tests.py": "0418b0a9c2c83dcf46387e9d79f897ba9c228a2c1f836484422cd899642a70c4",
-    "release_manifest.py": "e10b8471f7a942eb77f3c4aa69d34be6cbee137a881827bef1913da1ffbcedad",
+    "release_manifest.py": "f7a03c3f63bc9179e6fbf445d908706ff0dff0936d741bf39f3ab5f416f5cdad",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
     "tile_budget.py": "edaf919b06d0b269462a8894714dd24e70990f6e282328c14a3f84700acf7943",
     "verify_phaseE.py": "ab534ad6e62fbdc4e5694f7f8283e2c3dfd1eec4d466fea871b38034cf94b33a"
@@ -167,7 +168,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 178,
+  "gate_commands": 181,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {

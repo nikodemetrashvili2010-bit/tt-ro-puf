@@ -1,0 +1,4 @@
+1. ring loads, magic against the SPEF
+   Arm A: Pearson 0.940, Spearman 0.912, magic above SPEF by 16.82 to 19.79 fF
+   Arm C: Pearson 0.772, Spearman 0.794, magic above SPEF by 16.80 to 18.77 fF
+2. routed nets: 559 compared; 185 with a SPEF total above 5 fF, magic over SPEF median 0.968, quartiles 0.810 and 1.091

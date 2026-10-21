@@ -1,0 +1,179 @@
+{
+  "_comment": [
+    "A second amendment to G.4, written 2026-10-21. It changes no byte of",
+    "chip/PREREGISTRATION.json or of chip/PREREG_AMENDMENT.json, the first",
+    "amendment, and records both by hash. The first amendment left the",
+    "abstention rule as frozen. This one adds one condition to it, for one",
+    "reason found on 20 October: a second extractor run over the same",
+    "layout calls one of Arm A's six scored pairs level, where the SPEF",
+    "calls it by more than a percent.",
+    "",
+    "preregister.py --amendment holds this file the way it holds the",
+    "first: its quotes against the two files it amends, the hashes it",
+    "records against the files on disk, and the scored pairs it lists",
+    "against the rule it states, worked again from the tables it names."
+  ],
+  "written": "2026-10-21",
+  "gate": "G.4",
+  "kind": "amendment",
+  "not_a_preregistration": true,
+  "not_a_preregistration_why": [
+    "PREREGISTRATION.json was frozen on 31 August and the first amendment",
+    "was written on 18 October, both before any of this was known. This",
+    "file was written after a second extraction of the layout, with its",
+    "numbers in hand. No die had been read and nothing had been measured,",
+    "so none of it can have been fitted to data, but it is a decision taken",
+    "late, and it must never be cited as though it carried the frozen",
+    "file's weight."
+  ],
+  "dies_read_when_written": 0,
+  "supersedes_nothing": true,
+  "frozen_record": {
+    "chip/PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
+  },
+  "amendment_record": {
+    "chip/PREREG_AMENDMENT.json": "056b8188b68f8e057309d1905dd6fc9d8d288d86ad1bde5dc8ea8d90f81d13c3"
+  },
+
+  "tables": {
+    "line": {
+      "path": "extraction/TOLERANCES.json",
+      "key": "margin_rule.high_margin_threshold_pct_f",
+      "sha256": "7f61955a03f2c43331ff4a36c6bca1235af598eec96c3740de246919960408c2"
+    },
+    "first": {
+      "what": "the release build's SPEF, the tables every prediction has been read from: Arms A and C through the archive's full RC decks, Arm B through its instance decks, the macro's own extraction the same for all sixteen with each instance's enable and output routes from the SPEF",
+      "A": {
+        "path": "sim/spice/gono/rc_validation_3arm.csv",
+        "column": "rc_MHz",
+        "sha256": "a723fe9192cb437f3eb49743e434d704959d64d7d5739eb45154c4e0e4734ed2"
+      },
+      "B": {
+        "path": "sim/spice/gono/armb3/armb_instances_out.txt",
+        "column": "f_kNN",
+        "sha256": "bedac7885d25fb027b106a434f0b88c498591f8b9a83ffa1d2fbe893e6f8b068"
+      },
+      "C": {
+        "path": "sim/spice/gono/rc_validation_armc.csv",
+        "column": "rc_MHz",
+        "sha256": "69bc9b1a54d926c2be63d92d470dff9907291dbea6d2de2c8703380bacc7c2f1"
+      }
+    },
+    "second": {
+      "what": "magic's extraction of the same layout, capacitance only, through the archive's lumped deck, run on 20 October",
+      "path": "sim/spice/magic/magic_rings.csv",
+      "column": "magic_MHz",
+      "sha256": "5d21c6709295e033abc939d55ea343144e4483fe46769eec253c359e933c05d4"
+    }
+  },
+
+  "amends": [
+    {
+      "id": "abstention",
+      "frozen_key": "exclusions.abstention",
+      "frozen_text": "A pair whose frequency separation is below the high-margin threshold in TOLERANCES.json is an abstention.",
+      "first_amendment_key": "not_amended",
+      "first_amendment_text": "the abstention rule read from extraction/TOLERANCES.json",
+      "decided": "2026-10-21",
+      "by": "Nikoloz",
+      "now": [
+        "A pair is scored only if its separation clears the high-margin",
+        "line in extraction/TOLERANCES.json, with the same sign, in both",
+        "tables named above: the SPEF's, which the predictions are read",
+        "from, and magic's, a second extraction of the same layout through",
+        "lumped decks, since that extraction is capacitance only. Every",
+        "other pair is an abstention, counted and published, its sign never",
+        "scored either way. The line is read from TOLERANCES.json and not",
+        "re-derived, and a separation is f_a minus f_b as a percent of the",
+        "mean of that arm's sixteen rings in the same table. For a scored",
+        "pair the two tables agree on the sign, and that sign is the",
+        "prediction. The rule is the same for all three arms."
+      ],
+      "scored": {
+        "A": ["4/5", "6/7", "10/11", "12/13", "14/15"],
+        "B": [],
+        "C": ["4/5", "12/13", "14/15"]
+      },
+      "scored_as_frozen": {
+        "A": ["0/1", "4/5", "6/7", "10/11", "12/13", "14/15"],
+        "B": [],
+        "C": ["4/5", "8/9", "10/11", "12/13", "14/15"]
+      },
+      "why": [
+        "Every prediction in the project was read from one extraction, the",
+        "SPEF OpenRCX wrote. On 20 October the same layout went through",
+        "magic, which also sees inside the standard cells, and the ring",
+        "decks were run again with its loads. Five of Arm A's six scored",
+        "pairs come out the same way and over the line. Pair 0/1 does not:",
+        "the SPEF has ring 0 faster by 1.08 percent of the arm's mean,",
+        "magic has the two level, -0.015, and with metal fill ring 1",
+        "ahead. The SPEF puts 1.36 fF more on ring 1 than on ring 0, and",
+        "magic about a tenth of one. The SPEF's own lumped decks put pair",
+        "0/1 at +1.069, so the split is the extractor's and not the",
+        "resistance's.",
+        "",
+        "The line already allows each ring an extraction error the size of",
+        "one ring's mismatch (T2a in TOLERANCES.json), as if an extraction",
+        "could be off by that much and no more. Two open extractors part on",
+        "pair 0/1 by about 1.3 fF. A call that turns on the choice of",
+        "extractor is a call about the tool and not about the layout, and",
+        "the line's own reasoning is that such a call is not scored: a",
+        "low-margin sign that comes out right is not a result, and one that",
+        "comes out wrong is not a failure.",
+        "",
+        "As it stood, M1 on Arm A needed six of six, and one of the six was",
+        "a pair the two extractors call differently, with nothing in hand",
+        "to say which of them is right. The primary test would have turned",
+        "on that one pair."
+      ],
+      "gives_up": [
+        "M1 on Arm A can no longer pass on its own. Five of five is 1/32,",
+        "0.03125, over the first Holm level, so it is tested at 0.05 only",
+        "after M4 has cleared 0.025, and if M4 fails it fails with it. Taken",
+        "knowing that M4, run through primary_tests.py on the model",
+        "frequencies, has p(1) of 0.0011 from the SPEF, 0.012 from magic and",
+        "at most 0.00011 with fill. With the 0.062 percent ring mismatch",
+        "drawn 200 times onto magic's frequencies it stayed under 0.025",
+        "every time, the largest 0.023. magic without fill is where tying",
+        "M1 to M4 costs the most.",
+        "",
+        "Pair 0/1 scores nothing whichever way it comes out. Arm C's",
+        "secondary M1 loses 8/9 and 10/11, which magic puts under the line.",
+        "And the scored pairs now rest on a second tool's numbers as well",
+        "as the first's. They are in sim/spice/magic/ with the decks and",
+        "logs they came from, and recorded here by hash."
+      ],
+      "fill_left_out": [
+        "Metal fill is not part of the rule. Whether Tiny Tapeout's fill",
+        "reaches inside the tile, and with which tool, is not known. With",
+        "the fill open_pdks' generator draws, at four grid positions, the",
+        "first run in SPICE and the other three moved from it by the fitted",
+        "fill slope, the five pairs Arm A scores keep their sign and stay",
+        "over the line in every one. None of Arm C's three does: 12/13",
+        "turns round, and 4/5 and 14/15 keep their sign but fall under the",
+        "line. M1 on Arm C is secondary and carries no claim."
+      ],
+      "decks_differ": [
+        "The two tables are not the same kind of deck. The SPEF's side is",
+        "the RC decks the predictions come from, and magic's side is lumped,",
+        "the only kind a capacitance-only extraction gives. Like for like,",
+        "the SPEF's own lumped decks keep Arm A's five scored pairs over the",
+        "line with the same signs, and split on 0/1 the same way, +1.069",
+        "against magic's -0.015. They differ from the RC decks elsewhere:",
+        "they put 2/3 and 8/9 over the line, which the RC decks and the",
+        "frozen rule leave out, and Arm C's 4/5 and 14/15 under it, -0.588",
+        "and -0.602 where the RC decks have -1.322 and -0.648."
+      ]
+    }
+  ],
+
+  "not_amended": [
+    "The line itself and its derivation in extraction/TOLERANCES.json, the pairing, the bit convention, the two primaries and Holm over them, M1's test, the die M1 and M4 are tested on, and everything else in chip/PREREG_AMENDMENT.json stand as they are.",
+    "preregister.py P03 still reads the frozen abstention sentence and passes on it. The added condition is held by --amendment instead."
+  ],
+
+  "still_open": [
+    "Whatever archive of the per-pair predictions is made before the first die is read takes the scored pairs above.",
+    "Everything still open in chip/PREREG_AMENDMENT.json is still open: the M4 secondary's interval, M2's shuffles and seed, E.3, and the paper's preregistration section, which now takes up both amendments."
+  ]
+}

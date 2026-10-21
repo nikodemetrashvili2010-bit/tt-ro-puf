@@ -1,0 +1,17 @@
+Warning: m=xx on .subckt line will override multiplier m hierarchy!
+
+Using KLU as Direct Linear Solver
+
+Note: Compatibility modes selected: hs a
+
+
+Circuit: * c00: lumped loads from a magic extraction
+
+option SCALE: Scale is set to 1e-06 for instance and model parameters
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+ Reference value :  0.00000e+00 Reference value :  1.14928e-09 Reference value :  2.08050e-09 Reference value :  3.16150e-09 Reference value :  4.23750e-09 Reference value :  5.38050e-09 Reference value :  6.56150e-09 Reference value :  7.59050e-09 Reference value :  8.72350e-09 Reference value :  9.95050e-09 Reference value :  1.11935e-08 Reference value :  1.23785e-08 Reference value :  1.35405e-08 Reference value :  1.48315e-08 Reference value :  1.61125e-08 Reference value :  1.73895e-08 Reference value :  1.83265e-08 Reference value :  1.91175e-08 Reference value :  1.99285e-08 Reference value :  2.07865e-08 Reference value :  2.19205e-08 Reference value :  2.30855e-08 Reference value :  2.42635e-08 Reference value :  2.52605e-08 Reference value :  2.62975e-08 Reference value :  2.73225e-08 Reference value :  2.83365e-08 Reference value :  2.94665e-08 Reference value :  3.05115e-08 Reference value :  3.14415e-08 Reference value :  3.27115e-08 Reference value :  3.39685e-08 Reference value :  3.52445e-08 Reference value :  3.65345e-08 Reference value :  3.76985e-08 Reference value :  3.88595e-08 Reference value :  3.98435e-08
+No. of Data Rows : 40014
+tp                  =  2.086305e-08 targ=  3.188884e-08 trig=  1.102579e-08
+f = 4.793163e+08
+Note: Simulation executed from .control section 

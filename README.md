@@ -98,6 +98,16 @@ of the predictability. The closest Arm C pair is still 3.7 mismatch standard
 deviations apart, the arm holds 0.00 bits of 8, and a reader calls 8.00. Its
 bits, `11010110`, come out the same at ss, tt and ff.
 
+All of that comes through one extractor, OpenRCX, by way of the SPEF. A
+second one, magic, run over the same layout on 20 October, keeps the sign of
+five of the six Arm A pairs over the abstention line and calls pair 0/1
+level, -0.015% where the SPEF has +1.08%. It also turns round 2/3, one of the
+two pairs under the line. So 7.99 is the SPEF's model, and a reader working
+from magic would call two of the eight bits the other way. The preregistered
+test now scores only pairs both extractors agree on,
+[docs/phaseG_prereg_amendment_2.md](docs/phaseG_prereg_amendment_2.md), and
+the second extraction is in `sim/spice/magic/`.
+
 The rest of this section was measured on the baseline and has not been repeated
 on the release build.
 
@@ -202,7 +212,9 @@ That is why the figure draws Arm B as one reference line; the sixteen have
 since been run individually, on the baseline's routes and again on the release
 build's, which drew every one of them again, and they sit inside 0.0025% and
 0.0033% of each other at tt. So the line is now shorthand for sixteen results
-rather than a stand-in for them.
+rather than a stand-in for them. That is the SPEF's view, which stops at the
+macro's edge. magic sees the top-level wires that cross the macro cores as
+well, and spreads the same sixteen 0.495% at tt (`sim/spice/magic/`).
 
 It does not yet show that Arm B's total spread on real chips is lower than Arm
 A's: top-level routing, supply, temperature, and device mismatch still act on

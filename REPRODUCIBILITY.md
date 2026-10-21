@@ -57,6 +57,9 @@ from those logs and diffs each against the committed copy, the same way it has
 done for `mux_validation.csv` since August. The Arm B logs have no csv;
 `analyze_instance.py --build release` reads each corner and
 `verify_instance_corners.py --build release` reads all three.
+`sim/spice/magic/` holds the 96 ring decks of the second extraction,
+magic's, with their logs, and CI rebuilds its `magic_rings.csv` from them
+and diffs it the same way.
 
 The boundary waveforms are reduced with `reduce_raw.py --kind bnd`, which keeps
 the crossings at half the supply, the last 50 samples and any tail sample of q

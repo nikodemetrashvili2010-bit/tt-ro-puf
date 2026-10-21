@@ -102,6 +102,9 @@ jobs:
           diff /tmp/rc3a.csv sim/spice/gono/rc_validation_3arm.csv
           python3 sim/spice/gono/analyze_rc.py --arm C --dir sim/spice/gono/rc3/armC --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3c.csv
           diff /tmp/rc3c.csv sim/spice/gono/rc_validation_armc.csv
+          python3 sim/spice/magic/tabulate.py --selftest
+          python3 sim/spice/magic/tabulate.py --csv /tmp/magic_rings.csv
+          diff /tmp/magic_rings.csv sim/spice/magic/magic_rings.csv
           python3 sim/spice/gono/real_world.py --selftest
           python3 sim/spice/gono/real_world.py
           python3 sim/spice/gono/verify_instance.py

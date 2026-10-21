@@ -19,6 +19,12 @@ artifacts. `spice/mc/` is a first-order mismatch-sensitivity study. Neither is
 a silicon measurement or an entropy/reliability validation; the exact modeled
 scope and omitted effects are stated in each subdirectory README.
 
+`spice/magic/` is a second extractor over the release build: magic's
+extraction of the same layout through the archive's lumped decks, with and
+without metal fill. `chip/PREREG_AMENDMENT_2.json` reads its ring table, and
+the gate rebuilds that table from the deck logs. It is not silicon either,
+and its README says what it leaves out.
+
 `tt_fit.py` reads Tiny Tapeout's own sources at pinned commits, the precheck,
 the multiplexer and the demo board's SDK, and holds the chip and the bench
 firmware to them: the layout through four of their precheck functions, what

@@ -1,0 +1,5 @@
+archive's rc3/armA/ro00_lumped.spice, its own loads, in this setup
+  archived log:              f = 5.509165e+08
+  archive deck run here:     f = 5.509165e+08
+  gen_decks template, 20 periods in 80 ns: f = 5.509165e+08
+  gen_decks template, 10 periods in 40 ns: f = 5.509162e+08

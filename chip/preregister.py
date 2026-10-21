@@ -39,6 +39,13 @@ to the implementation recorded beside it, the amended order and reading to
 what the bench firmware does, and the two halves of the M4 secondary to
 where the placement hook puts Arm C's rings.
 
+Since 21 October it holds `PREREG_AMENDMENT_2.json` as well. That one adds a
+condition to the abstention rule: a pair is scored only when the SPEF's table
+and magic's both put it over the line, with the same sign. `--amendment`
+holds its quotes to both files it amends, the hashes it records to the
+tables on disk, and the pairs it lists to the rule, worked again from those
+tables.
+
 Usage:
     python3 preregister.py --selftest
     python3 preregister.py --freeze-check
@@ -49,6 +56,7 @@ Usage:
 
 import argparse
 import copy
+import csv
 import hashlib
 import itertools
 import json
@@ -66,6 +74,14 @@ REGIONS = os.path.join(HERE, "ARMC_REGIONS.json")
 TOLERANCES = os.path.join(ROOT, "extraction", "TOLERANCES.json")
 
 AMENDMENT = os.path.join(HERE, "PREREG_AMENDMENT.json")
+AMENDMENT2 = os.path.join(HERE, "PREREG_AMENDMENT_2.json")
+# The tables the second amendment's rule reads, from the top of the tree.
+# The SPEF's side is the archive's, the tables every prediction has been
+# read from; magic's side is the second extraction of 20 October.
+SPEF_TABLES = {"A": ("sim/spice/gono/rc_validation_3arm.csv", "rc_MHz"),
+               "B": ("sim/spice/gono/armb3/armb_instances_out.txt", "f_kNN"),
+               "C": ("sim/spice/gono/rc_validation_armc.csv", "rc_MHz")}
+MAGIC_TABLE = ("sim/spice/magic/magic_rings.csv", "magic_MHz")
 IMPL = os.path.join(HERE, "primary_tests.py")
 FIRMWARE = os.path.join(ROOT, "firmware", "measure_puf.py")
 TEMPLATE = os.path.join(HERE, "ARMC_TEMPLATE.json")
@@ -453,7 +469,8 @@ def amendment_main():
     for r in res.rows:
         if not r["pass"]:
             print("       %s: %s" % (r["id"], r["detail"]))
-    return 1 if bad else 0
+    bad2 = amendment2_main(pre, am)
+    return 1 if bad or bad2 else 0
 
 
 def amendment_selftest():
@@ -510,6 +527,272 @@ def amendment_selftest():
         a2, c2 = copy.deepcopy(am), dict(ctx)
         fault(a2, c2)
         tripped = set(amendment_checks(pre, a2, c2).failed())
+        if tripped == {want}:
+            print("  ok    %-4s %s" % (want, label))
+        else:
+            print("  FAIL  %-4s %s -- tripped %s"
+                  % (want, label, ", ".join(sorted(tripped)) or "nothing"))
+            ok = False
+    return ok
+
+
+# --------------------------------------------------------- second amendment
+
+def table_mhz(rel, column, arm):
+    """One arm's sixteen ring frequencies in MHz, ring 0 first, from a table
+    the second amendment names. Stops if a ring is missing or doubled."""
+    with open(os.path.join(ROOT, rel), "r", encoding="utf-8") as fh:
+        text = fh.read()
+    if column == "f_kNN":
+        got = [(int(m.group(1)), float(m.group(2)) / 1e6) for m in
+               re.finditer(r"(?m)^f_k(\d+)\s*=\s*([0-9.eE+-]+)\s*$", text)]
+    else:
+        rows = list(csv.DictReader(text.splitlines()))
+        if rows and "ring" in rows[0]:
+            got = [(int(r["ring"][1:]), float(r[column])) for r in rows
+                   if r["ring"][:1] == arm]
+        else:
+            got = [(int(r["ro"]), float(r[column])) for r in rows]
+    if sorted(i for i, _ in got) != list(range(N_PER_ARM)):
+        raise SystemExit("%s: Arm %s does not have rings 0 to %d once each"
+                         % (rel, arm, N_PER_ARM - 1))
+    return [f for _, f in sorted(got)]
+
+
+def separations(f):
+    """Each adjacent pair's f_a - f_b, as a percent of the arm's mean."""
+    mean = sum(f) / len(f)
+    return [(f[2 * j] - f[2 * j + 1]) / mean * 100.0
+            for j in range(len(f) // 2)]
+
+
+def scored_pairs(first, second, line):
+    """The pairs one arm scores, as frozen (the first table alone over the
+    line) and as amended (both tables over it, with the same sign)."""
+    s1, s2 = separations(first), separations(second)
+    name = lambda j: "%d/%d" % (2 * j, 2 * j + 1)
+    frozen = [name(j) for j, x in enumerate(s1) if abs(x) >= line]
+    both = [name(j) for j, (x, y) in enumerate(zip(s1, s2))
+            if abs(x) >= line and abs(y) >= line and (x > 0) == (y > 0)]
+    return frozen, both
+
+
+def amendment2_context():
+    with open(TOLERANCES, "r", encoding="utf-8") as fh:
+        tol = json.load(fh)
+    rels = [rel for rel, _ in SPEF_TABLES.values()] + [MAGIC_TABLE[0]]
+    ctx = {"prereg_hash": sha256_file(PREREG),
+           "am1_hash": sha256_file(AMENDMENT),
+           "tol_hash": sha256_file(TOLERANCES),
+           "line": tol["margin_rule"]["high_margin_threshold_pct_f"],
+           "hashes": dict((rel, sha256_file(os.path.join(ROOT, rel)))
+                          for rel in rels),
+           "first": {}, "second": {}}
+    for arm, (rel, col) in sorted(SPEF_TABLES.items()):
+        ctx["first"][arm] = table_mhz(rel, col, arm)
+        ctx["second"][arm] = table_mhz(MAGIC_TABLE[0], MAGIC_TABLE[1], arm)
+    return ctx
+
+
+def load_amendment2():
+    with open(AMENDMENT2, "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def amendment2_checks(pre, am1, am2, ctx):
+    """pre and am1 are the two files the second amendment amends; ctx holds
+    the hashes and tables it reads, so the selftest can fault each one."""
+    res = Results()
+    items = {it.get("id"): it for it in am2.get("amends", [])}
+
+    rec = am2.get("frozen_record", {}).get("chip/PREREGISTRATION.json")
+    rec1 = am2.get("amendment_record", {}).get("chip/PREREG_AMENDMENT.json")
+    res.add("B01", "it records the frozen file and the first amendment by "
+                   "hash",
+            rec == FROZEN_SHA256 == ctx["prereg_hash"]
+            and rec1 == ctx["am1_hash"],
+            "frozen %s, first amendment recorded %s, on disk %s"
+            % (str(rec)[:12], str(rec1)[:12], ctx["am1_hash"][:12]))
+
+    why = " ".join(am2.get("not_a_preregistration_why", []))
+    res.add("B02", "it says on its face it is not a preregistration",
+            am2.get("kind") == "amendment"
+            and am2.get("not_a_preregistration") is True
+            and am2.get("supersedes_nothing") is True
+            and "never be cited" in why
+            and am2.get("dies_read_when_written") == 0,
+            "dies read when written: %s" % am2.get("dies_read_when_written"))
+
+    unquoted = []
+    for iid, it in sorted(items.items()):
+        try:
+            v = frozen_value(pre, it["frozen_key"])
+        except (KeyError, TypeError):
+            unquoted.append("%s names no key %s" % (iid, it.get("frozen_key")))
+            continue
+        if not (isinstance(v, str) and it.get("frozen_text")
+                and it["frozen_text"] in v):
+            unquoted.append("%s misquotes %s" % (iid, it["frozen_key"]))
+        if "first_amendment_text" in it:
+            w = am1.get(it.get("first_amendment_key", ""))
+            if isinstance(w, list):
+                w = " ".join(w)
+            if not (isinstance(w, str) and it["first_amendment_text"]
+                    and it["first_amendment_text"] in w):
+                unquoted.append("%s misquotes the first amendment's %s"
+                                % (iid, it.get("first_amendment_key")))
+    res.add("B03", "every item quotes what it amends, as it stands in both "
+                   "files",
+            bool(items) and not unquoted,
+            "; ".join(unquoted) or "%d item(s)" % len(items))
+
+    late = []
+    for iid, it in sorted(items.items()):
+        d = it.get("decided", "")
+        if not (am1.get("written", "") < d <= am2.get("written", "")
+                and d[:7] < pre["silicon_expected"]):
+            late.append("%s dated %s" % (iid, d))
+        for k in ("by", "now", "why", "gives_up"):
+            if not it.get(k):
+                late.append("%s has no %s" % (iid, k))
+    ids = [it.get("id") for it in am2.get("amends", [])]
+    if len(set(ids)) != len(ids):
+        late.append("two items share an id")
+    res.add("B04", "every item is dated after the first amendment and before "
+                   "silicon, and says who, what, why and what it gives up",
+            bool(items) and not late, "; ".join(late) or "%d item(s)"
+            % len(items))
+
+    tables = am2.get("tables", {})
+    wrong = []
+    named = [(tables.get("first", {}).get(arm, {}), rel, col,
+              "Arm %s's first table" % arm)
+             for arm, (rel, col) in sorted(SPEF_TABLES.items())]
+    named.append((tables.get("second", {}),) + MAGIC_TABLE
+                 + ("the second table",))
+    for e, rel, col, what in named:
+        if e.get("path") != rel or e.get("column") != col:
+            wrong.append("%s is %s %s, not %s %s" % (what, e.get("path"),
+                                                    e.get("column"), rel, col))
+        elif e.get("sha256") != ctx["hashes"][rel]:
+            wrong.append("%s recorded %s, on disk %s"
+                         % (rel, str(e.get("sha256"))[:12],
+                            ctx["hashes"][rel][:12]))
+    e = tables.get("line", {})
+    if not (e.get("path") == "extraction/TOLERANCES.json"
+            and e.get("key") == "margin_rule.high_margin_threshold_pct_f"
+            and e.get("sha256") == pre["depends_on"]["tolerances"]["sha256"]
+            == ctx["tol_hash"]):
+        wrong.append("the line is not read from the frozen TOLERANCES.json")
+    res.add("B05", "the rule reads the archive's SPEF tables, magic's table "
+                   "and the frozen line, each the file recorded beside it",
+            not wrong, "; ".join(wrong) or "%d files, every hash the one on "
+            "disk" % (len(named) + 1))
+
+    it = items.get("abstention", {})
+    off, got = [], []
+    for arm in "ABC":
+        frozen, both = scored_pairs(ctx["first"][arm], ctx["second"][arm],
+                                    ctx["line"])
+        got.append("%s %s" % (arm, ",".join(both) or "none"))
+        listed = (it.get("scored") or {}).get(arm)
+        if listed != both:
+            off.append("Arm %s lists %s, the rule gives %s"
+                       % (arm, listed, both))
+        listed = (it.get("scored_as_frozen") or {}).get(arm)
+        if listed != frozen:
+            off.append("Arm %s lists %s as frozen, the frozen rule gives %s"
+                       % (arm, listed, frozen))
+    res.add("B06", "the pairs it lists as scored are what the rule gives on "
+                   "those tables, and so are the frozen rule's",
+            bool(it) and not off, "; ".join(off) or "; ".join(got))
+    return res
+
+
+def amendment2_main(pre, am1):
+    am2 = load_amendment2()
+    ctx = amendment2_context()
+    res = amendment2_checks(pre, am1, am2, ctx)
+    print("\nG.4 second amendment, written %s, %d item(s), recording %s and %s"
+          % (am2["written"], len(am2["amends"]), FROZEN_SHA256[:16],
+             ctx["am1_hash"][:16]))
+    for it in am2["amends"]:
+        print("  %-13s %s  %s" % (it["id"], it["decided"], it["frozen_key"]))
+    print("  line          %s percent of the arm's mean, from TOLERANCES.json"
+          % ctx["line"])
+    for arm in "ABC":
+        frozen, both = scored_pairs(ctx["first"][arm], ctx["second"][arm],
+                                    ctx["line"])
+        print("  Arm %s scores  %s, as frozen %s"
+              % (arm, " ".join(both) or "none", " ".join(frozen) or "none"))
+    print()
+    for r in res.rows:
+        print("  %-4s %-58s %s" % (r["id"], r["name"][:58],
+                                   "pass" if r["pass"] else "FAIL"))
+    bad = res.failed()
+    print("\n  %s" % ("all %d checks pass" % len(res.rows) if not bad
+                      else "FAILED: " + ", ".join(bad)))
+    for r in res.rows:
+        if not r["pass"]:
+            print("       %s: %s" % (r["id"], r["detail"]))
+    return bad
+
+
+def amendment2_selftest():
+    """Each fault on a copy of the real files, and only its check may fire."""
+    with open(PREREG, "r", encoding="utf-8") as fh:
+        pre = json.load(fh)
+    with open(AMENDMENT, "r", encoding="utf-8") as fh:
+        am1 = json.load(fh)
+    am2 = load_amendment2()
+    ctx = amendment2_context()
+    clean = amendment2_checks(pre, am1, am2, ctx)
+    if clean.failed():
+        print("  FAIL: the second amendment as it stands fails %s"
+              % ", ".join(clean.failed()))
+        return False
+    print("  the second amendment as it stands passes all %d checks"
+          % len(clean.rows))
+
+    def item(a):
+        return [it for it in a["amends"] if it["id"] == "abstention"][0]
+
+    def f_b03(a, c):
+        item(a)["frozen_text"] = item(a)["frozen_text"].replace("below",
+                                                                "above")
+
+    def f_b06(a, c):
+        item(a)["scored"]["A"] = ["0/1"] + item(a)["scored"]["A"]
+
+    def f_b06_table(a, c):
+        # magic calling 0/1 the SPEF's way, by more than the line, with the
+        # table recorded by its own hash: B05 still holds, and it is the
+        # list of scored pairs that no longer follows from the tables
+        s = list(c["second"]["A"])
+        s[0] = s[1] * 1.015
+        c["second"]["A"] = s
+
+    faults = [
+        ("B01", "the first amendment recorded by another hash",
+         lambda a, c: a["amendment_record"].update(
+             {"chip/PREREG_AMENDMENT.json": "0" * 64})),
+        ("B02", "an amendment written after a die was read",
+         lambda a, c: a.update(dies_read_when_written=1)),
+        ("B03", "a quote of the frozen abstention that is not what it says",
+         f_b03),
+        ("B04", "an item dated before the first amendment was written",
+         lambda a, c: item(a).update(decided="2026-10-17")),
+        ("B05", "magic's table recorded by another hash",
+         lambda a, c: a["tables"]["second"].update(sha256="0" * 64)),
+        ("B06", "a pair listed as scored that the rule does not score",
+         f_b06),
+        ("B06", "a magic table that calls 0/1 the SPEF's way", f_b06_table),
+    ]
+    ok = True
+    for want, label, fault in faults:
+        a2, c2 = copy.deepcopy(am2), copy.deepcopy(ctx)
+        fault(a2, c2)
+        tripped = set(amendment2_checks(pre, am1, a2, c2).failed())
         if tripped == {want}:
             print("  ok    %-4s %s" % (want, label))
         else:
@@ -685,6 +968,9 @@ def selftest():
 
     print("\n  the amendment, faults on copies of the real files")
     ok = amendment_selftest() and ok
+
+    print("\n  the second amendment, faults on copies of the real files")
+    ok = amendment2_selftest() and ok
 
     print("\n  %s" % ("all faults isolated" if ok else "SELFTEST FAILED"))
     return 0 if ok else 1
