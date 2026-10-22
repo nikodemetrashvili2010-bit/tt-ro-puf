@@ -297,6 +297,34 @@ if got:
     check("the Arm B spreads it quotes are the release logs'",
           list(got) == want, "%s against %s" % ("/".join(got), "/".join(want)))
 
+# Added 2026-10-22. Those spreads take each macro's own extraction and its
+# routes from the top-level SPEF, and neither sees a top-level wire over a
+# macro core. magic, run over the whole layout, does, and the datasheet gives
+# its figure beside them now. The table is the one PREREG_AMENDMENT_2.json
+# reads, which the gate rebuilds from the deck logs, so this reads the same
+# numbers the amendment does.
+MAGIC = resolve("sim/spice/magic/magic_rings.csv")
+mrows = list(csv.DictReader(open(MAGIC, encoding="utf-8")))
+mag = {a: [float(r["magic_MHz"]) for r in mrows if r["ring"][:1] == a]
+       for a in "AB"}
+
+
+def spread(f):
+    return 100.0 * (max(f) - min(f)) / (sum(f) / len(f))
+
+
+got = quoted(r"puts the sixteen ([\d.]+)% apart at tt\. That is still far "
+             r"under the ([\d.]+)% it gives Arm A", "Arm B in magic", str)
+if got:
+    check("Arm B's and Arm A's spreads in magic are its table's",
+          len(mag["A"]) == len(mag["B"]) == 16
+          and got == ("%.3f" % spread(mag["B"]), "%.2f" % spread(mag["A"])),
+          "B %.4f%%, A %.4f%%" % (spread(mag["B"]), spread(mag["A"])))
+b_counts = (max(mag["B"]) - min(mag["B"])) * 1e6 * window / fw_clk
+check("and in magic Arm B spans well over one count at the window in use",
+      b_counts > 10 and "but it is well over one count" in flat,
+      "%.0f counts" % b_counts)
+
 floor_mhz = fast * window / (ceiling + 1)
 got = quoted(r'floor at ([\d.]+) MHz', "the clock floor", float)
 if got:

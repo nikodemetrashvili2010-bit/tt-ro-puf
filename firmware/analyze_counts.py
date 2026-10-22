@@ -548,6 +548,113 @@ def print_summaries(groups):
                 print("  %s: mean is zero" % name)
 
 
+# --- a selection pin that never reaches the chip ---------------------------
+#
+# The firmware picks a ring with six pins, ui[1] and ui[7] for the arm and
+# ui[2] to ui[5] for the index (docs/info.md). If one of them never arrives,
+# the chip holds that bit at one level whatever the firmware drives, and any
+# two selections that differ only in it measure the same ring. The counts
+# still look like counts. The Tang Nano's first run on 19 October lost index
+# bit 0 that way, and all this script showed was bit error rates of 0.29 to
+# 0.45 with no reason given (docs/phaseG_fpga_bench.md).
+#
+# Two different rings can read alike by chance, so one pair proves nothing. A
+# pin is named when three quarters of its pairs or more read alike, out of
+# eight pairs at least. A pair reads alike when its two means sit within
+# SAME_RING_SE standard errors of each other, so two selections whose counts
+# never move are alike only if they are equal. Two things this cannot see:
+# two wires swapped with each other, where every selection still reads a ring
+# of its own under another number, and a wire that comes and goes inside one
+# run.
+SEL_PINS = (("ui[1]", "arm bit 0", 1, 0), ("ui[7]", "arm bit 1", 2, 0),
+            ("ui[2]", "index bit 0", 0, 1), ("ui[3]", "index bit 1", 0, 2),
+            ("ui[4]", "index bit 2", 0, 4), ("ui[5]", "index bit 3", 0, 8))
+SAME_RING_SE = 4.0
+SAME_RING_MIN_REPEATS = 4
+LOST_PIN_SHARE = 0.75
+LOST_PIN_MIN_PAIRS = 8
+
+
+def run_selections(g):
+    """run_id -> {(arm, idx): [counts]}, so each run is judged on its own."""
+    out = {}
+    for (run_id, _), rc in g["by_round"].items():
+        for key, c in rc.items():
+            out.setdefault(run_id, {}).setdefault(key, []).append(c)
+    return out
+
+
+def read_alike(a, b):
+    """Whether two selections' counts look like one ring, or None when either
+    has too few repeats to say."""
+    if min(len(a), len(b)) < SAME_RING_MIN_REPEATS:
+        return None
+    ma, mb = mean(a), mean(b)
+    va = sum((x - ma) ** 2 for x in a) / (len(a) - 1)
+    vb = sum((x - mb) ** 2 for x in b) / (len(b) - 1)
+    return abs(ma - mb) <= SAME_RING_SE * math.sqrt(va / len(a) + vb / len(b))
+
+
+def pin_pairs(sel):
+    """(pin, what, pairs that read alike, pairs compared) for each of the six.
+
+    A pin's pairs are the selections that differ in its bit alone, each taken
+    once from the side where the bit is 0, and only where both sides were
+    measured. There is no arm 3, so an arm pin has 16 pairs and an index pin
+    24."""
+    out = []
+    for pin, what, arm_bit, idx_bit in SEL_PINS:
+        alike = compared = 0
+        for (arm, idx), counts in sorted(sel.items()):
+            if arm & arm_bit or idx & idx_bit:
+                continue
+            other = (arm ^ arm_bit, idx ^ idx_bit)
+            if other not in sel:
+                continue
+            same = read_alike(counts, sel[other])
+            if same is None:
+                continue
+            compared += 1
+            alike += int(same)
+        out.append((pin, what, alike, compared))
+    return out
+
+
+def lost_pins(sel):
+    """The pins whose pairs read alike often enough to say the pin never got
+    to the chip."""
+    return [p for p in pin_pairs(sel)
+            if p[3] >= LOST_PIN_MIN_PAIRS and p[2] >= LOST_PIN_SHARE * p[3]]
+
+
+def print_selection_pins(groups):
+    print("\n== Selection pins (two selections that differ in one pin should"
+          " read two rings)")
+    for (chip, cond), g in sorted(groups.items()):
+        for run_id, sel in sorted(run_selections(g).items()):
+            where = "%s/%s run %s" % (chip, cond, run_id)
+            pairs = pin_pairs(sel)
+            tally = ", ".join("%s %d/%d" % (pin, alike, n)
+                              for pin, _, alike, n in pairs)
+            short = [pin for pin, _, _, n in pairs if n < LOST_PIN_MIN_PAIRS]
+            if len(short) == len(pairs):
+                print("  %s: too few pairs to tell, each selection needs %d"
+                      " repeats" % (where, SAME_RING_MIN_REPEATS))
+                continue
+            lost = lost_pins(sel)
+            for pin, what, alike, n in lost:
+                print("  %s: PIN %s (%s) DID NOT REACH THE CHIP. %d of %d"
+                      " pairs that differ only in it read one ring, so half"
+                      " the selections measured the other half's rings."
+                      " Check that wire and run again."
+                      % (where, pin, what, alike, n))
+            if not lost:
+                print("  %s: no pin missing" % where)
+            print("    pairs reading one ring: %s" % tally)
+            if short:
+                print("    too few pairs to judge %s" % ", ".join(short))
+
+
 def load_hazard(path):
     """Transitions a -> b (slot = 16 * arm + idx) the census marks counted."""
     with open(path, encoding="utf-8", newline="") as fh:
@@ -725,6 +832,7 @@ def main(argv=None):
             print("note: --positions ignored (incomplete or nan coordinates)", file=sys.stderr)
 
     print_summaries(groups)
+    print_selection_pins(groups)
     hazard = load_hazard(args.hazard_csv) if args.hazard_csv else None
     print_first_start(groups, hazard)
     print_across_chips(groups, pairings)

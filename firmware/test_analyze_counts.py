@@ -5,6 +5,7 @@
 
 import contextlib
 import io
+import random
 import tempfile
 import unittest
 from pathlib import Path
@@ -288,6 +289,106 @@ class VolunteerDataFaultTests(unittest.TestCase):
         self.assertIn("predicted to count +1.000 over 2", text)
         self.assertIn("the rest +0.000 over 3", text)
 
+
+# --------------------------------------------------------------------------
+# A selection pin that never reaches the chip. The Tang Nano's first run on
+# 19 October lost index bit 0, and the report said nothing about it: bit
+# error rates of 0.29 to 0.45 and no reason (docs/phaseG_fpga_bench.md).
+# Each fault below names one pin and no other. Added 2026-10-22.
+# --------------------------------------------------------------------------
+
+def bench_run(path, read, run_id="r1", rounds=20, tie=None):
+    """A three-arm run where read(arm, idx) is the ring a selection really
+    measures. Every ring has its own count, 20 apart in a scrambled order,
+    plus a count of jitter drawn afresh for every reading, so two selections
+    of one ring come out close but not equal. tie makes one ring read like
+    another."""
+    ring = {(k // 16, k % 16): 20000 + 20 * ((29 * k) % 48)
+            for k in range(48)}
+    if tie:
+        ring[tie[1]] = ring[tie[0]]
+    lines = ['# META {"run_id": "%s", "clk_hz_requested": 50000000, '
+             '"window": 2048}' % run_id,
+             "run_id,chip_id,condition,round,order,arm,idx,count,t_ms"]
+    rng = random.Random(20261022)
+    t = 0
+    for r in range(rounds):
+        for k in range(48):
+            arm, idx = k // 16, k % 16
+            count = ring[read(arm, idx)] + rng.randint(0, 1)
+            lines.append("%s,c1,room,%d,%d,%d,%d,%d,%d"
+                         % (run_id, r, k, arm, idx, count, t))
+            t += 1
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return str(path)
+
+
+class SelectionPinTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+
+    def sel(self, read, **kw):
+        p = bench_run(self.root / "run.csv", read, **kw)
+        g = analyzer.load_files([p])[("c1", "room")]
+        return analyzer.run_selections(g)["r1"]
+
+    def named(self, lost):
+        return [(pin, n) for pin, _, _, n in lost]
+
+    def test_a_clean_run_names_no_pin(self):
+        pairs = analyzer.pin_pairs(self.sel(lambda a, i: (a, i)))
+        self.assertEqual([(p, alike, n) for p, _, alike, n in pairs],
+                         [("ui[1]", 0, 16), ("ui[7]", 0, 16),
+                          ("ui[2]", 0, 24), ("ui[3]", 0, 24),
+                          ("ui[4]", 0, 24), ("ui[5]", 0, 24)])
+        self.assertEqual(analyzer.lost_pins(self.sel(lambda a, i: (a, i))), [])
+
+    def test_a_lost_index_bit_is_named(self):
+        # ui[2] never arrives and the chip reads it as 0
+        lost = analyzer.lost_pins(self.sel(lambda a, i: (a, i & ~1)))
+        self.assertEqual(self.named(lost), [("ui[2]", 24)])
+
+    def test_a_pin_held_high_is_named_too(self):
+        lost = analyzer.lost_pins(self.sel(lambda a, i: (a, i | 8)))
+        self.assertEqual(self.named(lost), [("ui[5]", 24)])
+
+    def test_a_lost_arm_bit_is_named(self):
+        # ui[7] never arrives, so Arm C's selections measure Arm A's rings
+        lost = analyzer.lost_pins(self.sel(lambda a, i: (a & ~2, i)))
+        self.assertEqual(self.named(lost), [("ui[7]", 16)])
+
+    def test_two_rings_alike_by_chance_name_nothing(self):
+        sel = self.sel(lambda a, i: (a, i), tie=((0, 0), (0, 1)))
+        pairs = {p: (alike, n) for p, _, alike, n in analyzer.pin_pairs(sel)}
+        self.assertEqual(pairs["ui[2]"], (1, 24))
+        self.assertEqual(analyzer.lost_pins(sel), [])
+
+    def test_too_few_repeats_to_tell(self):
+        # three rounds of a run that did lose a pin: not enough to say so
+        p = bench_run(self.root / "short.csv", lambda a, i: (a, i & ~1),
+                      rounds=3)
+        groups = analyzer.load_files([p])
+        sel = analyzer.run_selections(groups[("c1", "room")])["r1"]
+        self.assertEqual(analyzer.lost_pins(sel), [])
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            analyzer.print_selection_pins(groups)
+        self.assertIn("too few pairs to tell", out.getvalue())
+
+    def test_each_run_is_judged_on_its_own(self):
+        good = bench_run(self.root / "good.csv", lambda a, i: (a, i), "r1")
+        bad = bench_run(self.root / "bad.csv", lambda a, i: (a, i & ~4), "r2")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            status = analyzer.main([good, bad])
+        self.assertEqual(status, 0)
+        text = out.getvalue()
+        self.assertIn("c1/room run r1: no pin missing", text)
+        self.assertIn("c1/room run r2: PIN ui[4] (index bit 2) DID NOT REACH"
+                      " THE CHIP.", text)
+        self.assertEqual(text.count("DID NOT REACH THE CHIP"), 1)
 
 if __name__ == "__main__":
     unittest.main()

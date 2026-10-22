@@ -150,6 +150,39 @@ There is no complete run yet. `bench_run.bat` does the check, the
 measurement and the check again and will not measure if the first check
 fails, and that is the next run.
 
+## 22 October: the analyzer names the pin
+
+`analyze_counts.py` looks at every run for a selection pin that never
+reached the chip now. For each of the six pins it takes the selections that
+differ in that pin alone, 16 pairs for an arm pin and 24 for an index pin,
+and asks whether the two read one ring: means within four standard errors
+of each other. When three quarters of a pin's pairs or more read alike, it
+names the pin.
+
+The two files from the 19th, through the script and nothing else, pairs
+reading one ring:
+
+    pin                  run 1    run 2
+    ui[1] arm bit 0      0/16     0/16
+    ui[7] arm bit 1      0/16     2/16
+    ui[2] index bit 0    24/24    2/24
+    ui[3] index bit 1    0/24     3/24
+    ui[4] index bit 2    0/24     6/24
+    ui[5] index bit 3    0/24     4/24
+
+Run 1 names ui[2], index bit 0, the wire that was off. Its 24 pairs sit
+within a tenth of a count of each other, 1.5 standard errors at most, and
+the closest pair on any other pin is 14.6 standard errors apart. Run 2 names
+nothing. It ran at the 256 window, where its 48 selections read only 14
+different counts between them and 43 gave the same count all 60 times, so
+different rings read exactly alike quite often, 6 of 24 on one pin at most.
+That is the margin the three quarters has to keep.
+
+Run 2's own fault, the window bit, is not a selection pin and this does not
+see it. Neither does it see two wires swapped with each other, the same gap
+the wire check has. Seven new tests in `test_analyze_counts.py`, each fault
+naming its own pin and no other; 40 firmware tests in all.
+
 ## Files
 
 On the bench PC, outside the repository, sha256 first sixteen digits:

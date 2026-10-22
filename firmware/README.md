@@ -92,6 +92,14 @@ community-submitted CSVs stay interpretable.
 - Per chip and condition: mean, peak-to-peak, standard deviation, median and
   MAD (peak-to-peak alone is outlier-sensitive), and the within-oscillator
   repeat noise.
+- Per run, whether a selection pin never reached the chip. Two selections
+  that differ in one pin alone should read two rings. When three quarters or
+  more of a pin's pairs read alike, means within four standard errors of
+  each other, the pin is named and the run wants doing again. It needs four
+  repeats of each selection, and it cannot see two wires swapped with each
+  other or a wire that comes and goes inside a run. Added 22 October, after
+  the Tang Nano's first run lost index bit 0 and the report said nothing
+  (`docs/phaseG_fpga_bench.md`).
 - The primary comparison: for each chip, a leave-one-chip-out template
   correlation (the chip's centred pattern against the mean centred pattern of
   the other chips), then the paired Arm A minus Arm B difference of those
@@ -133,7 +141,8 @@ community-submitted CSVs stay interpretable.
   if it is labeled exploratory. Most of that is frozen in
   `chip/PREREGISTRATION.json` since 31 August. The minimum die count, three
   for M2 by 30 September 2027, is in `chip/PREREG_AMENDMENT.json` since 18
-  October, with the rest of what the frozen file left open.
+  October, with the rest of what the frozen file left open. Which Arm A
+  pairs M1 scores changed on 21 October, in `chip/PREREG_AMENDMENT_2.json`.
 
 ## Protocol notes
 

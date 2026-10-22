@@ -63,6 +63,13 @@ apart; on the two-arm layout's routes it was 0.0025% at tt. That is a measured
 pre-silicon result rather than an assumption, and it is what makes Arm B the
 control.
 
+Those Arm B figures put each macro's own extraction together with its routes
+from the top-level SPEF, so no top-level wire that crosses a macro core shows
+up in them. A second extractor, magic, run over the whole layout, does see
+those wires, and in lumped decks it puts the sixteen 0.495% apart at tt. That
+is still far under the 6.39% it gives Arm A, but it is well over one count
+(`sim/spice/magic/`).
+
 The experiment will test whether Arm A's centred frequency pattern repeats more
 strongly across fabricated chips than Arm B's pattern. Cross-die repeatability,
 uniqueness, and security impact are unknown until those measurements are made.
