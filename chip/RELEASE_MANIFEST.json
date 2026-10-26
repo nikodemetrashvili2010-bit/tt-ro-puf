@@ -80,13 +80,13 @@
       "pass": true
     },
     {
-      "detail": "cost, criteria, def, macro_lef, metrics, netlist, positions, regions, rtl, spef, template",
+      "detail": "chip/PREREGISTRATION.json, chip/PREREG_AMENDMENT.json, chip/PREREG_AMENDMENT_2.json, cost, criteria, def, extraction/TOLERANCES.json, macro_lef, metrics, netlist, positions, regions, rtl, sim/spice/gono/armb3/armb_instances_out.txt, sim/spice/gono/rc_validation_3arm.csv, sim/spice/gono/rc_validation_armc.csv, sim/spice/magic/magic_rings.csv, spef, template",
       "id": "S08",
       "name": "at least one artefact records where the build came from",
       "pass": true
     },
     {
-      "detail": "3 freeze checks for 2 frozen files plus the A.5 one",
+      "detail": "4 freeze checks for 2 frozen files plus the A.5 one",
       "id": "S09",
       "name": "every frozen file has a freeze check in the gate",
       "pass": true
@@ -125,10 +125,11 @@
     "G2_AMENDMENT.json": "ed67bb2e63bb59388af79309a8102ba70ba5e835e2d5d6e141231ea34dd407b4",
     "G2_CRITERIA.json": "c4e3d3049d0e99b21974bf77413c83a7da90a3a5c18a61bafad5079757a62c77",
     "G2_DECISION.json": "a33d7440168e00808247017247f9e5b27ec5bf1bf5bc21f7cad62d04ed484c47",
-    "G3_RUNBOOK.json": "848a9a45b0eaef3ffcaa6840287200e5ad1f7165a41827e585fc4184fa120a52",
-    "G3_RUNBOOK_CHECK.json": "60583d7a48e725afb54d0e953b5b6444c34053d9797c7f3ff6a4c8ebdfe1500b",
+    "G3_RUNBOOK.json": "14276bf499ddeaa43098e7d1d7d4ab35c48c6b863f7fb6441df6c24ee2291a40",
+    "G3_RUNBOOK_CHECK.json": "25c400da7f26e7beeaafef7641a6575d282a883666ea51a420f6df13314521cb",
     "OBSERVABILITY.json": "c3a6799bdbc74d0acafc71013f6f6c40db6c22b183486f56c565329264710c5a",
     "PLACEMENT_CFG.json": "78fdb3054468de87a82d35207decd0ac0b0fadf33f9658dd2c693e51bd09fc28",
+    "PREDICTIONS.json": "8a7bf09522d1539eaa768340042a9d2ccbe72538b5b4a1b56338623b7bc3af23",
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
     "PREREG_AMENDMENT.json": "056b8188b68f8e057309d1905dd6fc9d8d288d86ad1bde5dc8ea8d90f81d13c3",
     "PREREG_AMENDMENT_2.json": "20d61d0dc0e38813760f6d15a48caa795d1265f740656f11c8c38ed3f2bd5c18",
@@ -136,6 +137,7 @@
     "RTL_LINT.json": "bd1abe521020a7b16d6089a1a0800a1704a06ec0224c02f187a7fa0f6642f291",
     "TILE_BUDGET.json": "36462dcd58b13a770be0a49a03f848dd427963896b4071b8f31ba45c5c4e4ce2",
     "archive_baseline.py": "af09ad4e79920f98562da3a79333e1fa7f5598213b9bd6b7cc046f1979b6ba48",
+    "archive_predictions.py": "93832ebdb3e18e7813460c55b6d45029ce6f4af0dcd629b133bb9c561f4ddbb5",
     "armc_cost.py": "f0216485e8f0cbd8e635a9779ed2725668e1fd11b9d24290e2f3ca968c4a71b9",
     "armc_place.tcl": "e864bb42a2c97d705ba5b219c5a34d8422dbef7ab9d2c07050c1e8bbd4139f9f",
     "armc_template.py": "064c90a977f1f82036cd31dd6193ecce988a56013629b582ec447b123790a110",
@@ -158,7 +160,7 @@
     "placement_fidelity.py": "e4a8c3434c9c79d0d16b4711381278f8a8a7f12249f4fd8d1f4a5b88ef951e39",
     "preregister.py": "695754257f6f26e72b7b3c33a9dc16a1af321ef714f8b5c2e8c176f531d9824f",
     "primary_tests.py": "0418b0a9c2c83dcf46387e9d79f897ba9c228a2c1f836484422cd899642a70c4",
-    "release_manifest.py": "f7a03c3f63bc9179e6fbf445d908706ff0dff0936d741bf39f3ab5f416f5cdad",
+    "release_manifest.py": "c49b4d22017125cd788141c35f2650dc94167de6ece431b9401d888e128e4296",
     "ro_armc.v": "a9f412a8dffe60ca4d190aa44fd3bd72e247000f007cbab1fc9db71c436e9093",
     "tile_budget.py": "edaf919b06d0b269462a8894714dd24e70990f6e282328c14a3f84700acf7943",
     "verify_phaseE.py": "ab534ad6e62fbdc4e5694f7f8283e2c3dfd1eec4d466fea871b38034cf94b33a"
@@ -168,7 +170,7 @@
     "PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f"
   },
   "gate": "G.5",
-  "gate_commands": 181,
+  "gate_commands": 195,
   "phase": "E",
   "produced": {
     "ARMC_COST.json": {
@@ -216,7 +218,7 @@
     },
     "G3_RUNBOOK_CHECK.json": {
       "producer": "g3_runbook.py",
-      "sha256": "60583d7a48e725afb54d0e953b5b6444c34053d9797c7f3ff6a4c8ebdfe1500b",
+      "sha256": "25c400da7f26e7beeaafef7641a6575d282a883666ea51a420f6df13314521cb",
       "sources": {}
     },
     "OBSERVABILITY.json": {
@@ -228,6 +230,20 @@
       "producer": "gen_placement_cfg.py",
       "sha256": "78fdb3054468de87a82d35207decd0ac0b0fadf33f9658dd2c693e51bd09fc28",
       "sources": {}
+    },
+    "PREDICTIONS.json": {
+      "producer": "archive_predictions.py",
+      "sha256": "8a7bf09522d1539eaa768340042a9d2ccbe72538b5b4a1b56338623b7bc3af23",
+      "sources": {
+        "chip/PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
+        "chip/PREREG_AMENDMENT.json": "056b8188b68f8e057309d1905dd6fc9d8d288d86ad1bde5dc8ea8d90f81d13c3",
+        "chip/PREREG_AMENDMENT_2.json": "20d61d0dc0e38813760f6d15a48caa795d1265f740656f11c8c38ed3f2bd5c18",
+        "extraction/TOLERANCES.json": "7f61955a03f2c43331ff4a36c6bca1235af598eec96c3740de246919960408c2",
+        "sim/spice/gono/armb3/armb_instances_out.txt": "bedac7885d25fb027b106a434f0b88c498591f8b9a83ffa1d2fbe893e6f8b068",
+        "sim/spice/gono/rc_validation_3arm.csv": "a723fe9192cb437f3eb49743e434d704959d64d7d5739eb45154c4e0e4734ed2",
+        "sim/spice/gono/rc_validation_armc.csv": "69bc9b1a54d926c2be63d92d470dff9907291dbea6d2de2c8703380bacc7c2f1",
+        "sim/spice/magic/magic_rings.csv": "5d21c6709295e033abc939d55ea343144e4483fe46769eec253c359e933c05d4"
+      }
     },
     "RELEASE_MANIFEST.json": {
       "producer": "release_manifest.py",

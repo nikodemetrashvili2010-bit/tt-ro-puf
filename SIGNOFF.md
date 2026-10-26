@@ -37,7 +37,7 @@ netlist byte for byte identical to the archived ones.
 | Selector side inputs against the netlist | every tie on all 48 paths, 612 of them, at the level the netlist's own decode holds with that ring selected. One `o21a_2` on C00 to C03 was tied the other way until 2026-10-10; those four rows moved 4 to 7 ps on the low | `gen_mux_sweep.py --check-sides`, on both builds in CI | no |
 | Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 63 enable-fall phases over four sweeps 50, 5, 1 and 0.2 ps apart, every one settles to a rail and the count steps by at most one. The step sits at about 76 ps at the tap, and just above it the flop sees a pulse as narrow as 80 ps on the finest grid | the four `boundary_validation_B13_3arm*.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_b13_armb.md` | no |
 | Boundary pulse at tt and ss | B13 again, at tt and at ss, each on a 50 ps grid and then a 5 ps grid across the step, 140 phases: every one settles to a rail and the count steps by at most one. The step sits at 115 to 122 ps at the tap at tt and 258 to 264 at ss. One 5 ps step past it the flop still sees 231 ps at tt and 507 at ss, over the library's 169.8 and 353.8, and a finer grid would find narrower, as at ff | `boundary_validation_B13_3arm_tt.csv`, `_tt_5ps`, `_ss` and `_ss_5ps`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_tt_ss.md` | no |
-| Boundary through the other 47 paths | not swept; every one carries all 30 judged edges in the selector sweep, and B13 is the slowest rise of the 48 | `mux3_validation.csv` | before final trust |
+| Boundary through the other 47 paths | screened at ff on 26 October: all 48 paths at four enable-fall phases, 32, 54, 68 and 82 ps at the tap, 192 phases, every one settles to a rail and the count steps by at most one. B13 is not the worst. B00 loses the 82 ps pulse, and on 5, 1 and 0.2 ps grids its step sits at about 84 ps against B13's 76, with a 69 ps pulse reaching the flop on the finest grid and resolving. Ten more Arm B paths step between 68 and 82, nothing in Arms A and C above 68 | `boundary_screen_ff.csv`, `boundary_validation_B00_3arm_5ps.csv`, `_1ps` and `_0p2ps`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_screen.md` | no |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
 | Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply at most 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
 | Drawn spacing, checked a second way | KLayout width and space on li1 to met4, no failures, the smallest gaps equal to the rule | `real_world/space_width.py` and its output; needs KLayout, so not in the gate | no |
@@ -159,10 +159,9 @@ from it stays in the paper as a prior run, not as a result of this design.
 
 In the order I care about them.
 
-The boundary through the other 47 selector paths. B13, the slowest, has been
-swept four ways since 22 September, down to 0.2 ps steps, and every phase
-resolves. The rest have only the steady selector sweep behind them. The old
-file marked 29 of 32 paths the same way on the baseline.
+The boundary through the selector paths at tt and ss. Since 26 October all
+48 are screened at ff, and B00, which needs the widest pulse of any of them,
+has 5, 1 and 0.2 ps grids there. Only B13 has run at tt and ss.
 
 At tt and ss B13 has been swept since 18 October, on grids of 50 and 5 ps
 only. Nothing finer has run there.
@@ -190,6 +189,8 @@ narrower pulse at every finer grid, 202 ps at 5 ps steps, 128 at 1 ps and 80 at
 0.2 ps, so the width right at the threshold is a property of how finely you
 look rather than of the circuit, and the flop resolved every one of them. At
 tt and ss the 5 ps grids got to 231 and 507 ps and the flop resolved those too.
+B00's 0.2 ps grid, on 26 October, got to 69 ps at ff, under the 77.5, and the
+flop resolved that one as well.
 
 Arm B's leftover on the release build's routes. The sixteen were run on them on
 22 September and still spread under one count at the measurement setting.

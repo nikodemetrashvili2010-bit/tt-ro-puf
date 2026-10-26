@@ -49,12 +49,14 @@ from logs.
 So does everything run on the release build. `sim/spice/gono/rc3/` holds the
 128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
 selector decks, `sim/spice/gono/bnd3/` the eight boundary sweeps through B13,
+the three through B00 and the screen of all 48 paths,
 `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
 `sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
 reads. CI rebuilds `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
-`mux3/mux3_validation.csv` and the eight `boundary_validation_B13_3arm*.csv`
-from those logs and diffs each against the committed copy, the same way it has
-done for `mux_validation.csv` since August. The Arm B logs have no csv;
+`mux3/mux3_validation.csv`, the eleven `boundary_validation_*_3arm*.csv` and
+`boundary_screen_ff.csv` from those logs and diffs each against the committed
+copy, the same way it has done for `mux_validation.csv` since August. The Arm
+B logs have no csv;
 `analyze_instance.py --build release` reads each corner and
 `verify_instance_corners.py --build release` reads all three.
 `sim/spice/magic/` holds the 96 ring decks of the second extraction,
@@ -258,6 +260,22 @@ The slow corner needs the 76 steps for its longer ring period. The two 5 ps
 grids start at the last coarse phase that lost the pulse and run 60 ps on.
 On a two-core machine run the decks one at a time; two at once took three
 times as long each on 18 October.
+
+The screen of 26 October puts every path through four phases on B13's grid,
+one folder a path in `bnd3/screen_ff/`, and B00, the path that lost all four,
+has three sweeps of its own beside it. Each folder holds the decks the line
+below writes, the logs, and the waveforms reduced with `reduce_raw.py --kind
+bnd`:
+
+```sh
+for d in sim/spice/gono/bnd3/screen_ff/*/; do osc=$(basename $d); python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc $osc --corner ff --base-ns 30.080 --step-ps 10 --steps 4 --output-dir /tmp/screen/$osc; done
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner ff --base-ns 30.100 --step-ps 5 --steps 13 --output-dir /tmp/bnd_b00_5
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner ff --base-ns 30.110 --step-ps 1 --steps 6 --output-dir /tmp/bnd_b00_1
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner ff --base-ns 30.111 --step-ps 0.2 --steps 6 --output-dir /tmp/bnd_b00_02
+python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_ff --control sim/spice/gono/boundary_validation_B13_3arm_5ps.csv --csv /tmp/screen_ff.csv
+```
+
+192 decks for the screen and 25 for B00, about 33 s each here.
 
 Both analyzers carry planted-fault checks that need no PDK and no ngspice, so the
 analysis can be exercised on any machine before the decks are run:

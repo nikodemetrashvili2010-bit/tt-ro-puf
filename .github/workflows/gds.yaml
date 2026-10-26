@@ -98,6 +98,15 @@ jobs:
           diff /tmp/bnd3_B13_ss.csv sim/spice/gono/boundary_validation_B13_3arm_ss.csv
           python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B13_ss_5ps --vdd 1.60 --csv /tmp/bnd3_B13_ss_5ps.csv
           diff /tmp/bnd3_B13_ss_5ps.csv sim/spice/gono/boundary_validation_B13_3arm_ss_5ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_5ps --vdd 1.95 --csv /tmp/bnd3_B00_5ps.csv
+          diff /tmp/bnd3_B00_5ps.csv sim/spice/gono/boundary_validation_B00_3arm_5ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_1ps --vdd 1.95 --csv /tmp/bnd3_B00_1ps.csv
+          diff /tmp/bnd3_B00_1ps.csv sim/spice/gono/boundary_validation_B00_3arm_1ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_0p2ps --vdd 1.95 --csv /tmp/bnd3_B00_0p2ps.csv
+          diff /tmp/bnd3_B00_0p2ps.csv sim/spice/gono/boundary_validation_B00_3arm_0p2ps.csv
+          python3 sim/spice/gono/boundary_screen.py --selftest
+          python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_ff --control sim/spice/gono/boundary_validation_B13_3arm_5ps.csv --csv /tmp/screen_ff.csv
+          diff /tmp/screen_ff.csv sim/spice/gono/boundary_screen_ff.csv
           python3 sim/spice/gono/analyze_rc.py --dir sim/spice/gono/rc3/armA --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3a.csv
           diff /tmp/rc3a.csv sim/spice/gono/rc_validation_3arm.csv
           python3 sim/spice/gono/analyze_rc.py --arm C --dir sim/spice/gono/rc3/armC --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3c.csv
@@ -195,6 +204,11 @@ jobs:
           python3 chip/preregister.py
           python3 chip/preregister.py --amendment
           python3 chip/primary_tests.py --selftest
+          python3 chip/archive_predictions.py --selftest
+          python3 chip/archive_predictions.py --json /tmp/predictions.json
+          diff /tmp/predictions.json chip/PREDICTIONS.json
+          python3 chip/archive_predictions.py
+          python3 chip/archive_predictions.py --freeze-check
           python3 chip/verify_phaseE.py --selftest
           python3 chip/verify_phaseE.py
           python3 chip/g3_runbook.py --selftest

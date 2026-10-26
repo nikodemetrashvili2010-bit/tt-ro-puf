@@ -1,0 +1,326 @@
+{
+  "_comment": [
+    "The per-pair sign predictions for SKY 26d, written before any die",
+    "was read. chip/archive_predictions.py renders this file from the",
+    "four tables chip/PREREG_AMENDMENT_2.json names and stops if one of",
+    "them has changed since the amendment recorded it.",
+    "",
+    "A pair is ring 2j against ring 2j+1 in one arm. Its bit is 1 when",
+    "the lower ring runs faster. A separation is f_a minus f_b as a",
+    "percent of the arm's mean in the same table. Strings run pair 0/1",
+    "first and 14/15 last, and x marks an abstention, which is counted",
+    "and published and never scored either way.",
+    "",
+    "Scored means scored by the second amendment's rule, the one that",
+    "holds: over the line, with the same sign, in both tables.",
+    "as_frozen is kept beside it so the frozen rule's answer stays",
+    "visible. The scored pairs of Arm A carry M1, which is tested at",
+    "0.05 only after M4 has cleared 0.025. Arm C's are secondary, and",
+    "Arm B scores none."
+  ],
+  "written": "2026-10-26",
+  "producer": "archive_predictions.py",
+  "dies_read_when_written": 0,
+  "line_pct_f": 0.6179,
+  "source": {
+    "sha256": {
+      "extraction/TOLERANCES.json": "7f61955a03f2c43331ff4a36c6bca1235af598eec96c3740de246919960408c2",
+      "sim/spice/gono/rc_validation_3arm.csv": "a723fe9192cb437f3eb49743e434d704959d64d7d5739eb45154c4e0e4734ed2",
+      "sim/spice/gono/armb3/armb_instances_out.txt": "bedac7885d25fb027b106a434f0b88c498591f8b9a83ffa1d2fbe893e6f8b068",
+      "sim/spice/gono/rc_validation_armc.csv": "69bc9b1a54d926c2be63d92d470dff9907291dbea6d2de2c8703380bacc7c2f1",
+      "sim/spice/magic/magic_rings.csv": "5d21c6709295e033abc939d55ea343144e4483fe46769eec253c359e933c05d4",
+      "chip/PREREGISTRATION.json": "81b697b4904dd406586df06d8ff411fdcd50b331420eba62c840bc4bfec58b8f",
+      "chip/PREREG_AMENDMENT.json": "056b8188b68f8e057309d1905dd6fc9d8d288d86ad1bde5dc8ea8d90f81d13c3",
+      "chip/PREREG_AMENDMENT_2.json": "20d61d0dc0e38813760f6d15a48caa795d1265f740656f11c8c38ed3f2bd5c18"
+    }
+  },
+  "layout": {
+    "what": "run 83, the release build, dualarm/build_armc/",
+    "sha256": {
+      "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.def": "89a2224f99761c9d9043562ca5f1ae8e533f30d06d3ff65e5c0ae2ca06709f06",
+      "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef": "4a9fc5e891be4496610b599be8674d3bd5763b838fb58609df4e3d34be8b5ae5",
+      "dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.gds": "90dbb1d218effebca9903e1b4ce857f27d846056ff6eacd4ca2213ce7d894bb1"
+    }
+  },
+  "arms": {
+    "A": {
+      "scored": [
+        "4/5",
+        "6/7",
+        "10/11",
+        "12/13",
+        "14/15"
+      ],
+      "scored_as_frozen": [
+        "0/1",
+        "4/5",
+        "6/7",
+        "10/11",
+        "12/13",
+        "14/15"
+      ],
+      "predicted": "xx10x000",
+      "spef_signs": "11100000",
+      "magic_signs": "00100000",
+      "pairs": [
+        {
+          "pair": "0/1",
+          "spef_pct": 1.083,
+          "magic_pct": -0.015,
+          "as_frozen": "scored",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "2/3",
+          "spef_pct": 0.212,
+          "magic_pct": -0.058,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "4/5",
+          "spef_pct": 2.037,
+          "magic_pct": 1.628,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 1
+        },
+        {
+          "pair": "6/7",
+          "spef_pct": -1.423,
+          "magic_pct": -2.428,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 0
+        },
+        {
+          "pair": "8/9",
+          "spef_pct": -0.316,
+          "magic_pct": -1.52,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "10/11",
+          "spef_pct": -2.291,
+          "magic_pct": -0.964,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 0
+        },
+        {
+          "pair": "12/13",
+          "spef_pct": -2.878,
+          "magic_pct": -2.258,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 0
+        },
+        {
+          "pair": "14/15",
+          "spef_pct": -1.84,
+          "magic_pct": -2.992,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 0
+        }
+      ]
+    },
+    "B": {
+      "scored": [],
+      "scored_as_frozen": [],
+      "predicted": "xxxxxxxx",
+      "spef_signs": "01010111",
+      "magic_signs": "00101001",
+      "pairs": [
+        {
+          "pair": "0/1",
+          "spef_pct": -0.001,
+          "magic_pct": -0.01,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "2/3",
+          "spef_pct": 0.001,
+          "magic_pct": -0.034,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "4/5",
+          "spef_pct": -0.001,
+          "magic_pct": 0.082,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "6/7",
+          "spef_pct": 0.0,
+          "magic_pct": -0.138,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "8/9",
+          "spef_pct": -0.001,
+          "magic_pct": 0.025,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "10/11",
+          "spef_pct": 0.001,
+          "magic_pct": -0.093,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "12/13",
+          "spef_pct": 0.001,
+          "magic_pct": -0.033,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "14/15",
+          "spef_pct": 0.001,
+          "magic_pct": 0.341,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        }
+      ]
+    },
+    "C": {
+      "scored": [
+        "4/5",
+        "12/13",
+        "14/15"
+      ],
+      "scored_as_frozen": [
+        "4/5",
+        "8/9",
+        "10/11",
+        "12/13",
+        "14/15"
+      ],
+      "predicted": "xx0xxx10",
+      "spef_signs": "11010110",
+      "magic_signs": "01010110",
+      "pairs": [
+        {
+          "pair": "0/1",
+          "spef_pct": 0.339,
+          "magic_pct": -0.799,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "2/3",
+          "spef_pct": 0.611,
+          "magic_pct": 0.096,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "4/5",
+          "spef_pct": -1.322,
+          "magic_pct": -1.435,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 0
+        },
+        {
+          "pair": "6/7",
+          "spef_pct": 0.321,
+          "magic_pct": 1.107,
+          "as_frozen": "abstains",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "8/9",
+          "spef_pct": -0.802,
+          "magic_pct": -0.01,
+          "as_frozen": "scored",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "10/11",
+          "spef_pct": 1.151,
+          "magic_pct": 0.525,
+          "as_frozen": "scored",
+          "as_amended": "abstains",
+          "prediction": null
+        },
+        {
+          "pair": "12/13",
+          "spef_pct": 1.201,
+          "magic_pct": 2.22,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 1
+        },
+        {
+          "pair": "14/15",
+          "spef_pct": -0.648,
+          "magic_pct": -1.027,
+          "as_frozen": "scored",
+          "as_amended": "scored",
+          "prediction": 0
+        }
+      ]
+    }
+  },
+  "m4_model": {
+    "spef": 0.363,
+    "magic": 0.471,
+    "what": [
+      "Arm C's standard deviation over Arm A's, sixteen rings",
+      "each, at the nominal corner. M4 wants the die's to be",
+      "under 1 with its interval clear of 1."
+    ]
+  },
+  "not_in_the_model": [
+    "Ring mismatch. Every separation here is the layout's alone. A die",
+    "adds about 0.062 percent a ring of its own, which the line in",
+    "extraction/TOLERANCES.json is built to allow for.",
+    "Metal fill. Whether SKY 26d fills inside the tile is not known.",
+    "With open_pdks' fill at four grid positions the five Arm A pairs",
+    "scored here keep their sign and stay over the line. Arm C's three",
+    "do not: 12/13 turns round, 4/5 and 14/15 fall under the line",
+    "(sim/spice/magic/, chip/PREREG_AMENDMENT_2.json).",
+    "Tiny Tapeout's decap swap, a tenth of the top-level decap_3 cells",
+    "drawn again at every submission. Bounded on 20 October over 20000",
+    "draws, and no pair over the line could turn.",
+    "Voltage and temperature. The tables are the typical corner. The",
+    "SPEF's signs for Arms A and C come out the same at ss, tt and ff",
+    "(README.md). The preregistration names no cell for M1, and the",
+    "nominal cell M2 and M4 use names no window. Both are open."
+  ],
+  "went_public_before_this_archive": [
+    "PREREGISTRATION.json says nothing about a prediction goes public",
+    "before it is archived. That was not kept. Arm A's eight SPEF signs",
+    "were in docs/phaseG_g3_extract.md in 796b776 on 2026-09-19, and",
+    "README.md carried them with Arm C's in 1987e6c on 2026-09-20, both",
+    "pushed. They are the spef_signs strings of Arms A and C in this",
+    "file, unchanged, and C04 holds the README to them. Both commits came",
+    "after the layout was final and before any die existed, so nothing",
+    "could have been fitted, but a commit is not an archive in the",
+    "preregistration's sense."
+  ]
+}

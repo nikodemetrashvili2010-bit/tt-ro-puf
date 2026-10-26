@@ -97,6 +97,7 @@ PRODUCERS = {
     "G3_RUNBOOK_CHECK.json": "g3_runbook.py",
     "RTL_LINT.json": "lint_rtl.py",
     "RELEASE_MANIFEST.json": "release_manifest.py",
+    "PREDICTIONS.json": "archive_predictions.py",
 }
 
 # Written by hand and checked by a script, but not gated on a hash. The

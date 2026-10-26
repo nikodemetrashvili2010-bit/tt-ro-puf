@@ -195,6 +195,14 @@ eight, all through B13, are the `_3arm` files, with their decks, logs and
 reduced waveforms in `bnd3/`: four at ff on grids of 50, 5, 1 and 0.2 ps, and
 since 18 October two each at tt and ss on grids of 50 and 5 ps.
 
+Since 26 October `bnd3/` also holds `screen_ff/`, all 48 paths at four phases
+of B13's grid, one folder a path, which `boundary_screen.py` reads into
+`boundary_screen_ff.csv`. Every deck there hands its chain the same ring and
+the same tap, so the four phases are four pulse widths, 32, 54, 68 and 82 ps,
+and the screen asks only which of them each path passes on. B00 passes none
+of them, so it has three sweeps of its own beside B13's, at 5, 1 and 0.2 ps,
+with its step at about 84 ps against B13's 76.
+
 `check_pulse_width.py` reads what the PDK promises rather than what the simulator
 shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out
 of the Liberty files, handling both spellings vendors use for it, and compares

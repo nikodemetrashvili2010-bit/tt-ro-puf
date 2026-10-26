@@ -251,7 +251,8 @@
         "g3_runbook.py",
         "lint_rtl.py",
         "armc_template.py",
-        "gen_armc_fix.py"
+        "gen_armc_fix.py",
+        "archive_predictions.py"
       ],
       "regenerates": [
         "TILE_BUDGET.json",
@@ -272,7 +273,8 @@
         "e2_tb_plan.csv",
         "RTL_LINT.json",
         "ARMC_TEMPLATE.json",
-        "ARMC_FIX.json"
+        "ARMC_FIX.json",
+        "PREDICTIONS.json"
       ],
       "expected_failures": [
         {
