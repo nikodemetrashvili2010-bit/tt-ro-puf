@@ -201,7 +201,19 @@ of B13's grid, one folder a path, which `boundary_screen.py` reads into
 the same tap, so the four phases are four pulse widths, 32, 54, 68 and 82 ps,
 and the screen asks only which of them each path passes on. B00 passes none
 of them, so it has three sweeps of its own beside B13's, at 5, 1 and 0.2 ps,
-with its step at about 84 ps against B13's 76.
+with its step at about 84 ps against B13's 76. Since 27 October it has tt
+and ss as well, swept the way B13 was, in `B00_tt`, `B00_tt_5ps`, `B00_ss`
+and `B00_ss_5ps`.
+
+`bnd_nodes.py` asks where along a path a lost pulse is lost. It takes a
+deck the screen ran and rewrites three lines so every net of the chain is
+written out around the stop, and nothing in the circuit changes. Eight Arm
+B paths, probed that way at one phase each, are in `bnd3/nodes_ff/` and
+read into `bnd_nodes_ff.csv`, and on every read the tool holds them to the
+screen's own runs where the two reductions kept the same rows.
+`bnd3/nodes_whatif/` is two of those decks with the capacitor on the first
+net swapped between B00 and B04, read into `bnd_nodes_whatif.csv`. Those two
+are not the chip, and each says so in a comment.
 
 `check_pulse_width.py` reads what the PDK promises rather than what the simulator
 shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out

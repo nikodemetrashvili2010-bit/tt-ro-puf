@@ -49,13 +49,14 @@ from logs.
 So does everything run on the release build. `sim/spice/gono/rc3/` holds the
 128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
 selector decks, `sim/spice/gono/bnd3/` the eight boundary sweeps through B13,
-the three through B00 and the screen of all 48 paths,
-`sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
+the seven through B00, the screen of all 48 paths and the probes of eight of
+them, `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
 `sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
 reads. CI rebuilds `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
-`mux3/mux3_validation.csv`, the eleven `boundary_validation_*_3arm*.csv` and
-`boundary_screen_ff.csv` from those logs and diffs each against the committed
-copy, the same way it has done for `mux_validation.csv` since August. The Arm
+`mux3/mux3_validation.csv`, the fifteen `boundary_validation_*_3arm*.csv`,
+`boundary_screen_ff.csv` and the two `bnd_nodes_*.csv` from those logs and
+diffs each against the committed copy, the same way it has done for
+`mux_validation.csv` since August. The Arm
 B logs have no csv;
 `analyze_instance.py --build release` reads each corner and
 `verify_instance_corners.py --build release` reads all three.
@@ -276,6 +277,35 @@ python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_ff --contro
 ```
 
 192 decks for the screen and 25 for B00, about 33 s each here.
+
+B00 at tt and ss, from 27 October, is B13's four commands with `--osc B00`,
+except that its slow-corner 5 ps grid starts at 33.25 ns, one coarse phase
+later than B13's, since B00 loses one more there:
+
+```sh
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner tt --output-dir /tmp/b00_tt
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner ss --steps 76 --output-dir /tmp/b00_ss
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner tt --base-ns 30.15 --step-ps 5 --steps 13 --output-dir /tmp/b00_tt5
+python3 sim/spice/gono/gen_boundary_sweep.py --build dualarm/build_armc --osc B00 --corner ss --base-ns 33.25 --step-ps 5 --steps 13 --output-dir /tmp/b00_ss5
+```
+
+The probes in `bnd3/nodes_ff/` are the screen's own decks with three lines
+rewritten, one folder a path, written by `bnd_nodes.py --make`, run like any
+other deck and reduced by `--reduce`, which reads both copies and refuses to
+keep one that reads differently. B00, B03, B04, B07, B08 and B12 are phase
+`bnd_02`, B11 and B15 `bnd_01`:
+
+```sh
+python3 sim/spice/gono/bnd_nodes.py --make sim/spice/gono/bnd3/screen_ff/B00/bnd_02.spice --out /tmp/nodes/B00
+(cd /tmp/nodes/B00 && python3 <repo>/sim/spice/run_ngspice.py nodes_02.spice --log nodes_02.log)
+python3 sim/spice/gono/bnd_nodes.py --reduce /tmp/nodes --out /tmp/nodes_ff
+python3 sim/spice/gono/bnd_nodes.py /tmp/nodes_ff --screen sim/spice/gono/boundary_screen_ff.csv --screen-runs sim/spice/gono/bnd3/screen_ff --csv /tmp/bnd_nodes_ff.csv
+```
+
+The two what-if decks in `bnd3/nodes_whatif/` are B00's and B04's probes
+with the `Csel0` line of each set to the other's value, 1.194940e-14 and
+2.708600e-14, and a two-line comment saying so. They are read with
+`--no-screen`, since no screen run is the same circuit.
 
 Both analyzers carry planted-fault checks that need no PDK and no ngspice, so the
 analysis can be exercised on any machine before the decks are run:

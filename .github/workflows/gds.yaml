@@ -107,6 +107,19 @@ jobs:
           python3 sim/spice/gono/boundary_screen.py --selftest
           python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_ff --control sim/spice/gono/boundary_validation_B13_3arm_5ps.csv --csv /tmp/screen_ff.csv
           diff /tmp/screen_ff.csv sim/spice/gono/boundary_screen_ff.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_tt --vdd 1.80 --csv /tmp/bnd3_B00_tt.csv
+          diff /tmp/bnd3_B00_tt.csv sim/spice/gono/boundary_validation_B00_3arm_tt.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_tt_5ps --vdd 1.80 --csv /tmp/bnd3_B00_tt_5ps.csv
+          diff /tmp/bnd3_B00_tt_5ps.csv sim/spice/gono/boundary_validation_B00_3arm_tt_5ps.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_ss --vdd 1.60 --csv /tmp/bnd3_B00_ss.csv
+          diff /tmp/bnd3_B00_ss.csv sim/spice/gono/boundary_validation_B00_3arm_ss.csv
+          python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_ss_5ps --vdd 1.60 --csv /tmp/bnd3_B00_ss_5ps.csv
+          diff /tmp/bnd3_B00_ss_5ps.csv sim/spice/gono/boundary_validation_B00_3arm_ss_5ps.csv
+          python3 sim/spice/gono/bnd_nodes.py --selftest
+          python3 sim/spice/gono/bnd_nodes.py sim/spice/gono/bnd3/nodes_ff --screen sim/spice/gono/boundary_screen_ff.csv --screen-runs sim/spice/gono/bnd3/screen_ff --csv /tmp/bnd_nodes_ff.csv
+          diff /tmp/bnd_nodes_ff.csv sim/spice/gono/bnd_nodes_ff.csv
+          python3 sim/spice/gono/bnd_nodes.py sim/spice/gono/bnd3/nodes_whatif --no-screen --csv /tmp/bnd_nodes_whatif.csv
+          diff /tmp/bnd_nodes_whatif.csv sim/spice/gono/bnd_nodes_whatif.csv
           python3 sim/spice/gono/analyze_rc.py --dir sim/spice/gono/rc3/armA --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3a.csv
           diff /tmp/rc3a.csv sim/spice/gono/rc_validation_3arm.csv
           python3 sim/spice/gono/analyze_rc.py --arm C --dir sim/spice/gono/rc3/armC --ro 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 --spef dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef --csv /tmp/rc3c.csv

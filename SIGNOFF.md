@@ -36,8 +36,9 @@ netlist byte for byte identical to the archived ones.
 | 48-to-1 selector at tt and ss | all 48 paths carry every edge at both, 19 of 19 at tt and 9 of 9 at ss, 96 blocked controls silent; at its narrowest the counter's clock is low for 573 ps at tt and 1205 at ss, B11 both times, against the library's 260 to 262 and 574 to 578 | `sim/spice/gono/mux3_tt/` and `mux3_ss/`, both csvs regenerated in CI, `docs/phaseG_selector_tt_ss.md` | no |
 | Selector side inputs against the netlist | every tie on all 48 paths, 612 of them, at the level the netlist's own decode holds with that ring selected. One `o21a_2` on C00 to C03 was tied the other way until 2026-10-10; those four rows moved 4 to 7 ps on the low | `gen_mux_sweep.py --check-sides`, on both builds in CI | no |
 | Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 63 enable-fall phases over four sweeps 50, 5, 1 and 0.2 ps apart, every one settles to a rail and the count steps by at most one. The step sits at about 76 ps at the tap, and just above it the flop sees a pulse as narrow as 80 ps on the finest grid | the four `boundary_validation_B13_3arm*.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_b13_armb.md` | no |
-| Boundary pulse at tt and ss | B13 again, at tt and at ss, each on a 50 ps grid and then a 5 ps grid across the step, 140 phases: every one settles to a rail and the count steps by at most one. The step sits at 115 to 122 ps at the tap at tt and 258 to 264 at ss. One 5 ps step past it the flop still sees 231 ps at tt and 507 at ss, over the library's 169.8 and 353.8, and a finer grid would find narrower, as at ff | `boundary_validation_B13_3arm_tt.csv`, `_tt_5ps`, `_ss` and `_ss_5ps`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_tt_ss.md` | no |
+| Boundary pulse at tt and ss | B13 since 18 October and B00 since 27 October, each at tt and at ss on a 50 ps grid and then a 5 ps grid across the step, 280 phases: every one settles to a rail and the count steps by at most one. B13's step sits at 115 to 122 ps at the tap at tt and 258 to 264 at ss, B00's at 142 to 148 and 317 to 323. One 5 ps step past it the flop still sees 231 and 290 ps at tt and 507 and 483 at ss, over the library's 169.8 and 353.8, and a finer grid would find narrower, as at ff | `boundary_validation_B13_3arm_tt.csv`, `_tt_5ps`, `_ss` and `_ss_5ps` and B00's four, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_tt_ss.md`, `docs/phaseG_boundary_b00.md` | no |
 | Boundary through the other 47 paths | screened at ff on 26 October: all 48 paths at four enable-fall phases, 32, 54, 68 and 82 ps at the tap, 192 phases, every one settles to a rail and the count steps by at most one. B13 is not the worst. B00 loses the 82 ps pulse, and on 5, 1 and 0.2 ps grids its step sits at about 84 ps against B13's 76, with a 69 ps pulse reaching the flop on the finest grid and resolving. Ten more Arm B paths step between 68 and 82, nothing in Arms A and C above 68 | `boundary_screen_ff.csv`, `boundary_validation_B00_3arm_5ps.csv`, `_1ps` and `_0p2ps`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_screen.md` | no |
+| Where the last pulse is lost | eight Arm B paths probed net by net at ff on 27 October, each at one of the screen's own phases and each the screen's run wherever the two reductions kept the same row. On the four that need the wider pulse it dies at the first or second net, behind a first net of 27.09 or 17.98 fF where the other four start on 11.95 or 4.01, and swapping the first net's load between B00 and B04 swaps their verdicts. Across all 48 paths a net of 17.68 fF or more among the first two is needed for a step above 68 ps and is not enough on its own | `bnd_nodes_ff.csv`, `bnd_nodes_whatif.csv`, waveforms in `sim/spice/gono/bnd3/nodes_ff/` and `nodes_whatif/`, rebuilt in CI, `docs/phaseG_boundary_b00.md` | no |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
 | Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply at most 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
 | Drawn spacing, checked a second way | KLayout width and space on li1 to met4, no failures, the smallest gaps equal to the rule | `real_world/space_width.py` and its output; needs KLayout, so not in the gate | no |
@@ -161,10 +162,11 @@ In the order I care about them.
 
 The boundary through the selector paths at tt and ss. Since 26 October all
 48 are screened at ff, and B00, which needs the widest pulse of any of them,
-has 5, 1 and 0.2 ps grids there. Only B13 has run at tt and ss.
+has 5, 1 and 0.2 ps grids there. B13 has run at tt and ss since 18 October
+and B00 since 27 October. The other 46 have not.
 
-At tt and ss B13 has been swept since 18 October, on grids of 50 and 5 ps
-only. Nothing finer has run there.
+At tt and ss those two have grids of 50 and 5 ps only. Nothing finer has run
+there.
 
 The baseline's selector archive. Its sixteen Arm B decks in `mux/`, and every
 deck of the B00 and B15 boundary sweeps, tie one `o21a_2` with A1 high where
@@ -188,7 +190,8 @@ The release build says the same from the other side. B13's sweeps found a
 narrower pulse at every finer grid, 202 ps at 5 ps steps, 128 at 1 ps and 80 at
 0.2 ps, so the width right at the threshold is a property of how finely you
 look rather than of the circuit, and the flop resolved every one of them. At
-tt and ss the 5 ps grids got to 231 and 507 ps and the flop resolved those too.
+tt and ss the 5 ps grids got to 231 and 507 ps on B13, and to 290 and 483 on
+B00, and the flop resolved those too.
 B00's 0.2 ps grid, on 26 October, got to 69 ps at ff, under the 77.5, and the
 flop resolved that one as well.
 
