@@ -961,11 +961,13 @@ def print_drift(groups, pairings):
 # sim/spice/gono/clock_neighbours.py). A ring close enough to a multiple of
 # one of those can lock on and run at exactly that multiple, and then it
 # reads a whole number of windows, or of half or quarter windows, at every
-# repeat, whatever its own frequency. No simulation has had them toggling
-# beside a ring, so this is looked for in the data, two ways to start. A
-# median count within ON_MULTIPLE of a multiple of a quarter window, which
-# a free ring also gives about 3 times in 512, so that is a flag for a look
-# and not a verdict. And with the clock sweep (measure_puf.py,
+# repeat, whatever its own frequency. SPICE with them toggling beside four
+# rings puts that pull at up to a few hundred ppm on C11, whose coupling sits
+# on one node (sim/spice/gono/inject.py, docs/phaseG_clock_pull.md), and the
+# Arm B macros were not simulated, so this is looked for in the data, two ways
+# to start. A median count within ON_MULTIPLE of a multiple of a quarter
+# window, which a free ring also gives about 3 times in 512, so that is a flag
+# for a look and not a verdict. And with the clock sweep (measure_puf.py,
 # CLK_SWEEP_HZ), a ring whose frequency at another clock disagrees with its
 # frequency at the main one, once the shift all the rings share is taken
 # out: a free ring has one frequency whatever clock counts it. That uses the

@@ -32,6 +32,8 @@ python3 sim/spice/gono/numerical_audit.py
 python3 sim/spice/gono/verify_predictability.py
 python3 sim/spice/gono/real_world.py     # heat, wire current, supply drop, taps
 python3 sim/spice/gono/clock_neighbours.py  # what switches beside each ring
+python3 sim/spice/gono/inject.py check sim/spice/gono/inject3  # and its decks
+python3 sim/spice/gono/inject.py table sim/spice/gono/inject3  # what they read
 python3 sim/verify_datasheet.py
 python3 sim/spice/gono/analyze_noise.py --selftest
 python3 sim/spice/gono/analyze_noise.py
@@ -51,13 +53,16 @@ So does everything run on the release build. `sim/spice/gono/rc3/` holds the
 128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
 selector decks, `sim/spice/gono/bnd3/` the eight boundary sweeps through B13,
 the seven through B00, the screen of all 48 paths and the probes of eight of
-them, `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
+them, `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff,
 `sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
-reads. CI rebuilds `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
+reads, and `sim/spice/gono/inject3/` the decks with the clock driven beside a
+ring, each with the rising crossings ngspice gave. CI rebuilds
+`rc_validation_3arm.csv`, `rc_validation_armc.csv`,
 `mux3/mux3_validation.csv`, the fifteen `boundary_validation_*_3arm*.csv`,
-`boundary_screen_ff.csv` and the two `bnd_nodes_*.csv` from those logs, and
-`clock_neighbours.csv` from run 83's SPEF and DEF, and diffs each against the
-committed copy, the same way it has done for
+`boundary_screen_ff.csv` and the two `bnd_nodes_*.csv` from those logs,
+`clock_neighbours.csv` from run 83's SPEF and DEF and `inject3/inject3.csv`
+from the crossings, and diffs each against the committed copy, the same way
+it has done for
 `mux_validation.csv` since August. The Arm
 B logs have no csv;
 `analyze_instance.py --build release` reads each corner and

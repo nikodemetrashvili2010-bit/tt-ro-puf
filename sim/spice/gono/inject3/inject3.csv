@@ -1,0 +1,8 @@
+config,arm,ro,corner,aggressor,loop_ff,out_ff,out_driven,swing,edge_ps,n,phases,offset,run,f0_mhz,square_mhz,pull_ppm,offset_ppm,peak_ppm,steepest_ppm,small_pull_ppm,full_over_small
+C08_tt_clk,C,8,tt,clknet_4_15_0_clk,0.760,0.000,no,1,100,11,8,0,8,571.5600,51.9600,0.38,+2.24,1.88,5.81,,
+C11_tt_clk,C,11,tt,clknet_4_10_0_clk,0.489,1.493,yes,1,100,11,16,0,10,572.8787,52.0799,,,310.29,315.52,,
+C11_tt_clk_e70,C,11,tt,clknet_4_10_0_clk,0.489,1.493,yes,1,70,11,16,0.1375,2,572.8787,52.0799,,,375.68,397.14,,
+C11_tt_clk_h,C,11,tt,clknet_4_10_0_clk,0.489,1.493,yes,1,100,11,16,0.5,4,572.8787,52.0799,,,281.41,291.36,,
+C12_tt_wt0,C,12,tt,u_puf.u_core.wtimer[0],0.641,0.000,no,1,100,23,8,0,8,576.0679,25.0464,28.19,-2.38,57.38,58.73,,
+C12_tt_wt0_h,C,12,tt,u_puf.u_core.wtimer[0],0.641,0.000,no,1,100,23,8,0.5,4,576.0679,25.0464,,,25.33,25.51,,
+C15_tt_clk,C,15,tt,clknet_4_14_0_clk,0.632,0.000,no,1,100,11,16,0,12,573.6001,52.1455,,,100.37,103.40,,

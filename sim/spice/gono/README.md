@@ -224,6 +224,18 @@ boxes, the length of top-level wire the DEF runs over each ring area. Read
 into `clock_neighbours.csv`, one row a ring, and checked against the clock's
 own side of the SPEF. Added 28 October with `docs/phaseG_physical_review.md`.
 
+`inject.py` then drives those nets. It takes one ring's deck the way
+`gen_rc_decks.py` builds it and puts the couplings to a named net on an
+ideal square wave at a whole fraction of the ring's own frequency, in place
+of the ground every other deck here ties them to, one deck for each phase
+between the two. How far the ring's frequency moves with that phase is how
+far the clock can pull it. `inject3/` holds one folder a ring and aggressor,
+with the decks, ngspice's logs and the rising crossings of each run;
+`inject.py check inject3` makes every deck again from run 83's SPEF and
+compares, `inject.py table` writes `inject3/inject3.csv` from the crossings,
+and both are in the gate with `inject.py selftest`. Added the same evening,
+`docs/phaseG_clock_pull.md`.
+
 `check_pulse_width.py` reads what the PDK promises rather than what the simulator
 shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out
 of the Liberty files, handling both spellings vendors use for it, and compares

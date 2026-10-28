@@ -18,6 +18,11 @@ board and SDK behavior still needs checking with the returned hardware.
   these two. The second runs `measure_puf.py` itself under CPython against a
   fake board that keeps the chip's pin protocol, so the script has been
   through a whole run before it ever meets a board.
+- `cosim/` runs `measure_puf.py` against the chip's RTL instead, under
+  cocotb and Icarus with the ring models `test/` uses, for three host
+  speeds and a clock sweep with a runt pulse at each change. `make` there,
+  about half an hour for all three. `docs/phaseG_clock_pull.md` has what it
+  found.
 
 The pre-silicon hypothesis is that the centred Arm A frequency pattern will be
 more correlated across chips than the Arm B pattern. That is a prediction, not

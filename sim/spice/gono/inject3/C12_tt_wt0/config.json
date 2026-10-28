@@ -1,0 +1,13 @@
+{
+ "arm": "C",
+ "ro": 12,
+ "corner": "tt",
+ "aggressors": [
+  "u_puf.u_core.wtimer[0]"
+ ],
+ "n": 23,
+ "tran_ns": 150.0,
+ "no_small": true,
+ "reltol": 0.0001,
+ "spef": "../../../../../dualarm/build_armc/tt_um_nikodemetrashvili20_ro_puf.nom.spef"
+}

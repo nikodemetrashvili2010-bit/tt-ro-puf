@@ -90,6 +90,16 @@ for the rest. Whether any ring lands near a multiple at all depends on where
 silicon puts it: Arm A at tt is 538 to 570 MHz, which has 550 (11 x 50) in
 the middle of it, and Arm C at ff reaches 900 (18 x 50).
 
+Simulated the same evening, `docs/phaseG_clock_pull.md`. The size was about
+right and the ring was wrong. Where the coupling lands decides it, not how
+much there is: C08's lies evenly along eight stages in a row and cancels,
+nothing above the solver's noise, while C11's sits on one node, the NAND's
+input, and pulls it about 300 ppm either way at 100 ps edges and about 400
+at the clock's real ones. C15 about 100, C12's timer bit about 60. The bits
+are still safe, 400 ppm is a fifteenth of the line, and a pulled ring's
+frequency is still the thing to watch. For C11 the window is under a
+millivolt of supply wide.
+
 ## Supply and temperature
 
 These were in the archive already, from `analyze_noise.py` on the two-arm
@@ -165,7 +175,7 @@ ppm against limits of 25 and 29, and nothing else.
 
 The tests run both files whole: `test_measure_puf.py` puts the firmware
 through a run on the fake board with a ring locked, and the analyzer reads
-what it printed. 58 tests where there were 40.
+what it printed. 59 tests where there were 40.
 
 ## What I suggested on the 27th and did not do
 
@@ -193,7 +203,9 @@ one the rings already survive the flow, 32 of 32, checked on every CI build.
 ## Limits
 
 - the lock range is an estimate. A deck with the clock tree and the timer
-  bits driven beside a ring is the way to know, and it has not been written
+  bits driven beside a ring is the way to know, and it has not been written.
+  Written that evening for four rings, `docs/phaseG_clock_pull.md`; the
+  Arm B macros are still only lengths
 - the pile-up look needs a ring whose readings spread over two counts or
   more. A ring pinned all the time is the median's to catch, and a ring that
   barely moves and is pinned now and then is caught by neither
@@ -226,3 +238,7 @@ one the rings already survive the flow, 32 of 32, checked on every CI build.
   The sleeps were 0.29 s, and the rest was never measured
 - the test fixture first checked that B05 sat on a multiple of the window
   by its own frequency. It only does because it is locked
+- this file said 58 tests at first. There are 59
+- the estimate picked C08 as the worst ring because the most clock wire runs
+  beside it. Where the wire lands matters more, and C08's cancels; SPICE
+  that evening put C11 first
