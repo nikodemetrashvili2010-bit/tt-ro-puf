@@ -35,6 +35,18 @@ data rather than baked into a position. Take many rounds (the default is 60;
 50-100 is reasonable) so within-oscillator noise, within-chip drift, and
 between-position differences can be separated.
 
+Spread is not the same as gone, though. Every ring moves about 1% for 10 mV
+of supply, all of them together, and the two rings of a bit are read at
+different moments of a round, so whatever the supply does between those two
+moments lands in the bit. Until version 7 (`measure_puf/7`, 27 October) a
+start sat through three 1 ms sleeps, two starts a reading, which is 0.29 s of
+sleeping in every round before any printing. The protocol needs three clock
+cycles, so the waits are `SETTLE_US` now, 16 clock periods and never under
+20 us, and a round's rows are printed after the round instead of between
+readings. The order is not changed: it is the seeded random order the
+amendment of 18 October fixed (`docs/phaseG_prereg_amendment.md`), and a
+mirrored order would break that.
+
 ## Set the CONFIG block, and measure rather than label
 
 Edit the CONFIG block at the top of `measure_puf.py` for each run. A label like
@@ -54,6 +66,16 @@ in what you actually measured:
 The script emits a `# META {json}` line with a run UUID, seed, requested and
 measured clock, measured supply, temperature, board revision, and site, so
 community-submitted CSVs stay interpretable.
+
+Every row carries `clk_hz`, the clock it was counted at, and `t_rp_c`, the
+die temperature of the demo board's own microcontroller, read once a round
+through `ADC.CORE_TEMP` the way the SDK reads it. That is an RP2350B on the
+current boards and an RP2040 on older ones, where a bare `ADC(4)` would be
+the sensor on the second and a pin on the first. It is not the chip, so it
+follows warm-up and the room, which is what it is for: something to hold
+drift against. Off an RP2 the column is empty. The header also has the RP2's
+system clock, and a warning line if the project clock does not divide it,
+since then every window can be a system clock period long or short.
 
 ## Taking a measurement
 
@@ -86,6 +108,19 @@ community-submitted CSVs stay interpretable.
    `--hazard-csv` takes a list of the changes of selection a timed
    simulation says should read one high (columns `a`, `b` and `counted`) and
    splits the first-start report (below) into those and the rest.
+
+5. Once per die, look for a ring pulled by the clock. Set
+
+       CLK_SWEEP_HZ = (48_000_000, 52_000_000)
+
+   and the script reads every ring `SWEEP_ROUNDS` more times (10) at each of
+   those clocks after the main rounds, with the project held in reset while
+   the clock changes. Both divide evenly: the SDK puts the RP2 at 96 and
+   104 MHz and halves it, from its own search at v3.1.1. Those rows carry
+   their own `clk_hz` and the analyzer keeps them out of everything except
+   the check they are for. Below about 42.7 MHz the 2048 window leaves less
+   than 1.5 times the fastest simulated ring before the counter could wrap,
+   and the script says so in the header.
 
 ## What the analyzer reports
 
@@ -124,6 +159,17 @@ community-submitted CSVs stay interpretable.
   UUIDs are rejected. Raw files are never modified.
 - Oscillator means weight runs equally (per-run means first), so one long run
   cannot dominate a chip's summary.
+- Two exploratory sections at the end, added 27 October, labelled as such
+  and feeding nothing above them. Drift: each reading's offset from its own
+  ring's median, the median of that over the 24 readings either side as the
+  common mode, how far it moved over the run, and what the repeat noise and
+  the held-out bit errors look like with it divided out of a copy. It follows
+  what changes slower than about a round. And a ring pulled onto the clock:
+  a median on a whole number of windows or of half or quarter windows, a
+  pile of readings on one such multiple where the ring's spread puts few,
+  and with the sweep above, a ring whose frequency at the other clocks
+  disagrees with its own at 50 MHz once the shift every ring shares is
+  taken out. `docs/phaseG_physical_review.md` says why.
 
 ## Limits to keep in mind
 
@@ -195,6 +241,13 @@ community-submitted CSVs stay interpretable.
 - The header carries the clock the SDK says it made, `clk_hz_sdk`, next to
   the one asked for, and a warning line when they differ, since every count
   scales with it.
+- The waits inside a reading are `SETTLE_US`, written into the header as
+  `settle_us`: 16 periods of the slowest clock the run uses and never under
+  20 us. The start stays high that long, which is far longer than the three
+  clocks the chip needs to drop `done`, so the first poll cannot see the
+  previous run's `done` and count. How long a round takes now is set by
+  MicroPython's own speed and has not been measured on a board yet; `t_ms`
+  says, on the first one.
 - The SDK calls were checked against tt-micropython-firmware v3.1.1 on 23
   September 2026, and the probe, `enable()`'s return and
   `auto_clocking_freq` read in its source at v2.0.4, v3.0.0 and v3.1.1 on 18

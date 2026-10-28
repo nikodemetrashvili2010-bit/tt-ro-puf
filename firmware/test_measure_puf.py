@@ -5,8 +5,10 @@
 
 The firmware runs under MicroPython on the board and has never had a board
 to run on, so this runs the file itself under CPython with the two things
-MicroPython provides replaced: `time` (sleep_ms, ticks_ms, ticks_us,
-ticks_diff) and `ttboard.demoboard.DemoBoard`. The fake board keeps the
+MicroPython provides replaced: `time` (sleep_ms, sleep_us, ticks_ms,
+ticks_us, ticks_diff) and `ttboard.demoboard.DemoBoard`. For the board
+RP2's own temperature and clock, `sys.platform` and `machine` are stood in
+for too, only in the tests that ask for it. The fake board keeps the
 chip's pin protocol, not its physics: a start rising edge on ui[0] takes
 the selection on ui[7], ui[5:2] and ui[1], done rises on uio[0], ui[6]
 picks the byte, uio[3] swaps in the version bytes, uio[4] is sticky until
@@ -25,6 +27,8 @@ import builtins
 import contextlib
 import io
 import os
+import random
+import re
 import tempfile
 import types
 import unittest
@@ -64,7 +68,8 @@ class FakeBoard:
     version = "3.1.1"
 
     def __init__(self, hazard=(), version=(2, 0x1A), die_after=None,
-                 stuck_high=0, enable_ok=True, made_hz=None):
+                 stuck_high=0, enable_ok=True, made_hz=None, ring_hz=None,
+                 lock_ppm=0.0):
         self.log = []
         self.hazard = set(hazard)
         self.chip_version = version
@@ -73,6 +78,14 @@ class FakeBoard:
         # What the SDK reports it set the clock to; None means what was asked.
         self.made_hz = made_hz
         self.asked_hz = 0
+        # Ring frequencies in Hz by slot, for the tests where the clock
+        # matters; None keeps clean_count. A ring within lock_ppm of a
+        # multiple of the clock runs on it, the way a pulled ring would, and
+        # the rest get a fresh fraction of a count each time, the way jitter
+        # dithers the last one.
+        self.ring_hz = ring_hz
+        self.lock_ppm = lock_ppm
+        self.rng = random.Random(20261027)
         # Bits a DIP switch (or anything else) holds high. The SDK leaves such
         # a pin an input, so a write to it does nothing and a read reads high.
         self.stuck_high = int(stuck_high)
@@ -115,6 +128,16 @@ class FakeBoard:
     def clock_project_stop(self):
         self.log.append("clock stop")
 
+    def ring_count(self, slot):
+        if self.ring_hz is None:
+            return clean_count(slot)
+        clk = self.auto_clocking_freq
+        f = self.ring_hz[slot]
+        n = round(f / clk)
+        if n and abs(f - n * clk) <= self.lock_ppm * 1e-6 * f:
+            return n * 2048
+        return int(f * 2048 / clk + self.rng.random())
+
     # The chip, at its pins.
     def wrote(self, name, v):
         if name != "ui_in":
@@ -130,7 +153,7 @@ class FakeBoard:
         slot = ((v >> 7) & 1) * 32 + ((v >> 1) & 1) * 16 + ((v >> 2) & 0xF)
         extra = 1 if (self.active_sel, slot) in self.hazard else 0
         self.active_sel = slot
-        c = (clean_count(slot) + extra) if slot < 48 else 0
+        c = (self.ring_count(slot) + extra) if slot < 48 else 0
         self.ovf |= c >= 65536
         self.count, self.done = c & 0xFFFF, 1
 
@@ -162,17 +185,62 @@ class FakeDetect:
         return "TTDBv3"
 
 
-def run_firmware(board, detect=None, already_set_up=False):
+class FakeMachine:
+    """machine on an RP2 as far as the firmware uses it: ADC with its
+    CORE_TEMP constant, 8 as on the RP2350B of the current demo board, read
+    once a round, and freq(), the system clock. raw is what successive
+    reads return, round by round. core_temp None is a MicroPython without
+    the constant."""
+
+    def __init__(self, raw, sys_hz, core_temp=8):
+        self.raw, self.sys_hz, self.channels = list(raw), sys_hz, []
+        machine = self
+
+        class ADC:
+            def __init__(self, channel):
+                machine.channels.append(channel)
+                self.value = machine.raw[(len(machine.channels) - 1)
+                                         % len(machine.raw)]
+
+            def read_u16(self):
+                return self.value
+        if core_temp is not None:
+            ADC.CORE_TEMP = core_temp
+        self.ADC = ADC
+
+    def freq(self):
+        return self.sys_hz
+
+
+def run_firmware(board, detect=None, already_set_up=False, config=None,
+                 platform=None, machine=None, sleeps=None):
     """The firmware's console output. already_set_up is a board whose main.py
-    made the DemoBoard before the script ran."""
+    made the DemoBoard before the script ran. config replaces CONFIG lines,
+    {"NAME": "python source"}. platform stands in for sys.platform and
+    machine for the RP2's own module. sleeps, a list, collects ("ms", n)
+    and ("us", n) for every sleep the script asks for."""
     detect = detect or FakeDetect()
-    clock = {"ms": 0}
+    source = SOURCE
+    for name, value in (config or {}).items():
+        source, n = re.subn(r"(?m)^%s\s*=.*$" % name,
+                            lambda m: "%s = %s" % (name, value), source)
+        assert n == 1, name
+    clock = {"us": 0}
+    slept = sleeps if sleeps is not None else []
 
     def ticks_ms():
-        clock["ms"] += 1
-        return clock["ms"]
+        clock["us"] += 1000
+        return clock["us"] // 1000
+
+    def sleep_ms(ms):
+        slept.append(("ms", ms))
+        clock["us"] += 1000 * ms
+
+    def sleep_us(us):
+        slept.append(("us", us))
+        clock["us"] += us
     fake_time = types.SimpleNamespace(
-        sleep_ms=lambda ms: clock.__setitem__("ms", clock["ms"] + ms),
+        sleep_ms=sleep_ms, sleep_us=sleep_us,
         ticks_ms=ticks_ms, ticks_us=lambda: 123456,
         ticks_diff=lambda a, b: a - b)
     demoboard = types.SimpleNamespace(
@@ -189,13 +257,36 @@ def run_firmware(board, detect=None, already_set_up=False):
             return demoboard
         if name == "ttboard.boot.demoboard_detect":
             return detect_module
+        if name == "sys" and platform is not None:
+            return types.SimpleNamespace(platform=platform)
+        if name == "machine" and machine is not None:
+            return machine
         return real_import(name, globals, locals, fromlist, level)
     env = {"__name__": "measure_puf_under_test",
            "__builtins__": dict(vars(builtins), __import__=fake_import)}
     out = io.StringIO()
     with contextlib.redirect_stdout(out):
-        exec(compile(SOURCE, str(HERE / "measure_puf.py"), "exec"), env)
+        exec(compile(source, str(HERE / "measure_puf.py"), "exec"), env)
     return out.getvalue()
+
+
+def table(text):
+    """The CSV header and rows of a run's output, comments left out."""
+    lines = text.splitlines()
+    body = lines[next(i for i, l in enumerate(lines)
+                      if l.startswith("run_id,")):]
+    rows = [l.split(",") for l in body if l and not l.startswith("#")]
+    return rows[0], rows[1:]
+
+
+def ring_frequencies():
+    """48 rings from 470 to 545 MHz in a scrambled order, and B05 (slot 21)
+    120 ppm above 11 x 50 MHz, inside a 150 ppm lock range of the main
+    clock and nowhere near a multiple of 48 or 52 MHz. Version7Tests
+    checks that rather than trusting this."""
+    hz = [470e6 + 1.6e6 * ((29 * k) % 48) for k in range(48)]
+    hz[21] = 550e6 * (1 + 120e-6)
+    return hz
 
 
 class MeasurePufTests(unittest.TestCase):
@@ -331,6 +422,155 @@ class MeasurePufTests(unittest.TestCase):
         self.assertEqual(board.uio_oe_pico._value, 0b1100_1110)
         self.assertTrue(writes)
         self.assertEqual([v for v in writes if v & 0b1100_0000], [])
+
+
+class Version7Tests(unittest.TestCase):
+    """measure_puf/7, 27 October: the pace, the board RP2's temperature,
+    the clock sweep (docs/phaseG_physical_review.md)."""
+
+    def test_a_start_waits_microseconds_not_milliseconds(self):
+        # Every millisecond sleep left is the setup's: reset, the pin check
+        # and the version bytes. A start is three waits of SETTLE_US.
+        sleeps = []
+        board = FakeBoard()
+        text = run_firmware(board, sleeps=sleeps)
+        self.assertEqual([n for k, n in sleeps if k == "ms"],
+                         [10, 1, 1, 1, 1, 1, 10, 1, 1, 1])
+        self.assertEqual([n for k, n in sleeps if k == "us"],
+                         [20] * (3 * board.starts))
+        self.assertEqual(board.starts, 2 * 60 * 48)
+        self.assertIn('"settle_us": 20', text)
+
+    def test_rows_carry_their_clock_and_no_temperature_off_an_rp2(self):
+        text = run_firmware(FakeBoard())
+        header, rows = table(text)
+        self.assertEqual(header[-3:], ["t_ms", "clk_hz", "t_rp_c"])
+        self.assertEqual({r[-2] for r in rows}, {"50000000"})
+        self.assertEqual({r[-1] for r in rows}, {""})
+        self.assertIn('"t_rp_c_is": null', text)
+        self.assertIn('"rp2_sys_hz": null', text)
+        self.assertIn('"clk_sweep_hz": []', text)
+        self.assertIn("# done rounds=60 timeouts=0", text)
+
+    def test_on_an_rp2_each_round_carries_the_die_temperature(self):
+        # 14020 of 65535 is 0.70598 V, 27.0 C by the datasheet's line, and
+        # 13800 is 0.69490 V, 33.45 C. One read of the sensor a round, on
+        # the channel CORE_TEMP names and never on 4.
+        machine = FakeMachine(raw=[14020, 13800], sys_hz=100_000_000)
+        text = run_firmware(FakeBoard(), platform="rp2", machine=machine)
+        header, rows = table(text)
+        temps = [r[header.index("t_rp_c")] for r in rows]
+        self.assertEqual(temps[:96], ["27.0"] * 48 + ["33.5"] * 48)
+        self.assertEqual(machine.channels, [8] * 60)
+        self.assertIn('"rp2_sys_hz": 100000000', text)
+        self.assertIn('"t_rp_c_is": "board RP2 die"', text)
+        self.assertNotIn("does not divide", text)
+
+    def test_without_core_temp_no_adc_is_touched(self):
+        # An older MicroPython with no ADC.CORE_TEMP: the column stays
+        # empty, and no channel, which on an RP2350B could be a pin, is read.
+        machine = FakeMachine([14020], 100_000_000, core_temp=None)
+        text = run_firmware(FakeBoard(), platform="rp2", machine=machine)
+        header, rows = table(text)
+        self.assertEqual({r[header.index("t_rp_c")] for r in rows}, {""})
+        self.assertEqual(machine.channels, [])
+
+    def test_a_system_clock_the_project_clock_does_not_divide_is_warned(self):
+        # 125 MHz over 50 is 2.5: the PWM divides by a fraction. 150 over 50
+        # is 3, whole, and only the duty is off half a period, which a
+        # design that uses rising edges alone never sees.
+        text = run_firmware(FakeBoard(), platform="rp2",
+                            machine=FakeMachine([14020], 125_000_000))
+        self.assertIn("# WARNING: the board's RP2 runs at 125000000 Hz,"
+                      " which the 50000000 Hz project clock does not divide",
+                      text)
+        text = run_firmware(FakeBoard(), platform="rp2",
+                            machine=FakeMachine([14020], 150_000_000))
+        self.assertNotIn("does not divide", text)
+
+    def test_the_fixture_has_one_ring_in_lock_range(self):
+        # The sweep test below leans on this, so check it rather than trust
+        # the arithmetic in the docstring.
+        hz = ring_frequencies()
+        near = sorted((k, clk) for k, f in enumerate(hz)
+                      for clk in (48e6, 50e6, 52e6)
+                      if abs(f - round(f / clk) * clk) <= 150e-6 * f)
+        self.assertEqual(near, [(21, 50e6)])
+        # And no ring left to itself reads within two counts of a multiple
+        # of a quarter window at 50 MHz, the finest step the analyzer
+        # flags. B05 would read 22530.7; it reads 22528 only because it is
+        # locked.
+        counts = [f * 2048 / 50e6 for f in hz]
+        on_step = [k for k, c in enumerate(counts)
+                   if abs(c - 512 * round(c / 512)) <= 2]
+        self.assertEqual(on_step, [])
+
+    def test_a_clock_sweep_finds_a_ring_pulled_onto_the_clock(self):
+        board = FakeBoard(ring_hz=ring_frequencies(), lock_ppm=150)
+        text = run_firmware(board, config={
+            "CLK_SWEEP_HZ": "(48_000_000, 52_000_000)"})
+        header, rows = table(text)
+        self.assertEqual(len(rows), (60 + 2 * 10) * 48)
+        clk = [r[header.index("clk_hz")] for r in rows][::48]
+        self.assertEqual(clk, ["50000000"] * 60 + ["48000000"] * 10
+                         + ["52000000"] * 10)
+        self.assertIn("# sweep clk=48000000 rounds=10", text)
+        self.assertIn("# done rounds=60 sweep_rounds=20 timeouts=0", text)
+        self.assertIn('"clk_sweep_hz": [48000000, 52000000]', text)
+        self.assertIn('"sweep_rounds": 10', text)
+        # The project sits in reset while each clock changes.
+        for hz in (48_000_000, 52_000_000):
+            i = board.log.index("clock %d" % hz)
+            self.assertEqual(board.log[i - 1:i + 2],
+                             ["reset True", "clock %d" % hz, "reset False"])
+        self.assertEqual(board.log[-2:], ["reset True", "clock stop"])
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "run.csv")
+            Path(p).write_text(text, encoding="utf-8")
+            g = analyze_counts.load_files([p])[("chip01", "room_1v8")]
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                analyze_counts.print_pulling({("chip01", "room_1v8"): g})
+        # Nothing from the sweep reaches the main statistics.
+        self.assertEqual(len(g["by_round"]), 60)
+        self.assertEqual(len(g["first_start"]), 60 * 48 - 1)
+        self.assertEqual(analyze_counts.osc_means(g, 1)[5], 11 * 2048)
+        self.assertEqual(sorted(next(iter(g["sweep"].values()))),
+                         [48_000_000, 52_000_000])
+        report = out.getvalue()
+        self.assertIn("B05 reads 11 x 2048 (550.0 MHz), repeat SD 0.00",
+                      report)
+        self.assertEqual(report.count(" reads "), 1)
+        flagged = re.findall(r"at (\d+) Hz: shift all rings share [+-]\d+ ppm,"
+                             r" spread [\d.]+ ppm; off by more than \d+ ppm:"
+                             r" (.*)", report)
+        self.assertEqual([c for c, _ in flagged], ["48000000", "52000000"])
+        for _, names in flagged:
+            self.assertRegex(names, r"^B05 \+1[0-3]\d ppm$")
+
+    def test_a_sweep_clock_too_slow_for_the_window_is_warned(self):
+        text = run_firmware(FakeBoard(), config={
+            "CLK_SWEEP_HZ": "(40_000_000,)", "ROUNDS": "2",
+            "SWEEP_ROUNDS": "1"})
+        self.assertIn("# WARNING: at 40000000 Hz and the 2048 window the"
+                      " counter can report 1280 MHz before it wraps, under"
+                      " 1.5 times the fastest simulated ring", text)
+        self.assertNotIn("at 50000000 Hz and the", text)
+        self.assertIn('"settle_us": 20', text)
+
+    def test_a_sweep_clock_the_sdk_did_not_make_is_written_down(self):
+        board = FakeBoard()
+        board.clock_project_PWM = (
+            lambda hz, _orig=board.clock_project_PWM:
+            (_orig(hz), setattr(board, "made_hz",
+                                hz if hz == 50_000_000 else hz + 3)))
+        text = run_firmware(board, config={
+            "CLK_SWEEP_HZ": "(48_000_000,)", "ROUNDS": "2",
+            "SWEEP_ROUNDS": "1"})
+        self.assertIn("# WARNING: sweep asked for 48000000 Hz and the SDK"
+                      " says it made 48000003 Hz", text)
+        header, rows = table(text)
+        self.assertEqual(rows[-1][header.index("clk_hz")], "48000003")
 
 
 if __name__ == "__main__":

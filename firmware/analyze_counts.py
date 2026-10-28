@@ -6,7 +6,10 @@
 Input CSVs come from measure_puf.py: a ``# META {json}`` header line plus
 rows of run_id, chip_id, condition, round, order, arm, idx, count, overflow,
 count_first and t_ms (``overflow`` and ``count_first`` are optional; older
-runs lack them). Arm is 0 (A, auto-placed), 1 (B, matched macro) or 2 (C,
+runs lack them), and since measure_puf/7 clk_hz and t_rp_c. A row whose
+clk_hz is not the run's own clock, or whose round comes after the main ones,
+belongs to the clock sweep and is kept out of every statistic except the
+pulling check. Arm is 0 (A, auto-placed), 1 (B, matched macro) or 2 (C,
 hand-placed). The physical die is
 the experimental unit, so across-chip statistics are bootstrapped over chips
 rather than over the dependent set of chip pairs. Response bits use pairings
@@ -131,15 +134,26 @@ def load_files(paths):
         meta = parse_meta(lines, path)
         setting = None
         measured = {}
+        # The clock the main rounds were counted at, and the first round of
+        # the clock sweep. A sweep row is told by either: its own clock, or,
+        # for a sweep clock that happens to equal the main one, its round.
+        main_clk = None
+        sweep_from = None
         if meta:
             setting = (meta.get("clk_hz_requested"), meta.get("window"))
             for k in ("clk_hz_measured", "vdd_v_measured", "temp_c_measured"):
                 v = meta.get(k)
                 if v:
                     measured[k] = v
+            main_clk = meta.get("clk_hz_sdk") or meta.get("clk_hz_requested")
+            if meta.get("sweep_rounds") and meta.get("rounds") is not None:
+                sweep_from = int(meta["rounds"])
         rows = csv.DictReader(csv_body(lines, path))
         has_first = "count_first" in (rows.fieldnames or ())
         has_ovf = "overflow" in (rows.fieldnames or ())
+        has_clk = "clk_hz" in (rows.fieldnames or ())
+        has_trp = "t_rp_c" in (rows.fieldnames or ())
+        has_t = "t_ms" in (rows.fieldnames or ())
         last_slot = {}
         required = {"run_id", "chip_id", "condition", "round", "arm", "idx", "count"}
         if not rows.fieldnames or not required.issubset(rows.fieldnames):
@@ -156,6 +170,12 @@ def load_files(paths):
                 count = int(row["count"])
                 first = int(row["count_first"]) if has_first else None
                 ovf = int(row["overflow"] or 0) if has_ovf else 0
+                clk = (int(row["clk_hz"]) if has_clk
+                       and (row["clk_hz"] or "").strip() else None)
+                t_rp = (float(row["t_rp_c"]) if has_trp
+                        and (row["t_rp_c"] or "").strip() else None)
+                t_ms = (int(row["t_ms"]) if has_t
+                        and (row["t_ms"] or "").strip() else None)
             except (KeyError, TypeError, ValueError) as exc:
                 raise ValueError("%s:%d: %s" % (path, n, exc)) from exc
             if arm not in (0, 1, 2) or not 0 <= idx < NRO:
@@ -170,15 +190,8 @@ def load_files(paths):
                 (chip_id, condition),
                 {"raw": {}, "by_round": {}, "runs": set(), "sources": set(),
                  "settings": set(), "timeouts": 0, "saturated": 0,
-                 "measured": {}, "first_start": []})
-            # Rows arrive in acquisition order, so the previous row of the
-            # same run is the selection this row's first start switched from.
-            slot = 16 * arm + idx
-            prev = last_slot.get(run_id)
-            last_slot[run_id] = slot
-            if (first is not None and prev is not None and count >= 0
-                    and first >= 0 and not ovf):
-                g["first_start"].append((prev, slot, first - count))
+                 "measured": {}, "first_start": [], "series": {},
+                 "sweep": {}, "main_clk": {}, "window": {}, "t_rp": {}})
             g["sources"].add(path)
             g["runs"].add(run_id)
             g["settings"].add(setting)
@@ -190,6 +203,27 @@ def load_files(paths):
             # seen and let the report say when they do not agree.
             for k, v in measured.items():
                 g["measured"].setdefault(k, set()).add(v)
+            g["main_clk"][run_id] = main_clk
+            g["window"][run_id] = setting[1] if setting else None
+            # The clock sweep is for the pulling check only. Its rows were
+            # read after a reset at other clocks, so they stay out of every
+            # count below, the first start included.
+            if ((clk is not None and main_clk and clk != main_clk)
+                    or (sweep_from is not None and rnd >= sweep_from)):
+                g["sweep"].setdefault(run_id, {}).setdefault(
+                    clk or main_clk, {}).setdefault((arm, idx), []).append(
+                        (count, ovf))
+                continue
+            # Rows arrive in acquisition order, so the previous row of the
+            # same run is the selection this row's first start switched from.
+            slot = 16 * arm + idx
+            prev = last_slot.get(run_id)
+            last_slot[run_id] = slot
+            if (first is not None and prev is not None and count >= 0
+                    and first >= 0 and not ovf):
+                g["first_start"].append((prev, slot, first - count))
+            if t_rp is not None:
+                g["t_rp"].setdefault(run_id, []).append(t_rp)
             if count < 0:
                 g["timeouts"] += 1
                 continue
@@ -197,6 +231,8 @@ def load_files(paths):
                 g["saturated"] += 1
             g["raw"].setdefault((arm, idx), []).append(count)
             g["by_round"].setdefault((run_id, rnd), {})[(arm, idx)] = count
+            g["series"].setdefault(run_id, []).append(
+                (rnd, arm, idx, count, t_ms))
     return groups
 
 
@@ -806,6 +842,284 @@ def print_across_conditions(groups, pairings):
                       % (chip, name, mean(cs), len(cs)))
 
 
+# --- drift inside a run (exploratory, not preregistered) -------------------
+#
+# Every ring on the die moves about 1.06% for 10 mV of supply and +35 ppm a
+# degree at 1.8 V, and they all move together. The randomized order spreads
+# that over the rings, but each reading still carries whatever supply and
+# temperature were doing at its moment, and the two rings of a bit are read
+# at different moments. Since the rings move together, the readings around
+# one show how far everything stood off just then: each reading's offset
+# from its own ring's median, and the median of those over DRIFT_NEIGHBOURS
+# readings either side, the reading itself left out. A ring's median is
+# itself taken at drifting moments, a few hundred ppm off on a steep drift,
+# so it is taken again from the corrected copy and the offsets with it,
+# DRIFT_PASSES times in all. Dividing the result out of a copy says how much
+# of the repeat noise and of the bit errors was drift. Every other section
+# uses the counts as read; this one only measures.
+DRIFT_NEIGHBOURS = 24
+DRIFT_PASSES = 3
+DRIFT_MIN_ROUNDS = 4
+TICKS_PERIOD = 1 << 30   # MicroPython's ticks_ms wraps here on 32-bit boards
+
+
+def ring_name(arm, idx):
+    return "%s%02d" % ("ABC"[arm], idx)
+
+
+def percentile(xs, q):
+    """Nearest rank, q from 0 to 1."""
+    s = sorted(xs)
+    return s[min(len(s) - 1, max(0, int(round(q * (len(s) - 1)))))]
+
+
+def common_mode(series):
+    """The common offset at each reading of one run, as a fraction.
+
+    series is [(arm, idx, count)] in acquisition order."""
+    d = [0.0] * len(series)
+    for _ in range(DRIFT_PASSES):
+        per = {}
+        for (arm, idx, c), dj in zip(series, d):
+            per.setdefault((arm, idx), []).append(c / (1.0 + dj))
+        med = {k: median(v) for k, v in per.items()}
+        e = [c / med[(a, i)] - 1.0 if med[(a, i)] else 0.0
+             for a, i, c in series]
+        d = []
+        for j in range(len(e)):
+            near = (e[max(0, j - DRIFT_NEIGHBOURS):j]
+                    + e[j + 1:j + 1 + DRIFT_NEIGHBOURS])
+            d.append(median(near) if near else 0.0)
+    return d
+
+
+def run_view(series, scale=None):
+    """One run as bit_reliability reads a group, each reading divided by
+    1 + scale[j] when scale is given."""
+    by_round, raw = {}, {}
+    for j, (rnd, arm, idx, c, _) in enumerate(series):
+        v = c / (1.0 + scale[j]) if scale else float(c)
+        by_round.setdefault(("run", rnd), {})[(arm, idx)] = v
+        raw.setdefault((arm, idx), []).append(v)
+    return {"by_round": by_round, "raw": raw}
+
+
+def repeat_ppm(raw):
+    """Median over rings of each ring's repeat SD, in ppm of its mean."""
+    out = [1e6 * population_sd(v) / mean(v) for v in raw.values()
+           if len(v) > 1 and mean(v)]
+    return median(out) if out else None
+
+
+def print_drift(groups, pairings):
+    print("\n== Drift inside a run (exploratory, not preregistered; the"
+          " sections above use the counts as read)")
+    for (chip, cond), g in sorted(groups.items()):
+        for run_id, series in sorted(g["series"].items()):
+            where = "%s/%s run %s" % (chip, cond, run_id)
+            rounds = len({s[0] for s in series})
+            if rounds < DRIFT_MIN_ROUNDS:
+                print("  %s: %d round(s), too few to tell drift from noise"
+                      % (where, rounds))
+                continue
+            d = common_mode([(a, i, c) for _, a, i, c, _ in series])
+            span = 1e6 * (percentile(d, 0.95) - percentile(d, 0.05))
+            line = ("  %s: common mode spans %.0f ppm (5th to 95th"
+                    " percentile) over %d rounds" % (where, span, rounds))
+            ts = [s[4] for s in series if s[4] is not None]
+            if len(ts) == len(series):
+                line += ", %.1f s" % (((ts[-1] - ts[0]) % TICKS_PERIOD) / 1e3)
+            temps = g["t_rp"].get(run_id)
+            if temps:
+                line += "; board RP2 die %.1f to %.1f C" % (min(temps),
+                                                             max(temps))
+            print(line)
+            before, after = run_view(series), run_view(series, d)
+            rb, ra = repeat_ppm(before["raw"]), repeat_ppm(after["raw"])
+            if rb is not None and ra is not None:
+                print("    repeat SD, median ring: %.0f ppm as read, %.0f ppm"
+                      " with the common mode divided out" % (rb, ra))
+            for label, pairs in pairings:
+                parts = []
+                for arm, _ in ARMS:
+                    b = bit_reliability(before, arm, pairs)
+                    a = bit_reliability(after, arm, pairs)
+                    if b[0] is None or a[0] is None:
+                        continue
+                    parts.append("%s %.3f to %.3f, low-margin %d to %d"
+                                 % ("ABC"[arm], b[0], a[0], b[1], a[1]))
+                if parts:
+                    print("    %s held-out BER: %s"
+                          % (label, "; ".join(parts)))
+
+
+# --- a ring pulled onto the clock (exploratory, not preregistered) ---------
+#
+# The 50 MHz clock runs beside eleven of the routed rings and over six Arm B
+# macros, and the window timer's two low bits, a 25 and a 12.5 MHz square
+# wave while a ring runs, beside C12 (docs/phaseG_physical_review.md,
+# sim/spice/gono/clock_neighbours.py). A ring close enough to a multiple of
+# one of those can lock on and run at exactly that multiple, and then it
+# reads a whole number of windows, or of half or quarter windows, at every
+# repeat, whatever its own frequency. No simulation has had them toggling
+# beside a ring, so this is looked for in the data, two ways to start. A
+# median count within ON_MULTIPLE of a multiple of a quarter window, which
+# a free ring also gives about 3 times in 512, so that is a flag for a look
+# and not a verdict. And with the clock sweep (measure_puf.py,
+# CLK_SWEEP_HZ), a ring whose frequency at another clock disagrees with its
+# frequency at the main one, once the shift all the rings share is taken
+# out: a free ring has one frequency whatever clock counts it. That uses the
+# mean count, not the median. One count is 43 ppm at the fastest ring, and
+# only the jitter between repeats resolves less, by averaging.
+#
+# The supply moves a ring about 1060 ppm a millivolt, so a lock range of a
+# hundred ppm or so is a tenth of a millivolt wide. A ring the supply
+# carries in and out of it would sit on the multiple for some readings and
+# not others, and its median would not show it. So there is a third look:
+# a pile-up of readings within ON_MULTIPLE of a step multiple, PILE_RATIO
+# times or more what the ring's own spread puts there, and at least
+# PILE_MIN of them. Only for a ring whose readings spread over PILE_SPREAD
+# counts or more; one that hardly moves is the median's to judge.
+ON_MULTIPLE = 1
+ON_MULTIPLE_STEPS = (1, 2, 4)   # the window, a half and a quarter of it
+PILE_MIN = 4
+PILE_RATIO = 3.0
+PILE_SPREAD = 2.0
+PULL_SIGMA = 5.0
+PULL_FLOOR_PPM = 10.0
+PULL_MIN_RINGS = 8
+
+
+def on_multiple(counts, window):
+    """(n, step) when the median count sits within ON_MULTIPLE of n steps,
+    step the window or a half or a quarter of it, the coarsest that fits."""
+    if not counts or not window:
+        return None
+    m = median(counts)
+    for div in ON_MULTIPLE_STEPS:
+        step = window / float(div)
+        n = int(round(m / step))
+        if n >= 1 and abs(m - n * step) <= ON_MULTIPLE:
+            return n, (int(step) if step == int(step) else step)
+    return None
+
+
+def pile_up(counts, window):
+    """(n, step, k, expected) when k readings sit within ON_MULTIPLE of n
+    steps, the multiple of a quarter window nearest the median, and the
+    ring's spread, taken as normal, puts only `expected` there."""
+    if len(counts) < 2 * PILE_MIN or not window:
+        return None
+    m = median(counts)
+    s = 1.4826 * mad(counts)
+    if s < PILE_SPREAD:
+        return None
+    quarter = window / float(ON_MULTIPLE_STEPS[-1])
+    q = int(round(m / quarter))
+    if q < 1:
+        return None
+    at = q * quarter
+    k = sum(1 for c in counts if abs(c - at) <= ON_MULTIPLE)
+    expected = (len(counts) * (2 * ON_MULTIPLE + 1)
+                / (s * math.sqrt(2 * math.pi))
+                * math.exp(-0.5 * ((at - m) / s) ** 2))
+    if k < PILE_MIN or k < PILE_RATIO * expected:
+        return None
+    for div in ON_MULTIPLE_STEPS:
+        step = window / float(div)
+        if abs(at / step - round(at / step)) < 1e-9:
+            return (int(round(at / step)),
+                    int(step) if step == int(step) else step, k, expected)
+    return None
+
+
+def sweep_offsets(main, other, main_clk, clk):
+    """(offsets, shared, spread) in ppm, or None with too few rings.
+
+    main and other map a ring to its counts at main_clk and at clk. The
+    offset is a ring's frequency at clk over its frequency at main_clk,
+    against the median of that over all rings, which is the shift they
+    share; spread is 1.4826 times the MAD of the offsets."""
+    ratio = {}
+    for k in sorted(set(main) & set(other)):
+        if len(main[k]) < 2 or len(other[k]) < 2:
+            continue
+        mm, mo = mean(main[k]), mean(other[k])
+        if mm > 0 and mo > 0:
+            ratio[k] = (mo * float(clk)) / (mm * float(main_clk))
+    if len(ratio) < PULL_MIN_RINGS:
+        return None
+    shared = median(list(ratio.values()))
+    off = {k: 1e6 * (r / shared - 1.0) for k, r in ratio.items()}
+    return off, 1e6 * (shared - 1.0), 1.4826 * mad(list(off.values()))
+
+
+def print_pulling(groups):
+    print("\n== A ring pulled onto the clock (exploratory, not preregistered)")
+    for (chip, cond), g in sorted(groups.items()):
+        sel = run_selections(g)
+        for run_id in sorted(g["runs"]):
+            where = "%s/%s run %s" % (chip, cond, run_id)
+            main = sel.get(run_id, {})
+            clk, win = g["main_clk"].get(run_id), g["window"].get(run_id)
+            if not win or not main:
+                print("  %s: %s, nothing to check" % (where, "no window in"
+                      " the header" if not win else "no main readings"))
+                continue
+            sds = [population_sd(v) for v in main.values() if len(v) > 1]
+            typical = median(sds) if sds else None
+            hits = []
+            for (arm, idx), counts in sorted(main.items()):
+                hit = on_multiple(counts, win)
+                pile = None if hit else pile_up(counts, win)
+                if hit is None and pile is None:
+                    continue
+                n, step = hit or pile[:2]
+                mhz = (" (%.1f MHz)" % (n * step * clk / float(win) / 1e6)
+                       if clk else "")
+                if hit:
+                    text = "%s reads %d x %s%s" % (ring_name(arm, idx), n,
+                                                   step, mhz)
+                    if len(counts) > 1 and typical is not None:
+                        text += (", repeat SD %.2f against %.2f for the"
+                                 " median ring" % (population_sd(counts),
+                                                   typical))
+                else:
+                    text = ("%s has %d of %d readings within %d of %d x %s%s,"
+                            " where its spread puts %.1f"
+                            % (ring_name(arm, idx), pile[2], len(counts),
+                               ON_MULTIPLE, n, step, mhz, pile[3]))
+                hits.append(text)
+            print("  %s: %s" % (where, "; ".join(hits) if hits else
+                                "no ring on a multiple of a quarter of the"
+                                " %d window" % win))
+            sweeps = g["sweep"].get(run_id)
+            if not sweeps:
+                print("    no clock sweep in this run (CLK_SWEEP_HZ in"
+                      " measure_puf.py)")
+                continue
+            if not clk:
+                print("    a clock sweep, but no main clock in the header"
+                      " to hold it against")
+                continue
+            for c in sorted(k for k in sweeps if k):
+                other = {key: [x for x, o in v if x >= 0 and not o]
+                         for key, v in sweeps[c].items()}
+                res = sweep_offsets(main, other, clk, c)
+                if res is None:
+                    print("    at %d Hz: fewer than %d rings with two clean"
+                          " readings" % (c, PULL_MIN_RINGS))
+                    continue
+                off, shared, spread = res
+                limit = max(PULL_FLOOR_PPM, PULL_SIGMA * spread)
+                odd = sorted(k for k, v in off.items() if abs(v) > limit)
+                print("    at %d Hz: shift all rings share %+d ppm, spread"
+                      " %.1f ppm; off by more than %.0f ppm: %s"
+                      % (c, round(shared), spread, limit,
+                         ", ".join("%s %+.0f ppm" % (ring_name(*k), off[k])
+                                   for k in odd) or "none"))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("csv_files", metavar="CSV", nargs="+")
@@ -839,6 +1153,8 @@ def main(argv=None):
     print_primary_delta(groups)
     print_reliability(groups, pairings)
     print_across_conditions(groups, pairings)
+    print_drift(groups, pairings)
+    print_pulling(groups)
     print("\nDescriptive metrics only. The physical die is the unit; pairwise "
           "chip/condition counts are dependent, so read the bootstrap-by-chip "
           "interval, not the pair count, as the sample size. Hamming distance and "

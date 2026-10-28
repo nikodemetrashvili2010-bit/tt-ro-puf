@@ -157,6 +157,12 @@ same way.
 
 Not a threat to the entropy.
 
+28 October: not the same for all 48. The clock tree couples to eleven of
+the routed rings and to none of the rest, the window timer's two low bits
+to C12, and the clock crosses six of the Arm B macros. The bits are still
+not at risk, but for a different reason than the one above
+(`docs/phaseG_physical_review.md`).
+
 ### Ground bounce and decoupling
 
 The fill step runs with `sky130_fd_sc_hd__decap_3` ahead of `fill_2` and

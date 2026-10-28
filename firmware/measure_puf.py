@@ -82,8 +82,37 @@
 # with acquisition time (a plain arm-by-arm sweep would confound slow thermal
 # or supply drift with arm identity). The random seed and the per-sample
 # timestamp are recorded so the order is reproducible and any drift is visible.
+# This order is the preregistered one (chip/PREREG_AMENDMENT.json, the order
+# item of 18 October), so do not swap it for a mirrored one here.
+#
+# Version 7, 27 October, three things for a world that is not the simulator.
+#
+#   - pace. A start used to sit through three 1 ms sleeps the protocol never
+#     needed: it asks for three clock cycles, 60 ns at 50 MHz. Two starts a
+#     reading and 48 readings made 0.29 s of sleeping a round before any
+#     printing, and every ring moves about 1% for 10 mV of supply, all
+#     together, so drift inside a round turned into differences between
+#     rings. The waits are SETTLE_US now, sixteen clock periods and never
+#     under 20 us, and a round's rows are printed after the round, so the
+#     console is not between two readings either. Same order, same two
+#     starts, much less time for anything to move
+#   - a temperature to see drift against. Every row carries the die
+#     temperature of the demo board's own microcontroller, an RP2350 on the
+#     current boards and an RP2040 on older ones, read through ADC.CORE_TEMP
+#     the way the SDK reads it. It is the board, not the chip, so it follows
+#     warm-up and the room. Off an RP2 the column is empty
+#   - a check for a ring pulled by the clock. The 50 MHz clock runs beside
+#     eleven of the routed rings and over six Arm B macros, and the window
+#     timer's two low bits, 25 and 12.5 MHz while a ring runs, beside C12
+#     (docs/phaseG_physical_review.md). A ring that lands close to a
+#     multiple of one of them can be pulled onto it. CLK_SWEEP_HZ, empty by
+#     default, names more clocks to read every ring at after the main
+#     rounds. A free ring gives one frequency at all of them; a pulled one
+#     does not. Those rows carry their own clock in clk_hz, and
+#     analyze_counts.py keeps them out of everything but that check
 
 import json
+import sys
 import time
 import random
 
@@ -104,9 +133,13 @@ MEAS_TEMP_C = None           # measured temperature in C, None if not measured
 NOTES       = ""             # free text
 ROUNDS      = 60             # randomized rounds; raise for a real dataset
 TIMEOUT_MS  = 200
+CLK_SWEEP_HZ = ()            # more clocks for the pulling check, read after
+                             # the main rounds, e.g. (48_000_000, 52_000_000);
+                             # empty is off
+SWEEP_ROUNDS = 10            # rounds at each of those clocks
 # -------------------------------------------------------------------------
 
-SCRIPT_VERSION = "measure_puf/6"
+SCRIPT_VERSION = "measure_puf/7"
 WIN_SEL = 2                  # 0=256, 1=512, 2=2048, 3=16384 clk cycles
 WINDOW = 2048                # must be the length WIN_SEL selects in the RTL
 SAT_WARN = 65000             # warn when a count gets this close to the ceiling
@@ -115,6 +148,15 @@ N_IDX = 16
 PROTOCOL_VERSION = 2         # uio[3] high, ui[6] low: must read this
 BUILD_ID = 0x1A              # uio[3] high, ui[6] high: and this
 PROJECT = "tt_um_nikodemetrashvili20_ro_puf"
+# The protocol wants three clock cycles between pin changes. Sixteen periods
+# of the slowest clock this run uses, and never under 20 us.
+_SLOWEST_HZ = min((CLK_HZ,) + tuple(CLK_SWEEP_HZ))
+SETTLE_US = max(20, (16 * 1_000_000 + _SLOWEST_HZ - 1) // _SLOWEST_HZ)
+# The fastest ring in simulation, Arm C ring 10 at ff, and the margin the
+# analyzer asks a clock and window to leave above it before the 16-bit
+# counter could wrap (analyze_counts.py, FASTEST_SIM_MHZ).
+FASTEST_SIM_HZ = 911_100_000
+WRAP_SPEED_MARGIN = 1.5
 
 
 class Stop(Exception):
@@ -141,6 +183,50 @@ def _uio(rd_ver=False):
 
 def _bits(mask):
     return " ".join(str(b) for b in range(8) if mask >> b & 1) or "none"
+
+
+def _wait():
+    """The settle between two pin changes inside a reading."""
+    time.sleep_us(SETTLE_US)
+
+
+def _rp2_temp():
+    """The die temperature of the board's RP2 in C, or None.
+
+    ADC.CORE_TEMP is the sensor on an RP2040 and on an RP2350 both, and it
+    is what the SDK uses. A bare ADC(4) is the sensor on an RP2040 only: on
+    the RP2350B the current demo board carries, the sensor is channel 8 and
+    channel 4 is GPIO 44, and on the ESP32 that stood in on 19 October 4 is
+    a pin too. A MicroPython without the constant gets an empty column,
+    never a pin read as a temperature. It measures the board's
+    microcontroller, not the chip, so it is for seeing drift against and
+    for nothing else.
+    """
+    if sys.platform != "rp2":
+        return None
+    try:
+        import machine
+        volts = machine.ADC(machine.ADC.CORE_TEMP).read_u16() * 3.3 / 65535
+    except Exception:
+        return None
+    return 27 - (volts - 0.706) / 0.001721
+
+
+def _sys_clock():
+    """The board's RP2 system clock in Hz, or None off an RP2."""
+    if sys.platform != "rp2":
+        return None
+    try:
+        import machine
+        return machine.freq()
+    except Exception:
+        return None
+
+
+def _wrap_ceiling_ok(hz):
+    """Whether this clock leaves the analyzer's margin above the fastest
+    simulated ring before the counter could wrap at WINDOW."""
+    return 65536.0 * hz / WINDOW >= WRAP_SPEED_MARGIN * FASTEST_SIM_HZ
 
 
 def _set_ui(v):
@@ -193,12 +279,16 @@ def read_version():
 
 
 def _run(arm, idx):
-    """One start and its readout. The count, or -1 on timeout."""
+    """One start and its readout. The count, or -1 on timeout.
+
+    Each wait is SETTLE_US. Start is high long enough that done has gone
+    low before the first poll, so a poll cannot read the previous run's
+    done and its count."""
     base = _ui(0, arm, idx, 0)
     _set_ui(base)
-    time.sleep_ms(1)
+    _wait()
     _set_ui(base | 1)
-    time.sleep_ms(1)
+    _wait()
     _set_ui(base)
     t0 = time.ticks_ms()
     while not tt.uio_out[0]:
@@ -206,7 +296,7 @@ def _run(arm, idx):
             return -1
     lo = int(tt.uo_out.value)
     _set_ui(_ui(0, arm, idx, 1))
-    time.sleep_ms(1)
+    _wait()
     hi = int(tt.uo_out.value)
     _set_ui(base)
     return (hi << 8) | lo
@@ -256,6 +346,10 @@ def _emit_metadata(run_id, seed, clk_sdk):
         "t_start_ms": time.ticks_ms(), "notes": NOTES,
         "protocol_version": PROTOCOL_VERSION, "build_id": BUILD_ID,
         "starts_per_sample": 2, "count_is": "second start",
+        "settle_us": SETTLE_US, "clk_sweep_hz": list(CLK_SWEEP_HZ),
+        "sweep_rounds": SWEEP_ROUNDS if CLK_SWEEP_HZ else 0,
+        "rp2_sys_hz": _sys_clock(),
+        "t_rp_c_is": "board RP2 die" if sys.platform == "rp2" else None,
     }
     # This used to build the JSON by hand, on the grounds that it kept the
     # script MicroPython-safe. It escaped nothing. A double quote or a backslash
@@ -286,6 +380,23 @@ def _emit_metadata(run_id, seed, clk_sdk):
     if MEAS_VDD_V == 0.0:
         print("# WARNING: supply not measured; '%s' is a nominal label only"
               % CONDITION)
+    for hz in (CLK_HZ,) + tuple(CLK_SWEEP_HZ):
+        if not _wrap_ceiling_ok(hz):
+            print("# WARNING: at %d Hz and the %d window the counter can"
+                  " report %.0f MHz before it wraps, under %.1f times the"
+                  " fastest simulated ring; the overflow flag will say if"
+                  " one does" % (hz, WINDOW, 65536.0 * hz / WINDOW / 1e6,
+                                 WRAP_SPEED_MARGIN))
+    sys_hz = meta["rp2_sys_hz"]
+    if sys_hz and clk_sdk and sys_hz % clk_sdk:
+        # The SDK looks for a system clock the project clock divides into
+        # whole, and for 50 MHz finds one (sim/tt_fit.py). Divided by a
+        # fraction, the PWM's edges move by up to a system clock period and
+        # so does the end of every window, a couple of hundred ppm of a
+        # 41 us window. This says if a board's settings got in the way.
+        print("# WARNING: the board's RP2 runs at %d Hz, which the %d Hz"
+              " project clock does not divide; each window can be a system"
+              " clock period long or short" % (sys_hz, clk_sdk))
     return meta
 
 
@@ -340,37 +451,67 @@ def run():
 
     _emit_metadata(run_id, seed, clk_sdk)
     print("run_id,chip_id,condition,round,order,arm,idx,count,overflow,"
-          "count_first,t_ms")
+          "count_first,t_ms,clk_hz,t_rp_c")
 
     pairs = [(a, i) for a in range(N_ARM) for i in range(N_IDX)]
-    timeouts = 0
-    saturated = 0
-    wrapped = 0
-    zeros = 0
+    tally = {"timeouts": 0, "saturated": 0, "wrapped": 0, "zeros": 0}
     # First minus second start, over samples where both ran and nothing
     # wrapped: -1, 0, +1 and anything else.
     diffs = {-1: 0, 0: 0, 1: 0, "other": 0}
-    try:
-        for r in range(ROUNDS):
+
+    def rounds(first, n, clk_row):
+        """n rounds of all 48 in a fresh order each. A round's rows are kept
+        and printed after it, so the console never sits between two
+        readings."""
+        for r in range(first, first + n):
+            t_rp = _rp2_temp()
+            t_col = "" if t_rp is None else "%.1f" % t_rp
+            rows = []
             for order, (arm, idx) in enumerate(_shuffled(pairs, random)):
                 c, c1, ovf = measure_one(arm, idx)
+                rows.append((order, arm, idx, c, ovf, c1, time.ticks_ms()))
                 if c >= 0 and c1 >= 0 and not ovf:
                     d = c1 - c
                     diffs[d if d in (-1, 0, 1) else "other"] += 1
                 if c < 0:
-                    timeouts += 1
+                    tally["timeouts"] += 1
                 elif ovf:
-                    wrapped += 1
+                    tally["wrapped"] += 1
                 elif c >= SAT_WARN:
-                    saturated += 1
+                    tally["saturated"] += 1
                 elif c == 0:
-                    zeros += 1
-                print("%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d"
+                    tally["zeros"] += 1
+            for order, arm, idx, c, ovf, c1, t_ms in rows:
+                print("%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s"
                       % (run_id, CHIP_ID, CONDITION, r, order, arm, idx, c,
-                         ovf, c1, time.ticks_ms()))
-        print("# done rounds=%d timeouts=%d wrapped=%d near_saturation=%d"
+                         ovf, c1, t_ms, clk_row, t_col))
+
+    try:
+        rounds(0, ROUNDS, clk_sdk or CLK_HZ)
+        first = ROUNDS
+        for hz in CLK_SWEEP_HZ:
+            # A different clock for the pulling check. The SDK can move the
+            # RP2's own clock under the running PWM before it sets the new
+            # one, so the project sits in reset through the change. The rows
+            # carry the clock the SDK says it made, which is what they count.
+            tt.reset_project(True)
+            tt.clock_project_PWM(hz)
+            made = getattr(tt, "auto_clocking_freq", None) or hz
+            time.sleep_ms(10)
+            tt.reset_project(False)
+            time.sleep_ms(10)
+            if made != hz:
+                print("# WARNING: sweep asked for %d Hz and the SDK says it"
+                      " made %d Hz; its rows carry %d" % (hz, made, made))
+            rounds(first, SWEEP_ROUNDS, made)
+            first += SWEEP_ROUNDS
+            print("# sweep clk=%d rounds=%d" % (made, SWEEP_ROUNDS))
+        timeouts, wrapped = tally["timeouts"], tally["wrapped"]
+        saturated, zeros = tally["saturated"], tally["zeros"]
+        swept = (" sweep_rounds=%d" % (first - ROUNDS)) if CLK_SWEEP_HZ else ""
+        print("# done rounds=%d%s timeouts=%d wrapped=%d near_saturation=%d"
               " zero_counts=%d"
-              % (ROUNDS, timeouts, wrapped, saturated, zeros))
+              % (ROUNDS, swept, timeouts, wrapped, saturated, zeros))
         print("# first minus second start: -1 in %d, 0 in %d, +1 in %d,"
               " other in %d" % (diffs[-1], diffs[0], diffs[1], diffs["other"]))
         if wrapped:

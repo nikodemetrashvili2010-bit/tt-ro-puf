@@ -31,6 +31,7 @@ python3 sim/spice/gono/pairing_policy.py
 python3 sim/spice/gono/numerical_audit.py
 python3 sim/spice/gono/verify_predictability.py
 python3 sim/spice/gono/real_world.py     # heat, wire current, supply drop, taps
+python3 sim/spice/gono/clock_neighbours.py  # what switches beside each ring
 python3 sim/verify_datasheet.py
 python3 sim/spice/gono/analyze_noise.py --selftest
 python3 sim/spice/gono/analyze_noise.py
@@ -54,8 +55,9 @@ them, `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff, and
 `sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
 reads. CI rebuilds `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
 `mux3/mux3_validation.csv`, the fifteen `boundary_validation_*_3arm*.csv`,
-`boundary_screen_ff.csv` and the two `bnd_nodes_*.csv` from those logs and
-diffs each against the committed copy, the same way it has done for
+`boundary_screen_ff.csv` and the two `bnd_nodes_*.csv` from those logs, and
+`clock_neighbours.csv` from run 83's SPEF and DEF, and diffs each against the
+committed copy, the same way it has done for
 `mux_validation.csv` since August. The Arm
 B logs have no csv;
 `analyze_instance.py --build release` reads each corner and

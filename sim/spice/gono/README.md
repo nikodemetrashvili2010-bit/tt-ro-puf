@@ -215,6 +215,15 @@ screen's own runs where the two reductions kept the same rows.
 net swapped between B00 and B04, read into `bnd_nodes_whatif.csv`. Those two
 are not the chip, and each says so in a comment.
 
+`clock_neighbours.py` says what switches beside each ring while it runs,
+since every deck in this folder grounds a ring's neighbours. For the 32
+routed rings it reads the SPEF's coupling to the clock tree and to the flops
+that change on the clock's edges, the window timer and the counter's two
+sampling stages, and for the sixteen Arm B macros, which the SPEF sees as
+boxes, the length of top-level wire the DEF runs over each ring area. Read
+into `clock_neighbours.csv`, one row a ring, and checked against the clock's
+own side of the SPEF. Added 28 October with `docs/phaseG_physical_review.md`.
+
 `check_pulse_width.py` reads what the PDK promises rather than what the simulator
 shows. It pulls the minimum clock pulse width for `sky130_fd_sc_hd__dfrtp_2` out
 of the Liberty files, handling both spellings vendors use for it, and compares

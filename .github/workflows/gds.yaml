@@ -129,6 +129,9 @@ jobs:
           diff /tmp/magic_rings.csv sim/spice/magic/magic_rings.csv
           python3 sim/spice/gono/real_world.py --selftest
           python3 sim/spice/gono/real_world.py
+          python3 sim/spice/gono/clock_neighbours.py --selftest
+          python3 sim/spice/gono/clock_neighbours.py --csv /tmp/clock_neighbours.csv
+          diff /tmp/clock_neighbours.csv sim/spice/gono/clock_neighbours.csv
           python3 sim/spice/gono/verify_instance.py
           python3 sim/spice/gono/verify_instance_corners.py --selftest
           python3 sim/spice/gono/verify_instance_corners.py

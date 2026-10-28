@@ -46,6 +46,7 @@ netlist byte for byte identical to the archived ones.
 | Logic under stress, all 48 rings | 7 of 7 tests on seeds 1 to 4 on the release netlist with every ring given a delay: power-up from X with no clock, all 64 selector values, a seeded random host, the window changed under a run, the clock at 100 and 12.5 MHz, a soak, restarts; `ena` low stops every ring in 10 ns with no clock, and no two enables were ever high together in all 128 states of the seven flops behind them | `sim/stress/`, `docs/phaseG_stress.md`; not in CI yet | no |
 | First count after a change of selection | the counter clock mux can pulse while the selector settles, on 1728 of 4032 changes and 960 of the 2256 between rings, starting in twelve cells; if it lands after the counter's reset lets go, the first run reads one high. The firmware starts every selection twice and keeps the second, and the datasheet says to | `sim/mux_hazard.py --expect 1728`, `verify_datasheet.py`, `docs/phaseG_hazard.md` | no |
 | Fit to Tiny Tapeout's own sources | run 83's GDS, LEF and powered netlist pass four of the precheck's own functions, pin, power pin, cell name and analog pin; the build replaces seven settings and `config.json` sets none of them; a project not selected has its inputs and reset held at 0; the project sits behind the power switch `tt_pg_1v8_ll_2`, whose channel drops under a millivolt with a ring running, the same for every ring; the board makes the 50 MHz exactly, 100 MHz divided by 2; the firmware reads `ui_in` back, stops if `enable()` refuses and drives every `uio` pin the chip does not | `sim/tt_fit.py` against three pinned Tiny Tapeout repositories, decks in `sim/spice/pg/`, `docs/phaseG_tt_fit.md`; not in CI, it needs those repositories | no |
+| Clock beside the rings | only one ring runs at a time, so what switches beside it is the 50 MHz clock tree and the flops that change on its edges. The tree couples to 11 of the 32 routed rings, 9 of them in Arm C, C08 the most at 0.760 fF, 7.5 percent of its loop; the window timer's two low bits, a 25 and a 12.5 MHz square wave during a run, couple to C12 at 1.388 fF; the clock crosses the ring area of six Arm B macros and the counter's sampled bits two. Every extraction grounds a ring's neighbours, so no deck has had them switching. A lock range of order 100 ppm is an estimate, not a simulation, and the line every scored pair clears is 0.618 percent, so the bits are not at risk; a pulled ring's frequency is. The bench looks for it, a clock sweep in `measure_puf.py` and three checks in `analyze_counts.py` | `sim/spice/gono/clock_neighbours.py` on run 83's SPEF and DEF, 5 checks, 6 planted faults each caught alone, `docs/phaseG_physical_review.md` | no |
 | Silicon measurements | chips not fabricated | - | next phase |
 
 ## The two-arm baseline
@@ -214,6 +215,14 @@ again on 17 September on a different machine, with a different ngspice and PDK
 install, and came back the same
 ([docs/phaseG_spice_rerun.md](docs/phaseG_spice_rerun.md)). A repeat, not a
 check against the original logs.
+
+The clock beside the rings. Nothing has simulated a ring with the clock
+tree or the window timer switching next to it, so how far one can be
+pulled is an estimate, of order 100 ppm and good to a factor of three. The
+bench is set up to see it if it happens (`docs/phaseG_physical_review.md`).
+On the next chip the clock and the window timer stay out of the ring areas
+and the Arm B macro obstructs met2 to met4 over its ring, not only li1 and
+met1.
 
 The bench. None of it is in the GDS and all of it can spoil a measurement. The
 preregistered box reaches 125 C, while the RP2040 on the demo board is rated to
