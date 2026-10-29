@@ -1018,6 +1018,9 @@ the release window, and on these logs its ff significance check prints as a
 note, since that check was a statement about the baseline's routes. The other
 35 pass. Logs are in `sim/spice/gono/armb3/`, and CI reads all three. Section
 8.2's analysis, `matched_arm.py`, has not been redone on these routes.
+Redone 29 October with `--build release`, and the one new thing it found,
+the enable route going with frequency at tt, `armb_residual.py` traced to
+the solver (`docs/phaseG_armb_leftover.md`).
 
 ## 9. Controlled multi-build spread (done, 2026-07-24)
 
@@ -1101,6 +1104,14 @@ about the 5 ps decks, which is what the item is actually about. What it does
 change is the expected size of the answer: if the 1 ps lumped rerun lands
 anywhere near this floor, the closest full-RC pair clears it by two orders of
 magnitude rather than by 1.9 times.
+
+29 October, on the release build's deck. Sixteen copies of one instance in
+place of the sixteen spread 4.3 ppm at the same tolerance, where the
+sixteen spread 33, and run one at a time with the solver tightened the
+heaviest route sits 0.006 ppm under the reference. So this floor is the
+solver's answer to sixteen slightly different circuits in one deck, and
+between copies of one circuit it is about an eighth of that. The first is
+the one that applies when two Arm A rings are compared.
 
 ## Order of work
 

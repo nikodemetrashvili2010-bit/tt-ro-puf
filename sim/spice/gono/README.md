@@ -88,11 +88,22 @@ capacitance is worse than applying no correction at all, which is what says the
 target's own extraction is the part that cannot be skipped.
 
 `matched_arm.py` asks the same questions of Arm B that Section 6 asked of Arm
-A, using the sixteen per-instance runs of item 8: the leftover is not a loading
-effect, because most instances read faster than a reference ring with no
-top-level route and capacitance cannot do that; no corrector out of the design
-database helps at more than one corner; and the eight bits keep 7.9997 of 8
-with a reader calling 4.02.
+A, using the sixteen per-instance runs of item 8: no corrector out of the
+design database helps at more than one corner, and the eight bits keep 7.9997
+of 8 with a reader calling 4.02. Most instances also read faster than a
+reference ring with no top-level route, which capacitance cannot do, and that
+used to be the argument that the leftover is not the routes. With `--build
+release` it asks the same of run 83's routes, 7.9996 and 4.03, and one answer
+came back new: the enable route's capacitance goes with frequency at tt.
+
+`armb_residual.py` is where that went. It runs the release tt deck again at
+ten times the tolerance, with the sixteen replaced by sixteen copies of one
+instance, and one ring at a time at three tighter settings, all in
+`armb3/tol/` with their logs and rising crossings. The correlation, the
+instances above the reference and the spread itself are the solver's; alone
+and solved tightly the heaviest route sits 0.006 ppm under the reference.
+`make` writes every deck from the archived one, `check` holds the archive to
+it, and the report checks its own claims. `docs/phaseG_armb_leftover.md`.
 
 `pairing_policy.py` turns the one free parameter the design has left. Which
 rings get compared is the order the generate loop produced, and sixteen rings
@@ -204,6 +215,12 @@ of them, so it has three sweeps of its own beside B13's, at 5, 1 and 0.2 ps,
 with its step at about 84 ps against B13's 76. Since 27 October it has tt
 and ss as well, swept the way B13 was, in `B00_tt`, `B00_tt_5ps`, `B00_ss`
 and `B00_ss_5ps`.
+
+`screen_tt/` and `screen_ss/` are the same screen at the other two corners,
+added 29 October: five phases at tt and six at ss off B13's own grids, read
+with `boundary_screen.py --corner tt` or `ss` into `boundary_screen_tt.csv`
+and `boundary_screen_ss.csv`. There B13 and B00 are both held to their
+archived 5 ps rows. `docs/phaseG_boundary_screen_tt_ss.md`.
 
 `bnd_nodes.py` asks where along a path a lost pulse is lost. It takes a
 deck the screen ran and rewrites three lines so every net of the chain is

@@ -142,13 +142,23 @@ routing, but not the enable and output route each one carries at the top level,
 so "the offset is zero" was a claim about the inside of the macro doing duty
 for a claim about the whole thing.
 
-The sixteen per-instance runs on the baseline's routes settle it: the leftover
-is not a loading effect, since eleven of sixteen read faster than a reference
-ring with no top-level route and capacitance cannot do that; nothing in the
-design database predicts it at more than one corner; and the eight bits keep
-7.9997 of 8 with a reader calling 4.02 against 4.00 for guessing. On the
-release build's routes only the first of those has been looked at, and it
-holds: ten of sixteen faster at tt and twelve at ff.
+The sixteen per-instance runs on the baseline's routes settle it: nothing in
+the design database predicts the leftover at more than one corner, and the
+eight bits keep 7.9997 of 8 with a reader calling 4.02 against 4.00 for
+guessing. On the release build's routes the same questions give 7.9996 and
+4.03.
+
+They also show what the leftover is. Eleven of sixteen read faster than a
+reference ring with no top-level route, which a route cannot cause, and I
+used to read that as proof it was not the routes. On the release routes the
+enable route's capacitance even seemed to predict it at tt. Both are the
+solver, shown at tt on the release routes. All eighteen rings share one
+transient at ngspice's default tolerance; one circuit copied sixteen times
+into that deck spreads 4.3 ppm where the sixteen real ones spread 33, and run
+one at a time with the solver tightened, the heaviest route sits 0.006 ppm
+under the reference. So the routes do next to nothing, which is the point of
+the arm. The other corners and the baseline's decks are the same kind and
+were not taken apart (`docs/phaseG_armb_leftover.md`).
 
 The pairing is the one free parameter left, and turning it does not help much
 either. Which rings get compared is the order the generate loop emitted;
@@ -266,12 +276,16 @@ each build's own routes: 0.0001, 0.0033 and 0.0019 percent peak to peak on the
 release build, against 5.63, 5.73 and 5.83 percent for its Arm A, and 0.0001,
 0.0025 and 0.0009 on the baseline.
 
-Still open: the stopping boundary through the other 47 selector paths, which
-have been swept for edges but not for that; whether anything in the design
-files predicts what is left of Arm B on the release build's routes, which has
-only been asked of the baseline's; and one build to show whether the soft
-obstruction around Arm A still earns its place. The rest of the hardware list
-is in [docs/hardware_todo.md](docs/hardware_todo.md).
+The stopping boundary has run through all 48 selector paths at ff, tt and
+ss: every phase leaves the counter's first flop on a rail, and the count
+moves by one edge at most (`docs/phaseG_boundary_screen.md`,
+`docs/phaseG_boundary_screen_tt_ss.md`).
+
+Still open: grids finer than 5 ps at tt and ss; the pair drift figures the
+pairing analysis reads off the corner logs, the smallest of which sit where
+the solver moves two different circuits in one deck; and one build to show
+whether the soft obstruction around Arm A still earns its place. The rest of
+the hardware list is in [docs/hardware_todo.md](docs/hardware_todo.md).
 
 After fabrication the plan is to measure all three arms across chips, voltage,
 and temperature with the scripts in `firmware/`. What I expect on silicon: Arm

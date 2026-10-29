@@ -1305,6 +1305,17 @@ and 0.0019% at ff, at most 0.76 of one count at the 2048 cycles and 50 MHz the
 release firmware uses, and at least three orders of magnitude under that
 build's Arm A.
 
+Those spreads are the solver's more than the routes'. All eighteen rings
+run in one transient at ngspice's default tolerance, and on the release
+build at tt sixteen copies of one instance in that deck spread 4.3 ppm
+where the sixteen real ones spread 33. Run one at a time, at three settings
+each tighter than the last, the heaviest route sits 2.33, 0.034 and 0.006
+ppm under a ring with no route at all (Section 8.2). So the figures above
+are bounds set by the solver, and the routes' own share at tt is under 0.04
+ppm. Only the release build's tt deck was taken apart; its ss and ff decks
+and the baseline's, which has lighter routes, are the same kind of deck and
+were not run again.
+
 At the setting each build is measured with, a single reading cannot resolve the
 difference between them. Read the ss digits as an upper bound rather than a
 measurement: on the baseline the spread there is 1.3e-6 of the mean and the
@@ -1380,12 +1391,40 @@ Every number here is nominal-device simulation of one layout, so it bounds what
 top-level integration contributes and says nothing about fabricated mismatch on
 a die; that is still the measurement the chip exists to make. And the residual
 is small enough that the floor underneath it is the transient solver rather
-than the circuit, which is why the direction test above carries the argument
-and the correlations do not. The script is `sim/spice/gono/matched_arm.py`. The
-routes are the baseline's, too. The release build drew every one of them again,
-and Section 8.1 has the sixteen run on those, but the three questions here have
-not been asked of them. Only the first is cheap to read off the new logs, and
-ten of sixteen still sit above the reference at tt and twelve at ff.
+than the circuit. When I wrote this section I took that to be why the
+direction test carries the argument and the correlations do not. It covers
+the direction test as well, as the release build's routes showed. The script
+is `sim/spice/gono/matched_arm.py`.
+
+Everything above is the baseline's routes. On the release build's three of
+the answers come back the same: ten of sixteen above the reference at tt and
+twelve at ff, pairs keeping their sign 4, 2 and 4 times of 8 across the
+corner pairs, and 7.9996 of 8 bits with a reader at 4.03, where Arm A on that
+die gives 0.07 and 7.99. The other does not. One corrector helps, the enable
+route's capacitance at tt, +34.3%, and the correlation behind it, r = -0.805,
+survives Holm over both routes and all three corners at 0.0010.
+
+The enable sits at the supply the whole time a ring runs, so that could not
+be the circuit, and it is not. With the solver's tolerance ten times tighter
+the correlation is gone, r = -0.06, and the sixteen come out in a different
+order, r = +0.22 between the two runs. Sixteen copies of one instance in the
+same deck spread 4.3 ppm where the sixteen real ones spread 33. Run one at a
+time, at three settings each tighter than the last, the heaviest output
+route sits 2.33, 0.034 and 0.006 ppm under the reference, and the heaviest
+enable route 0.76 and then 0.020 (`sim/spice/gono/armb_residual.py`,
+`docs/phaseG_armb_leftover.md`).
+
+So this section's first test has to be read again. On the release build at
+tt the instances that sat above a no-route reference were the solver, and
+the baseline's were read off the same kind of deck. The four run alone sit
+just under the reference, closer the tighter the solver, the side a passive
+route pushes. The conclusion, that what separates them is not the routes,
+stands, and at tt on the release build it is shown now rather than argued
+from a reading that was noise. Every per-instance figure here and in
+Section 8.1 comes out of an eighteen-ring deck of that kind. On the release
+build at tt that is shown to be the solver's, with the routes' own share
+under 0.04 ppm; the other corners and the baseline's deck, with lighter
+routes, were not run again.
 
 ## 9. Planned silicon test
 
@@ -1436,9 +1475,9 @@ Most of it was measured on a build that is not the one being made. The release
 build has had its corner sweep, its full RC comparison and the bit count of
 Section 7.1 repeated in Section 7.4, its counter range worked out in Section
 5.4, and its sixteen Arm B instances run on their own routes at three corners
-in Section 8.1. The compensation, the re-pairing, the resolution floor and
-Section 8.2's look at what is left of Arm B are the baseline's, and whether
-their numbers carry over I have not tested yet.
+in Section 8.1, with Section 8.2's look at what is left of them. The
+compensation, the re-pairing and the resolution floor are the baseline's,
+and whether their numbers carry over I have not tested yet.
 
 This study is pre-silicon, and its model is deliberately simple. Nominal
 transistor models carry no random local mismatch. The lumped-capacitance model
@@ -1597,6 +1636,11 @@ whose external loads cannot reach the oscillation loop spread 0.0025% peak to
 peak. That is eighteen times under the indirect ceiling quoted above, which
 suggests the ceiling is loose, and it is measured on the macro rather than on
 an Arm A ring, so it bounds the solver and not that particular comparison.
+The release build's runs measure that floor directly. In one deck at the
+default tolerance sixteen copies of one instance spread 4.3 ppm and sixteen
+different ones 33, while the routes that make them different move a ring by
+under 0.04 ppm. Between two different circuits in one deck the solver's
+floor is tens of ppm, more than between two copies of one.
 
 Two structural limits sit above all of that. Eight bits is a very small
 response, and an entropy total over eight pairs of one block should not be read
@@ -1677,14 +1721,16 @@ their top-level enable and output routes, so the claim that every pair's offset
 is zero was an assumption until those sixteen were extracted with the routes
 they really have and run at three corners.
 
-They spread at most 0.0025% peak to peak, which is 0.57 of one counter count.
-More to the point, the leftover is not usable: most instances read faster than
-a reference ring carrying no route at all, which capacitive loading cannot
-cause; no corrector out of the design database helps at more than one corner,
-where Arm A's removes 89.5%; and the eight bits keep 7.9997 of 8, with a reader
-calling 4.02 against 4.00 for guessing. Those were the baseline's routes. On
-the release build's the sixteen spread at most 0.0033%, under one count at the
-measurement setting, and the rest of that analysis has not been redone there.
+They spread at most 0.0025% peak to peak, which is 0.57 of one counter count,
+and that much is a bound set by the solver rather than the routes: on the
+release routes at tt, run one at a time and solved tightly, the routes move a
+ring by under 0.04 ppm. The leftover is not usable either. No corrector out of
+the design database helps at more than one corner, where Arm A's removes
+89.5%, and the eight bits keep 7.9997 of 8, with a reader calling 4.02 against
+4.00 for guessing. Those were the baseline's routes. On the release build's
+the sixteen spread at most 0.0033%, under one count at the measurement
+setting, and the same analysis gives 7.9996 and 4.03. Its one new finding, a
+correlation with the enable route at tt, is the solver's as well.
 
 None of this is measured on silicon.
 

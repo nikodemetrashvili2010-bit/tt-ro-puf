@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Nikoloz Demetrashvili
 # SPDX-License-Identifier: Apache-2.0
-"""The ring-stop boundary through all 48 selector paths, screened at ff.
+"""The ring-stop boundary through all 48 selector paths, at ff, tt and ss.
 
 Until 26 October the boundary had been swept through one path of the
 release build's 48, B13, the slowest rise, on grids down to 0.2 ps at ff
@@ -40,26 +40,56 @@ failure; both are said.
 
 Checks:
   S01  every path has its four phases, each with a steady delay measured
+       (five at tt, six at ss)
   S02  every phase leaves the flop on a rail
   S03  no two adjacent phases differ by more than one edge
   S04  a pulse that reaches the flop is never followed by a wider one
        that does not, and the count never steps down
   S05  B13's phases at 30.100 and 30.110 ns are the archived 5 ps rows
+       (at tt and ss, B13's and B00's shared phases, listed below)
   S06  the last pulse at the tap agrees across the paths at each phase,
        within 5 ps, which is the shared-ring argument checked on the data.
-       5 is a third of the 14 ps between the screened widths
+       5 is a third of the 14 ps between the screened widths at ff, and
+       less than that at tt and ss, where the widths are further apart
 
 What it cannot do. Four phases on a 10 ps grid say where a step is to
 within a pulse width or two, and nothing about the pulse that sits exactly
 on it. B13's own grids showed the narrowest pulse at sel_ro shrinking with
 every finer grid, so that number belongs to the grid. The screen is the
 cheap pass that says whether any path deserves the fine treatment B13 got.
-It is ff only.
+It was ff only until 29 October.
+
+tt and ss, 29 October. The same screen at the other two corners. The
+phases come off B13's own grids there, five at tt and six at ss:
+
+    tt  enable falls 30.120 to 30.180 ns, 15 ps apart
+    ss  enable falls 33.125 to 33.275 ns, 30 ps apart
+
+There is not much room below either list. 30.115 at tt and 33.115 at ss
+stop the ring before it rises again, and the last pulse is then its
+previous full one, 842 and 1654 ps wide. So at tt the first phase is the
+narrowest pulse a 5 ps grid can give, and at ss it is within 10 ps of
+it. At the top both lists reach the first pulse B00 keeps, and B00 had
+the widest step of the 48 at ff.
+
+Two paths are held to their archives there, B13 and B00, since both have
+5 ps sweeps at tt and ss. At tt both share three phases with theirs, B13
+losing one and keeping two, B00 losing two and keeping one. At ss B13
+shares two, one each side of its step, and B00 one, the first it keeps.
+--corner picks the supply, the phase count and the rows S05 wants.
 
 Run:
     python3 boundary_screen.py bnd3/screen_ff \\
         --control boundary_validation_B13_3arm_5ps.csv \\
         --csv boundary_screen_ff.csv
+    python3 boundary_screen.py bnd3/screen_tt --corner tt \\
+        --control B13=boundary_validation_B13_3arm_tt_5ps.csv \\
+        --control B00=boundary_validation_B00_3arm_tt_5ps.csv \\
+        --csv boundary_screen_tt.csv
+    python3 boundary_screen.py bnd3/screen_ss --corner ss \\
+        --control B13=boundary_validation_B13_3arm_ss_5ps.csv \\
+        --control B00=boundary_validation_B00_3arm_ss_5ps.csv \\
+        --csv boundary_screen_ss.csv
     python3 boundary_screen.py --selftest
 """
 
@@ -87,6 +117,21 @@ CONTROL_TAG = "B13"
 CONTROL_FALLS = ("30.100", "30.110")
 TAG_RE = re.compile(r"^[ABC]\d\d$")
 
+# Per corner: the supply, phases per path, how far apart the paths' pulses
+# at the tap may be, and the rows of the archived 5 ps sweeps each control
+# path is held to. ff is what it was on 26 October.
+CORNERS = {
+    "ff": dict(vdd=VDD, phases=N_PHASE, tap_tol=TAP_TOL_PS,
+               controls={CONTROL_TAG: CONTROL_FALLS}),
+    "tt": dict(vdd=1.80, phases=5, tap_tol=TAP_TOL_PS,
+               controls={"B13": ("30.150", "30.165", "30.180"),
+                         "B00": ("30.150", "30.165", "30.180")}),
+    "ss": dict(vdd=1.60, phases=6, tap_tol=TAP_TOL_PS,
+               controls={"B13": ("33.215", "33.245"),
+                         "B00": ("33.275",)}),
+}
+WORDS = {4: "four", 5: "five", 6: "six"}
+
 CSV_HEAD = ["osc", "cells", "rise_ps", "fall_ps", "asymmetry_ps",
             "tap_ps", "arrived", "swallowed_up_to_ps", "arrived_from_ps",
             "narrowest_sel_ps", "flop_edges", "settled"]
@@ -102,10 +147,10 @@ def chain_of(directory):
     return ""
 
 
-def read_path(directory):
+def read_path(directory, vdd=VDD):
     rows = []
     for path in sorted(glob.glob(os.path.join(directory, "bnd_*.raw.txt"))):
-        rows.append(abs_.read_phase(directory, path, VDD, TAIL_NS))
+        rows.append(abs_.read_phase(directory, path, vdd, TAIL_NS))
     return sorted(rows, key=lambda r: r["t_fall"])
 
 
@@ -163,7 +208,8 @@ def analyser_rows(rows):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def run_checks(paths, control_csv, control_falls=CONTROL_FALLS):
+def run_checks(paths, controls, n_phase=N_PHASE, tap_tol=TAP_TOL_PS):
+    """controls maps a path to (its archived csv, the falls it shares)."""
     res = []
 
     def add(cid, name, ok, detail):
@@ -171,9 +217,10 @@ def run_checks(paths, control_csv, control_falls=CONTROL_FALLS):
 
     short = ["%s has %d" % (t, len(p["rows"]))
              for t, p in sorted(paths.items())
-             if len(p["rows"]) != N_PHASE
+             if len(p["rows"]) != n_phase
              or not all(r["measured"] for r in p["rows"])]
-    add("S01", "every path has its four phases, each measured", not short,
+    add("S01", "every path has its %s phases, each measured"
+        % WORDS.get(n_phase, str(n_phase)), not short,
         "; ".join(short[:6]) or "%d paths, %d phases"
         % (len(paths), sum(len(p["rows"]) for p in paths.values())))
 
@@ -202,49 +249,57 @@ def run_checks(paths, control_csv, control_falls=CONTROL_FALLS):
                "the count never steps down", not downs,
         ", ".join(downs) or "none")
 
-    bad = []
-    ctl = paths.get(CONTROL_TAG)
-    if ctl is None:
-        bad.append("no %s in the screen" % CONTROL_TAG)
-    elif not control_csv or not os.path.exists(control_csv):
-        bad.append("no archived sweep to hold it to")
-    else:
+    bad, held = [], 0
+    for tag in sorted(controls, reverse=True):
+        control_csv, control_falls = controls[tag]
+        who = "" if len(controls) == 1 else tag + " "
+        ctl = paths.get(tag)
+        if ctl is None:
+            bad.append("no %s in the screen" % tag)
+            continue
+        if not control_csv or not os.path.exists(control_csv):
+            bad.append("no archived sweep to hold %s to"
+                       % (tag if who else "it"))
+            continue
         with open(control_csv, encoding="utf-8") as fh:
             ref = dict((r["en_fall_ns"], r) for r in csv.DictReader(fh))
         mine = dict((r["en_fall_ns"], r) for r in analyser_rows(ctl["rows"]))
         for fall in control_falls:
             if fall not in ref or fall not in mine:
-                bad.append("%s ns missing" % fall)
+                bad.append("%s%s ns missing" % (who, fall))
                 continue
             diff = [k for k in ref[fall] if k != "phase"
                     and ref[fall][k] != mine[fall].get(k)]
             if diff:
-                bad.append("%s ns differs in %s" % (fall, ", ".join(diff)))
-    add("S05", "%s's shared phases are the archived 5 ps rows" % CONTROL_TAG,
-        not bad, "; ".join(bad) or "%d rows, every field"
-        % len(control_falls))
+                bad.append("%s%s ns differs in %s"
+                           % (who, fall, ", ".join(diff)))
+            else:
+                held += 1
+    add("S05", "%s shared phases are the archived 5 ps rows"
+        % " and ".join("%s's" % t for t in sorted(controls, reverse=True)),
+        not bad, "; ".join(bad) or "%d rows, every field" % held)
 
     spread, widest = [], 0.0
-    full = [p for p in paths.values() if len(p["rows"]) == N_PHASE]
-    for k in range(N_PHASE):
+    full = [p for p in paths.values() if len(p["rows"]) == n_phase]
+    for k in range(n_phase):
         taps = [p["rows"][k]["tap_hi"] * 1e12 for p in full]
         if not taps:
             continue
         span = max(taps) - min(taps)
         widest = max(widest, span)
-        if span > TAP_TOL_PS:
+        if span > tap_tol:
             spread.append("phase %d spans %.2f ps" % (k, span))
     add("S06", "the last pulse at the tap agrees across the paths",
         not spread, "; ".join(spread) or "widest spread %.3f ps" % widest)
     return res
 
 
-def load(directory):
+def load(directory, vdd=VDD):
     paths = {}
     for d in sorted(glob.glob(os.path.join(directory, "*"))):
         tag = os.path.basename(d)
         if os.path.isdir(d) and TAG_RE.match(tag):
-            rows = read_path(d)
+            rows = read_path(d, vdd)
             paths[tag] = {"rows": rows, "chain": chain_of(d)}
     return paths
 
@@ -257,11 +312,13 @@ def write_csv(summaries, path):
             w.writerow(s)
 
 
-def report(paths, control_csv, csv_path=None, control_falls=CONTROL_FALLS):
+def report(paths, controls, csv_path=None, corner="ff"):
+    setup = CORNERS[corner]
     summaries = [summarise(t, p["rows"], p["chain"])
                  for t, p in sorted(paths.items())]
     order = sorted(summaries, key=lambda s: (s["arrived"], s["osc"]))
-    print("ring-stop boundary through every selector path")
+    print("ring-stop boundary through every selector path"
+          + ("" if corner == "ff" else ", at %s" % corner))
     print()
     print("  path  cells  rise  asym  arrived  step at the tap      "
           "narrowest at sel_ro  edges")
@@ -286,7 +343,7 @@ def report(paths, control_csv, csv_path=None, control_falls=CONTROL_FALLS):
     for pattern in sorted(groups):
         print("  %s  %2d paths" % (pattern, len(groups[pattern])))
     print()
-    res = run_checks(paths, control_csv, control_falls)
+    res = run_checks(paths, controls, setup["phases"], setup["tap_tol"])
     for cid, name, ok, detail in res:
         print("  %s %s  %s" % ("ok  " if ok else "FAIL", cid, name))
         print("            %s" % detail)
@@ -329,18 +386,24 @@ def make_path(root, tag, min_width, period=S_PERIOD, hang=None, extra=None,
 
 
 def make_tree(root, **faults):
+    """Three paths, and an archived csv for each of the two that can be
+    controls: B13, as at ff, and C00, standing in for B00 at tt and ss."""
     os.makedirs(root)
     make_path(root, "A00", 40e-12, **faults.get("A00", {}))
     make_path(root, "B13", 75e-12, **faults.get("B13", {}))
     make_path(root, "C00", 60e-12, **faults.get("C00", {}))
-    ctl = os.path.join(root, "control.csv")
-    rows = analyser_rows(read_path(os.path.join(root, "B13")))
-    with open(ctl, "w", newline="\n", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=list(rows[0]), lineterminator="\n")
-        w.writeheader()
-        for r in rows:
-            w.writerow(r)
-    return ctl
+    out = {}
+    for tag in ("B13", "C00"):
+        ctl = os.path.join(root, "control_%s.csv" % tag)
+        rows = analyser_rows(read_path(os.path.join(root, tag)))
+        with open(ctl, "w", newline="\n", encoding="utf-8") as fh:
+            w = csv.DictWriter(fh, fieldnames=list(rows[0]),
+                               lineterminator="\n")
+            w.writeheader()
+            for r in rows:
+                w.writerow(r)
+        out[tag] = ctl
+    return out
 
 
 def selftest():
@@ -348,6 +411,7 @@ def selftest():
     ok = True
     tmp = tempfile.mkdtemp(prefix="screen_selftest.")
     try:
+        # The last three run with two controls, the way tt and ss do.
         cases = [
             ("a clean screen passes", {}, None, []),
             ("a phase with no waveform", {"A00": {"missing": 1}}, None,
@@ -357,28 +421,39 @@ def selftest():
              ["S03"]),
             ("a wider pulse lost after a narrower one arrived",
              {"C00": {"lost": 3}}, None, ["S04"]),
-            ("the control no longer the archived rows", {}, "sel_high_ps",
-             ["S05"]),
+            ("the control no longer the archived rows", {},
+             ("B13", "sel_high_ps"), ["S05"]),
             ("one path handed a different pulse",
              {"C00": {"period": S_PERIOD + 1.0e-12}}, None, ["S06"]),
+            ("two controls, both their archived rows", {}, None, []),
+            ("two controls, the second not its archived rows", {},
+             ("C00", "sel_high_ps"), ["S05"]),
+            ("two controls, the second missing from the screen", {},
+             ("C00", "gone"), ["S05"]),
         ]
         for i, (label, faults, poison, expect) in enumerate(cases):
             root = os.path.join(tmp, "t%d" % i)
-            ctl = make_tree(root, **faults)
-            if poison:
-                with open(ctl, encoding="utf-8") as fh:
+            ctls = make_tree(root, **faults)
+            if poison and poison[1] == "gone":
+                shutil.rmtree(os.path.join(root, poison[0]))
+            elif poison:
+                with open(ctls[poison[0]], encoding="utf-8") as fh:
                     rows = list(csv.DictReader(fh))
                 for r in rows:
                     if r["en_fall_ns"] == S_CONTROL[1]:
-                        r[poison] = str(int(r[poison]) + 1)
-                with open(ctl, "w", newline="\n", encoding="utf-8") as fh:
+                        r[poison[1]] = str(int(r[poison[1]]) + 1)
+                with open(ctls[poison[0]], "w", newline="\n",
+                          encoding="utf-8") as fh:
                     w = csv.DictWriter(fh, fieldnames=list(rows[0]),
                                        lineterminator="\n")
                     w.writeheader()
                     w.writerows(rows)
+            controls = {"B13": (ctls["B13"], S_CONTROL)}
+            if label.startswith("two controls"):
+                controls["C00"] = (ctls["C00"], S_CONTROL)
             paths = load(root)
             got = [cid for cid, _, good, _ in
-                   run_checks(paths, ctl, S_CONTROL) if not good]
+                   run_checks(paths, controls) if not good]
             good = got == expect
             if i == 0:
                 arrived = dict((t, summarise(t, p["rows"], p["chain"])
@@ -398,7 +473,13 @@ def selftest():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("directory", nargs="?")
-    ap.add_argument("--control", help="the archived sweep B13 is held to")
+    ap.add_argument("--corner", default="ff", choices=sorted(CORNERS),
+                    help="the corner the screen ran at (default ff)")
+    ap.add_argument("--control", action="append", default=[],
+                    metavar="[TAG=]CSV",
+                    help="an archived sweep a control path is held to, "
+                         "B13's when no tag is given; tt and ss want B13's "
+                         "and B00's")
     ap.add_argument("--csv", help="write the per-path record here")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()
@@ -406,10 +487,20 @@ def main():
         return selftest()
     if not args.directory:
         ap.error("give the screen directory, or --selftest")
-    paths = load(args.directory)
+    given = {}
+    for item in args.control:
+        tag, _, path = item.rpartition("=")
+        given[tag or CONTROL_TAG] = path
+    setup = CORNERS[args.corner]
+    stray = sorted(set(given) - set(setup["controls"]))
+    if stray:
+        ap.error("no control %s at %s" % (", ".join(stray), args.corner))
+    controls = dict((tag, (given.get(tag), falls))
+                    for tag, falls in setup["controls"].items())
+    paths = load(args.directory, setup["vdd"])
     if not paths:
         raise SystemExit("no path directories in %s" % args.directory)
-    return report(paths, args.control, args.csv)
+    return report(paths, controls, args.csv, args.corner)
 
 
 if __name__ == "__main__":

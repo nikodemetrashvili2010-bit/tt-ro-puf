@@ -1000,6 +1000,79 @@ cw = bits_for(SIGMA_HI, c_rc)
 check("even at the top of the mismatch interval Arm C holds under 0.05 bits",
       sum(r[2] for r in cw) < 0.05, "%.4f" % sum(r[2] for r in cw))
 
+# ------------------------------------------ Arm B on the release routes
+# Section 8.2 asked of run 83's routes, and the runs that took its one new
+# answer apart, armb3/tol/. Read here with read_instances above and the
+# logs' own printed frequencies, not with matched_arm.py or
+# armb_residual.py, which read the same logs through analyze_instance.py
+# and the waveform crossings.
+print("\n== matched-macro arm on the release routes, armb3/ ==")
+RB = os.path.join(HERE, "armb3")
+rb, rb_ref = {}, {}
+for corner, name in (("tt", "armb_instances_out.txt"),
+                     ("ss", "armb_instances_ss_out.txt"),
+                     ("ff", "armb_instances_ff_out.txt")):
+    rb[corner], rb_ref[corner] = read_instances(os.path.join(RB, name))
+up = [sum(1 for v in rb[c] if v > rb_ref[c]) for c in ("tt", "ss", "ff")]
+check("10 of 16 read above the no-route reference at tt, 1 at ss, 12 at ff",
+      up == [10, 1, 12], "%d, %d, %d" % tuple(up))
+rows_rb = {int(r["instance"]): r for r in
+           csv.DictReader(open(os.path.join(RB, "instance_parasitics.csv")))}
+rb_en = [float(rows_rb[k]["en_cap_fF"]) for k in range(NRO)]
+rb_tt = centred(rb["tt"])
+r_rb = pearson(rb_en, rb_tt)
+check("the enable route goes with frequency at tt, r = -0.805",
+      round(r_rb, 3) == -0.805, "%+.4f" % r_rb)
+rb_d = [rb_tt[a] - rb_tt[b] for a, b in PAIRS]
+rb_ent = sum(hbin(phi(d / (SIGMA_RING * math.sqrt(2)))) for d in rb_d)
+rb_acc = sum(max(phi(d / (SIGMA_RING * math.sqrt(2))),
+                 1 - phi(d / (SIGMA_RING * math.sqrt(2)))) for d in rb_d)
+check("taken as it stands, Arm B keeps 7.9996 of 8 bits and a reader calls "
+      "4.03", (round(rb_ent, 4), round(rb_acc, 2)) == (7.9996, 4.03),
+      "%.5f, %.4f" % (rb_ent, rb_acc))
+
+TOL = os.path.join(RB, "tol")
+t4, t4_ref = read_instances(os.path.join(TOL, "rt4", "armb_instances_out.txt"))
+r_t4 = pearson(rb_en, centred(t4))
+check("ten times tighter the enable route says nothing, |r| under 0.2",
+      abs(r_t4) < 0.2, "%+.4f" % r_t4)
+order = pearson(rb_tt, centred(t4))
+check("and the sixteen come out in another order, r under 0.5",
+      order < 0.5, "%+.4f" % order)
+
+
+def ppm_spread(f):
+    return (max(f) - min(f)) / st.fmean(f) * 1e6
+
+
+for null, real, want in (("null3", rb["tt"], 0.25), ("null4", t4, 0.25)):
+    nf, _ = read_instances(os.path.join(TOL, null, "armb_instances_out.txt"))
+    check("%s, instance 0 sixteen times, spreads under a quarter of the "
+          "sixteen" % null, ppm_spread(nf) < want * ppm_spread(real),
+          "%.2f ppm against %.2f" % (ppm_spread(nf), ppm_spread(real)))
+
+
+def alone_f(name, key):
+    txt = open(os.path.join(TOL, "alone", name, "armb_instances_out.txt"),
+               errors="ignore").read()
+    return float(re.search(r"^%s\s*=\s*(\S+)" % key, txt, re.M).group(1))
+
+
+# The logs print seven digits, 100 Hz at 570 MHz, so 0.18 ppm is as fine
+# as this reads; the crossings in armb_residual.py go further.
+for setting, ring in (("s1", "k08"), ("s2", "k08"), ("s3", "k08"),
+                      ("s2", "k14")):
+    fr = alone_f("r_%s" % setting, "f_r")
+    fk = alone_f("%s_%s" % (ring, setting), "f_%s" % ring)
+    gap = (fk - fr) / fr * 1e6
+    if setting == "s1":
+        check("alone at s1, %s sits about 2.3 ppm under the reference" % ring,
+              -2.6 < gap < -2.0, "%+.2f ppm" % gap)
+    else:
+        check("alone at %s, %s is within 0.2 ppm of the reference"
+              % (setting, ring), abs(gap) < 0.2, "%+.2f ppm" % gap)
+
+
 # ----------------------------------------------------------------- control
 # A check that cannot fail is not a check. Break the link between each ring's
 # frequency and its own parasitics by rotating the feature vectors, and the

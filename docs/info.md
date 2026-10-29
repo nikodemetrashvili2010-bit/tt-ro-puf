@@ -63,6 +63,12 @@ apart; on the two-arm layout's routes it was 0.0025% at tt. That is a measured
 pre-silicon result rather than an assumption, and it is what makes Arm B the
 control.
 
+At tt most of that spread is the solver's. All eighteen rings of that run
+share one transient, and in it sixteen copies of one instance spread 4.3 ppm
+where the sixteen real ones spread 33. Run one at a time and solved tightly,
+the routes move a ring by under 0.04 ppm. ss and ff were not taken apart
+that way (`docs/phaseG_armb_leftover.md`).
+
 Those Arm B figures put each macro's own extraction together with its routes
 from the top-level SPEF, so no top-level wire that crosses a macro core shows
 up in them. A second extractor, magic, run over the whole layout, does see

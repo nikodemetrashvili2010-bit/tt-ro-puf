@@ -37,12 +37,12 @@ netlist byte for byte identical to the archived ones.
 | Selector side inputs against the netlist | every tie on all 48 paths, 612 of them, at the level the netlist's own decode holds with that ring selected. One `o21a_2` on C00 to C03 was tied the other way until 2026-10-10; those four rows moved 4 to 7 ps on the low | `gen_mux_sweep.py --check-sides`, on both builds in CI | no |
 | Boundary pulse through the selector | B13, the slowest rise of the 48, at ff: 63 enable-fall phases over four sweeps 50, 5, 1 and 0.2 ps apart, every one settles to a rail and the count steps by at most one. The step sits at about 76 ps at the tap, and just above it the flop sees a pulse as narrow as 80 ps on the finest grid | the four `boundary_validation_B13_3arm*.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_b13_armb.md` | no |
 | Boundary pulse at tt and ss | B13 since 18 October and B00 since 27 October, each at tt and at ss on a 50 ps grid and then a 5 ps grid across the step, 280 phases: every one settles to a rail and the count steps by at most one. B13's step sits at 115 to 122 ps at the tap at tt and 258 to 264 at ss, B00's at 142 to 148 and 317 to 323. One 5 ps step past it the flop still sees 231 and 290 ps at tt and 507 and 483 at ss, over the library's 169.8 and 353.8, and a finer grid would find narrower, as at ff | `boundary_validation_B13_3arm_tt.csv`, `_tt_5ps`, `_ss` and `_ss_5ps` and B00's four, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_tt_ss.md`, `docs/phaseG_boundary_b00.md` | no |
-| Boundary through the other 47 paths | screened at ff on 26 October: all 48 paths at four enable-fall phases, 32, 54, 68 and 82 ps at the tap, 192 phases, every one settles to a rail and the count steps by at most one. B13 is not the worst. B00 loses the 82 ps pulse, and on 5, 1 and 0.2 ps grids its step sits at about 84 ps against B13's 76, with a 69 ps pulse reaching the flop on the finest grid and resolving. Ten more Arm B paths step between 68 and 82, nothing in Arms A and C above 68 | `boundary_screen_ff.csv`, `boundary_validation_B00_3arm_5ps.csv`, `_1ps` and `_0p2ps`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_screen.md` | no |
+| Boundary through the other 47 paths | screened at ff on 26 October: all 48 paths at four enable-fall phases, 32, 54, 68 and 82 ps at the tap, 192 phases, every one settles to a rail and the count steps by at most one. B13 is not the worst. B00 loses the 82 ps pulse, and on 5, 1 and 0.2 ps grids its step sits at about 84 ps against B13's 76, with a 69 ps pulse reaching the flop on the finest grid and resolving. Ten more Arm B paths step between 68 and 82, nothing in Arms A and C above 68. At tt and ss on 29 October, all 48 again: five phases at tt, 63 to 148 ps at the tap, and six at ss, 93 to 323, 528 phases, every one settles to a rail and the count steps by at most one, every path's step bracketed. B00, B01, B05 and B09 need the widest at tt, 129 to 148, B00 alone at ss, 289 to 323. The narrowest pulse at `sel_ro` is 178 ps at tt and 226 at ss, the second on C07 and under the library's 353.8, and the flop resolved it | `boundary_screen_ff.csv`, `boundary_validation_B00_3arm_5ps.csv`, `_1ps` and `_0p2ps`, `boundary_screen_tt.csv` and `_ss.csv`, waveforms in `sim/spice/gono/bnd3/`, rebuilt in CI, `docs/phaseG_boundary_screen.md`, `docs/phaseG_boundary_screen_tt_ss.md` | no |
 | Where the last pulse is lost | eight Arm B paths probed net by net at ff on 27 October, each at one of the screen's own phases and each the screen's run wherever the two reductions kept the same row. On the four that need the wider pulse it dies at the first or second net, behind a first net of 27.09 or 17.98 fF where the other four start on 11.95 or 4.01, and swapping the first net's load between B00 and B04 swaps their verdicts. Across all 48 paths a net of 17.68 fF or more among the first two is needed for a step above 68 ps and is not enough on its own | `bnd_nodes_ff.csv`, `bnd_nodes_whatif.csv`, waveforms in `sim/spice/gono/bnd3/nodes_ff/` and `nodes_whatif/`, rebuilt in CI, `docs/phaseG_boundary_b00.md` | no |
 | Flow warning classes | 14 of 14 derived counts agree with `metrics.json`, each class named per net or shown to be a flow constant; notes below | `triage_warnings.py --build dualarm/build_armc` | no |
 | Heat, wire current, supply drop, taps | 20 of 20 checks, 8 planted faults caught: a running ring 0.23 mW at tt and 0.40 mW at ff, under 0.2 K of self-heating, the busiest ring wire 13 times under the tech LEF's RMS current limit, the supply at most 0.58 mV down under a ring with no bit changed, every tap where the baseline had it | `real_world.py`, decks and logs in `sim/spice/gono/real_world/`, `docs/phaseG_realworld.md` | no |
 | Drawn spacing, checked a second way | KLayout width and space on li1 to met4, no failures, the smallest gaps equal to the rule | `real_world/space_width.py` and its output; needs KLayout, so not in the gate | no |
-| Arm B on this build's routes | all sixteen start at ss, tt and ff carrying the enable and output routes run 83 drew, the longest output route 45.4 fF where the baseline's stopped at 29.5: 0.0001%, 0.0033% and 0.0019% peak to peak, under the 0.01% written down before the first run and under one count at the 2048-cycle window and 50 MHz | `sim/spice/gono/armb3/`, `analyze_instance.py --build release` at each corner and `verify_instance_corners.py --build release`, in CI, `docs/phaseG_b13_armb.md` | no |
+| Arm B on this build's routes | all sixteen start at ss, tt and ff carrying the enable and output routes run 83 drew, the longest output route 45.4 fF where the baseline's stopped at 29.5: 0.0001%, 0.0033% and 0.0019% peak to peak, under the 0.01% written down before the first run and under one count at the 2048-cycle window and 50 MHz. Section 8.2 asked of them on 29 October: 7.9996 of 8 bits at tt with a reader at 4.03, nothing predicts it at more than one corner, and the one thing that did, the enable route at tt, r = -0.805, is the solver's. Ten times tighter it is gone, sixteen copies of one instance in that deck spread 4.3 ppm against the sixteen's 33, and alone and solved tightly the heaviest route sits 0.034 and then 0.006 ppm under a ring with no route | `sim/spice/gono/armb3/`, `analyze_instance.py --build release` at each corner and `verify_instance_corners.py --build release`, in CI, `docs/phaseG_b13_armb.md`; `matched_arm.py --build release`, `armb_residual.py` on `armb3/tol/`, in CI, `docs/phaseG_armb_leftover.md` | no |
 | Logic under stress, all 48 rings | 7 of 7 tests on seeds 1 to 4 on the release netlist with every ring given a delay: power-up from X with no clock, all 64 selector values, a seeded random host, the window changed under a run, the clock at 100 and 12.5 MHz, a soak, restarts; `ena` low stops every ring in 10 ns with no clock, and no two enables were ever high together in all 128 states of the seven flops behind them | `sim/stress/`, `docs/phaseG_stress.md`; not in CI yet | no |
 | First count after a change of selection | the counter clock mux can pulse while the selector settles, on 1728 of 4032 changes and 960 of the 2256 between rings, starting in twelve cells; if it lands after the counter's reset lets go, the first run reads one high. The firmware starts every selection twice and keeps the second, and the datasheet says to | `sim/mux_hazard.py --expect 1728`, `verify_datasheet.py`, `docs/phaseG_hazard.md` | no |
 | Bench firmware against the RTL | `measure_puf.py` version 7, unchanged but for four CONFIG lines, under cocotb against the RTL with the behavioural rings, at three host speeds, 0.1, 5 and a seeded 1 to 30 us a pin operation, with a clock sweep at 48 and 52 MHz and a 700 ps runt pulse on `clk` under reset at each change: 432 rows, every count within one of the model's, no timeout, no overflow, and the analyzer reads all three runs | `firmware/cosim/`, `docs/phaseG_clock_pull.md`; about half an hour, so not in CI | no |
@@ -162,13 +162,10 @@ from it stays in the paper as a prior run, not as a result of this design.
 
 In the order I care about them.
 
-The boundary through the selector paths at tt and ss. Since 26 October all
-48 are screened at ff, and B00, which needs the widest pulse of any of them,
-has 5, 1 and 0.2 ps grids there. B13 has run at tt and ss since 18 October
-and B00 since 27 October. The other 46 have not.
-
-At tt and ss those two have grids of 50 and 5 ps only. Nothing finer has run
-there.
+Finer grids at tt and ss. All 48 paths are screened at all three corners
+since 29 October, and at ff B13 and B00 have 1 and 0.2 ps grids as well. At
+tt and ss those two have grids of 50 and 5 ps and the other 46 the screen's
+15 and 30 ps. Nothing finer has run at either corner, on any path.
 
 The baseline's selector archive. Its sixteen Arm B decks in `mux/`, and every
 deck of the B00 and B15 boundary sweeps, tie one `o21a_2` with A1 high where
@@ -197,12 +194,17 @@ B00, and the flop resolved those too.
 B00's 0.2 ps grid, on 26 October, got to 69 ps at ff, under the 77.5, and the
 flop resolved that one as well.
 
-Arm B's leftover on the release build's routes. The sixteen were run on them on
-22 September and still spread under one count at the measurement setting.
-Whether anything in the design database predicts what is left, and what it
-would be worth in bits, is Section 8.2 of the paper, and that has only been
-asked of the baseline's routes; `matched_arm.py` reads the baseline's DEF and
-logs by name.
+Anything else that rests on a few tens of ppm between different circuits
+in one deck at ngspice's default tolerance. On 29 October that turned out to
+be the solver's size for Arm B's sixteen (`docs/phaseG_armb_leftover.md`):
+in the same deck one circuit sixteen times spreads 4.3 ppm and sixteen
+slightly different ones 33. The pair drift envelopes `pairing_policy.py`
+reads off the corner logs run from 0.004% to 0.282%, and the bottom of that
+is in range. Those logs are the sixteen-ring lumped decks at a 5 ps step;
+against the one-ring lumped decks at 1 ps the same sixteen rings sit 0.18%
+slower with a 60 ppm standard deviation about that, on both builds. How much
+of that survives in a ratio of two corners is not known. Arm A's and Arm C's
+pair gaps, 0.2% and up, are out of range of all of it.
 
 The soft obstruction around Arm A. With Arm A and Arm C both fixed in place it
 holds nothing, and it wants one build with only that change to show whether it

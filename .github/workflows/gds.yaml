@@ -50,6 +50,10 @@ jobs:
           python3 sim/spice/gono/build_transfer.py
           python3 sim/spice/gono/matched_arm.py --selftest
           python3 sim/spice/gono/matched_arm.py
+          python3 sim/spice/gono/matched_arm.py --build release
+          python3 sim/spice/gono/armb_residual.py --selftest
+          python3 sim/spice/gono/armb_residual.py check
+          python3 sim/spice/gono/armb_residual.py
           python3 sim/spice/gono/pairing_policy.py --selftest
           python3 sim/spice/gono/pairing_policy.py
           python3 sim/spice/gono/verify_predictability.py
@@ -107,6 +111,10 @@ jobs:
           python3 sim/spice/gono/boundary_screen.py --selftest
           python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_ff --control sim/spice/gono/boundary_validation_B13_3arm_5ps.csv --csv /tmp/screen_ff.csv
           diff /tmp/screen_ff.csv sim/spice/gono/boundary_screen_ff.csv
+          python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_tt --corner tt --control B13=sim/spice/gono/boundary_validation_B13_3arm_tt_5ps.csv --control B00=sim/spice/gono/boundary_validation_B00_3arm_tt_5ps.csv --csv /tmp/screen_tt.csv
+          diff /tmp/screen_tt.csv sim/spice/gono/boundary_screen_tt.csv
+          python3 sim/spice/gono/boundary_screen.py sim/spice/gono/bnd3/screen_ss --corner ss --control B13=sim/spice/gono/boundary_validation_B13_3arm_ss_5ps.csv --control B00=sim/spice/gono/boundary_validation_B00_3arm_ss_5ps.csv --csv /tmp/screen_ss.csv
+          diff /tmp/screen_ss.csv sim/spice/gono/boundary_screen_ss.csv
           python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_tt --vdd 1.80 --csv /tmp/bnd3_B00_tt.csv
           diff /tmp/bnd3_B00_tt.csv sim/spice/gono/boundary_validation_B00_3arm_tt.csv
           python3 sim/spice/gono/analyze_boundary_sweep.py sim/spice/gono/bnd3/B00_tt_5ps --vdd 1.80 --csv /tmp/bnd3_B00_tt_5ps.csv

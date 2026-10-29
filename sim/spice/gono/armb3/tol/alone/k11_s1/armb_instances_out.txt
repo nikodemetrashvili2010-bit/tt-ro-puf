@@ -1,0 +1,73 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * arm b, one ring alone: instance 11 with its routes, from armb3/armb_instances.spice
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+Using SPARSE 1.3 as Direct Linear Solver
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vpwr                                       1.8
+one                                        1.8
+en                                           0
+k11_edrv                           2.70603e-09
+k11_epin                           2.70603e-09
+k11_net1                            4.9501e-09
+k11_n0                                     1.8
+k11_n30                                    1.8
+k11_n1                             2.70603e-09
+k11_n2                                     1.8
+k11_n3                             2.70603e-09
+k11_n4                                     1.8
+k11_n5                             2.70603e-09
+k11_n6                                     1.8
+k11_n7                             2.70603e-09
+k11_n8                                     1.8
+k11_n9                             2.70603e-09
+k11_n10                                    1.8
+k11_n11                            2.70603e-09
+k11_n12                                    1.8
+k11_n13                            2.70603e-09
+k11_n14                                    1.8
+k11_n15                            2.70603e-09
+k11_n16                                    1.8
+k11_n17                            2.70603e-09
+k11_n18                                    1.8
+k11_n19                            2.70603e-09
+k11_n20                                    1.8
+k11_n21                            2.70603e-09
+k11_n22                                    1.8
+k11_n23                            2.70603e-09
+k11_n24                                    1.8
+k11_n25                            2.70603e-09
+k11_n26                                    1.8
+k11_n27                            2.70603e-09
+k11_n28                                    1.8
+k11_n29                            2.70603e-09
+k11_net2                           2.60627e-09
+k11_omac                            4.9501e-09
+k11_o331_11                         4.9501e-09
+k11_orx                             4.9501e-09
+k11_rxout                          2.70603e-09
+ven#branch                                   0
+vone#branch                                  0
+vdd#branch                        -1.11537e-10
+
+
+No. of Data Rows : 320012
+tp_k11              =  3.504312e-08 targ=  4.512253e-08 trig=  1.007941e-08
+tq_k11              =  3.504312e-08 targ=  4.512296e-08 trig=  1.007984e-08
+hi_k11              =  8.334400e-10 targ=  2.843441e-08 trig=  2.760097e-08
+hx_k11              =  8.333930e-10 targ=  2.843480e-08 trig=  2.760140e-08
+dr_k11              =  4.346260e-13 targ=  2.760140e-08 trig=  2.760097e-08
+df_k11              =  3.875671e-13 targ=  2.843480e-08 trig=  2.843441e-08
+sm_k11              =  1.000541e-10 targ=  2.765696e-08 trig=  2.755690e-08
+sr_k11              =  1.000528e-10 targ=  2.765734e-08 trig=  2.755729e-08
+f_k11 = 5.707254e+08
+ngspice-42 done

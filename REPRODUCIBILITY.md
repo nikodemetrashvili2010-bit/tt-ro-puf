@@ -27,6 +27,9 @@ python3 sim/spice/gono/predictable_bits.py
 python3 sim/spice/gono/compensated_bits.py
 python3 sim/spice/gono/build_transfer.py
 python3 sim/spice/gono/matched_arm.py
+python3 sim/spice/gono/matched_arm.py --build release
+python3 sim/spice/gono/armb_residual.py check  # Arm B again, armb3/tol/
+python3 sim/spice/gono/armb_residual.py        # where its leftover comes from
 python3 sim/spice/gono/pairing_policy.py
 python3 sim/spice/gono/numerical_audit.py
 python3 sim/spice/gono/verify_predictability.py
@@ -52,14 +55,16 @@ from logs.
 So does everything run on the release build. `sim/spice/gono/rc3/` holds the
 128 ring decks of Arms A and C with their logs, `sim/spice/gono/mux3/` the 96
 selector decks, `sim/spice/gono/bnd3/` the eight boundary sweeps through B13,
-the seven through B00, the screen of all 48 paths and the probes of eight of
-them, `sim/spice/gono/armb3/` the Arm B instance decks at ss, tt and ff,
+the seven through B00, the screens of all 48 paths at ff, tt and ss and the
+probes of eight of them, `sim/spice/gono/armb3/` the Arm B instance decks at
+ss, tt and ff,
 `sim/spice/gono/real_world/` the power and wire-current decks `real_world.py`
 reads, and `sim/spice/gono/inject3/` the decks with the clock driven beside a
 ring, each with the rising crossings ngspice gave. CI rebuilds
 `rc_validation_3arm.csv`, `rc_validation_armc.csv`,
 `mux3/mux3_validation.csv`, the fifteen `boundary_validation_*_3arm*.csv`,
-`boundary_screen_ff.csv` and the two `bnd_nodes_*.csv` from those logs,
+the three `boundary_screen_*.csv` and the two `bnd_nodes_*.csv` from those
+logs,
 `clock_neighbours.csv` from run 83's SPEF and DEF and `inject3/inject3.csv`
 from the crossings, and diffs each against the committed copy, the same way
 it has done for
@@ -67,6 +72,11 @@ it has done for
 B logs have no csv;
 `analyze_instance.py --build release` reads each corner and
 `verify_instance_corners.py --build release` reads all three.
+`sim/spice/gono/armb3/tol/` holds the tt deck run again at two tolerances,
+with sixteen copies of one instance in place of the sixteen, and one ring at
+a time at three tighter settings, each with its log and its rising
+crossings; `armb_residual.py check` makes every deck again from
+`armb3/armb_instances.spice` and holds each crossing file to its log.
 `sim/spice/magic/` holds the 96 ring decks of the second extraction,
 magic's, with their logs, and CI rebuilds its `magic_rings.csv` from them
 and diffs it the same way.
